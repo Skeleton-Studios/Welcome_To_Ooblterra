@@ -1,9 +1,8 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
-/* will need to add this back once we add plugin files
+
 using Welcome_To_Ooblterra.Patches;
-*/
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -28,7 +27,7 @@ namespace Welcome_To_Ooblterra{
             WTOLogSource = BepInEx.Logging.Logger.CreateLogSource (modGUID);
             WTOLogSource.LogInfo ("Begin test mod...");
             WTOHarmony.PatchAll (typeof (WTOBase));
-            //myHarmony.PatchAll (typeof (<PatchedClass>));
+            WTOHarmony.PatchAll (typeof (MoonPatch));
         }
 
     }
