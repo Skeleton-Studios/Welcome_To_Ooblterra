@@ -2,64 +2,83 @@
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
 using HarmonyLib;
 using System;
 using LC_API.BundleAPI;
-using MOON_API;
+using WonderAPI;
 using UnityEngine;
-
+using UnityEngine.Assertions;
+using UnityEngine.SceneManagement;
+using System.IO;
+using System.Reflection;
+using GameNetcodeStuff;
+using System.Collections;
+using System.Reflection.Emit;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class MoonPatch {
-        // Token: 0x06000006 RID: 6 RVA: 0x000020AC File Offset: 0x000002AC
+        //Identifiers for the Moon
+        private const string MoonFriendlyName = "Ooblterra";
+        private const string MoonDescription = "POPULATION: Entirely wiped out.\nCONDITIONS: Hazardous. Deadly air, mostly clear skies. Always nighttime. The ground is alive.\nFAUNA: The unique conditions of Ooblterra allow for lots of strange beings.";
+        private const string MoonRiskLevel = "A";
+        private const string MoonConfirmation = "Are you certain you want to go to Ooblterra?\n\nPlease CONFIRM or DENY.\n\n";
+        private const string MoonTravelText = "Routing to Ooblterra... Travel to new planets may take a while.";
+        private const string MoonPrefabDir = "";
+
+        //Defining the custom moon for the API
         [HarmonyPatch (typeof (StartOfRound), "Awake")]
         [HarmonyPrefix]
         private static bool AwakePatch(StartOfRound __instance) {
-            Core.AddMoon (new SelectableLevel {
-                LevelDescription = "POPULATION: Entirely wiped out.\nCONDITIONS: Hazardous. Deadly air, mostly clear skies. Always nighttime. The ground is alive.\nFAUNA: The unique conditions of Ooblterra allow for lots of strange beings.",
-                planetHasTime = true,
-                name = "Ooblterra",
-                PlanetName = "Ooblterra",
-                sceneName = "InitSceneLaunchOptions",
-                riskLevel = "Dangerous",
-                spawnEnemiesAndScrap = true,
-                timeToArrive = 10f,
-                planetPrefab = __instance.GetComponent<StartOfRound> ().levels[0].planetPrefab
-            }, BundleLoader.GetLoadedAsset<GameObject> ("assets/lcconstruct/main.prefab"));
+            SelectableLevel vow = __instance.GetComponent<StartOfRound> ().levels[2];
+            //Create new moon based on vow
+            SelectableLevel MyNewMoon = vow;
+            //override relevant properties
+            MyNewMoon.PlanetName = MoonFriendlyName;
+            MyNewMoon.name = MoonFriendlyName;
+            MyNewMoon.LevelDescription = MoonDescription;
+            MyNewMoon.riskLevel = MoonRiskLevel;
+            MyNewMoon.timeToArrive = 3f;
+            //temporary solution that doesn't even work, so yknow, lol
+            MyNewMoon.overrideWeather = true;
+            MyNewMoon.overrideWeatherType = LevelWeatherType.None;
+
+            //Add moon to API
+            Core.AddMoon(MyNewMoon);
+
             return true;
         }
 
-        // Token: 0x06000007 RID: 7 RVA: 0x00002140 File Offset: 0x00000340
         [HarmonyPatch (typeof (StartOfRound), "Awake")]
         [HarmonyPostfix]
+        //Add the custom moon to the terminal
         private static void AwakePatch2(StartOfRound __instance) {
+
             GameObject gameObject = GameObject.Find ("TerminalScript");
             Terminal component = gameObject.GetComponent<Terminal> ();
             TerminalKeyword terminalKeyword = new TerminalKeyword ();
-            terminalKeyword.name = "Ooblterra";
-            terminalKeyword.word = "Ooblterra";
+            terminalKeyword.name = MoonFriendlyName;
+            terminalKeyword.word = MoonFriendlyName.ToLower ();
             int num = component.moonsCatalogueList.Length;
             Array.Resize<SelectableLevel> (ref component.moonsCatalogueList, num + 1);
-            component.moonsCatalogueList[num] = Core.GetMoons ()["Ooblterra"];
+            component.moonsCatalogueList[num] = Core.GetMoons ()[MoonFriendlyName];
             Array.Resize<TerminalKeyword> (ref component.terminalNodes.allKeywords, component.terminalNodes.allKeywords.Length + 1);
             component.terminalNodes.allKeywords[component.terminalNodes.allKeywords.Length - 1] = terminalKeyword;
             TerminalNode terminalNode = new TerminalNode ();
-            terminalNode.name = "Ooblterra2";
+            terminalNode.name = MoonFriendlyName;
             terminalNode.itemCost = 0;
-            terminalNode.displayText = "Routing to Ooblterra... Travel to new planets may take a while.";
-            terminalNode.buyRerouteToMoon = Core.ModdedIds["Ooblterra"];
+            terminalNode.displayText = MoonTravelText;
+            terminalNode.buyRerouteToMoon = Core.ModdedIds[MoonFriendlyName];
             terminalNode.clearPreviousText = true;
             terminalNode.buyUnlockable = false;
             CompatibleNoun compatibleNoun = new CompatibleNoun ();
             compatibleNoun.noun = component.terminalNodes.allKeywords[3];
             compatibleNoun.result = terminalNode;
             TerminalNode terminalNode2 = new TerminalNode ();
-            terminalNode2.name = "Ooblterra1";
+            terminalNode2.name = MoonFriendlyName;
             terminalNode2.buyItemIndex = -1;
             terminalNode2.clearPreviousText = true;
             terminalNode2.buyUnlockable = false;
-            terminalNode2.displayText = "Are you certain you want to go to Ooblterra?\n\nPlease CONFIRM or DENY.\n\n";
+            terminalNode2.displayText = MoonConfirmation;
             terminalNode2.isConfirmationNode = false;
             terminalNode2.itemCost = 0;
             terminalNode2.overrideOptions = true;
@@ -76,6 +95,52 @@ namespace Welcome_To_Ooblterra.Patches {
             Array.Resize<CompatibleNoun> (ref component.terminalNodes.allKeywords[26].compatibleNouns, component.terminalNodes.allKeywords[26].compatibleNouns.Length + 1);
             component.terminalNodes.allKeywords[26].compatibleNouns[component.terminalNodes.allKeywords[26].compatibleNouns.Length - 1] = compatibleNoun2;
             component.terminalNodes.allKeywords[component.terminalNodes.allKeywords.Length - 1] = terminalKeyword;
+        }
+
+        [HarmonyPatch (typeof (StartOfRound), "SceneManager_OnLoadComplete1")]
+        [HarmonyPostfix]
+        private static void StartGameReplaceActors(StartOfRound __instance) {
+            if (__instance.currentLevel.name == MoonFriendlyName) {
+                WTOBase.PrintToConsole("Loading into level " + MoonFriendlyName);
+                GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject> ();
+                GameObject[] trees = new GameObject[] { };
+                foreach (GameObject obj in allObjects) {
+                    //WTOBase.PrintToConsole("Object found: " + obj.name);
+                    if (obj.name.Contains ("tree")) {
+                        trees.AddItem<GameObject> (obj);
+                    }
+                }
+                WTOBase.PrintToConsole("Destroying Trees...");
+                foreach (GameObject obj in trees) {
+                    GameObject.Destroy(obj);
+                }
+                try {
+                    //System.Threading.Thread.Sleep (2000);
+                    GameObject TerrainObject = GameObject.Find ("CompletedVowTerrain");
+                    WTOBase.PrintToConsole("Destroying " + TerrainObject.name);
+                    GameObject.Destroy (TerrainObject);
+
+                } catch {
+                    WTOBase.PrintToConsole("Couldn't destroy terrain object.");
+                }
+                    GameObject MyLevelAsset = WTOBase.MyLevel.LoadAsset (WTOBase.GetBundledAssetPath()) as GameObject;
+                    GameObject MyInstantiatedLevel = GameObject.Instantiate (MyLevelAsset);
+                    WTOBase.PrintToConsole("Loaded custom object!");
+                    WTOBase.PrintToConsole("Couldn't load custom asset.");
+                    /*this is just to make sure I can access things added to the custom prefab programatically. 
+                     * Honestly, this can probably be used to add custom teleport doors and shit without having 
+                     * to worry about the script being in the prefab. Can just add it here. 
+                     * Though it's probably a better idea to have a class that marks a transform and teleport one of
+                     * the already working doors to it.
+                     */  
+                    try { 
+                        GameObject Staretree = GameObject.Find("staretree");
+                        WTOBase.PrintToConsole("Staretree found at " + Staretree.transform.position.ToString());
+                    } catch {
+                        WTOBase.PrintToConsole("Staretree not found!");
+                    }
+
+            }
         }
     }
 }
