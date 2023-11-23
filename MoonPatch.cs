@@ -14,6 +14,8 @@ using System.Reflection;
 using GameNetcodeStuff;
 using System.Collections;
 using System.Reflection.Emit;
+using LethalLib.Modules;
+using static LethalLib.Modules.Levels;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class MoonPatch {
@@ -28,7 +30,7 @@ namespace Welcome_To_Ooblterra.Patches {
         //Defining the custom moon for the API
         [HarmonyPatch (typeof (StartOfRound), "Awake")]
         [HarmonyPrefix]
-        private static bool AwakePatch(StartOfRound __instance) {
+        private static bool AddMoonToList(StartOfRound __instance) {
             SelectableLevel vow = __instance.GetComponent<StartOfRound> ().levels[2];
             //Create new moon based on vow
             SelectableLevel MyNewMoon = vow;
@@ -41,6 +43,7 @@ namespace Welcome_To_Ooblterra.Patches {
             //temporary solution that doesn't even work, so yknow, lol
             MyNewMoon.overrideWeather = true;
             MyNewMoon.overrideWeatherType = LevelWeatherType.None;
+            MyNewMoon.currentWeather = LevelWeatherType.None;
 
             //Add moon to API
             Core.AddMoon(MyNewMoon);
@@ -48,10 +51,27 @@ namespace Welcome_To_Ooblterra.Patches {
             return true;
         }
 
+        [HarmonyPatch(typeof(StartOfRound), "Awake")]
+        [HarmonyPostfix]
+        //try to add our custom items
+        private static void AddCustomItems(StartOfRound __instance) {
+            //Create our custom items
+            try { 
+                foreach (string assetname in WTOBase.GetModelListKeys()) {
+                    Item item = WTOBase.MyAssets.LoadAsset<Item>("Assets/CustomItems" + assetname + ".fbx");
+                    NetworkPrefabs.RegisterNetworkPrefab(item.spawnPrefab);
+                    Items.RegisterScrap(item, WTOBase.GetModelListValue(assetname), LevelTypes.All);
+                    WTOBase.PrintToConsole("Custom items loaded!");
+                }
+            } catch {
+                WTOBase.PrintToConsole("Error adding custom assets!");
+            }
+        }
+
+        //Add the custom moon to the terminal
         [HarmonyPatch (typeof (StartOfRound), "Awake")]
         [HarmonyPostfix]
-        //Add the custom moon to the terminal
-        private static void AwakePatch2(StartOfRound __instance) {
+        private static void AddMoonToTerminal(StartOfRound __instance) {
 
             GameObject gameObject = GameObject.Find ("TerminalScript");
             Terminal component = gameObject.GetComponent<Terminal> ();
@@ -97,6 +117,7 @@ namespace Welcome_To_Ooblterra.Patches {
             component.terminalNodes.allKeywords[component.terminalNodes.allKeywords.Length - 1] = terminalKeyword;
         }
 
+        //Destroy the necessary actors and set our scene
         [HarmonyPatch (typeof (StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPostfix]
         private static void StartGameReplaceActors(StartOfRound __instance) {
@@ -104,41 +125,32 @@ namespace Welcome_To_Ooblterra.Patches {
                 WTOBase.PrintToConsole("Loading into level " + MoonFriendlyName);
                 GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject> ();
                 GameObject[] trees = new GameObject[] { };
+                //Destroy all trees (currently not working?)
                 foreach (GameObject obj in allObjects) {
-                    //WTOBase.PrintToConsole("Object found: " + obj.name);
-                    if (obj.name.Contains ("tree")) {
+                    if (obj.name.Contains("tree")) {
                         trees.AddItem<GameObject> (obj);
                     }
                 }
                 WTOBase.PrintToConsole("Destroying Trees...");
                 foreach (GameObject obj in trees) {
+                    Debug.Log("tree found: " + obj.name);
                     GameObject.Destroy(obj);
                 }
-                try {
-                    //System.Threading.Thread.Sleep (2000);
-                    GameObject TerrainObject = GameObject.Find ("CompletedVowTerrain");
-                    WTOBase.PrintToConsole("Destroying " + TerrainObject.name);
-                    GameObject.Destroy (TerrainObject);
+                GameObject TerrainObject = GameObject.Find ("CompletedVowTerrain");
+                WTOBase.PrintToConsole("Destroying " + TerrainObject.name);
+                GameObject.Destroy (TerrainObject);
+                GameObject MyLevelAsset = WTOBase.MyAssets.LoadAsset (WTOBase.GetBundledAssetPath()) as GameObject;
+                GameObject MyInstantiatedLevel = GameObject.Instantiate (MyLevelAsset);
+                WTOBase.PrintToConsole("Loaded custom object!");
+                /*
+                 * I can access things added to the custom prefab programatically. Honestly, this can probably  
+                 * be used to add custom teleport doors and shit without having to worry about the script being 
+                 * in the prefab. Can just add it here. Though it's probably a better idea to have a class that
+                 * marks a transform and teleport one of the already working doors to it.
+                 */
+                GameObject Staretree = GameObject.Find("staretree");
+                WTOBase.PrintToConsole("Staretree found at " + Staretree.transform.position.ToString());
 
-                } catch {
-                    WTOBase.PrintToConsole("Couldn't destroy terrain object.");
-                }
-                    GameObject MyLevelAsset = WTOBase.MyLevel.LoadAsset (WTOBase.GetBundledAssetPath()) as GameObject;
-                    GameObject MyInstantiatedLevel = GameObject.Instantiate (MyLevelAsset);
-                    WTOBase.PrintToConsole("Loaded custom object!");
-                    WTOBase.PrintToConsole("Couldn't load custom asset.");
-                    /*this is just to make sure I can access things added to the custom prefab programatically. 
-                     * Honestly, this can probably be used to add custom teleport doors and shit without having 
-                     * to worry about the script being in the prefab. Can just add it here. 
-                     * Though it's probably a better idea to have a class that marks a transform and teleport one of
-                     * the already working doors to it.
-                     */  
-                    try { 
-                        GameObject Staretree = GameObject.Find("staretree");
-                        WTOBase.PrintToConsole("Staretree found at " + Staretree.transform.position.ToString());
-                    } catch {
-                        WTOBase.PrintToConsole("Staretree not found!");
-                    }
 
             }
         }

@@ -44,6 +44,9 @@
     <Reference Include="LC_API">
       <HintPath>..\..\Tools\2018-LC_API-1.2.1\BepInEx\plugins\LC_API.dll</HintPath>
     </Reference>
+    <Reference Include="LethalLib">
+      <HintPath>..\..\Tools\LethalLib\LethalLib.dll</HintPath>
+    </Reference>
     <Reference Include="MOON_API">
       <HintPath>..\..\Tools\MoonAPI\MOON_API.dll</HintPath>
     </Reference>
