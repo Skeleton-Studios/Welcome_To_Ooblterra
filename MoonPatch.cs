@@ -16,6 +16,8 @@ using System.Collections;
 using System.Reflection.Emit;
 using LethalLib.Modules;
 using static LethalLib.Modules.Levels;
+using Unity.Netcode;
+using UnityEngine.InputSystem;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class MoonPatch {
@@ -28,72 +30,51 @@ namespace Welcome_To_Ooblterra.Patches {
         private const string MoonPrefabDir = "";
 
         //Defining the custom moon for the API
-        [HarmonyPatch (typeof (StartOfRound), "Awake")]
+        [HarmonyPatch(typeof(StartOfRound), "Awake")]
         [HarmonyPrefix]
         private static bool AddMoonToList(StartOfRound __instance) {
-            SelectableLevel vow = __instance.GetComponent<StartOfRound> ().levels[2];
+            SelectableLevel vow = __instance.GetComponent<StartOfRound>().levels[2];
             //Create new moon based on vow
             SelectableLevel MyNewMoon = vow;
+            
             //override relevant properties
             MyNewMoon.PlanetName = MoonFriendlyName;
             MyNewMoon.name = MoonFriendlyName;
             MyNewMoon.LevelDescription = MoonDescription;
             MyNewMoon.riskLevel = MoonRiskLevel;
             MyNewMoon.timeToArrive = 3f;
-            //temporary solution that doesn't even work, so yknow, lol
-            MyNewMoon.overrideWeather = true;
-            MyNewMoon.overrideWeatherType = LevelWeatherType.None;
-            MyNewMoon.currentWeather = LevelWeatherType.None;
 
             //Add moon to API
             Core.AddMoon(MyNewMoon);
-
             return true;
         }
 
-        [HarmonyPatch(typeof(StartOfRound), "Awake")]
-        [HarmonyPostfix]
-        //try to add our custom items
-        private static void AddCustomItems(StartOfRound __instance) {
-            //Create our custom items
-            try { 
-                foreach (string assetname in WTOBase.GetModelListKeys()) {
-                    Item item = WTOBase.MyAssets.LoadAsset<Item>("Assets/CustomItems" + assetname + ".fbx");
-                    NetworkPrefabs.RegisterNetworkPrefab(item.spawnPrefab);
-                    Items.RegisterScrap(item, WTOBase.GetModelListValue(assetname), LevelTypes.All);
-                    WTOBase.PrintToConsole("Custom items loaded!");
-                }
-            } catch {
-                WTOBase.PrintToConsole("Error adding custom assets!");
-            }
-        }
-
         //Add the custom moon to the terminal
-        [HarmonyPatch (typeof (StartOfRound), "Awake")]
+        [HarmonyPatch(typeof(StartOfRound), "Awake")]
         [HarmonyPostfix]
         private static void AddMoonToTerminal(StartOfRound __instance) {
 
-            GameObject gameObject = GameObject.Find ("TerminalScript");
-            Terminal component = gameObject.GetComponent<Terminal> ();
-            TerminalKeyword terminalKeyword = new TerminalKeyword ();
+            GameObject gameObject = GameObject.Find("TerminalScript");
+            Terminal component = gameObject.GetComponent<Terminal>();
+            TerminalKeyword terminalKeyword = new TerminalKeyword();
             terminalKeyword.name = MoonFriendlyName;
-            terminalKeyword.word = MoonFriendlyName.ToLower ();
+            terminalKeyword.word = MoonFriendlyName.ToLower();
             int num = component.moonsCatalogueList.Length;
-            Array.Resize<SelectableLevel> (ref component.moonsCatalogueList, num + 1);
-            component.moonsCatalogueList[num] = Core.GetMoons ()[MoonFriendlyName];
-            Array.Resize<TerminalKeyword> (ref component.terminalNodes.allKeywords, component.terminalNodes.allKeywords.Length + 1);
+            Array.Resize<SelectableLevel>(ref component.moonsCatalogueList, num + 1);
+            component.moonsCatalogueList[num] = Core.GetMoons()[MoonFriendlyName];
+            Array.Resize<TerminalKeyword>(ref component.terminalNodes.allKeywords, component.terminalNodes.allKeywords.Length + 1);
             component.terminalNodes.allKeywords[component.terminalNodes.allKeywords.Length - 1] = terminalKeyword;
-            TerminalNode terminalNode = new TerminalNode ();
+            TerminalNode terminalNode = new TerminalNode();
             terminalNode.name = MoonFriendlyName;
             terminalNode.itemCost = 0;
             terminalNode.displayText = MoonTravelText;
             terminalNode.buyRerouteToMoon = Core.ModdedIds[MoonFriendlyName];
             terminalNode.clearPreviousText = true;
             terminalNode.buyUnlockable = false;
-            CompatibleNoun compatibleNoun = new CompatibleNoun ();
+            CompatibleNoun compatibleNoun = new CompatibleNoun();
             compatibleNoun.noun = component.terminalNodes.allKeywords[3];
             compatibleNoun.result = terminalNode;
-            TerminalNode terminalNode2 = new TerminalNode ();
+            TerminalNode terminalNode2 = new TerminalNode();
             terminalNode2.name = MoonFriendlyName;
             terminalNode2.buyItemIndex = -1;
             terminalNode2.clearPreviousText = true;
@@ -108,50 +89,45 @@ namespace Welcome_To_Ooblterra.Patches {
                 compatibleNoun,
                 component.terminalNodes.allKeywords[26].compatibleNouns[0].result.terminalOptions[1]
             };
-            CompatibleNoun compatibleNoun2 = new CompatibleNoun ();
+            CompatibleNoun compatibleNoun2 = new CompatibleNoun();
             compatibleNoun2.noun = terminalKeyword;
             compatibleNoun2.result = terminalNode2;
             terminalKeyword.defaultVerb = component.terminalNodes.allKeywords[26];
-            Array.Resize<CompatibleNoun> (ref component.terminalNodes.allKeywords[26].compatibleNouns, component.terminalNodes.allKeywords[26].compatibleNouns.Length + 1);
+            Array.Resize<CompatibleNoun>(ref component.terminalNodes.allKeywords[26].compatibleNouns, component.terminalNodes.allKeywords[26].compatibleNouns.Length + 1);
             component.terminalNodes.allKeywords[26].compatibleNouns[component.terminalNodes.allKeywords[26].compatibleNouns.Length - 1] = compatibleNoun2;
             component.terminalNodes.allKeywords[component.terminalNodes.allKeywords.Length - 1] = terminalKeyword;
         }
 
         //Destroy the necessary actors and set our scene
-        [HarmonyPatch (typeof (StartOfRound), "SceneManager_OnLoadComplete1")]
+        [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPostfix]
         private static void StartGameReplaceActors(StartOfRound __instance) {
             if (__instance.currentLevel.name == MoonFriendlyName) {
                 WTOBase.PrintToConsole("Loading into level " + MoonFriendlyName);
-                GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject> ();
-                GameObject[] trees = new GameObject[] { };
+                GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+                GameObject[] trees = new GameObject[] {};
                 //Destroy all trees (currently not working?)
                 foreach (GameObject obj in allObjects) {
                     if (obj.name.Contains("tree")) {
-                        trees.AddItem<GameObject> (obj);
+                        GameObject.Destroy(obj);
                     }
                 }
-                WTOBase.PrintToConsole("Destroying Trees...");
-                foreach (GameObject obj in trees) {
-                    Debug.Log("tree found: " + obj.name);
-                    GameObject.Destroy(obj);
-                }
-                GameObject TerrainObject = GameObject.Find ("CompletedVowTerrain");
+                GameObject TerrainObject = GameObject.Find("CompletedVowTerrain");
                 WTOBase.PrintToConsole("Destroying " + TerrainObject.name);
-                GameObject.Destroy (TerrainObject);
-                GameObject MyLevelAsset = WTOBase.MyAssets.LoadAsset (WTOBase.GetBundledAssetPath()) as GameObject;
-                GameObject MyInstantiatedLevel = GameObject.Instantiate (MyLevelAsset);
+                GameObject.Destroy(TerrainObject);
+                GameObject FogObject = GameObject.Find();
+                WTOBase.PrintToConsole("Destroying " + FogObject.name);
+                GameObject.Destroy(FogObject);
+
+                GameObject MyLevelAsset = WTOBase.MyAssets.LoadAsset(WTOBase.GetBundledAssetPath()) as GameObject;
+                GameObject MyInstantiatedLevel = GameObject.Instantiate(MyLevelAsset);
                 WTOBase.PrintToConsole("Loaded custom object!");
                 /*
                  * I can access things added to the custom prefab programatically. Honestly, this can probably  
                  * be used to add custom teleport doors and shit without having to worry about the script being 
                  * in the prefab. Can just add it here. Though it's probably a better idea to have a class that
-                 * marks a transform and teleport one of the already working doors to it.
+                 * marks a transform and teleport one of the already working doors to it. :)
                  */
-                GameObject Staretree = GameObject.Find("staretree");
-                WTOBase.PrintToConsole("Staretree found at " + Staretree.transform.position.ToString());
-
-
             }
         }
     }

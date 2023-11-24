@@ -17,10 +17,11 @@ using static LethalLib.Modules.Levels;
 namespace Welcome_To_Ooblterra{
     [BepInPlugin (modGUID, modName, modVersion)]
     public class WTOBase : BaseUnityPlugin {
+
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
         private const string modVersion = "0.1.1";
-        private const string LevelAssetPath = "assets/CustomScene/levelprefab.prefab";
+        private const string LevelAssetPath = "Assets/CustomScene/customlevel.prefab";
         private static Dictionary<string, int> modelAssets = new Dictionary<string, int> ();
         private const string BundleName = "customlevel";
 
@@ -48,27 +49,17 @@ namespace Welcome_To_Ooblterra{
             WTOHarmony.PatchAll (typeof (WTOBase));
             WTOHarmony.PatchAll (typeof (MoonPatch));
 
-            //Attempt to load assetbundle
-            try {
-                string pathToFile = Path.Combine (Path.GetDirectoryName (Assembly.GetExecutingAssembly ().Location), BundleName);
-                PrintToConsole("Bundle Path: " + pathToFile);
-                MyAssets = AssetBundle.LoadFromFile (pathToFile);
-                PrintToConsole("BEGIN PRINTING LOADED ASSETS");
-                foreach (string AssetNameToPrint in MyAssets.GetAllAssetNames ()) {
-                    Debug.Log("Asset in bundle: " + AssetNameToPrint);
-                }
-                PrintToConsole("END PRINTING LOADED ASSETS");
-                GameObject MyLevelAsset = MyAssets.LoadAsset(LevelAssetPath) as GameObject;
-            } catch {
-                PrintToConsole("Asset already loaded, skipping...");
+            //Loads the assetbundle and tells us everything in it
+            string pathToFile = Path.Combine (Path.GetDirectoryName (Assembly.GetExecutingAssembly ().Location), BundleName);
+            PrintToConsole("Bundle Path: " + pathToFile);
+            MyAssets = AssetBundle.LoadFromFile (pathToFile);
+            PrintToConsole("BEGIN PRINTING LOADED ASSETS");
+            foreach (string AssetNameToPrint in MyAssets.GetAllAssetNames ()) {
+                Debug.Log("Asset in bundle: " + AssetNameToPrint);
             }
-
-            //A list of item names and their rarities
-            modelAssets.Add("handcrystal", 5);
-            modelAssets.Add("crate", 10);
-            modelAssets.Add("waterbottle", 5);
+            PrintToConsole("END PRINTING LOADED ASSETS");
+            GameObject MyLevelAsset = MyAssets.LoadAsset(LevelAssetPath) as GameObject;
         }
 
     }
-
 }
