@@ -26,19 +26,20 @@ namespace Welcome_To_Ooblterra {
         [HarmonyPrefix]
         private static void StartPatch(ref StartOfRound __instance) {
             if (WTOBase.SuitsLoaded) {
-                WTOBase.LogToConsole("Step 0");
                 return; 
             }
-            WTOBase.LogToConsole("Step 1");
+            //Get all unlockables
             for (int i = 0; i < __instance.unlockablesList.unlockables.Count; i++) {
 
                 UnlockableItem unlockableItem = __instance.unlockablesList.unlockables[i];
                 WTOBase.LogToConsole("Processing unlockable {index=" + i + ", name=" + unlockableItem.unlockableName + "}");
 
+                //This will skip executing of the remaining code UNLESS the object we've found is a suit
                 if (unlockableItem.suitMaterial == null || !unlockableItem.alreadyUnlocked) {
                     continue;
                 }
 
+                //Create new suits based on the materials
                 foreach (string SuitPath in suitMaterials) {
 
                     UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
