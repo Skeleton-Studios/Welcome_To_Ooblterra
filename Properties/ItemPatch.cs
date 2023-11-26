@@ -1,37 +1,50 @@
 ﻿using HarmonyLib;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
+using LethalLib.Modules;
 using UnityEngine.InputSystem;
+using Unity.Netcode;
+using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 
 namespace Welcome_To_Ooblterra.Properties {
     internal class ItemPatch {
-        private static GameObject HandCrystalItem;
-
-        [HarmonyPatch(typeof(StartOfRound), "Awake")]
-        [HarmonyPostfix]
-        //try to add our custom items
-        private static void AddCustomItems(StartOfRound __instance) {
-            //Create our custom items
-            HandCrystalItem = WTOBase.MyAssets.LoadAsset<GameObject>("Assets/CustomItems/handcrystal.prefab");
-            //LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(HandCrystalItem.spawnPrefab);
-            /*
-            try { 
-                foreach (string assetname in WTOBase.GetModelListKeys()) {
-                    Item item = WTOBase.MyAssets.LoadAsset<Item>("Assets/CustomItems" + assetname + ".fbx");
-                    item.name = assetname;
-                    item.twoHanded = false;
-                    NetworkPrefabs.RegisterNetworkPrefab(item.spawnPrefab);
-                    Items.RegisterScrap(item, WTOBase.GetModelListValue(assetname), LevelTypes.All);
-                    WTOBase.PrintToConsole("Custom items loaded!");
-                }
-            } catch {
-                WTOBase.PrintToConsole("Error adding custom assets!");
+        
+        private class ItemData {
+            private string ItemPath;
+            private int Rarity;
+            private Item Itemref;
+            public ItemData(string path, int rarity) {
+                ItemPath = path;
+                Rarity = rarity;
             }
-         */
+            public string GetItemPath(){  return ItemPath; }
+            public int GetRarity(){ return Rarity; }
+            public void SetItem(Item ItemToSet){ Itemref= ItemToSet; }
+            public Item GetItem(){ return Itemref; }
+
+        }
+        //This array stores all our custom items
+        private static ItemData[] ItemList = new ItemData[] { 
+            new ItemData("Assets/CustomItems/AlienCrate.asset", 10),
+            new ItemData("Assets/Customitems/FiveSixShovel.asset", 30),
+            new ItemData("Assets/CustomItems/HandCrystal.asset", 5),
+            new ItemData("Assets/CustomItems/OoblCorpse.asset", 40),
+            new ItemData("Assets/CustomItems/StatueSmall.asset", 10),
+            new ItemData("Assets/CustomItems/WandCorpse.asset", 40),
+            new ItemData("Assets/CustomItems/WandFeed.asset", 10),
+        };
+
+
+        //Add our custom items
+        //I know its public I need to reference it in the fucking plugin class!!!! leave me alone!!!!!!!
+        public static void AddCustomItems() {
+            //Create our custom items
+            Item NextItem;
+            foreach(ItemData MyCustomScrap in ItemList){
+                NextItem = WTOBase.MyAssets.LoadAsset<Item>(MyCustomScrap.GetItemPath());               
+                NetworkPrefabs.RegisterNetworkPrefab(NextItem.spawnPrefab);
+                Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.All);
+                MyCustomScrap.SetItem(NextItem);
+            }
         }
 
         //try to spawn the object 
@@ -39,9 +52,9 @@ namespace Welcome_To_Ooblterra.Properties {
         [HarmonyPostfix]
         private static void TrySpawnNewItem(StartOfRound __instance) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
-                var Crystal = UnityEngine.Object.Instantiate(HandCrystalItem, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
-                //Crystal.GetComponent<NetworkObject>().Spawn();
-                WTOBase.PrintToConsole("Custom item spawned...");
+                var Crystal = UnityEngine.Object.Instantiate(ItemList[2].GetItem().spawnPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
+                Crystal.GetComponent<NetworkObject>().Spawn();
+                WTOBase.LogToConsole("Custom item spawned...");
             }
         }
     }
