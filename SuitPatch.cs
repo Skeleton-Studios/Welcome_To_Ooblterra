@@ -43,7 +43,7 @@ namespace Welcome_To_Ooblterra {
                 foreach (string SuitPath in suitMaterials) {
 
                     UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
-                    newUnlockableItem.suitMaterial = WTOBase.MyAssets.LoadAsset<Material>(SuitPath);
+                    newUnlockableItem.suitMaterial = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath);
 
                     //prepare and set name
                     String SuitName = SuitPath.Substring(19,8);

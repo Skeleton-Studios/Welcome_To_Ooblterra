@@ -39,11 +39,18 @@ namespace Welcome_To_Ooblterra.Properties {
         public static void AddCustomItems() {
             //Create our custom items
             Item NextItem;
+            SpawnableItemWithRarity MoonScrapItem;
+
             foreach(ItemData MyCustomScrap in ItemList){
-                NextItem = WTOBase.MyAssets.LoadAsset<Item>(MyCustomScrap.GetItemPath());               
+                NextItem = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());               
                 NetworkPrefabs.RegisterNetworkPrefab(NextItem.spawnPrefab);
-                Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.All);
+                //Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.All);
                 MyCustomScrap.SetItem(NextItem);
+                MoonScrapItem = new SpawnableItemWithRarity {
+                    spawnableItem = NextItem,
+                    rarity = MyCustomScrap.GetRarity()
+                };
+                WTOBase.AddToScrapList(MoonScrapItem);
             }
         }
 
