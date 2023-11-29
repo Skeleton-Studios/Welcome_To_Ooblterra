@@ -26,9 +26,11 @@ namespace Welcome_To_Ooblterra{
         //Bundle Paths
         string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
         string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
+        string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custominterior");
         //string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
         public static AssetBundle LevelAssetBundle;
         public static AssetBundle ItemAssetBundle;
+        public static AssetBundle FactoryAssetBundle;
         //public static AssetBundle MonsterAssetBundle;
 
         private readonly Harmony WTOHarmony = new Harmony (modGUID);
@@ -56,13 +58,16 @@ namespace Welcome_To_Ooblterra{
             WTOLogSource.LogInfo("Welcome to Ooblterra!");
 
             WTOHarmony.PatchAll(typeof(WTOBase));
-            WTOHarmony.PatchAll(typeof(ItemPatch));
+            //WTOHarmony.PatchAll(typeof(ItemPatch));
             WTOHarmony.PatchAll(typeof(MoonPatch));
             WTOHarmony.PatchAll(typeof(SuitPatch));
+            //WTOHarmony.PatchAll(typeof(FactoryPatch));
+
 
             //Loads the assetbundle and tells us everything in it
             LevelAssetBundle = AssetBundle.LoadFromFile (LevelBundlePath);
             ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
+            FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
             //MonsterItemBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
 
             LogToConsole("BEGIN PRINTING LOADED ASSETS");
@@ -72,13 +77,17 @@ namespace Welcome_To_Ooblterra{
             foreach (string AssetNameToPrint in ItemAssetBundle.GetAllAssetNames()) {
                 Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
             }
+            
+            foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
+                Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
+            }
             /*
             foreach (string AssetNameToPrint in MonsterAssetBundle.GetAllAssetNames()) {
                 Debug.Log("Asset in bundle: " + AssetNameToPrint);
             }
             */
             LogToConsole("END PRINTING LOADED ASSETS");
-            ItemPatch.AddCustomItems();
+            //ItemPatch.AddCustomItems();
             SuitsLoaded = false;
         }
     }

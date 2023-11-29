@@ -1,13 +1,14 @@
-﻿using HarmonyLib;
+﻿using DunGen.Adapters;
+using HarmonyLib;
 using System;
-using WonderAPI;
 using UnityEngine;
+using Unity.AI.Navigation;
+using System.Linq;
+using Unity.Netcode;
+using WonderAPI;
+using System.Collections.Generic;
 
 namespace Welcome_To_Ooblterra.Patches {
-
-    /* First two methods are modified from Bizzlemip's LC_Construct mod.
-     * GET PERMISSION FOR THIS JAMES
-     */
 
     internal class MoonPatch {
 
@@ -24,11 +25,24 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "Awake")]
         [HarmonyPrefix]
         private static bool AddMoonToList(StartOfRound __instance) {
-            //Create new moon based on vow
-            MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>("Assets/CustomScene/OoblterraLevel.asset"); ;
+            //Load our level asset object
+            MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>("Assets/CustomScene/OoblterraLevel.asset");
+
+            //Set certain variables that we can't set in unity or else shit will break
+            {
+                MyNewMoon.planetPrefab = __instance.levels[2].planetPrefab;
+                MyNewMoon.spawnableMapObjects = __instance.levels[2].spawnableMapObjects;
+                MyNewMoon.spawnableOutsideObjects = __instance.levels[2].spawnableOutsideObjects;
+                MyNewMoon.spawnableScrap = __instance.levels[2].spawnableScrap;
+                MyNewMoon.Enemies = __instance.levels[5].Enemies;
+                MyNewMoon.levelAmbienceClips = __instance.levels[2].levelAmbienceClips;
+                MyNewMoon.OutsideEnemies = __instance.levels[0].OutsideEnemies;
+                MyNewMoon.DaytimeEnemies = __instance.levels[0].DaytimeEnemies;
+
+            }
+
             MoonFriendlyName = MyNewMoon.PlanetName;
 
-            MyNewMoon.spawnableScrap = __instance.levels[2].spawnableScrap;
             try {
                 foreach (SpawnableItemWithRarity item in WTOBase.GetScrapList()) {
                     MyNewMoon.spawnableScrap.AddItem<SpawnableItemWithRarity>(item);
@@ -37,9 +51,8 @@ namespace Welcome_To_Ooblterra.Patches {
                     WTOBase.LogToConsole(addeditem.ToString());
                 }
             } catch {
-                WTOBase.LogToConsole("Failed!");
+                WTOBase.LogToConsole("Failed to add scrap!");
             }
-            //Add moon to API
             Core.AddMoon(MyNewMoon);
             return true;
         }
@@ -48,20 +61,24 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "Awake")]
         [HarmonyPostfix]
         private static void AddMoonToTerminal(StartOfRound __instance) {
-            
+
             Terminal ActiveTerminal = GameObject.Find("TerminalScript").GetComponent<Terminal>(); //Terminal object reference 
             TerminalKeyword RouteKeyword = ActiveTerminal.terminalNodes.allKeywords[26];
             TerminalKeyword InfoKeyword = ActiveTerminal.terminalNodes.allKeywords[6];
 
-            TerminalKeyword TerminalEntry = LevelBundle.LoadAsset<TerminalKeyword>("Assets/CustomScene/523-Ooblterra.asset"); //get our bundle's Terminal Keyword
-            int MoonListLength = ActiveTerminal.moonsCatalogueList.Length; //Resize list of moons displayed when you type in the keyword
-            Array.Resize<SelectableLevel>(ref ActiveTerminal.moonsCatalogueList, MoonListLength + 1);
-            ActiveTerminal.moonsCatalogueList[MoonListLength] = MyNewMoon; //Add our moon to that list
+            TerminalKeyword TerminalEntry = LevelBundle.LoadAsset<TerminalKeyword>("Assets/CustomScene/523-Ooblterra.asset"); //get our bundle's Terminal Keyword 
+            TerminalEntry.defaultVerb = RouteKeyword;
+            Array.Resize<SelectableLevel>(ref ActiveTerminal.moonsCatalogueList, ActiveTerminal.moonsCatalogueList.Length + 1); //Resize list of moons displayed 
+            ActiveTerminal.moonsCatalogueList[ActiveTerminal.moonsCatalogueList.Length - 1] = MyNewMoon; //Add our moon to that list
             Array.Resize<TerminalKeyword>(ref ActiveTerminal.terminalNodes.allKeywords, ActiveTerminal.terminalNodes.allKeywords.Length + 1);
             ActiveTerminal.terminalNodes.allKeywords[ActiveTerminal.terminalNodes.allKeywords.Length - 1] = TerminalEntry; //Add our terminal entry 
             TerminalEntry.defaultVerb = RouteKeyword; //Set its default verb to "route"
 
-            TerminalNode RouteNode = LevelBundle.LoadAsset<TerminalNode>("Assets/CustomScene/523route.asset"); //get our bundle's route node
+
+            TerminalNode RouteNode = LevelBundle.LoadAsset<TerminalNode>("Assets/CustomScene/523route.asset");
+            RouteNode.terminalOptions[0].noun = ActiveTerminal.terminalNodes.allKeywords[4];
+            RouteNode.terminalOptions[0].result = LevelBundle.LoadAsset<TerminalNode>("Assets/CustomScene/523CancelRoute.asset");
+            RouteNode.terminalOptions[1].noun = ActiveTerminal.terminalNodes.allKeywords[3];
 
             //Resize our RouteKeyword array and put our new route confirmation into it
             Array.Resize<CompatibleNoun>(ref RouteKeyword.compatibleNouns, RouteKeyword.compatibleNouns.Length + 1);
@@ -69,6 +86,7 @@ namespace Welcome_To_Ooblterra.Patches {
                 noun = TerminalEntry,
                 result = RouteNode
             };
+
             //Resize InfoKeyword array and put our new info into it
             Array.Resize<CompatibleNoun>(ref InfoKeyword.compatibleNouns, InfoKeyword.compatibleNouns.Length + 1);
             InfoKeyword.compatibleNouns[InfoKeyword.compatibleNouns.Length - 1] = new CompatibleNoun {
@@ -77,15 +95,21 @@ namespace Welcome_To_Ooblterra.Patches {
             };
         }
 
+
+
+
         //Destroy the necessary actors and set our scene
         [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPostfix]
         private static void CustomLevelInit(StartOfRound __instance) {
+
             if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
                 return;
             }
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
-            string[] ObjectsToDestroy = new string[] {
+
+
+            string[] ObjectNamesToDestroy = new string[]{
                 "CompletedVowTerrain",
                 "tree",
                 "Tree",
@@ -95,23 +119,36 @@ namespace Welcome_To_Ooblterra.Patches {
                 "Local Volumetric Fog",
                 "GroundFog",
                 "Sky and Fog Global Volume",
-                "SunTexture"
+                "SunTexture",
             };
-            
+
             GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
-            
             foreach (GameObject ObjToDestroy in allObjects) {
-                foreach (string UnwantedObjString in ObjectsToDestroy) {
-                    //If the object has any of the names in the list, it's gotta go
-                    if (ObjToDestroy.name.Contains(UnwantedObjString)){
-                        GameObject.Destroy(ObjToDestroy);
+                
+                if (ObjToDestroy.name.Contains("Models2VowFactory")) {
+                    try {
+                        ObjToDestroy.SetActive(false);
+                        WTOBase.LogToConsole("Vow factory adjusted.");
+                    } catch {
+                        WTOBase.LogToConsole("Issue adjusting vow factory");
                     }
                 }
+
+
                 //If the object's named Plane and its parent is Foliage, it's also gotta go. This gets rid of the grass
-                if (ObjToDestroy.name.Contains("Plane") && ObjToDestroy.transform.parent.gameObject.name.Contains("Foliage")){ 
+                if (ObjToDestroy.name.Contains("Plane") && (ObjToDestroy.transform.parent.gameObject.name.Contains("Foliage") || ObjToDestroy.transform.parent.gameObject.name.Contains("Mounds"))) {
                     GameObject.Destroy(ObjToDestroy);
                 }
+                foreach (string UnwantedObjString in ObjectNamesToDestroy) {
+                    //If the object has any of the names in the list, it's gotta go
+                    if (ObjToDestroy.name.Contains(UnwantedObjString)) {
+                        GameObject.Destroy(ObjToDestroy);
+                        continue;
+                    }
+                }
             }
+
+
 
             SunObject = GameObject.Find("SunWithShadows");
             SunAnimObject = GameObject.Find("SunAnimContainer");
@@ -121,6 +158,19 @@ namespace Welcome_To_Ooblterra.Patches {
             GameObject MyLevelAsset = WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab") as GameObject;
             GameObject MyInstantiatedLevel = GameObject.Instantiate(MyLevelAsset);
             WTOBase.LogToConsole("Loaded custom terrain object!");
+            try {  
+                GameObject NavMesh = GameObject.Find("NavMesh");
+                NavMesh.GetComponent<NavMeshSurface>().BuildNavMesh();
+            } catch(Exception E) {
+                WTOBase.LogToConsole("Failed to rebuild navmesh. Error: " + E);
+            }  
+
+            /*
+            var prefab = StartOfRound.Instance.levels[6].Enemies.First(spawnableEnemy => spawnableEnemy.enemyType.enemyName == "Spring").enemyType.enemyPrefab;
+            var position = new Vector3(0, 0, 0); // up to you
+            var enemy = GameObject.Instantiate(prefab, position, Quaternion.identity);
+            RoundManager.SpawnEnemyOnServer(new Vector3(0, 0, 0), 0f, -3);
+            */
 
             //The prefab contains an object called TeleportSnapLocation that we move the primary door to
             GameObject Entrance = GameObject.Find("EntranceTeleportA");

@@ -1,11 +1,5 @@
-﻿using BepInEx;
-using BepInEx.Logging;
-using HarmonyLib;
+﻿using HarmonyLib;
 using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using Unity.Netcode;
 using UnityEngine;
 
 namespace Welcome_To_Ooblterra {

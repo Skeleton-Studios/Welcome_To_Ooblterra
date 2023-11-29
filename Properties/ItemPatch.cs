@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using UnityEngine;
-using LethalLib.Modules;
 using UnityEngine.InputSystem;
 using Unity.Netcode;
 using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
@@ -59,8 +58,8 @@ namespace Welcome_To_Ooblterra.Properties {
         [HarmonyPostfix]
         private static void TrySpawnNewItem(StartOfRound __instance) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
-                var Crystal = UnityEngine.Object.Instantiate(ItemList[2].GetItem().spawnPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
-                Crystal.GetComponent<NetworkObject>().Spawn();
+                //var Crystal = UnityEngine.Object.Instantiate(ItemList[2].GetItem().spawnPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
+                //Crystal.GetComponent<NetworkObject>().Spawn();
                 WTOBase.LogToConsole("Custom item spawned...");
             }
         }
