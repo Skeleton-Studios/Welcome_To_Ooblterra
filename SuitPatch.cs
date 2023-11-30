@@ -4,22 +4,25 @@ using UnityEngine;
 
 namespace Welcome_To_Ooblterra {
     
-    /* Heavily modified from AlexCodesGames' AdditionalSuits mod,
+    /* Modified from AlexCodesGames' AdditionalSuits mod,
      * which gives explicit permission on both the repo and in 
      * the plugin.cs file. Thank you!
      */
 
+
     internal class SuitPatch {
 
-        static string[] suitMaterials = new string[] {
+        static string[] SuitMaterialPaths = new string[] {
             "Assets/CustomSuits/ProtSuit.mat",
             "Assets/CustomSuits/MackSuit.mat"
         };
 
+        public static bool SuitsLoaded = false;
+
         [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPrefix]
         private static void StartPatch(ref StartOfRound __instance) {
-            if (WTOBase.SuitsLoaded) {
+            if (SuitsLoaded) {
                 return; 
             }
             //Get all unlockables
@@ -34,7 +37,7 @@ namespace Welcome_To_Ooblterra {
                 }
 
                 //Create new suits based on the materials
-                foreach (string SuitPath in suitMaterials) {
+                foreach (string SuitPath in SuitMaterialPaths) {
 
                     UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
                     newUnlockableItem.suitMaterial = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath);
@@ -46,7 +49,7 @@ namespace Welcome_To_Ooblterra {
                     //add new item to the listing of tracked unlockable items
                     __instance.unlockablesList.unlockables.Add(newUnlockableItem);
                 }
-                WTOBase.SuitsLoaded = true;
+                SuitsLoaded = true;
                 break;
             }
         }

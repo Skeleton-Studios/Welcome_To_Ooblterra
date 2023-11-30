@@ -1,12 +1,14 @@
 ﻿using HarmonyLib;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using Unity.Netcode;
 using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
+using LethalLib.Modules;
+using System.Collections.Generic;
 
 namespace Welcome_To_Ooblterra.Properties {
     internal class ItemPatch {
-        
+
+        public static List<SpawnableItemWithRarity> MoonScrap;
         private class ItemData {
             private string ItemPath;
             private int Rarity;
@@ -23,19 +25,17 @@ namespace Welcome_To_Ooblterra.Properties {
         }
         //This array stores all our custom items
         private static ItemData[] ItemList = new ItemData[] { 
-            new ItemData("Assets/CustomItems/AlienCrate.asset", 10),
-            new ItemData("Assets/Customitems/FiveSixShovel.asset", 30),
-            new ItemData("Assets/CustomItems/HandCrystal.asset", 5),
-            new ItemData("Assets/CustomItems/OoblCorpse.asset", 40),
-            new ItemData("Assets/CustomItems/StatueSmall.asset", 10),
-            new ItemData("Assets/CustomItems/WandCorpse.asset", 40),
-            new ItemData("Assets/CustomItems/WandFeed.asset", 10),
+            new ItemData("Assets/CustomItems/AlienCrate.asset", 30),
+            new ItemData("Assets/Customitems/FiveSixShovel.asset", 10),
+            new ItemData("Assets/CustomItems/HandCrystal.asset", 30),
+            new ItemData("Assets/CustomItems/OoblCorpse.asset", 5),
+            new ItemData("Assets/CustomItems/StatueSmall.asset", 40),
+            new ItemData("Assets/CustomItems/WandCorpse.asset", 5),
+            new ItemData("Assets/CustomItems/WandFeed.asset", 20),
         };
 
-
         //Add our custom items
-        //I know its public I need to reference it in the fucking plugin class!!!! leave me alone!!!!!!!
-        public static void AddCustomItems() {
+        private void AddCustomItems() {
             //Create our custom items
             Item NextItem;
             SpawnableItemWithRarity MoonScrapItem;
@@ -43,25 +43,61 @@ namespace Welcome_To_Ooblterra.Properties {
             foreach(ItemData MyCustomScrap in ItemList){
                 NextItem = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());               
                 NetworkPrefabs.RegisterNetworkPrefab(NextItem.spawnPrefab);
-                //Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.All);
                 MyCustomScrap.SetItem(NextItem);
+                Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.All);
+                
                 MoonScrapItem = new SpawnableItemWithRarity {
                     spawnableItem = NextItem,
                     rarity = MyCustomScrap.GetRarity()
                 };
-                WTOBase.AddToScrapList(MoonScrapItem);
+                MoonScrap.AddItem(MoonScrapItem);
             }
+        }
+
+        /* TODO: This signatures SHOULD be taking the list as a param, 
+         * and the SOR Instance should probably be grabbed on awake so it 
+         * doesn't need to be passed. 
+         */
+        public static void SetMoonItemList(bool UseDefaultList, SelectableLevel Moon, StartOfRound __instance) {
+            if (UseDefaultList) {
+                Moon.spawnableScrap = __instance.levels[2].spawnableScrap;
+                return;
+            }
+            foreach (SpawnableItemWithRarity item in ItemPatch.MoonScrap) {
+                Moon.spawnableScrap.Add(item);
+            }
+        }
+
+        void Awake() {
+            AddCustomItems();
         }
 
         //try to spawn the object 
         [HarmonyPatch(typeof(StartOfRound), "Update")]
         [HarmonyPostfix]
-        private static void TrySpawnNewItem(StartOfRound __instance) {
+        private static void DebugSpawnItem(StartOfRound __instance) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
                 //var Crystal = UnityEngine.Object.Instantiate(ItemList[2].GetItem().spawnPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
                 //Crystal.GetComponent<NetworkObject>().Spawn();
                 WTOBase.LogToConsole("Custom item spawned...");
             }
         }
+
+        [HarmonyPatch(typeof(RoundManager), "SpawnScrapInLevel")]
+        [HarmonyPrefix]
+        private static bool SetItemSpawnPoints(){
+            /*Notably, if the first item in the source array is say, a TableTopSpawn,
+             * This will mean items can only spawn on tabletops, and there tends to be only like 
+             * 2 of those. Will probably cause issues
+             * TODO: Ensure that the spawn we grab is a GeneralItemSpawn or even make it so we can
+             * specify the spawn type for each item 
+            */
+            RandomScrapSpawn[] source = Object.FindObjectsOfType<RandomScrapSpawn>();
+            foreach (SpawnableItemWithRarity item in MoonScrap) {
+                item.spawnableItem.spawnPositionTypes[0] = source[0].spawnableItems;
+            }
+            return true;
+        }
+
     }
 }

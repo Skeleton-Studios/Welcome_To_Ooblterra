@@ -1,12 +1,9 @@
-﻿using DunGen.Adapters;
-using HarmonyLib;
+﻿using HarmonyLib;
 using System;
 using UnityEngine;
 using Unity.AI.Navigation;
-using System.Linq;
-using Unity.Netcode;
 using WonderAPI;
-using System.Collections.Generic;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches {
 
@@ -25,34 +22,25 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "Awake")]
         [HarmonyPrefix]
         private static bool AddMoonToList(StartOfRound __instance) {
+
             //Load our level asset object
             MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>("Assets/CustomScene/OoblterraLevel.asset");
 
             //Set certain variables that we can't set in unity or else shit will break
-            {
-                MyNewMoon.planetPrefab = __instance.levels[2].planetPrefab;
-                MyNewMoon.spawnableMapObjects = __instance.levels[2].spawnableMapObjects;
-                MyNewMoon.spawnableOutsideObjects = __instance.levels[2].spawnableOutsideObjects;
-                MyNewMoon.spawnableScrap = __instance.levels[2].spawnableScrap;
-                MyNewMoon.Enemies = __instance.levels[5].Enemies;
-                MyNewMoon.levelAmbienceClips = __instance.levels[2].levelAmbienceClips;
-                MyNewMoon.OutsideEnemies = __instance.levels[0].OutsideEnemies;
-                MyNewMoon.DaytimeEnemies = __instance.levels[0].DaytimeEnemies;
+            MyNewMoon.planetPrefab = __instance.levels[2].planetPrefab;
+            MyNewMoon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[] { __instance.levels[0].spawnableOutsideObjects[6] };
+            MyNewMoon.levelAmbienceClips = __instance.levels[2].levelAmbienceClips;
 
-            }
+            MonsterPatch.SetSecurityObjects(true, MyNewMoon, __instance);
+            ItemPatch.SetMoonItemList(false, MyNewMoon, __instance);
+            MonsterPatch.SetInsideMonsters(true, MyNewMoon, __instance);
+            MonsterPatch.SetOutsideMonsters(true, MyNewMoon, __instance);
+            MonsterPatch.SetDaytimeMonsters(true, MyNewMoon, __instance);
+
+            
+
 
             MoonFriendlyName = MyNewMoon.PlanetName;
-
-            try {
-                foreach (SpawnableItemWithRarity item in WTOBase.GetScrapList()) {
-                    MyNewMoon.spawnableScrap.AddItem<SpawnableItemWithRarity>(item);
-                }
-                foreach (SpawnableItemWithRarity addeditem in MyNewMoon.spawnableScrap) {
-                    WTOBase.LogToConsole(addeditem.ToString());
-                }
-            } catch {
-                WTOBase.LogToConsole("Failed to add scrap!");
-            }
             Core.AddMoon(MyNewMoon);
             return true;
         }
@@ -95,13 +83,10 @@ namespace Welcome_To_Ooblterra.Patches {
             };
         }
 
-
-
-
         //Destroy the necessary actors and set our scene
         [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPostfix]
-        private static void CustomLevelInit(StartOfRound __instance) {
+        private static void InitCustomLevel(StartOfRound __instance) {
 
             if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
                 return;
@@ -147,9 +132,6 @@ namespace Welcome_To_Ooblterra.Patches {
                     }
                 }
             }
-
-
-
             SunObject = GameObject.Find("SunWithShadows");
             SunAnimObject = GameObject.Find("SunAnimContainer");
             IndirectLight = GameObject.Find("Indirect");
@@ -158,9 +140,9 @@ namespace Welcome_To_Ooblterra.Patches {
             GameObject MyLevelAsset = WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab") as GameObject;
             GameObject MyInstantiatedLevel = GameObject.Instantiate(MyLevelAsset);
             WTOBase.LogToConsole("Loaded custom terrain object!");
-            try {  
-                GameObject NavMesh = GameObject.Find("NavMesh");
-                NavMesh.GetComponent<NavMeshSurface>().BuildNavMesh();
+            try {
+                NavMeshSurface NavMesh = GameObject.Find("NavMesh").GetComponent<NavMeshSurface>();
+                //NavMesh.UpdateNavMesh();
             } catch(Exception E) {
                 WTOBase.LogToConsole("Failed to rebuild navmesh. Error: " + E);
             }  
@@ -185,6 +167,12 @@ namespace Welcome_To_Ooblterra.Patches {
             SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
             GameObject.Destroy(SunObject);
             GameObject.Destroy(IndirectLight); 
+        }
+
+        [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
+        [HarmonyPrefix]
+        private static bool SkipTODMusic() {
+            return false;
         }
     }
 }

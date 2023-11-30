@@ -15,13 +15,18 @@ namespace Welcome_To_Ooblterra{
      * Wouldn'tve had any of this code without it, thank you!
      */
 
-    [BepInPlugin (modGUID, modName, modVersion)]
+    [BepInPlugin(modGUID, modName, modVersion)]
     public class WTOBase : BaseUnityPlugin {
 
+        
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
         private const string modVersion = "0.3.0";
-        public static bool SuitsLoaded;
+
+        private readonly Harmony WTOHarmony = new Harmony(modGUID);
+        internal ManualLogSource WTOLogSource;
+        private static WTOBase Instance;
+        
 
         //Bundle Paths
         string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
@@ -33,22 +38,11 @@ namespace Welcome_To_Ooblterra{
         public static AssetBundle FactoryAssetBundle;
         //public static AssetBundle MonsterAssetBundle;
 
-        private readonly Harmony WTOHarmony = new Harmony (modGUID);
-        internal ManualLogSource WTOLogSource;
-        private static WTOBase Instance;
-        
-        private static List<SpawnableItemWithRarity> MoonScrap;
-
         public static void LogToConsole(string text) {
             text = "=======" + text + "=======";
             Debug.Log (text);
         }
 
-        public static void AddToScrapList(SpawnableItemWithRarity Item) { 
-            MoonScrap.AddItem(Item);
-            WTOBase.LogToConsole(Item.ToString());
-        }
-        public static List<SpawnableItemWithRarity> GetScrapList() { return MoonScrap; }
         void Awake() {
             //Load up various things and tell the console we've loaded
             if (Instance == null) {
@@ -58,7 +52,7 @@ namespace Welcome_To_Ooblterra{
             WTOLogSource.LogInfo("Welcome to Ooblterra!");
 
             WTOHarmony.PatchAll(typeof(WTOBase));
-            //WTOHarmony.PatchAll(typeof(ItemPatch));
+            WTOHarmony.PatchAll(typeof(ItemPatch));
             WTOHarmony.PatchAll(typeof(MoonPatch));
             WTOHarmony.PatchAll(typeof(SuitPatch));
             //WTOHarmony.PatchAll(typeof(FactoryPatch));
@@ -87,8 +81,6 @@ namespace Welcome_To_Ooblterra{
             }
             */
             LogToConsole("END PRINTING LOADED ASSETS");
-            //ItemPatch.AddCustomItems();
-            SuitsLoaded = false;
         }
     }
 }
