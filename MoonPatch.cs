@@ -37,9 +37,6 @@ namespace Welcome_To_Ooblterra.Patches {
             MonsterPatch.SetOutsideMonsters(true, MyNewMoon, __instance);
             MonsterPatch.SetDaytimeMonsters(true, MyNewMoon, __instance);
 
-            
-
-
             MoonFriendlyName = MyNewMoon.PlanetName;
             Core.AddMoon(MyNewMoon);
             return true;

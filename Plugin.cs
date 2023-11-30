@@ -8,6 +8,8 @@ using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using System.Collections.Generic;
+using System.Threading;
+using BepInEx.Configuration;
 
 namespace Welcome_To_Ooblterra{
 
@@ -18,29 +20,30 @@ namespace Welcome_To_Ooblterra{
     [BepInPlugin(modGUID, modName, modVersion)]
     public class WTOBase : BaseUnityPlugin {
 
-        
+
+        public static ConfigFile ConfigFile;
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
-        private const string modVersion = "0.3.0";
+        private const string modVersion = "0.4.0";
 
         private readonly Harmony WTOHarmony = new Harmony(modGUID);
         internal ManualLogSource WTOLogSource;
         private static WTOBase Instance;
-        
 
-        //Bundle Paths
-        string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
-        string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
-        string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custominterior");
-        //string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
         public static AssetBundle LevelAssetBundle;
         public static AssetBundle ItemAssetBundle;
         public static AssetBundle FactoryAssetBundle;
-        //public static AssetBundle MonsterAssetBundle;
+        public static AssetBundle MonsterAssetBundle;
 
         public static void LogToConsole(string text) {
             text = "=======" + text + "=======";
             Debug.Log (text);
+        }
+
+        public enum AllowedState { 
+            Off = 0,
+            CustomLevelOnly = 1,
+            AllLevels = 2
         }
 
         void Awake() {
@@ -48,38 +51,61 @@ namespace Welcome_To_Ooblterra{
             if (Instance == null) {
                 Instance = this;
             }
-            WTOLogSource = BepInEx.Logging.Logger.CreateLogSource (modGUID);
+
+            ConfigFile = Instance.Config;
+            WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
             WTOLogSource.LogInfo("Welcome to Ooblterra!");
 
             WTOHarmony.PatchAll(typeof(WTOBase));
-            WTOHarmony.PatchAll(typeof(ItemPatch));
-            WTOHarmony.PatchAll(typeof(MoonPatch));
-            WTOHarmony.PatchAll(typeof(SuitPatch));
-            //WTOHarmony.PatchAll(typeof(FactoryPatch));
 
-
-            //Loads the assetbundle and tells us everything in it
-            LevelAssetBundle = AssetBundle.LoadFromFile (LevelBundlePath);
-            ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
-            FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-            //MonsterItemBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
+            if (WTOConfig.WTOCustomSuits.Value) {
+                WTOHarmony.PatchAll(typeof(SuitPatch));
+            }
 
             LogToConsole("BEGIN PRINTING LOADED ASSETS");
-            foreach (string AssetNameToPrint in LevelAssetBundle.GetAllAssetNames()) {
-                Debug.Log("Asset in Level bundle: " + AssetNameToPrint);
+
+            if (WTOConfig.OoblterraEnabled.Value) {
+                string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
+                LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
+                WTOHarmony.PatchAll(typeof(MoonPatch));
+                foreach (string AssetNameToPrint in LevelAssetBundle.GetAllAssetNames()) {
+                    Debug.Log("Asset in Level bundle: " + AssetNameToPrint);
+                }
             }
-            foreach (string AssetNameToPrint in ItemAssetBundle.GetAllAssetNames()) {
-                Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
+
+            AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);
+            if (InteriorState != AllowedState.Off) {
+                string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custominterior");
+                FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
+                WTOHarmony.PatchAll(typeof(FactoryPatch));
+                foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
+                    Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
+                }
+            }
+
+            AllowedState.TryParse(WTOConfig.SpawnScrapStatus.ToString(), out AllowedState ItemState);
+            if (ItemState != AllowedState.Off) {
+                string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
+                ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
+                WTOHarmony.PatchAll(typeof(ItemPatch));
+                foreach (string AssetNameToPrint in ItemAssetBundle.GetAllAssetNames()) {
+                    Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
+                }
             }
             
-            foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
-                Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
+            AllowedState.TryParse(WTOConfig.SpawnOutdoorEnemyStatus.ToString(), out AllowedState OutdoorMonsterState);
+            AllowedState.TryParse(WTOConfig.SpawnIndoorEnemyStatus.ToString(), out AllowedState IndoorMonsterState);
+            AllowedState.TryParse(WTOConfig.SpawnAmbientEnemyStatus.ToString(), out AllowedState DaytimeMonsterState);
+            AllowedState.TryParse(WTOConfig.SpawnSecurityStatus.ToString(), out AllowedState SecurityState);
+            if (OutdoorMonsterState != AllowedState.Off || IndoorMonsterState != AllowedState.Off
+                || DaytimeMonsterState != AllowedState.Off || SecurityState != AllowedState.Off) {
+                string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
+
+                MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
+                foreach (string AssetNameToPrint in MonsterAssetBundle.GetAllAssetNames()) {
+                    Debug.Log("Asset in bundle: " + AssetNameToPrint);
+                }
             }
-            /*
-            foreach (string AssetNameToPrint in MonsterAssetBundle.GetAllAssetNames()) {
-                Debug.Log("Asset in bundle: " + AssetNameToPrint);
-            }
-            */
             LogToConsole("END PRINTING LOADED ASSETS");
         }
     }
