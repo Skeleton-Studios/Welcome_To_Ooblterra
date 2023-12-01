@@ -103,7 +103,9 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="WTOConfig.cs" />
     <Compile Include="FactoryPatch.cs" />
+    <Compile Include="MonsterPatch.cs" />
     <Compile Include="MoonPatch.cs" />
     <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
