@@ -21,7 +21,7 @@ namespace Welcome_To_Ooblterra.Patches {
         //Defining the custom moon for the API
         [HarmonyPatch(typeof(StartOfRound), "Awake")]
         [HarmonyPrefix]
-        private static bool AddMoonToList(StartOfRound __instance) {
+        private static void AddMoonToList(StartOfRound __instance) {
 
             //Load our level asset object
             MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>("Assets/CustomScene/OoblterraLevel.asset");
@@ -39,7 +39,6 @@ namespace Welcome_To_Ooblterra.Patches {
 
             MoonFriendlyName = MyNewMoon.PlanetName;
             Core.AddMoon(MyNewMoon);
-            return true;
         }
 
         //Add the custom moon to the terminal

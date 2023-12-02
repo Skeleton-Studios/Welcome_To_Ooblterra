@@ -52,19 +52,43 @@ namespace Welcome_To_Ooblterra{
                 Instance = this;
             }
 
-            ConfigFile = Instance.Config;
+            //ConfigFile = Instance.Config ;
+            //ConfigFile.Save();
             WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
             WTOLogSource.LogInfo("Welcome to Ooblterra!");
 
             WTOHarmony.PatchAll(typeof(WTOBase));
+            //WTOHarmony.PatchAll(typeof(WTOConfig));
+            WTOHarmony.PatchAll(typeof(MonsterPatch));
 
-            if (WTOConfig.WTOCustomSuits.Value) {
+            if (/* WTOConfig.WTOCustomSuits.Value*/ true) {
                 WTOHarmony.PatchAll(typeof(SuitPatch));
             }
 
             LogToConsole("BEGIN PRINTING LOADED ASSETS");
 
-            if (WTOConfig.OoblterraEnabled.Value) {
+
+            //AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);
+            if (/*InteriorState != AllowedState.Off*/ true) {
+                string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custominterior");
+                FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
+                //WTOHarmony.PatchAll(typeof(FactoryPatch));
+                foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
+                    Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
+                }
+            }
+
+            //AllowedState.TryParse(WTOConfig.SpawnScrapStatus.ToString(), out AllowedState ItemState);
+            if (/*ItemState != AllowedState.Off*/ true) {
+                string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
+                ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
+                WTOHarmony.PatchAll(typeof(ItemPatch));
+                foreach (string AssetNameToPrint in ItemAssetBundle.GetAllAssetNames()) {
+                    Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
+                }
+            }
+
+            if (/* WTOConfig.OoblterraEnabled.Value*/ true) {
                 string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
                 LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
                 WTOHarmony.PatchAll(typeof(MoonPatch));
@@ -73,32 +97,14 @@ namespace Welcome_To_Ooblterra{
                 }
             }
 
-            AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);
-            if (InteriorState != AllowedState.Off) {
-                string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custominterior");
-                FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-                WTOHarmony.PatchAll(typeof(FactoryPatch));
-                foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
-                    Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
-                }
-            }
-
-            AllowedState.TryParse(WTOConfig.SpawnScrapStatus.ToString(), out AllowedState ItemState);
-            if (ItemState != AllowedState.Off) {
-                string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
-                ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
-                WTOHarmony.PatchAll(typeof(ItemPatch));
-                foreach (string AssetNameToPrint in ItemAssetBundle.GetAllAssetNames()) {
-                    Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
-                }
-            }
-            
+            /*
             AllowedState.TryParse(WTOConfig.SpawnOutdoorEnemyStatus.ToString(), out AllowedState OutdoorMonsterState);
             AllowedState.TryParse(WTOConfig.SpawnIndoorEnemyStatus.ToString(), out AllowedState IndoorMonsterState);
             AllowedState.TryParse(WTOConfig.SpawnAmbientEnemyStatus.ToString(), out AllowedState DaytimeMonsterState);
             AllowedState.TryParse(WTOConfig.SpawnSecurityStatus.ToString(), out AllowedState SecurityState);
             if (OutdoorMonsterState != AllowedState.Off || IndoorMonsterState != AllowedState.Off
-                || DaytimeMonsterState != AllowedState.Off || SecurityState != AllowedState.Off) {
+                || DaytimeMonsterState != AllowedState.Off || SecurityState != AllowedState.Off
+            true) {
                 string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
 
                 MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
@@ -106,7 +112,9 @@ namespace Welcome_To_Ooblterra{
                     Debug.Log("Asset in bundle: " + AssetNameToPrint);
                 }
             }
+            */
             LogToConsole("END PRINTING LOADED ASSETS");
+            ItemPatch.AddCustomItems();
         }
     }
 }

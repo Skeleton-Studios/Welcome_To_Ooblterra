@@ -14,7 +14,7 @@ namespace Welcome_To_Ooblterra {
         public static ConfigEntry<string> SpawnSecurityStatus;
 
 
-        private void Awake() {
+        private void Load() {
 
             OoblterraEnabled = WTOBase.ConfigFile.Bind("General", "Enable Ooblterra", true, "Whether or not to enable Ooblterra in the moons list and allow navigation to it. \n Default value: true \n Accepted values: true, false \n\n");
             

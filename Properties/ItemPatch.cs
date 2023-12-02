@@ -8,7 +8,7 @@ using System.Collections.Generic;
 namespace Welcome_To_Ooblterra.Properties {
     internal class ItemPatch {
 
-        public static List<SpawnableItemWithRarity> MoonScrap;
+        private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
         private class ItemData {
             private string ItemPath;
             private int Rarity;
@@ -35,7 +35,8 @@ namespace Welcome_To_Ooblterra.Properties {
         };
 
         //Add our custom items
-        private void AddCustomItems() {
+        public static void AddCustomItems() {
+            WTOBase.LogToConsole("Adding custom items...");
             //Create our custom items
             Item NextItem;
             SpawnableItemWithRarity MoonScrapItem;
@@ -50,7 +51,7 @@ namespace Welcome_To_Ooblterra.Properties {
                     spawnableItem = NextItem,
                     rarity = MyCustomScrap.GetRarity()
                 };
-                MoonScrap.AddItem(MoonScrapItem);
+                MoonScrap.Add(MoonScrapItem);
             }
         }
 
@@ -63,14 +64,12 @@ namespace Welcome_To_Ooblterra.Properties {
                 Moon.spawnableScrap = __instance.levels[2].spawnableScrap;
                 return;
             }
-            foreach (SpawnableItemWithRarity item in ItemPatch.MoonScrap) {
+            WTOBase.LogToConsole("Items in MoonScrap list: " + MoonScrap.Count.ToString());
+            foreach (SpawnableItemWithRarity item in MoonScrap) {
                 Moon.spawnableScrap.Add(item);
             }
         }
 
-        void Awake() {
-            AddCustomItems();
-        }
 
         //try to spawn the object 
         [HarmonyPatch(typeof(StartOfRound), "Update")]
