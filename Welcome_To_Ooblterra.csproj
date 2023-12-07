@@ -43,7 +43,7 @@
     </Reference>
     <Reference Include="LethalLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\LethalLib\bin\Debug\LethalLib.dll</HintPath>
+      <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -56,6 +56,10 @@
     <Reference Include="Unity.AI.Navigation, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.AI.Navigation.dll</HintPath>
+    </Reference>
+    <Reference Include="Unity.Animation.Rigging, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.Animation.Rigging.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InputSystem, Version=1.7.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -103,6 +107,7 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="WandererAI.cs" />
     <Compile Include="WTOConfig.cs" />
     <Compile Include="FactoryPatch.cs" />
     <Compile Include="MonsterPatch.cs" />
@@ -113,4 +118,10 @@
     <Compile Include="SuitPatch.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PostBuildEvent>copy "F:\Welcome to Ooblterra!\Project Files\Welcome_To_Ooblterra\bin\Debug\Welcome_To_Ooblterra.dll" "F:\Welcome to Ooblterra!\Lethal Company\BepInEx\plugins\Welcome To Ooblterra"
+
+copy "F:\Welcome to Ooblterra!\Project Files\Welcome_To_Ooblterra\bin\Debug\Welcome_To_Ooblterra.dll" "F:\Welcome to Ooblterra!\Unity Stuff\LethalCompanyUnityTemplate\Assets\Plugins"
+</PostBuildEvent>
+  </PropertyGroup>
 </Project>

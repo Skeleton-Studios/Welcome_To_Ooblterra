@@ -4,6 +4,8 @@ using UnityEngine;
 using Unity.AI.Navigation;
 using WonderAPI;
 using Welcome_To_Ooblterra.Properties;
+using System.Linq;
+using System.Collections.Generic;
 
 namespace Welcome_To_Ooblterra.Patches {
 
@@ -12,7 +14,7 @@ namespace Welcome_To_Ooblterra.Patches {
         //Identifiers for the Moon
         private static SelectableLevel MyNewMoon;
 
-        private static string MoonFriendlyName;
+        public static string MoonFriendlyName;
         private static GameObject SunObject;
         private static GameObject SunAnimObject;
         private static GameObject IndirectLight;
@@ -35,7 +37,7 @@ namespace Welcome_To_Ooblterra.Patches {
             ItemPatch.SetMoonItemList(false, MyNewMoon, __instance);
             MonsterPatch.SetInsideMonsters(true, MyNewMoon, __instance);
             MonsterPatch.SetOutsideMonsters(true, MyNewMoon, __instance);
-            MonsterPatch.SetDaytimeMonsters(true, MyNewMoon, __instance);
+            MonsterPatch.SetDaytimeMonsters(false, MyNewMoon, __instance);
 
             MoonFriendlyName = MyNewMoon.PlanetName;
             Core.AddMoon(MyNewMoon);
@@ -100,12 +102,13 @@ namespace Welcome_To_Ooblterra.Patches {
                 "Local Volumetric Fog",
                 "GroundFog",
                 "Sky and Fog Global Volume",
-                "SunTexture",
+                "SunTexture"
             };
 
             GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+            
             foreach (GameObject ObjToDestroy in allObjects) {
-                
+
                 if (ObjToDestroy.name.Contains("Models2VowFactory")) {
                     try {
                         ObjToDestroy.SetActive(false);
@@ -115,7 +118,9 @@ namespace Welcome_To_Ooblterra.Patches {
                     }
                 }
 
-
+                foreach (NavMeshSurface Nav in GameObject.FindObjectsOfType<NavMeshSurface>()) {
+                    Nav.RemoveData();
+                }
                 //If the object's named Plane and its parent is Foliage, it's also gotta go. This gets rid of the grass
                 if (ObjToDestroy.name.Contains("Plane") && (ObjToDestroy.transform.parent.gameObject.name.Contains("Foliage") || ObjToDestroy.transform.parent.gameObject.name.Contains("Mounds"))) {
                     GameObject.Destroy(ObjToDestroy);
@@ -133,22 +138,8 @@ namespace Welcome_To_Ooblterra.Patches {
             IndirectLight = GameObject.Find("Indirect");
 
             //Load our custom prefab
-            GameObject MyLevelAsset = WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab") as GameObject;
-            GameObject MyInstantiatedLevel = GameObject.Instantiate(MyLevelAsset);
+            GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
             WTOBase.LogToConsole("Loaded custom terrain object!");
-            try {
-                NavMeshSurface NavMesh = GameObject.Find("NavMesh").GetComponent<NavMeshSurface>();
-                //NavMesh.UpdateNavMesh();
-            } catch(Exception E) {
-                WTOBase.LogToConsole("Failed to rebuild navmesh. Error: " + E);
-            }  
-
-            /*
-            var prefab = StartOfRound.Instance.levels[6].Enemies.First(spawnableEnemy => spawnableEnemy.enemyType.enemyName == "Spring").enemyType.enemyPrefab;
-            var position = new Vector3(0, 0, 0); // up to you
-            var enemy = GameObject.Instantiate(prefab, position, Quaternion.identity);
-            RoundManager.SpawnEnemyOnServer(new Vector3(0, 0, 0), 0f, -3);
-            */
 
             //The prefab contains an object called TeleportSnapLocation that we move the primary door to
             GameObject Entrance = GameObject.Find("EntranceTeleportA");
@@ -162,7 +153,9 @@ namespace Welcome_To_Ooblterra.Patches {
             SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
             SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
             GameObject.Destroy(SunObject);
-            GameObject.Destroy(IndirectLight); 
+            GameObject.Destroy(IndirectLight);
+
+            MoveNavNodesToNewPositions();
         }
 
         [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
@@ -170,6 +163,34 @@ namespace Welcome_To_Ooblterra.Patches {
         private static bool SkipTODMusic() {
             return false;
         }
+
+        private static void MoveNavNodesToNewPositions() {
+            //Get a list of all outside navigation nodes
+            GameObject[] NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
+            
+            //Get a list of all our Oobltera nodes
+            List<GameObject> CustomNodes = new List<GameObject>();
+            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+            foreach (GameObject Object in allObjects) {
+                if (Object.name == "OoblOutsideNode") {
+                    CustomNodes.Add(Object);
+                }
+            }
+            WTOBase.LogToConsole("Outside nav points: " + allObjects.Count().ToString());
+            //For each of the outside navigation nodes, move its position to the corresponding custom node. If the custom node list is
+            //exhausted, destroy the outside navigation node.
+            for(int i = 0; i < NavNodes.Count(); i++) {
+                if(CustomNodes.Count() > i) {
+                    NavNodes[i].transform.position = CustomNodes[i].transform.position;
+                } else {
+                    GameObject.Destroy(NavNodes[i]);
+                }
+            }
+            NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
+            WTOBase.LogToConsole("Moved nav points: " + NavNodes.Count().ToString());
+
+        }
+
     }
 }
 
