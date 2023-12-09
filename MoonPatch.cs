@@ -6,6 +6,7 @@ using WonderAPI;
 using Welcome_To_Ooblterra.Properties;
 using System.Linq;
 using System.Collections.Generic;
+using System.Reflection.Emit;
 
 namespace Welcome_To_Ooblterra.Patches {
 
@@ -106,7 +107,7 @@ namespace Welcome_To_Ooblterra.Patches {
             };
 
             GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
-            
+
             foreach (GameObject ObjToDestroy in allObjects) {
 
                 if (ObjToDestroy.name.Contains("Models2VowFactory")) {
@@ -167,7 +168,7 @@ namespace Welcome_To_Ooblterra.Patches {
         private static void MoveNavNodesToNewPositions() {
             //Get a list of all outside navigation nodes
             GameObject[] NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
-            
+
             //Get a list of all our Oobltera nodes
             List<GameObject> CustomNodes = new List<GameObject>();
             GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
@@ -179,8 +180,8 @@ namespace Welcome_To_Ooblterra.Patches {
             WTOBase.LogToConsole("Outside nav points: " + allObjects.Count().ToString());
             //For each of the outside navigation nodes, move its position to the corresponding custom node. If the custom node list is
             //exhausted, destroy the outside navigation node.
-            for(int i = 0; i < NavNodes.Count(); i++) {
-                if(CustomNodes.Count() > i) {
+            for (int i = 0; i < NavNodes.Count(); i++) {
+                if (CustomNodes.Count() > i) {
                     NavNodes[i].transform.position = CustomNodes[i].transform.position;
                 } else {
                     GameObject.Destroy(NavNodes[i]);
@@ -190,6 +191,9 @@ namespace Welcome_To_Ooblterra.Patches {
             WTOBase.LogToConsole("Moved nav points: " + NavNodes.Count().ToString());
 
         }
+
+        
+
 
     }
 }

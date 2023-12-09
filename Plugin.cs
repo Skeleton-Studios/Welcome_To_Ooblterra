@@ -10,6 +10,9 @@ using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using System.Collections.Generic;
 using System.Threading;
 using BepInEx.Configuration;
+using Unity.Netcode;
+using System;
+using System.Reflection.Emit;
 
 namespace Welcome_To_Ooblterra{
 
@@ -43,6 +46,46 @@ namespace Welcome_To_Ooblterra{
             Off = 0,
             CustomLevelOnly = 1,
             AllLevels = 2
+        }
+
+        [HarmonyPatch(typeof(HUDManager), "Awake")]
+        [HarmonyPostfix]
+        private static void ExtendMaxTextLimit(HUDManager __instance) {
+            __instance.chatTextField.characterLimit = 500;
+        }
+
+        [HarmonyPatch(typeof(HUDManager))]
+        [HarmonyPatch("SubmitChat_performed")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
+            // IL_0096: ldc.i4.s 50
+            WTOBase.LogToConsole("Finding Opcode...");
+            var code = new List<CodeInstruction>(instructions);
+            for (int i = 0; i < code.Count; i++) {
+                if (code[i].opcode == OpCodes.Ldc_I4_S && (sbyte)code[i].operand == (sbyte)50) {
+                    WTOBase.LogToConsole("Found Opcode!");
+                    code[i] = new CodeInstruction(OpCodes.Ldc_I4, 500);
+                    break;
+                }
+            }
+            return code;
+        }
+
+        [HarmonyPatch(typeof(HUDManager))]
+        [HarmonyPatch("AddPlayerChatMessageServerRpc")]
+        [HarmonyTranspiler]
+        static IEnumerable<CodeInstruction> NextTranspiler(IEnumerable<CodeInstruction> instructions) {
+            // IL_0096: ldc.i4.s 50
+            var code = new List<CodeInstruction>(instructions);
+            WTOBase.LogToConsole("Finding Opcode...");
+            for (int i = 0; i < code.Count; i++) {
+                if (code[i].opcode == OpCodes.Ldc_I4_S && (sbyte)code[i].operand == (sbyte)50) {
+                    WTOBase.LogToConsole("Found Opcode!");
+                    code[i] = new CodeInstruction(OpCodes.Ldc_I4, 500);
+                    break;
+                }
+            }
+            return code;
         }
 
         void Awake() {
@@ -107,10 +150,11 @@ namespace Welcome_To_Ooblterra{
             MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
             foreach (string AssetNameToPrint in MonsterAssetBundle.GetAllAssetNames()) {
                 Debug.Log("Asset in bundle: " + AssetNameToPrint);
-            }            
+            }
             LogToConsole("END PRINTING LOADED ASSETS");
             ItemPatch.AddCustomItems();
             MonsterPatch.CreateWanderer();
+
         }
     }
 }
