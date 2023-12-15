@@ -5,6 +5,7 @@ using Unity.AI.Navigation;
 using System.Linq;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
+using UnityEngine.Rendering.HighDefinition;
 
 namespace Welcome_To_Ooblterra.Patches {
 
@@ -99,6 +100,7 @@ namespace Welcome_To_Ooblterra.Patches {
                 "StaticLightingSky",
                 "ForestAmbience",
                 "Sky and Fog Global Volume",
+                "Local Volumetric Fog",
                 "SunTexture"
             };
 
@@ -153,6 +155,12 @@ namespace Welcome_To_Ooblterra.Patches {
             GameObject.Destroy(IndirectLight);
 
             MoveNavNodesToNewPositions();
+
+            //Fog
+            LocalVolumetricFog[] foglist = GameObject.FindObjectsOfType<LocalVolumetricFog>();
+            foreach(LocalVolumetricFog fog in foglist) {
+
+            }
         }
 
         [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
