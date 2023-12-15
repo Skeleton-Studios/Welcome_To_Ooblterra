@@ -1,11 +1,11 @@
 ﻿using HarmonyLib;
 using UnityEngine;
-using Welcome_To_Ooblterra.Patches;
 using LethalLib.Modules;
 using DunGen;
 using Dungeon = LethalLib.Modules.Dungeon;
+using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra {
+namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
 
         /* doesn't seem to do anything

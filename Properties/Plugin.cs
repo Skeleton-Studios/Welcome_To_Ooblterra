@@ -5,7 +5,6 @@ using Welcome_To_Ooblterra.Patches;
 using System.IO;
 using System.Reflection;
 using UnityEngine;
-using Welcome_To_Ooblterra.Properties;
 using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using System.Collections.Generic;
 using System.Threading;
@@ -14,7 +13,7 @@ using Unity.Netcode;
 using System;
 using System.Reflection.Emit;
 
-namespace Welcome_To_Ooblterra{
+namespace Welcome_To_Ooblterra.Properties {
 
     /* S/O to Minx, whose tutorial provided a great starting point.
      * Wouldn'tve had any of this code without it, thank you!
@@ -26,7 +25,7 @@ namespace Welcome_To_Ooblterra{
         public static ConfigFile ConfigFile;
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
-        private const string modVersion = "0.4.0";
+        private const string modVersion = "0.5.0";
 
         private readonly Harmony WTOHarmony = new Harmony(modGUID);
         internal ManualLogSource WTOLogSource;
@@ -61,10 +60,16 @@ namespace Welcome_To_Ooblterra{
 
             WTOHarmony.PatchAll(typeof(WTOBase));
             //WTOHarmony.PatchAll(typeof(WTOConfig));
+            
+            WTOHarmony.PatchAll(typeof(FactoryPatch));
+            WTOHarmony.PatchAll(typeof(ItemPatch));
             WTOHarmony.PatchAll(typeof(MonsterPatch));
+            WTOHarmony.PatchAll(typeof(MoonPatch));
+            WTOHarmony.PatchAll(typeof(SuitPatch));
+            WTOHarmony.PatchAll(typeof(TerminalPatch));
 
             if (/* WTOConfig.WTOCustomSuits.Value*/ true) {
-                WTOHarmony.PatchAll(typeof(SuitPatch));
+                
             }
 
             LogToConsole("BEGIN PRINTING LOADED ASSETS");
@@ -73,7 +78,7 @@ namespace Welcome_To_Ooblterra{
             if (/*InteriorState != AllowedState.Off*/ true) {
                 string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custominterior");
                 FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-                WTOHarmony.PatchAll(typeof(FactoryPatch));
+                
                 foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
                     Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
                 }
@@ -83,7 +88,7 @@ namespace Welcome_To_Ooblterra{
             if (/*ItemState != AllowedState.Off*/ true) {
                 string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
                 ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
-                WTOHarmony.PatchAll(typeof(ItemPatch));
+                
                 foreach (string AssetNameToPrint in ItemAssetBundle.GetAllAssetNames()) {
                     Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
                 }
@@ -92,7 +97,7 @@ namespace Welcome_To_Ooblterra{
             if (/* WTOConfig.OoblterraEnabled.Value*/ true) {
                 string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
                 LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
-                WTOHarmony.PatchAll(typeof(MoonPatch));
+                
                 foreach (string AssetNameToPrint in LevelAssetBundle.GetAllAssetNames()) {
                     Debug.Log("Asset in Level bundle: " + AssetNameToPrint);
                 }
@@ -105,7 +110,8 @@ namespace Welcome_To_Ooblterra{
             AllowedState.TryParse(WTOConfig.SpawnSecurityStatus.ToString(), out AllowedState SecurityState);
             if (OutdoorMonsterState != AllowedState.Off || IndoorMonsterState != AllowedState.Off
                 || DaytimeMonsterState != AllowedState.Off || SecurityState != AllowedState.Off
-            true) {*/
+            true) {
+            */
             string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
             MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
             foreach (string AssetNameToPrint in MonsterAssetBundle.GetAllAssetNames()) {

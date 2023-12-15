@@ -2,7 +2,7 @@
 using BepInEx.Configuration;
 
 
-namespace Welcome_To_Ooblterra {
+namespace Welcome_To_Ooblterra.Properties {
     internal class WTOConfig {
         public static ConfigEntry<bool> OoblterraEnabled;
         public static ConfigEntry<string> CustomInteriorEnabled;

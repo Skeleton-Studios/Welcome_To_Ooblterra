@@ -4,8 +4,9 @@ using UnityEngine.InputSystem;
 using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using LethalLib.Modules;
 using System.Collections.Generic;
+using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra.Properties {
+namespace Welcome_To_Ooblterra.Patches {
     internal class ItemPatch {
 
         private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
@@ -72,8 +73,8 @@ namespace Welcome_To_Ooblterra.Properties {
 
 
         //try to spawn the object 
-        [HarmonyPatch(typeof(StartOfRound), "Update")]
-        [HarmonyPostfix]
+        //[HarmonyPatch(typeof(StartOfRound), "Update")]
+        //[HarmonyPostfix]
         private static void DebugSpawnItem(StartOfRound __instance) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
                 //var Crystal = UnityEngine.Object.Instantiate(ItemList[2].GetItem().spawnPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);

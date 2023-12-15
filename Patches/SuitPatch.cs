@@ -1,8 +1,9 @@
 ﻿using HarmonyLib;
 using System;
 using UnityEngine;
+using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra {
+namespace Welcome_To_Ooblterra.Patches {
     
     /* Modified from AlexCodesGames' AdditionalSuits mod,
      * which gives explicit permission on both the repo and in 

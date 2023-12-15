@@ -8,31 +8,34 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Animations.Rigging;
 using Welcome_To_Ooblterra;
+using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra {
+namespace Welcome_To_Ooblterra.Enemies {
+
+
     public class WandererAI : EnemyAI {
 
         private RoundManager roundManager;
         private float AITimer;
 
-        private bool RunningAway = false;
-        private int TimeSinceLastInRangeOfThreat = 0;
-        private List<GameObject> RegisteredThreats = new List<GameObject>();
+        private List<PlayerControllerB> RegisteredThreats = new List<PlayerControllerB>();
+        private List<PlayerControllerB> PlayersCuriousAbout = new List<PlayerControllerB>();
 
         private bool MovingToNextPoint = false;
 
         private int InvestigatingTime = 12;
-        private bool Investigating = false;
+        //private bool Investigating = false;
         private int TotalInvestigationTime;
         
-        private Ray ray;
-        private RaycastHit rayHit;
+        //private Ray ray;
+        //private RaycastHit rayHit;
         //private AISearchRoutine roamPlanet;
         private System.Random enemyRandom;
         private bool HasReachedDestination = false;
         private bool HasFoundNextSearchPoint = false;
+        //private bool stateInterrupted = false;
 
-        
+
         protected override string __getTypeName() {
             return "WandererAI";
         }
@@ -67,6 +70,7 @@ namespace Welcome_To_Ooblterra {
         }
         public override void Update() {
             base.Update();
+            AITimer++;
             //don't run enemy ai if they're dead
             
             if (isEnemyDead || !ventAnimationFinished || MovingToNextPoint) {
@@ -87,10 +91,20 @@ namespace Welcome_To_Ooblterra {
             */
 
             //Custom Wanderer Code
-            if (agent.isOnNavMesh) { 
+            if (agent.isOnNavMesh) {
+                if (Vector3.Distance(NearestPlayer(RegisteredThreats).transform.position, transform.position) < 150 && currentBehaviourStateIndex != 2) {
+                    currentBehaviourStateIndex = 2;
+                } 
                 switch (currentBehaviourStateIndex) {
                     case 0:
                         agent.speed = 0f;
+                        if (Vector3.Distance(NearestPlayer(PlayersCuriousAbout).transform.position, transform.position) < 50){
+                            //Look at the player
+                            if (AITimer % 2 == 0) {
+                                InvestigatingTime++;
+                            }
+                            break;
+                        }
                         if (InvestigatingTime > TotalInvestigationTime) {
                             InvestigatingTime = -1;
                             HasReachedDestination = false;
@@ -100,12 +114,11 @@ namespace Welcome_To_Ooblterra {
                             break;
                         }
                         InvestigatingTime++;
-                        //WTOBase.LogToConsole("Wanderer investigating for " + InvestigatingTime.ToString());
                         break;
 
 
                     case 1:
-                        if (HasReachedDestination) {
+                        if (HasReachedDestination){
                             InvestigatingTime = 0;
                             TotalInvestigationTime = enemyRandom.Next(300, 2001);
                             currentBehaviourStateIndex = 0;
@@ -114,7 +127,7 @@ namespace Welcome_To_Ooblterra {
                             break;
                         }
 
-                        if (HasFoundNextSearchPoint) {
+                        if (HasFoundNextSearchPoint){
                             //WTOBase.LogToConsole("Distance from destination" + Vector3.Distance(destination, transform.position));
                             if (Vector3.Distance(destination, transform.position) < 2f) {
                                 HasReachedDestination = true;
@@ -122,7 +135,7 @@ namespace Welcome_To_Ooblterra {
                             break;
                         }
 
-                        if (IsOwner) {
+                        if (IsOwner){
                             agent.speed = 7f;
                             SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(allAINodes[enemyRandom.Next(allAINodes.Length -1)].transform.position, 5), checkForPath: true);
                             HasFoundNextSearchPoint = true;
@@ -130,45 +143,32 @@ namespace Welcome_To_Ooblterra {
                             creatureAnimator.SetBool("Investigating", value: false);
                             break;
                         }
-                        
-
-                        
                         break;
                     case 2:
-                        //AssessThreat();
-                    break;
+                        agent.speed = 10f;
+                        if (AITimer % 5 == 0) { 
+                            SetDestinationToPosition(ChooseFarthestNodeFromPosition(NearestPlayer(RegisteredThreats).transform.position, avoidLineOfSight: false, UnityEngine.Random.Range(0, allAINodes.Length / 2)).position);
+                            currentBehaviourStateIndex = 1;
+                            HasFoundNextSearchPoint = true;
+                        }
+                        break;
                 }
             }
         }
-        private bool InRangeOfThreats() {
-            bool InRange = false;
-            foreach (GameObject threat in RegisteredThreats) {
-                if (Vector3.Distance(base.transform.position, threat.transform.position) < 300) {
-                    InRange = true;
+        private PlayerControllerB NearestPlayer(List<PlayerControllerB> List) {
+            float distance = 100000;
+            PlayerControllerB nearestPlayer = null;
+            if (!List.Any()){
+                return nearestPlayer;
+            }
+            foreach (PlayerControllerB threat in List) {
+                float enemydistance = Vector3.Distance(threat.transform.position, transform.position);
+                if (enemydistance < distance) {
+                    distance = enemydistance;
+                    nearestPlayer = threat;
                 }
             }
-            return InRange;
-        }
-        private void FindNextPoint() {
-            Vector3 NextInvestigatePoint = base.transform.position + UnityEngine.Random.insideUnitSphere * 0.8f;
-            NavMeshHit hit;
-            if (NavMesh.SamplePosition(NextInvestigatePoint, out hit, 1.0f, NavMesh.AllAreas)) {
-                WTOBase.LogToConsole("Wanderer found new point!");
-                agent.SetDestination(NextInvestigatePoint);
-                MovingToNextPoint = true;
-            }
-            WTOBase.LogToConsole("Wanderer could not navigate to new point!");
-        }
-        private void AssessThreat() {
-            if (InRangeOfThreats()) {
-                //run away
-                return;
-            }
-            TimeSinceLastInRangeOfThreat++;
-            if (TimeSinceLastInRangeOfThreat > 30) {
-                RunningAway = false;
-                MovingToNextPoint = true;
-            }
+            return nearestPlayer;
         }
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
             base.HitEnemy(force, playerWhoHit, playHitSFX);
@@ -178,15 +178,8 @@ namespace Welcome_To_Ooblterra {
                     KillEnemyOnOwnerClient();
                     return;
                 }
-                //this probably does something (stolen from mouthdog)
-                /*
-                if (inKillAnimation) {
-                    StopKillAnimationServerRpc();
-                }
-                */
             }
-            RegisteredThreats.Add(playerWhoHit.gameObject);
-            RunningAway = true;
+            if(!RegisteredThreats.Contains(playerWhoHit)) RegisteredThreats.Add(playerWhoHit);
         }
     }
 }

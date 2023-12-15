@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
+using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra {
+namespace Welcome_To_Ooblterra.Patches {
+    
     internal class MonsterPatch {
 
         private static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
