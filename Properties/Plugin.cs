@@ -119,7 +119,8 @@ namespace Welcome_To_Ooblterra.Properties {
             }
             LogToConsole("END PRINTING LOADED ASSETS");
             ItemPatch.AddCustomItems();
-            MonsterPatch.CreateWanderer();
+            MonsterPatch.CreateEnemy("Assets/CustomMonsters/Wanderer/Wanderer.asset", MonsterPatch.DaytimeEnemies);
+            MonsterPatch.CreateEnemy("Assets/CustomMonsters/AdultWanderer/AdultWanderer.asset", MonsterPatch.AdultWandererContainer);
 
         }
     }

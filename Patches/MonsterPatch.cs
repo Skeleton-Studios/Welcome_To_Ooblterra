@@ -8,7 +8,8 @@ namespace Welcome_To_Ooblterra.Patches {
     
     internal class MonsterPatch {
 
-        private static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
+        public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
+        public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
         /* TODO: All these signatures SHOULD be taking the list as a param, 
          * and the SOR Instance should probably be grabbed on awake so it 
          * doesn't need to be passed. 
@@ -57,10 +58,10 @@ namespace Welcome_To_Ooblterra.Patches {
             */
         }
 
-        public static void CreateWanderer() {
+        public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList) {
 
-            EnemyType enemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>("Assets/CustomMonsters/Wanderer.asset");
-            TerminalNode terminalNode3 = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>("Assets/CustomMonsters/WandererTerminal.asset");
+            EnemyType enemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>(EnemyName);
+            //TerminalNode terminalNode3 = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>("Assets/CustomMonsters/Wanderer/WandererTerminal.asset");
             /*
             TerminalKeyword terminalKeyword = null;
             if (false) {
@@ -70,7 +71,7 @@ namespace Welcome_To_Ooblterra.Patches {
             }
             */
             NetworkPrefabs.RegisterNetworkPrefab(enemyType.enemyPrefab);
-            DaytimeEnemies.Add(new SpawnableEnemyWithRarity { enemyType = enemyType, rarity = 100 });
+            EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = enemyType, rarity = 100 });
             //Enemies.RegisterEnemy(enemyType, customEnemy.rarity, customEnemy.levelFlags, customEnemy.spawnType, terminalNode3, terminalKeyword);
 
         }

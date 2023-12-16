@@ -8,12 +8,116 @@ using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Animations.Rigging;
 using Welcome_To_Ooblterra;
+using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
+using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
 
 namespace Welcome_To_Ooblterra.Enemies {
 
-
     public class WandererAI : EnemyAI {
+        private class Investigate : BehaviorState {
+
+            private WandererAI Wanderer;
+            public AISearchRoutine roamMap;
+            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                Wanderer = self as WandererAI;
+                Wanderer.TotalInvestigationTime = enemyRandom.Next(200, 1500);
+                Wanderer.InvestigatingTime = 0;
+                self.creatureAnimator.speed = 1f;
+                self.agent.speed = 0f;
+                self.creatureAnimator.SetBool("Investigating", true);
+            }
+            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                Wanderer.InvestigatingTime++;
+            }
+            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                self.creatureAnimator.SetBool("Investigating", false);
+            }
+            public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+                new DoneInvestigating(),
+                new InDanger()
+            };
+        }
+        private class Roam : BehaviorState {
+            WandererAI Wanderer;
+
+            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                Wanderer = self as WandererAI;
+                self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                self.agent.speed = 7f;
+            }
+            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+
+            }
+            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            }
+            public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+                new FoundNextPoint(),
+                new InDanger()
+            };
+        }
+        private class Flee : BehaviorState {
+
+            private WandererAI Wanderer;
+
+            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                Wanderer = self as WandererAI;
+                self.agent.speed = 2f;
+                self.creatureAnimator.speed = 2f;
+                self.creatureAnimator.SetBool("Moving", true);
+            }
+            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                self.SetDestinationToPosition(self.ChooseFarthestNodeFromPosition(Wanderer.NearestPlayer(Wanderer.RegisteredThreats).transform.position).position);
+            }
+            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                self.creatureAnimator.SetBool("Moving", false);
+            }
+            public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+                new NoLongerInDanger()
+            };
+        }
+        private class DoneInvestigating : StateTransition {
+            public override bool CanTransitionBeTaken() {
+                WandererAI MyWanderer = self as WandererAI;
+                return (MyWanderer.InvestigatingTime > MyWanderer.TotalInvestigationTime);
+            }
+            public override BehaviorState NextState() {
+                return new Roam();
+            }
+        }
+        private class FoundNextPoint : StateTransition {
+            public override bool CanTransitionBeTaken() {
+                return (Vector3.Distance(self.transform.position, self.destination) < 5);
+            }
+            public override BehaviorState NextState() {
+                return new Investigate();
+            }
+        }
+        private class InDanger : StateTransition {
+            public override bool CanTransitionBeTaken() {
+                WandererAI MyWanderer = self as WandererAI;
+                if (MyWanderer.RegisteredThreats.Count <= 0) {
+                    return false;
+                }
+                return (Vector3.Distance(self.transform.position, MyWanderer.NearestPlayer(MyWanderer.RegisteredThreats).transform.position) < 5);
+            }
+            public override BehaviorState NextState() {
+                return new Flee();
+            }
+        }
+        private class NoLongerInDanger : StateTransition {
+
+            public override bool CanTransitionBeTaken() {
+                WandererAI MyWanderer = self as WandererAI;
+                return !(Vector3.Distance(self.transform.position, MyWanderer.NearestPlayer(MyWanderer.RegisteredThreats).transform.position) < 5);
+            }
+            public override BehaviorState NextState() {
+                return new Roam();
+            }
+        }
+
+        private BehaviorState InitialState = new Investigate();
+        private BehaviorState ActiveState = null;
 
         private RoundManager roundManager;
         private float AITimer;
@@ -46,9 +150,11 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         public override void Start() {
             base.Start();
+            ActiveState = InitialState;
             
             //Mouthdog Start() code
             roundManager = FindObjectOfType<RoundManager>();
+            
             useSecondaryAudiosOnAnimatedObjects = true;
             enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed + thisEnemyIndex);
             //roamPlanet = new AISearchRoutine();
@@ -65,7 +171,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             foreach (AnimatorClipInfo info in MyInfo) {
                 WTOBase.LogToConsole(info.clip.name);
             }
-            
+            ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
 
         }
         public override void Update() {
@@ -91,68 +197,20 @@ namespace Welcome_To_Ooblterra.Enemies {
             */
 
             //Custom Wanderer Code
-            if (agent.isOnNavMesh) {
-                if (Vector3.Distance(NearestPlayer(RegisteredThreats).transform.position, transform.position) < 150 && currentBehaviourStateIndex != 2) {
-                    currentBehaviourStateIndex = 2;
-                } 
-                switch (currentBehaviourStateIndex) {
-                    case 0:
-                        agent.speed = 0f;
-                        if (Vector3.Distance(NearestPlayer(PlayersCuriousAbout).transform.position, transform.position) < 50){
-                            //Look at the player
-                            if (AITimer % 2 == 0) {
-                                InvestigatingTime++;
-                            }
-                            break;
-                        }
-                        if (InvestigatingTime > TotalInvestigationTime) {
-                            InvestigatingTime = -1;
-                            HasReachedDestination = false;
-                            HasFoundNextSearchPoint = false;
-                            currentBehaviourStateIndex = 1;
-                            WTOBase.LogToConsole("Wanderer done investigating.");
-                            break;
-                        }
-                        InvestigatingTime++;
-                        break;
-
-
-                    case 1:
-                        if (HasReachedDestination){
-                            InvestigatingTime = 0;
-                            TotalInvestigationTime = enemyRandom.Next(300, 2001);
-                            currentBehaviourStateIndex = 0;
-                            creatureAnimator.SetBool("Investigating", value: true);
-                            WTOBase.LogToConsole("Wanderer changing state to investigate");
-                            break;
-                        }
-
-                        if (HasFoundNextSearchPoint){
-                            //WTOBase.LogToConsole("Distance from destination" + Vector3.Distance(destination, transform.position));
-                            if (Vector3.Distance(destination, transform.position) < 2f) {
-                                HasReachedDestination = true;
-                            }
-                            break;
-                        }
-
-                        if (IsOwner){
-                            agent.speed = 7f;
-                            SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(allAINodes[enemyRandom.Next(allAINodes.Length -1)].transform.position, 5), checkForPath: true);
-                            HasFoundNextSearchPoint = true;
-                            WTOBase.LogToConsole("Wanderer Searching!");
-                            creatureAnimator.SetBool("Investigating", value: false);
-                            break;
-                        }
-                        break;
-                    case 2:
-                        agent.speed = 10f;
-                        if (AITimer % 5 == 0) { 
-                            SetDestinationToPosition(ChooseFarthestNodeFromPosition(NearestPlayer(RegisteredThreats).transform.position, avoidLineOfSight: false, UnityEngine.Random.Range(0, allAINodes.Length / 2)).position);
-                            currentBehaviourStateIndex = 1;
-                            HasFoundNextSearchPoint = true;
-                        }
-                        break;
+            bool RunUpdate = true;
+            //don't run enemy ai if they're dead
+            foreach (StateTransition transition in ActiveState.transitions) {
+                transition.self = this;
+                if (transition.CanTransitionBeTaken()) {
+                    RunUpdate = false;
+                    ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
+                    ActiveState = transition.NextState();
+                    ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+                    break;
                 }
+            }
+            if (RunUpdate) {
+                ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
             }
         }
         private PlayerControllerB NearestPlayer(List<PlayerControllerB> List) {
@@ -175,6 +233,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             enemyHP -= force;
             if (base.IsOwner) {
                 if (enemyHP <= 0) {
+                    ItemPatch.SpawnItem(transform.position + new Vector3(0, 5, 0));
+                    Vector3 AdultSpawnPos = playerWhoHit.transform.position - (Vector3.Scale(new Vector3(-5, 0, -5), (playerWhoHit.transform.forward * -1)) );
+                    GameObject obj = UnityEngine.Object.Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, Quaternion.Euler(Vector3.zero));
+                    obj.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
+                    obj.gameObject.GetComponentInChildren<AdultWandererAI>().SetMyTarget(playerWhoHit);
                     KillEnemyOnOwnerClient();
                     return;
                 }

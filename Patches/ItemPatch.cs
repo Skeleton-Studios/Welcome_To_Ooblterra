@@ -5,12 +5,13 @@ using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using LethalLib.Modules;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
+using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class ItemPatch {
 
         private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
-        private class ItemData {
+        public class ItemData {
             private string ItemPath;
             private int Rarity;
             private Item Itemref;
@@ -25,7 +26,7 @@ namespace Welcome_To_Ooblterra.Patches {
 
         }
         //This array stores all our custom items
-        private static ItemData[] ItemList = new ItemData[] { 
+        public static ItemData[] ItemList = new ItemData[] { 
             new ItemData("Assets/CustomItems/AlienCrate.asset", 30),
             new ItemData("Assets/Customitems/FiveSixShovel.asset", 10),
             new ItemData("Assets/CustomItems/HandCrystal.asset", 30),
@@ -72,13 +73,11 @@ namespace Welcome_To_Ooblterra.Patches {
         }
 
 
-        //try to spawn the object 
-        //[HarmonyPatch(typeof(StartOfRound), "Update")]
-        //[HarmonyPostfix]
-        private static void DebugSpawnItem(StartOfRound __instance) {
+
+        public static void SpawnItem(Vector3 location) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
-                //var Crystal = UnityEngine.Object.Instantiate(ItemList[2].GetItem().spawnPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
-                //Crystal.GetComponent<NetworkObject>().Spawn();
+                var Crystal = UnityEngine.Object.Instantiate(ItemList[5].GetItem().spawnPrefab, location, Quaternion.identity);
+                Crystal.GetComponent<NetworkObject>().Spawn();
                 WTOBase.LogToConsole("Custom item spawned...");
             }
         }

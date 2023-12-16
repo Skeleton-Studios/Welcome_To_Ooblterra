@@ -91,6 +91,17 @@ namespace Welcome_To_Ooblterra.Patches {
             }
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
 
+            FootstepSurface tentacles = new FootstepSurface();
+            tentacles.surfaceTag = "Tentacle";
+            tentacles.clips = new AudioClip[] {
+                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP01.wav"),
+                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP02.wav"),
+                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP03.wav"),
+                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP04.wav"),
+                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP05.wav")
+            };
+            tentacles.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLE_Fall.wav");
+            __instance.footstepSurfaces.AddToArray<FootstepSurface>(tentacles);
 
             string[] ObjectNamesToDestroy = new string[]{
                 "CompletedVowTerrain",
