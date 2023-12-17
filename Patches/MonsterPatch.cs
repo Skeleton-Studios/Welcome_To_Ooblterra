@@ -1,7 +1,10 @@
-﻿using LethalLib.Modules;
+﻿using HarmonyLib;
+using LethalLib.Modules;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
+using UnityEngine.InputSystem;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches {
@@ -10,6 +13,7 @@ namespace Welcome_To_Ooblterra.Patches {
 
         public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
         public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
+        public static List<SpawnableEnemyWithRarity> InsideEnemies = new List<SpawnableEnemyWithRarity>();
         /* TODO: All these signatures SHOULD be taking the list as a param, 
          * and the SOR Instance should probably be grabbed on awake so it 
          * doesn't need to be passed. 
@@ -70,11 +74,22 @@ namespace Welcome_To_Ooblterra.Patches {
                 terminalKeyword.isVerb = false;
             }
             */
-            NetworkPrefabs.RegisterNetworkPrefab(enemyType.enemyPrefab);
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(enemyType.enemyPrefab);
             EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = enemyType, rarity = 100 });
             //Enemies.RegisterEnemy(enemyType, customEnemy.rarity, customEnemy.levelFlags, customEnemy.spawnType, terminalNode3, terminalKeyword);
 
         }
+
+        [HarmonyPatch(typeof(StartOfRound), "Update")]
+        [HarmonyPostfix]
+        public static void SpawnItem(StartOfRound __instance) {
+            if (Keyboard.current.f8Key.wasPressedThisFrame) {
+                var Monster = UnityEngine.Object.Instantiate(InsideEnemies[5].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
+                Monster.GetComponent<NetworkObject>().Spawn();
+                WTOBase.LogToConsole("Baby Lurker spawned...");
+            }
+        }
+
 
     }
 }

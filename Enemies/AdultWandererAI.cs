@@ -130,6 +130,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Wanderer = self as AdultWandererAI;
+                self.agent.speed = 7f;
                 self.SetDestinationToPosition(Wanderer.MainTarget.transform.position);
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {

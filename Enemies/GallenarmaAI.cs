@@ -156,7 +156,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     //We heard a boombox and are busting it down
                     case 5:
                         TimeSpentDancing++;
-                        if (TimeSpentDancing > 3000) {
+                        if (TimeSpentDancing > 10000) {
                             currentBehaviourStateIndex = 2;
                         }
                         break;

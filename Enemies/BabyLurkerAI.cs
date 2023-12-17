@@ -216,8 +216,10 @@ namespace Welcome_To_Ooblterra.Enemies {
                 transition.self = this;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
+                    Debug.Log("Exiting: " + ActiveState.ToString());
                     ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
                     ActiveState = transition.NextState();
+                    Debug.Log("Entering: " + ActiveState.ToString());
                     ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
                     break;
                 }
