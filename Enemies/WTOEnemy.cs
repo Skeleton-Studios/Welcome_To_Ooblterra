@@ -8,8 +8,8 @@ using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies {
-    public class WTOEnemy {
-        
+    public class WTOEnemy : EnemyAI {
+
         public abstract class BehaviorState {
             public abstract void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
             public abstract void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
@@ -22,60 +22,42 @@ namespace Welcome_To_Ooblterra.Enemies {
             public abstract bool CanTransitionBeTaken();
             public abstract BehaviorState NextState();
 
-            
+
         }
-        public class Investigate : BehaviorState {
-            private int InvestigatingTime;
-            public int TotalInvestigationTime;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Investigating", value: true);
-            }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Investigating", value: false);
-            }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
 
-            }
-            
+        internal BehaviorState InitialState;
+        internal BehaviorState ActiveState = null;
+        private System.Random enemyRandom;
+        private int AITimer;
+        private RoundManager roundManager;
+
+        public override void Start() {
+            base.Start();
+            ActiveState = InitialState;
+            roundManager = FindObjectOfType<RoundManager>();
+            enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed + thisEnemyIndex);
+            //Debug for the animations not fucking working
+            creatureAnimator.Rebind();
         }
-        public class Wander : BehaviorState {
-
-            private bool HasFoundNextSearchPoint;
-            private Vector3 destination;
-
-
-        public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.agent.speed = 7f;
-                self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
-                HasFoundNextSearchPoint = true;
-                WTOBase.LogToConsole("Wanderer Searching!");
-                creatureAnimator.SetBool("Searching", value: true);
-            }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Searching", value: false);
-            }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-
-            }
-        }
-        public class WanderToInvestigate : StateTransition {
-            Vector3 location;
-            public override bool CanTransitionBeTaken() {
-                if (Vector3.Distance(location, self.transform.position) < 2f) {
-                    return true;
+        public override void Update() {
+            base.Update();
+            AITimer++;
+            bool RunUpdate = true;
+            foreach (StateTransition transition in ActiveState.transitions) {
+                transition.self = this;
+                if (transition.CanTransitionBeTaken()) {
+                    RunUpdate = false;
+                    Debug.Log("Exiting: " + ActiveState.ToString());
+                    ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
+                    Debug.Log("Transitioning Via: " + transition.ToString());
+                    ActiveState = transition.NextState();
+                    Debug.Log("Entering: " + ActiveState.ToString());
+                    ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+                    break;
                 }
-                return false;
             }
-            public override BehaviorState NextState() {
-                return new Investigate();
-            }
-        }
-        public class InvestigateToWander : StateTransition {
-            public override bool CanTransitionBeTaken() {
-                return true;
-            }
-            public override BehaviorState NextState() {
-                return new Investigate();
+            if (RunUpdate) {
+                ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
             }
         }
     }

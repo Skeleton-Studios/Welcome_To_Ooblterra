@@ -54,5 +54,13 @@ namespace Welcome_To_Ooblterra.Patches {
                 break;
             }
         }
+        [HarmonyPatch(typeof(StartOfRound), "Start")]
+        [HarmonyPatch(typeof(RoundManager), "GenerateNewLevelClientRpc")]
+        [HarmonyPostfix]
+        private static void PatchPosters(StartOfRound __instance) {
+            Material[] materials = ((Renderer)GameObject.Find("HangarShip/Plane.001").GetComponent<MeshRenderer>()).materials;
+            materials[1] = WTOBase.ItemAssetBundle.LoadAsset<Material>("Assets/CustomSuits/Poster.mat");
+            ((Renderer)GameObject.Find("HangarShip/Plane.001").GetComponent<MeshRenderer>()).materials = materials;
+        }
     }
 }

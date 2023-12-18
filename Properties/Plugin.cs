@@ -61,7 +61,7 @@ namespace Welcome_To_Ooblterra.Properties {
             WTOHarmony.PatchAll(typeof(WTOBase));
             //WTOHarmony.PatchAll(typeof(WTOConfig));
             
-            WTOHarmony.PatchAll(typeof(FactoryPatch));
+            //WTOHarmony.PatchAll(typeof(FactoryPatch));
             WTOHarmony.PatchAll(typeof(ItemPatch));
             WTOHarmony.PatchAll(typeof(MonsterPatch));
             WTOHarmony.PatchAll(typeof(MoonPatch));
@@ -80,7 +80,7 @@ namespace Welcome_To_Ooblterra.Properties {
                 FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
                 
                 foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
-                    Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
+                    Debug.Log("Asset in Factory bundle: " + AssetNameToPrint);
                 }
             }
 
@@ -115,13 +115,13 @@ namespace Welcome_To_Ooblterra.Properties {
             string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
             MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
             foreach (string AssetNameToPrint in MonsterAssetBundle.GetAllAssetNames()) {
-                Debug.Log("Asset in bundle: " + AssetNameToPrint);
+                Debug.Log("Asset in Monster bundle: " + AssetNameToPrint);
             }
             LogToConsole("END PRINTING LOADED ASSETS");
             ItemPatch.AddCustomItems();
-            MonsterPatch.CreateEnemy("Assets/CustomMonsters/Wanderer/Wanderer.asset", MonsterPatch.DaytimeEnemies);
-            MonsterPatch.CreateEnemy("Assets/CustomMonsters/AdultWanderer/AdultWanderer.asset", MonsterPatch.AdultWandererContainer);
-
+            MonsterPatch.CreateEnemy("Assets/CustomMonsters/Wanderer/Wanderer.asset", MonsterPatch.DaytimeEnemies, 100);
+            MonsterPatch.CreateEnemy("Assets/CustomMonsters/AdultWanderer/AdultWanderer.asset", MonsterPatch.AdultWandererContainer, 10);
+            MonsterPatch.CreateEnemy("Assets/CustomMonsters/Gallenarma/Gallenarma.asset", MonsterPatch.InsideEnemies, 30);
         }
     }
 }
