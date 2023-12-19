@@ -51,7 +51,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Moving", true);
+                self.creatureAnimator.SetBool("Moving", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new HeardNoise(),
@@ -96,14 +96,12 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Investigate : BehaviorState {
-
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
                 Gallenarma.InvestigatingTime = 0;
                 Gallenarma.TotalInvestigateTime = enemyRandom.Next(/*260, 540*/ 50, 100);
                 self.creatureAnimator.SetBool("Investigating", true);
                 self.agent.speed = 0f;
-
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
@@ -305,7 +303,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class ReachedNoise : StateTransition {
             public override bool CanTransitionBeTaken() {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
-                return (Vector3.Distance(self.transform.position, self.destination) < 3);
+                return (Vector3.Distance(self.transform.position, self.destination) < 1);
             }
             public override BehaviorState NextState() {
                 return new Investigate();
@@ -318,7 +316,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         int InvestigatingTime;
         private bool asleep = true;
         private bool VictimStrungUp;
-        private System.Random enemyRandom;
         private int TimeSpentBreakingChains = 0;
         private float hearNoiseCooldown;
         private bool inKillAnimation;

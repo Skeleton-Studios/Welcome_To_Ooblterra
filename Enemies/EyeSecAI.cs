@@ -52,19 +52,18 @@ namespace Welcome_To_Ooblterra.Enemies {
             public bool ShouldPatrol;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Scanning", value: true);
-                //need to do work on the prefab in order to be able to fully implement this. Current idea:
                 EyeSecSelf = self as EyeSecAI;
                 EyeSecSelf.ScanFinished = false;
                 investigateTimer = 0;
-                //grab the scan collider. enable it
-                Collider.enabled = true;
+                EyeSecSelf.IsScanning = true;
 
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 if(investigateTimer <= 360) {
-                    ScanRoom();
+                    EyeSecSelf.ScanRoom();
                 } else {
                     EyeSecSelf.ScanFinished = true;
+                    EyeSecSelf.IsScanning = true;
                 }
                 investigateTimer++;
                                    
@@ -132,7 +131,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return false;
             }
             public override BehaviorState NextState() {
-                Collider.enabled = false;
+                //Collider.enabled = false;
                 return new Patrol();
             }
 
@@ -163,8 +162,8 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
 
         [SerializeField]
-        public static GameObject Head;
-        public static BoxCollider Collider;
+        public GameObject Head;
+        public BoxCollider Collider;
 
         [HideInInspector]
         public static List<GrabbableObject> grabbableObjectsInMap = new List<GrabbableObject>();
@@ -188,7 +187,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
         }
-        public static void ScanRoom() {
+        public void ScanRoom() {
             Head.transform.Rotate(0, 1, 0);
         }
         private void OnTriggerStay(Collider other) {

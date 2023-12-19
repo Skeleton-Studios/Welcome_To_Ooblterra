@@ -56,7 +56,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 BabyLurkerAI me = self as BabyLurkerAI;
-                self.agent.speed -= Time.deltaTime - 2;
+                self.agent.speed -= Time.deltaTime * 5f;
                 if (self.agent.speed < 1.5f){
                     me.LungeComplete = true;
                 }
@@ -139,7 +139,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EnemySpottedTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                self.targetPlayer = self.CheckLineOfSightForClosestPlayer(45f, 20, 2);
+                self.targetPlayer = self.CheckLineOfSightForClosestPlayer(180f, 60, 2);
                 return (self.targetPlayer != null);
             }
             public override BehaviorState NextState() {
@@ -171,7 +171,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         public override void Start() {
             InitialState = new Spawn();
-            
+            PrintDebugs = true;
             base.Start();
         }
         private bool IsEnemyInRange() {
