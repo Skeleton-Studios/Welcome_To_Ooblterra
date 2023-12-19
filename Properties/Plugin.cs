@@ -123,6 +123,7 @@ namespace Welcome_To_Ooblterra.Properties {
             MonsterPatch.CreateEnemy("Assets/CustomMonsters/AdultWanderer/AdultWanderer.asset", MonsterPatch.AdultWandererContainer, 10);
             MonsterPatch.CreateEnemy("Assets/CustomMonsters/Gallenarma/Gallenarma.asset", MonsterPatch.InsideEnemies, 30);
             MonsterPatch.CreateEnemy("Assets/CustomMonsters/BabyLurker/BabyLurker.asset", MonsterPatch.InsideEnemies, 10);
+            MonsterPatch.CreateEnemy("Assets/CustomMonsters/EyeSecurity/EyeSecurity.asset", MonsterPatch.InsideEnemies, 20);
         }
     }
 }

@@ -145,6 +145,7 @@
     <Compile Include="Patches\SuitPatch.cs" />
     <Compile Include="Things\BatteryRoom.cs" />
     <Compile Include="Things\EnforcerWeapon.cs" />
+    <Compile Include="Things\EyeSecScanner.cs" />
     <Compile Include="Things\FrankensteinTerminal.cs" />
     <Compile Include="Things\FrankensteinBodyPoint.cs" />
     <Compile Include="Things\HideSpot.cs" />

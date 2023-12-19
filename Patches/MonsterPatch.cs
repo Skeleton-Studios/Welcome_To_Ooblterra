@@ -72,9 +72,9 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPostfix]
         public static void SpawnItem(StartOfRound __instance) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
-                var Monster = UnityEngine.Object.Instantiate(InsideEnemies[1].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
+                var Monster = UnityEngine.Object.Instantiate(InsideEnemies[2].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
                 Monster.GetComponent<NetworkObject>().Spawn();
-                WTOBase.LogToConsole("Baby Lurker spawned...");
+                WTOBase.LogToConsole("EyeSec spawned...");
             }
         }
     }
