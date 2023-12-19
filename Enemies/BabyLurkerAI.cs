@@ -1,16 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine.AI;
+﻿using System.Collections.Generic;
 using UnityEngine;
-using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
 using GameNetcodeStuff;
-using static LethalLib.Modules.Enemies;
+using UnityEngine.AI;
 
 namespace Welcome_To_Ooblterra.Enemies {
-    public class BabyLurkerAI : EnemyAI {
+    public class BabyLurkerAI : WTOEnemy {
 
         //BEHAVIOR STATES
         private class Spawn : BehaviorState {
@@ -29,44 +23,43 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Roam : BehaviorState {
-            private int InvestigatingTime;
-            public int TotalInvestigationTime;
-            private bool HasRoamPoint;
-            public AISearchRoutine roamMap;
+            bool canMakeNextPoint;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.StartSearch(self.transform.position, roamMap);
-                self.creatureAnimator.SetBool("Moving", true);
+                self.creatureAnimator.SetBool("Patrolling", true);
+                canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                self.agent.speed = 7f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                if (!roamMap.inProgress) {
-                    self.StartSearch(self.transform.position, roamMap);
+                if (!canMakeNextPoint) {
+                    canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 }
-
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.StopSearch(roamMap);
-                self.creatureAnimator.SetBool("Moving", false);
+                self.creatureAnimator.SetBool("Patrolling", true);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> { 
                 new EnemySpottedTransition()
             };
         }
         private class Lunge : BehaviorState {
-            private bool endingLunge;
             private Ray ray;
             private RaycastHit rayHit;
-            private RoundManager roundManager = UnityEngine.Object.FindObjectOfType<RoundManager>();
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                BabyLurkerAI me = self as BabyLurkerAI;
+                me.LungeComplete = false;
                 self.creatureAnimator.SetBool("Lunging", true);
-                endingLunge = false;
                 ray = new Ray(self.transform.position + Vector3.up, self.transform.forward);
                 Vector3 pos = ((!Physics.Raycast(ray, out rayHit, 17f, StartOfRound.Instance.collidersAndRoomMask)) ? ray.GetPoint(17f) : rayHit.point);
-                pos = roundManager.GetNavMeshPosition(pos);
-                self.SetDestinationToPosition(pos);
+                pos = me.roundManager.GetNavMeshPosition(pos);
+                self.SetDestinationToPosition(self.targetPlayer.transform.position);
                 self.agent.speed = 13f;
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) { 
-                
+            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                BabyLurkerAI me = self as BabyLurkerAI;
+                self.agent.speed -= Time.deltaTime - 2;
+                if (self.agent.speed < 1.5f){
+                    me.LungeComplete = true;
+                }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Lunging", false);
@@ -77,12 +70,16 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Reposition : BehaviorState {
+            bool isRepositioning;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Moving", true);
-                
+                isRepositioning = self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position).position);
+                self.agent.speed = 8f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position).position);
+                if (!isRepositioning) {
+                    isRepositioning = self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position).position);
+                }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Moving", false);
@@ -121,15 +118,11 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return true;
             }
             public override BehaviorState NextState() {
-                if (IsEnemyInRange()) {
+                BabyLurkerAI me = self as BabyLurkerAI;
+                if (me.IsEnemyInRange()) {
                     return new Lunge();
                 }
                 return new Roam();
-            }
-
-            private bool IsEnemyInRange() {
-                PlayerControllerB nearestPlayer = self.CheckLineOfSightForClosestPlayer(45f, 20, 2);
-                return nearestPlayer == null;
             }
         }
         private class InPositionTransition : StateTransition {
@@ -137,20 +130,17 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return (Vector3.Distance(self.transform.position, self.destination) < 3); 
             }
             public override BehaviorState NextState() {
-                if (IsEnemyInRange()) {
+                BabyLurkerAI me = self as BabyLurkerAI;
+                if (me.IsEnemyInRange()) {
                     return new Lunge();
                 } 
                 return new Roam();
-            }
-            private bool IsEnemyInRange() {
-                PlayerControllerB nearestPlayer = self.CheckLineOfSightForClosestPlayer(45f, 20, 2);
-                return nearestPlayer == null;
             }
         }
         private class EnemySpottedTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
                 self.targetPlayer = self.CheckLineOfSightForClosestPlayer(45f, 20, 2);
-                return (self.targetPlayer == null);
+                return (self.targetPlayer != null);
             }
             public override BehaviorState NextState() {
                 return new Reposition();
@@ -158,7 +148,8 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EnemyAliveTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                return self.targetPlayer.health <= 0;
+                BabyLurkerAI me = self as BabyLurkerAI;
+                return self.targetPlayer.health > 0 && me.LungeComplete;
             }
             public override BehaviorState NextState() {
                 return new Reposition();
@@ -166,69 +157,29 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EnemyKilledTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                return self.targetPlayer.health <= 0;
+                BabyLurkerAI me = self as BabyLurkerAI;
+                return self.targetPlayer.health <= 0 && me.LungeComplete;
             }
             public override BehaviorState NextState() {
                 return new StayOnPlayer();
             }
         }
 
-        private System.Random enemyRandom;
-        private RoundManager roundManager;
-        private float AITimer;
-        private BehaviorState InitialState = new Spawn();
-        private BehaviorState ActiveState = null;
-
+        private bool LungeComplete;
         protected override string __getTypeName() {
             return "BabyLurkerAI";
         }
-        public override void DoAIInterval() {
-            base.DoAIInterval();
-            _ = StartOfRound.Instance.livingPlayers;
-        }
         public override void Start() {
+            InitialState = new Spawn();
+            
             base.Start();
-            ActiveState = InitialState;
         }
-        public override void Update() {
-            if (isEnemyDead || !ventAnimationFinished) {
-                return;
+        private bool IsEnemyInRange() {
+            PlayerControllerB nearestPlayer = CheckLineOfSightForClosestPlayer(180f, 20, 2);
+            if (nearestPlayer != null) {
+                targetPlayer = nearestPlayer;
             }
-
-            base.Update();
-            AITimer++;
-
-            //play the stun animation if they're stunned 
-            //TODO: SetLayerWeight switches between the basic animation layer (0) and the stun animation layer (1). 
-            //The wanderer will need a similar setup if we want to be able to stun him, plus a stun animation 
-            /*
-            if (stunNormalizedTimer > 0f && !isEnemyDead) {
-                if (stunnedByPlayer != null && currentBehaviourStateIndex != 2 && base.IsOwner) {
-                    creatureAnimator.SetLayerWeight(1, 1f);
-                }
-            } else {
-                creatureAnimator.SetLayerWeight(1, 0f);
-            }
-            */
-            bool RunUpdate = true;
-            //don't run enemy ai if they're dead
-            foreach (StateTransition transition in ActiveState.transitions) {
-                transition.self = this;
-                if (transition.CanTransitionBeTaken()) {
-                    RunUpdate = false;
-                    Debug.Log("Exiting: " + ActiveState.ToString());
-                    ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-                    ActiveState = transition.NextState();
-                    Debug.Log("Entering: " + ActiveState.ToString());
-                    ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
-                    break;
-                }
-            }
-            if (RunUpdate) {
-                ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
-            }
-            //Custom Monster Code
-
+            return nearestPlayer != null;
         }
     }
 }

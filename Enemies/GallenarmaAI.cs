@@ -2,10 +2,9 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
-using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
 
 namespace Welcome_To_Ooblterra.Enemies {
-    public class GallenarmaAI : EnemyAI, INoiseListener {
+    public class GallenarmaAI : WTOEnemy, INoiseListener {
 
         //BEHAVIOR STATES
         private class Asleep : BehaviorState {
@@ -42,7 +41,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Patrol : BehaviorState {
             private bool canMakeNextPoint;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Patrolling", true);
+                self.creatureAnimator.SetBool("Moving", true);
                 canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 self.agent.speed = 5f;
             }
@@ -52,7 +51,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Patrolling", true);
+                self.creatureAnimator.SetBool("Moving", true);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new HeardNoise(),
@@ -102,7 +101,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
                 Gallenarma.InvestigatingTime = 0;
                 Gallenarma.TotalInvestigateTime = enemyRandom.Next(/*260, 540*/ 50, 100);
-                self.creatureAnimator.SetBool("Moving", true);
+                self.creatureAnimator.SetBool("Investigating", true);
                 self.agent.speed = 0f;
 
             }
@@ -110,12 +109,11 @@ namespace Welcome_To_Ooblterra.Enemies {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
                 if (Gallenarma.InvestigatingTime < Gallenarma.TotalInvestigateTime) {
                     Gallenarma.InvestigatingTime++;
-                    self.creatureAnimator.SetBool("Investigating", true);
                     return;
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Moving", false);
+                self.creatureAnimator.SetBool("Investigating", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new ThingAtNoise(),
@@ -315,8 +313,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
 
         public DeadBodyInfo bodyBeingCarried;
-        private RoundManager roundManager;
-        private float AITimer;
 
         int TotalInvestigateTime;
         int InvestigatingTime;
@@ -328,8 +324,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         private bool inKillAnimation;
         private int TimeUntilChainsBroken;
         private int TimeSpentDancing;
-        private BehaviorState InitialState = new Asleep();
-        private BehaviorState ActiveState = null;
         private int TameTimer = 0;
         private Vector3 myBoomboxPos;
 
@@ -346,66 +340,13 @@ namespace Welcome_To_Ooblterra.Enemies {
         private List<NoiseInfo> NoiseStack = new List<NoiseInfo>();
         private NoiseInfo Noise = new NoiseInfo(new Vector3(-1,-1,-1), -1);
 
-        protected override string __getTypeName() {
-            return "GallenarmaAI";
-        }
-        public override void DoAIInterval() {
-            base.DoAIInterval();
-            _ = StartOfRound.Instance.livingPlayers;
-        }
-
         public override void Start() {
+            InitialState = new Asleep();
             base.Start();
-            ActiveState = InitialState;
-            enemyHP = 20;
-            //Mouthdog Start() code
-            roundManager = FindObjectOfType<RoundManager>();
-            useSecondaryAudiosOnAnimatedObjects = true;
-            enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed + thisEnemyIndex);
-            //Debug for the animations not fucking working
-            creatureAnimator.Rebind();
         }
-        public override void Update() {
-            base.Update();
-            AITimer++;
-            //don't run enemy ai if they're dead
+        public override void Update() {           
             TameTimer--;
-            if (isEnemyDead || !ventAnimationFinished) {
-                return;
-            }
-
-            //play the stun animation if they're stunned 
-            //TODO: SetLayerWeight switches between the basic animation layer (0) and the stun animation layer (1). 
-            //The wanderer will need a similar setup if we want to be able to stun him, plus a stun animation 
-            /*
-            if (stunNormalizedTimer > 0f && !isEnemyDead) {
-                if (stunnedByPlayer != null && currentBehaviourStateIndex != 2 && base.IsOwner) {
-                    creatureAnimator.SetLayerWeight(1, 1f);
-                }
-            } else {
-                creatureAnimator.SetLayerWeight(1, 0f);
-            }
-            */
-
-            //Custom Gallenarma Code
-            bool RunUpdate = true;
-            //don't run enemy ai if they're dead
-            foreach (StateTransition transition in ActiveState.transitions) {
-                transition.self = this;
-                if (transition.CanTransitionBeTaken()) {
-                    RunUpdate = false;
-                    Debug.Log("Exiting: " + ActiveState.ToString());
-                    ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-                    Debug.Log("Transitioning Via: " + transition.ToString());
-                    ActiveState = transition.NextState();
-                    Debug.Log("Entering: " + ActiveState.ToString());
-                    ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
-                    break;
-                }
-            }
-            if (RunUpdate) {
-                ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
-            }
+            base.Update();
         }
 
         //If we're attacked by a player, they need to be immediately set to our target player

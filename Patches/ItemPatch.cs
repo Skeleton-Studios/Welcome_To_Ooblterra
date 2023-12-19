@@ -44,6 +44,7 @@ namespace Welcome_To_Ooblterra.Patches {
             SpawnableItemWithRarity MoonScrapItem;
 
             foreach(ItemData MyCustomScrap in ItemList){
+                Debug.Log("Adding " + MyCustomScrap.ToString());
                 NextItem = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());               
                 NetworkPrefabs.RegisterNetworkPrefab(NextItem.spawnPrefab);
                 MyCustomScrap.SetItem(NextItem);
@@ -57,22 +58,12 @@ namespace Welcome_To_Ooblterra.Patches {
             }
         }
 
-        /* TODO: This signatures SHOULD be taking the list as a param, 
-         * and the SOR Instance should probably be grabbed on awake so it 
-         * doesn't need to be passed. 
-         */
-        public static void SetMoonItemList(bool UseDefaultList, SelectableLevel Moon, StartOfRound __instance) {
-            if (UseDefaultList) {
-                Moon.spawnableScrap = __instance.levels[2].spawnableScrap;
-                return;
-            }
-            WTOBase.LogToConsole("Items in MoonScrap list: " + MoonScrap.Count.ToString());
-            foreach (SpawnableItemWithRarity item in MoonScrap) {
-                Moon.spawnableScrap.Add(item);
-            }
+        public static void SetMoonItemList(SelectableLevel Moon) {
+            Moon.spawnableScrap = MoonScrap;
         }
-
-
+        public static void SetMoonItemList(SelectableLevel Moon, List<SpawnableItemWithRarity> ItemList) {
+                Moon.spawnableScrap = ItemList;
+        }
 
         public static void SpawnItem(Vector3 location) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GameNetcodeStuff;
+using System;
 using System.Collections.Generic;
 using System.Data.Common;
 using System.Linq;
@@ -25,12 +26,26 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         }
 
-        internal BehaviorState InitialState;
-        internal BehaviorState ActiveState = null;
-        private System.Random enemyRandom;
-        private int AITimer;
-        private RoundManager roundManager;
+        public enum PlayerState {
+            Dead,
+            Outside,
+            Inside
+        }
 
+        internal BehaviorState InitialState { get; set; }
+        internal BehaviorState ActiveState = null;
+        internal System.Random enemyRandom;
+        internal int AITimer;
+        internal RoundManager roundManager;
+        internal bool PrintDebugs = false;
+        internal PlayerState MyValidState;
+        protected override string __getTypeName() {
+            return GetType().Name;
+        }
+        public override void DoAIInterval() {
+            base.DoAIInterval();
+            _ = StartOfRound.Instance.livingPlayers;
+        }
         public override void Start() {
             base.Start();
             ActiveState = InitialState;
@@ -38,20 +53,43 @@ namespace Welcome_To_Ooblterra.Enemies {
             enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed + thisEnemyIndex);
             //Debug for the animations not fucking working
             creatureAnimator.Rebind();
+            ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+            if (enemyType.isOutsideEnemy) {
+                MyValidState = PlayerState.Outside;
+            } else {
+                MyValidState = PlayerState.Inside;
+            }
         }
         public override void Update() {
             base.Update();
             AITimer++;
+            //don't run enemy ai if they're dead
+            if (isEnemyDead || !ventAnimationFinished) {
+                return;
+            }
+
+            //play the stun animation if they're stunned 
+            //TODO: SetLayerWeight switches between the basic animation layer (0) and the stun animation layer (1). 
+            //The wanderer will need a similar setup if we want to be able to stun him, plus a stun animation 
+            /*
+            if (stunNormalizedTimer > 0f && !isEnemyDead) {
+                if (stunnedByPlayer != null && currentBehaviourStateIndex != 2 && base.IsOwner) {
+                    creatureAnimator.SetLayerWeight(1, 1f);
+                }
+            } else {
+                creatureAnimator.SetLayerWeight(1, 0f);
+            }
+            */
             bool RunUpdate = true;
             foreach (StateTransition transition in ActiveState.transitions) {
                 transition.self = this;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
-                    Debug.Log("Exiting: " + ActiveState.ToString());
+                    LogMessage("Exiting: " + ActiveState.ToString());
                     ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-                    Debug.Log("Transitioning Via: " + transition.ToString());
+                    LogMessage("Transitioning Via: " + transition.ToString());
                     ActiveState = transition.NextState();
-                    Debug.Log("Entering: " + ActiveState.ToString());
+                    LogMessage("Entering: " + ActiveState.ToString());
                     ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
                     break;
                 }
@@ -59,6 +97,23 @@ namespace Welcome_To_Ooblterra.Enemies {
             if (RunUpdate) {
                 ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
             }
+        }
+        internal void LogMessage(string message) {
+            if (PrintDebugs) {
+                Debug.Log(message);
+            }
+        }
+        internal bool PlayerCanBeTargeted(PlayerControllerB myPlayer) {
+            return (ValidatePlayer(myPlayer) == MyValidState);
+        }
+        internal PlayerState ValidatePlayer(PlayerControllerB myPlayer) {
+            if (myPlayer.isPlayerDead) {
+                return PlayerState.Dead;
+            }
+            if (myPlayer.isInsideFactory) {
+                return PlayerState.Inside;
+            }
+            return PlayerState.Outside;
         }
     }
 }

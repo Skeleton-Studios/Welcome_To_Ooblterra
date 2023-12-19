@@ -1,15 +1,12 @@
 ﻿using GameNetcodeStuff;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
-using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
 
 namespace Welcome_To_Ooblterra.Enemies {
-    public class AdultWandererAI : EnemyAI {
+    public class AdultWandererAI : WTOEnemy {
+
+        //BEHAVIOR STATES
         private class Spawn : BehaviorState {
             private int SpawnTimer;
             private int SpawnTime = 50;
@@ -141,6 +138,8 @@ namespace Welcome_To_Ooblterra.Enemies {
                 new EnemyEnteredRange()
             };
         }
+
+        //STATE TRANSITIONS
         private class EvaluateEnemyState : StateTransition {
             AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
@@ -155,7 +154,6 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return new WaitForTargetLook();
             }
         }
-
         private class EvaluatePlayerLook : StateTransition {
             public override bool CanTransitionBeTaken() {
                 AdultWandererAI SelfWanderer = self as AdultWandererAI;
@@ -222,68 +220,13 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
         }
 
-        private BehaviorState InitialState = new Spawn();
-        private BehaviorState ActiveState = null;
-        private System.Random enemyRandom;
-        private RoundManager roundManager;
-        private float AITimer;
         private bool spawnFinished = false;
         public PlayerControllerB MainTarget = null;
         private bool LostPatience = false;
-        private bool MainTargetReachable = false;
-        protected override string __getTypeName() {
-            return "AdultWandererAI";
-        }
-        public override void DoAIInterval() {
-            base.DoAIInterval();
-            _ = StartOfRound.Instance.livingPlayers;
-        }
         public override void Start() {
+            InitialState = new Spawn();
             base.Start();
-            ActiveState = InitialState;
         }
-        public override void Update() {
-            base.Update();
-            AITimer++;
-            //don't run enemy ai if they're dead
-
-            if (isEnemyDead || !ventAnimationFinished) {
-                return;
-            }
-
-            //play the stun animation if they're stunned 
-            //TODO: SetLayerWeight switches between the basic animation layer (0) and the stun animation layer (1). 
-            //The wanderer will need a similar setup if we want to be able to stun him, plus a stun animation 
-            /*
-            if (stunNormalizedTimer > 0f && !isEnemyDead) {
-                if (stunnedByPlayer != null && currentBehaviourStateIndex != 2 && base.IsOwner) {
-                    creatureAnimator.SetLayerWeight(1, 1f);
-                }
-            } else {
-                creatureAnimator.SetLayerWeight(1, 0f);
-            }
-            */
-
-            //Custom Monster Code
-            bool RunUpdate = true;
-            //don't run enemy ai if they're dead
-            foreach (StateTransition transition in ActiveState.transitions) {
-                transition.self = this;
-                if (transition.CanTransitionBeTaken()) {
-                    RunUpdate = false;
-                    Debug.Log("Exiting: " + ActiveState.ToString());
-                    ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-                    ActiveState = transition.NextState();
-                    Debug.Log("Entering: " + ActiveState.ToString());
-                    ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
-                    break;
-                }
-            }
-            if (RunUpdate) {
-                ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
-            }
-        }
-
         private void MeleeAttackPlayer(PlayerControllerB target) {
             target.DamagePlayer(80, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
             target.JumpToFearLevel(1f);

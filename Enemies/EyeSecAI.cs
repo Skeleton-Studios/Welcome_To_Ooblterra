@@ -12,8 +12,7 @@ using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
 
 namespace Welcome_To_Ooblterra.Enemies {
 
-
-    public class EyeSecAI : EnemyAI {
+    public class EyeSecAI : WTOEnemy {
 
         //BEHAVIOR STATES
         private class Patrol : BehaviorState {
@@ -54,22 +53,21 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Scanning", value: true);
                 //need to do work on the prefab in order to be able to fully implement this. Current idea:
-                if (EyeSecSelf == null) {
-                    EyeSecSelf = self as EyeSecAI;
-                }
+                EyeSecSelf = self as EyeSecAI;
                 EyeSecSelf.ScanFinished = false;
+                investigateTimer = 0;
                 //grab the scan collider. enable it
+                Collider.enabled = true;
 
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                
-                //scan from bottom of prefab to +500, adding +1 to the y value each time on the collider 
-                //if a player holding scrap
-                EyeSecSelf.FoundPlayerHoldingScrap = true;
-                    //self.targetPlayer = 
-                //if reached top of scan and found no scrap
-                    EyeSecSelf.FoundPlayerHoldingScrap = false;
+                if(investigateTimer <= 360) {
+                    ScanRoom();
+                } else {
                     EyeSecSelf.ScanFinished = true;
+                }
+                investigateTimer++;
+                                   
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Scanning", value: false);
@@ -106,6 +104,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 new FinishKill()
             };
         }
+
         //STATE TRANSITIONS
         private class ShouldStartScanTransition : StateTransition {
             EyeSecAI SelfEyeSec;
@@ -133,6 +132,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return false;
             }
             public override BehaviorState NextState() {
+                Collider.enabled = false;
                 return new Patrol();
             }
 
@@ -140,7 +140,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class BeginAttack : StateTransition {
             EyeSecAI SelfEyeSec;
             public override bool CanTransitionBeTaken() {
-                //Grab a list of every player in range
                 return SelfEyeSec.FoundPlayerHoldingScrap;
             }
             public override BehaviorState NextState() {
@@ -162,66 +161,23 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
 
         }
-        
+
+        [SerializeField]
+        public static GameObject Head;
+        public static BoxCollider Collider;
+
+        [HideInInspector]
         public static List<GrabbableObject> grabbableObjectsInMap = new List<GrabbableObject>();
-        private BehaviorState InitialState = new Patrol();
-        private BehaviorState ActiveState = null;
-        private System.Random enemyRandom;
-        private RoundManager roundManager;
-        private float AITimer;
-        private List<PlayerControllerB> scannedPlayers;
         public bool FoundPlayerHoldingScrap = false;
         public bool ScanFinished = false;
-        protected override string __getTypeName() {
-            return "EyeSecAI";
-        }
-        public override void DoAIInterval() {
-            base.DoAIInterval();
-            _ = StartOfRound.Instance.livingPlayers;
-        }
+        public bool IsScanning;
 
         public override void Start() {
-            base.Start();
-            ActiveState = InitialState;
+            InitialState = new Patrol();
             RefreshGrabbableObjectsInMapList();
-        }
-        public override void Update() {
-            if (isEnemyDead || !ventAnimationFinished) {
-                return;
-            }
-
-            base.Update();
-            AITimer++;
-
-            //play the stun animation if they're stunned 
-            //TODO: SetLayerWeight switches between the basic animation layer (0) and the stun animation layer (1). 
-            //The wanderer will need a similar setup if we want to be able to stun him, plus a stun animation 
-            /*
-            if (stunNormalizedTimer > 0f && !isEnemyDead) {
-                if (stunnedByPlayer != null && currentBehaviourStateIndex != 2 && base.IsOwner) {
-                    creatureAnimator.SetLayerWeight(1, 1f);
-                }
-            } else {
-                creatureAnimator.SetLayerWeight(1, 0f);
-            }
-            */
-            bool RunUpdate = true;
-            //don't run enemy ai if they're dead
-            foreach (StateTransition transition in ActiveState.transitions) {
-                transition.self = this;
-                if (transition.CanTransitionBeTaken()) {
-                    RunUpdate = false;
-                    ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-                    ActiveState = transition.NextState();
-                    ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
-                    break;
-                }
-            }
-            if (RunUpdate) {
-                ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
-            }
-            //Custom Monster Code
-
+            PrintDebugs = true;
+            base.Start();
+            
         }
         public static void RefreshGrabbableObjectsInMapList() {
             grabbableObjectsInMap.Clear();
@@ -230,6 +186,29 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if (array[i].scrapValue != 0) {
                     grabbableObjectsInMap.Add(array[i]);
                 }
+            }
+        }
+        public static void ScanRoom() {
+            Head.transform.Rotate(0, 1, 0);
+        }
+        private void OnTriggerStay(Collider other) {
+            if (!IsScanning) {
+                return;
+            }
+            PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
+            if (!other.gameObject.CompareTag("Player")) {
+                return;
+            }
+            if (!PlayerCanBeTargeted(victim)) {
+                return;
+            }
+            //grab a list of all the items he has and check if its in the grabbable objects list
+            if (grabbableObjectsInMap.Contains(victim.currentlyHeldObjectServer)) {
+                //if it is...
+                FoundPlayerHoldingScrap = true;
+                ScanFinished = true;
+                targetPlayer = victim;
+                return;
             }
         }
     }

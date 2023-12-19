@@ -11,57 +11,43 @@ namespace Welcome_To_Ooblterra.Patches {
     
     internal class MonsterPatch {
 
-        public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
-        public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
         public static List<SpawnableEnemyWithRarity> InsideEnemies = new List<SpawnableEnemyWithRarity>();
-        public static List<SpawnableEnemyWithRarity> OutdoorEnemies = new List<SpawnableEnemyWithRarity>();
+        public static List<SpawnableEnemyWithRarity> OutsideEnemies = new List<SpawnableEnemyWithRarity>();
+        public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
         public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
-        /* TODO: All these signatures SHOULD be taking the list as a param, 
-         * and the SOR Instance should probably be grabbed on awake so it 
-         * doesn't need to be passed. 
-         */
-        public static void SetInsideMonsters(bool UseDefaultList, SelectableLevel Moon, StartOfRound __instance) {
-            if (UseDefaultList) {
-                Moon.Enemies = new List<SpawnableEnemyWithRarity>(){ __instance.levels[5].Enemies[4] };
-                return;
-            }
-            //TODO: make this reference the indoor monster list
-            foreach (SpawnableEnemyWithRarity monster in InsideEnemies) {
-                Moon.Enemies.Add(monster);
-            }
-            
+        public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
+
+        public static void SetInsideMonsters(SelectableLevel Moon) {
+            Moon.Enemies = InsideEnemies;
         }
-        public static void SetOutsideMonsters(bool UseDefaultList, SelectableLevel Moon, StartOfRound __instance) {
-            if (UseDefaultList) {
-                Moon.OutsideEnemies.Add(__instance.levels[0].OutsideEnemies[0]);
-                return;
-            }
-            //TODO: make this reference the outdoor monster list
-            foreach (SpawnableEnemyWithRarity monster in OutdoorEnemies) {
-                Moon.OutsideEnemies.Add(monster);
-            }
-            
+        public static void SetInsideMonsters(SelectableLevel Moon, List<SpawnableEnemyWithRarity> EnemyList) {
+            Moon.Enemies = EnemyList;
         }
-        public static void SetDaytimeMonsters(bool UseDefaultList, SelectableLevel Moon, StartOfRound __instance){
-            if (UseDefaultList) {
-                Moon.DaytimeEnemies.Add(__instance.levels[0].DaytimeEnemies[1]);
-                return;
-            }
-            foreach (SpawnableEnemyWithRarity monster in DaytimeEnemies) {
-                Moon.DaytimeEnemies.Add(monster);
-            }
-            
+
+        public static void SetOutsideMonsters(SelectableLevel Moon) {
+            Moon.OutsideEnemies = OutsideEnemies;
         }
-        public static void SetSecurityObjects(bool UseDefaultList, SelectableLevel Moon, StartOfRound __instance) {
-            if (UseDefaultList) {
-                Moon.spawnableMapObjects = __instance.levels[2].spawnableMapObjects;
-                return;
-            }
-            //resize the security item array
-            Moon.spawnableMapObjects = new SpawnableMapObject[SecurityList.Count];
-            for(int i = 0; i < SecurityList.Count; i++) {
+        public static void SetOutsideMonsters(SelectableLevel Moon, List<SpawnableEnemyWithRarity> EnemyList) {
+                Moon.OutsideEnemies = EnemyList;
+        }
+
+        public static void SetDaytimeMonsters(SelectableLevel Moon) {
+            Moon.DaytimeEnemies = DaytimeEnemies;
+        }
+        public static void SetDaytimeMonsters(SelectableLevel Moon, List<SpawnableEnemyWithRarity> EnemyList) {
+                Moon.DaytimeEnemies = EnemyList;
+        }
+
+        public static void SetSecurityObjects(SelectableLevel Moon) {
+            SpawnableMapObject[] spawnableMapObjects = new SpawnableMapObject[SecurityList.Count];
+            Moon.spawnableMapObjects = spawnableMapObjects;
+            for (int i = 0; i < SecurityList.Count; i++) {
                 Moon.spawnableMapObjects.SetValue(SecurityList[i], i);
             }
+        }
+        public static void SetSecurityObjects(SelectableLevel Moon, SpawnableMapObject[] Objects) {
+            Moon.spawnableMapObjects = Objects;
+
         }
 
         public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity) {
@@ -86,12 +72,10 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPostfix]
         public static void SpawnItem(StartOfRound __instance) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
-                var Monster = UnityEngine.Object.Instantiate(InsideEnemies[0].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
+                var Monster = UnityEngine.Object.Instantiate(InsideEnemies[1].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
                 Monster.GetComponent<NetworkObject>().Spawn();
-                WTOBase.LogToConsole("Gallenarma spawned...");
+                WTOBase.LogToConsole("Baby Lurker spawned...");
             }
         }
-
-
     }
 }

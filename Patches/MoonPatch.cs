@@ -61,11 +61,11 @@ namespace Welcome_To_Ooblterra.Patches {
             MyNewMoon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[] { __instance.levels[0].spawnableOutsideObjects[6] };
             MyNewMoon.levelAmbienceClips = __instance.levels[2].levelAmbienceClips;
 
-            MonsterPatch.SetSecurityObjects(true, MyNewMoon, __instance);
-            ItemPatch.SetMoonItemList(false, MyNewMoon, __instance);
-            MonsterPatch.SetInsideMonsters(true, MyNewMoon, __instance);
-            MonsterPatch.SetOutsideMonsters(true, MyNewMoon, __instance);
-            MonsterPatch.SetDaytimeMonsters(false, MyNewMoon, __instance);
+            MonsterPatch.SetSecurityObjects(MyNewMoon, __instance.levels[5].spawnableMapObjects);
+            ItemPatch.SetMoonItemList(MyNewMoon);
+            MonsterPatch.SetInsideMonsters(MyNewMoon);
+            MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {__instance.levels[0].Enemies[0]} );
+            MonsterPatch.SetDaytimeMonsters(MyNewMoon);
 
             MoonFriendlyName = MyNewMoon.PlanetName;
             Moons[MyNewMoon.name] = MyNewMoon;
@@ -90,18 +90,6 @@ namespace Welcome_To_Ooblterra.Patches {
                 return;
             }
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
-
-            FootstepSurface tentacles = new FootstepSurface();
-            tentacles.surfaceTag = "Tentacle";
-            tentacles.clips = new AudioClip[] {
-                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP01.wav"),
-                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP02.wav"),
-                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP03.wav"),
-                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP04.wav"),
-                LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP05.wav")
-            };
-            tentacles.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLE_Fall.wav");
-            __instance.footstepSurfaces.AddToArray<FootstepSurface>(tentacles);
 
             string[] ObjectNamesToDestroy = new string[]{
                 "CompletedVowTerrain",
@@ -166,11 +154,19 @@ namespace Welcome_To_Ooblterra.Patches {
             GameObject.Destroy(IndirectLight);
 
             MoveNavNodesToNewPositions();
-
-            //Fog
-            LocalVolumetricFog[] foglist = GameObject.FindObjectsOfType<LocalVolumetricFog>();
-            foreach(LocalVolumetricFog fog in foglist) {
-
+            
+            //Footsteps
+            foreach(FootstepSurface surfaces in __instance.footstepSurfaces) {
+                if (surfaces.surfaceTag == "Grass") {
+                    surfaces.clips = new AudioClip[] {
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP01.wav"),
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP02.wav"),
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP03.wav"),
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP04.wav"),
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP05.wav")
+                    };
+                    surfaces.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLE_Fall.wav");
+                }
             }
         }
 
