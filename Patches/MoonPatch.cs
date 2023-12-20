@@ -18,6 +18,7 @@ namespace Welcome_To_Ooblterra.Patches {
         public static IDictionary<string, int> ModdedIds = new Dictionary<string, int>();
         //public IDictionary<string, SelectableLevel> mlevels;
 
+        //LethalLib.Modules.Levels.LevelTypes OoblterraLevel = (LethalLib.Modules.Levels.LevelTypes)0x200;
 
         public static string MoonFriendlyName;
         private static GameObject SunObject;

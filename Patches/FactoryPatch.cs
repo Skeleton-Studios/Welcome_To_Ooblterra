@@ -1,71 +1,71 @@
-﻿using HarmonyLib;
+﻿using BepInEx;
+using BepInEx.Configuration;
+using BepInEx.Logging;
+using DunGen;
+using System;
+using System.IO;
+using System.Linq;
+using System.Reflection;
+using Unity.Netcode;
+using static LethalLib.Modules.Levels;
 using UnityEngine;
 using LethalLib.Modules;
-using DunGen;
+using HarmonyLib;
 using Dungeon = LethalLib.Modules.Dungeon;
 using Welcome_To_Ooblterra.Properties;
+using System.Xml.Linq;
+using static LethalLib.Modules.Dungeon;
+using DunGen.Graph;
+using System.Collections.Generic;
+using static UnityEngine.Rendering.HighDefinition.ScalableSettingLevelParameter;
+using LethalLib.Extras;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
 
-        /* doesn't seem to do anything
-        private static TileSet MyTileSet = WTOBase.FactoryAssetBundle.LoadAsset<TileSet>("Assets/CustomInterior/OoblterraMaze.asset");
+        private static AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
+        internal static DungeonDef OoblFacilityDungeon;
 
-        [HarmonyPatch(typeof(RoundManager), "Awake")]
-        [HarmonyPostfix]
-        private static void AddTilesToDunGen(){
-            var runtimeDungeon = GameObject.FindObjectOfType<RuntimeDungeon>();
-            var generator = runtimeDungeon.Generator;
-            generator.TileInjectionMethods += InjectTiles;
+        public static void Start() {
+            DungeonFlow OoblFacilityFlow = FactoryBundle.LoadAsset<DungeonFlow>("Assets/CustomInterior/Data/WTOFlow.asset");
+
+
+            OoblFacilityDungeon = ScriptableObject.CreateInstance<LethalLib.Extras.DungeonDef>();
+            OoblFacilityDungeon.dungeonFlow = OoblFacilityFlow;
+            OoblFacilityDungeon.rarity = 99999;
+
+            Dungeon.AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.ExperimentationLevel);
+            WTOBase.LogToConsole("Dungeon Added: " + OoblFacilityDungeon.ToString());
+
         }
-        private static void InjectTiles(RandomStream randomStream, ref List<InjectedTile> tilesToInject) {
-            bool isOnMainPath = false;
-            float pathDepth = 0.1f;
-            float branchDepth = 1.0f;
-            var tile = new InjectedTile(MyTileSet, isOnMainPath, pathDepth, branchDepth);
-            tilesToInject.Add(tile);
-        }
-        */
 
         [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
         [HarmonyPostfix]
-        private static void CustomFactoryReplacements(RoundManager __instance) {
-            if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+
+        static void FixTeleportDoors() {
+            SpawnSyncedObject[] SyncedObjects = GameObject.FindObjectsOfType<SpawnSyncedObject>();
+            NetworkManager networkManager = GameObject.FindObjectOfType<NetworkManager>();
+            bool bFoundEntranceA = false;
+            bool bFoundEntranceB = false;
+            int iVentsFound = 0;
+            foreach (SpawnSyncedObject syncedObject in SyncedObjects) {
+                if (syncedObject.spawnPrefab.name == "EntranceTeleportA_EMPTY") {
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.Prefabs.First(x => x.Prefab.name == "EntranceTeleportA");
+                    bFoundEntranceA = true;
+                    syncedObject.spawnPrefab = networkPrefab.Prefab;
+                } else if (syncedObject.spawnPrefab.name == "EntranceTeleportB_EMPTY") {
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.Prefabs.First(x => x.Prefab.name == "EntranceTeleportB");
+                    bFoundEntranceB = true;
+                    syncedObject.spawnPrefab = networkPrefab.Prefab;
+                } else if (syncedObject.spawnPrefab.name == "VentDummy") {
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.Prefabs.First(x => x.Prefab.name == "VentEntrance");
+                    iVentsFound++;
+                    syncedObject.spawnPrefab = networkPrefab.Prefab;
+                }
+            }
+            if (!bFoundEntranceA && !bFoundEntranceB) {
                 return;
             }
-            ReplaceRoom("Assets/CustomInterior/OoblStartRoom.prefab", "ManorStartRoom", "CustomElevator");
-        }
-
-        private static void ReplaceRoom(string PathToNewRoom, string BaseMeshName, string NewMeshName) {
-            //Create an instance of the new mesh 
-            GameObject ObjectMesh = WTOBase.FactoryAssetBundle.LoadAsset<GameObject>(PathToNewRoom);
-            GameObject ReplacedMesh = GameObject.Find(BaseMeshName);
-
-            foreach(MeshRenderer item in GameObject.FindObjectsOfType<MeshRenderer>()) {
-                if (item.transform.parent.name == "StartRoomMeshes" || item.transform.parent.name == "RandomProps" || item.transform.parent.name == "ManorStartRoom") {
-                    item.enabled = false;
-                }
-                if (item.name.Contains("Shelf") || item.name.Contains("Books")){
-                    item.enabled = false;
-                }
-            }
-
-            foreach (Light light in GameObject.FindObjectsOfType<Light>()) {
-                if(light.name == "PoweredLightTypeB" || light.name == "PoweredLightTypeB (1)") {
-                    GameObject.Destroy(light.gameObject);
-                }
-            }
-
-            GameObject.Find("ManorStartRoom").GetComponent<MeshRenderer>().enabled = false;
-            GameObject MainRoom = GameObject.Instantiate(ObjectMesh, ReplacedMesh.transform.position, Quaternion.identity);
-            MainRoom.transform.Rotate(0, 90, 0);
-            /*
-            ReplacedMesh.GetComponent<MeshFilter>().mesh = GameObject.Find(NewMeshName).GetComponent<MeshFilter>().mesh;
-            ReplacedMesh.GetComponent<MeshRenderer>().materials = GameObject.Find(NewMeshName).GetComponent<MeshRenderer>().materials;
-            ReplacedMesh.GetComponent<MeshCollider>().sharedMesh = GameObject.Find(NewMeshName).GetComponent<MeshFilter>().mesh;
-
-            GameObject.Destroy(ObjectMesh);
-            */
         }
     }
 }

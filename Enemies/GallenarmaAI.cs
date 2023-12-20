@@ -25,7 +25,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
                 self.creatureAnimator.SetBool("Breaking", true);
-                Gallenarma.TimeUntilChainsBroken = enemyRandom.Next(/*1800, 3600*/ 18, 36);
+                Gallenarma.TimeUntilChainsBroken = enemyRandom.Next(1800, 3600);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;

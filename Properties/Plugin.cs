@@ -29,7 +29,7 @@ namespace Welcome_To_Ooblterra.Properties {
 
         private readonly Harmony WTOHarmony = new Harmony(modGUID);
         internal ManualLogSource WTOLogSource;
-        private static WTOBase Instance;
+        public static WTOBase Instance;
 
         public static AssetBundle LevelAssetBundle;
         public static AssetBundle ItemAssetBundle;
@@ -61,7 +61,7 @@ namespace Welcome_To_Ooblterra.Properties {
             WTOHarmony.PatchAll(typeof(WTOBase));
             //WTOHarmony.PatchAll(typeof(WTOConfig));
             
-            //WTOHarmony.PatchAll(typeof(FactoryPatch));
+            WTOHarmony.PatchAll(typeof(FactoryPatch));
             WTOHarmony.PatchAll(typeof(ItemPatch));
             WTOHarmony.PatchAll(typeof(MonsterPatch));
             WTOHarmony.PatchAll(typeof(MoonPatch));
@@ -125,6 +125,7 @@ namespace Welcome_To_Ooblterra.Properties {
             MonsterPatch.CreateEnemy("Assets/CustomMonsters/BabyLurker/BabyLurker.asset", MonsterPatch.InsideEnemies, 10);
             MonsterPatch.CreateEnemy("Assets/CustomMonsters/EyeSecurity/EyeSecurity.asset", MonsterPatch.InsideEnemies, 20);
             MonsterPatch.CreateEnemy("Assets/CustomMonsters/Lurker/Lurker.asset", MonsterPatch.InsideEnemies, 20);
+            FactoryPatch.Start();
         }
     }
 }
