@@ -189,7 +189,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void Start() {
             InitialState = new Patrol();
             RefreshGrabbableObjectsInMapList();
-            PrintDebugs = true;
+            //PrintDebugs = true;
             base.Start();
 
         }

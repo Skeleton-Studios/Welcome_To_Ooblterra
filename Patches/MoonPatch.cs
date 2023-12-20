@@ -89,6 +89,7 @@ namespace Welcome_To_Ooblterra.Patches {
             if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
                 return;
             }
+
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
 
             string[] ObjectNamesToDestroy = new string[]{

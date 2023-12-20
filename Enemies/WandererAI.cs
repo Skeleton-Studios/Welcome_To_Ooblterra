@@ -115,7 +115,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
 
         private List<PlayerControllerB> RegisteredThreats = new List<PlayerControllerB>();
-        private bool MovingToNextPoint = false;
         private int InvestigatingTime = 12;
         private int TotalInvestigationTime;
         public override void Start() {
@@ -157,6 +156,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             if(!RegisteredThreats.Contains(playerWhoHit)) RegisteredThreats.Add(playerWhoHit);
         }
+
     }
 }
 
