@@ -59,6 +59,9 @@ namespace Welcome_To_Ooblterra.Enemies {
                 self.agent.speed -= Time.deltaTime * 5f;
                 if (self.agent.speed < 1.5f){
                     me.LungeComplete = true;
+                    if(me.LungeCooldown < 1) { 
+                        me.LungeCooldown = 500;
+                    }
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -127,7 +130,8 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class InPositionTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                return (Vector3.Distance(self.transform.position, self.destination) < 3); 
+                BabyLurkerAI me = self as BabyLurkerAI;
+                return (Vector3.Distance(self.transform.position, self.destination) < 3) && me.LungeCooldown <= 0; 
             }
             public override BehaviorState NextState() {
                 BabyLurkerAI me = self as BabyLurkerAI;
@@ -166,6 +170,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
 
         private bool LungeComplete;
+        private int LungeCooldown;
         protected override string __getTypeName() {
             return "BabyLurkerAI";
         }
@@ -173,6 +178,12 @@ namespace Welcome_To_Ooblterra.Enemies {
             InitialState = new Spawn();
             PrintDebugs = true;
             base.Start();
+        }
+        public override void Update() {
+            base.Update();
+            if(LungeCooldown > 0) {
+                LungeCooldown--;
+            }
         }
         private bool IsEnemyInRange() {
             PlayerControllerB nearestPlayer = CheckLineOfSightForClosestPlayer(180f, 20, 2);
