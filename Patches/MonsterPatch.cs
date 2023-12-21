@@ -71,11 +71,13 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "Update")]
         [HarmonyPostfix]
         public static void SpawnItem(StartOfRound __instance) {
+            /*
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
                 var Monster = UnityEngine.Object.Instantiate(InsideEnemies[3].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
                 Monster.GetComponent<NetworkObject>().Spawn();
                 WTOBase.LogToConsole("EyeSec spawned...");
             }
+            */
         }
     }
 }

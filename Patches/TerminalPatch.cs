@@ -69,7 +69,7 @@ namespace Welcome_To_Ooblterra.Patches {
 
             foreach (KeyValuePair<string, SelectableLevel> keyValuePair in moons) {
                 TerminalNode terminalNode = specialKeywordResult;
-                terminalNode.displayText = terminalNode.displayText + "\n* " + keyValuePair.Value.PlanetName + " [planetTime]";
+                terminalNode.displayText = terminalNode.displayText + "\n* " + "Ooblterra" + " [planetTime]";
             }
 
             TerminalNode terminalNode2 = specialKeywordResult;

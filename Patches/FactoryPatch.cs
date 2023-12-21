@@ -19,6 +19,7 @@ using DunGen.Graph;
 using System.Collections.Generic;
 using static UnityEngine.Rendering.HighDefinition.ScalableSettingLevelParameter;
 using LethalLib.Extras;
+using UnityEngine.InputSystem;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
@@ -41,7 +42,6 @@ namespace Welcome_To_Ooblterra.Patches {
 
         [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
         [HarmonyPostfix]
-
         static void FixTeleportDoors() {
             SpawnSyncedObject[] SyncedObjects = GameObject.FindObjectsOfType<SpawnSyncedObject>();
             NetworkManager networkManager = GameObject.FindObjectOfType<NetworkManager>();
@@ -50,21 +50,40 @@ namespace Welcome_To_Ooblterra.Patches {
             int iVentsFound = 0;
             foreach (SpawnSyncedObject syncedObject in SyncedObjects) {
                 if (syncedObject.spawnPrefab.name == "EntranceTeleportA_EMPTY") {
-                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.Prefabs.First(x => x.Prefab.name == "EntranceTeleportA");
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(x => x.Prefab.name == "EntranceTeleportA");
+                    if (networkPrefab == null) {
+                        WTOBase.LogToConsole("Failed to find EntranceTeleportA prefab.");
+                        return;
+                    }
+                    WTOBase.LogToConsole("Found and replaced EntranceTeleportA prefab.");
                     bFoundEntranceA = true;
                     syncedObject.spawnPrefab = networkPrefab.Prefab;
                 } else if (syncedObject.spawnPrefab.name == "EntranceTeleportB_EMPTY") {
-                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.Prefabs.First(x => x.Prefab.name == "EntranceTeleportB");
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(x => x.Prefab.name == "EntranceTeleportB");
                     bFoundEntranceB = true;
                     syncedObject.spawnPrefab = networkPrefab.Prefab;
                 } else if (syncedObject.spawnPrefab.name == "VentDummy") {
-                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.Prefabs.First(x => x.Prefab.name == "VentEntrance");
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(x => x.Prefab.name == "VentEntrance");
                     iVentsFound++;
                     syncedObject.spawnPrefab = networkPrefab.Prefab;
                 }
             }
             if (!bFoundEntranceA && !bFoundEntranceB) {
                 return;
+            }
+        }
+
+        [HarmonyPatch(typeof(RoundManager), "Update")]
+        [HarmonyPostfix]
+        static void CheckDoors() {
+            if (Keyboard.current.f8Key.wasPressedThisFrame) {
+                EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
+                for (int i = 0; i < array.Length; i++) { 
+                    WTOBase.LogToConsole("Entrance Number: "+ i);
+                    Debug.Log("Entrance ID = 0?" + (array[i].entranceId != 0).ToString());
+                    Debug.Log("Not Is Entrance to Building? " + (!array[i].isEntranceToBuilding).ToString());
+                    WTOBase.LogToConsole("Next entrance...");
+                }
             }
         }
     }

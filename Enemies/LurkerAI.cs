@@ -16,19 +16,20 @@ namespace Welcome_To_Ooblterra.Enemies {
         //BEHAVIOR STATES
         private class Roam : BehaviorState {
             
-            public int TotalInvestigationTime;
-            
+            private bool MovingToPosition;
 
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 LurkerAI lurker = self as LurkerAI;
-                self.StartSearch(self.transform.position, lurker.roamMap);
-                self.creatureAnimator.SetBool("Moving", true);
+                MovingToPosition = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 self.agent.speed = 5f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 LurkerAI lurker = self as LurkerAI;
-                if (!lurker.roamMap.inProgress) {
-                    self.StartSearch(self.transform.position, lurker.roamMap);
+                if (!MovingToPosition) {
+                    MovingToPosition = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                }
+                if(Vector3.Distance(self.transform.position, self.destination) < 2) {
+                    MovingToPosition = false;
                 }
 
             }
@@ -142,7 +143,7 @@ namespace Welcome_To_Ooblterra.Enemies {
 
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Moving", true);
-                self.SetDestinationToPosition(self.ChooseFarthestNodeFromPosition(self.targetPlayer.transform.position).position, true);
+                self.SetDestinationToPosition(self.ChooseFarthestNodeFromPosition(self.transform.position).position, true);
                 self.agent.speed = 15f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {

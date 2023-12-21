@@ -2,6 +2,7 @@
 using UnityEngine;
 using GameNetcodeStuff;
 using UnityEngine.AI;
+using UnityEngine.Assertions.Must;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class BabyLurkerAI : WTOEnemy {
@@ -89,6 +90,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new InPositionTransition(),
+                new EnemyOutOfRange()
             };
         }
         private class StayOnPlayer : BehaviorState {
@@ -141,6 +143,20 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return new Roam();
             }
         }
+        private class EnemyOutOfRange : StateTransition {
+            public override bool CanTransitionBeTaken() {
+                BabyLurkerAI me = self as BabyLurkerAI;
+                if ((Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) > 15)){
+                    self.targetPlayer = null;
+                    return true;
+                }
+                return false;
+            }
+            public override BehaviorState NextState() {
+                BabyLurkerAI me = self as BabyLurkerAI;
+                return new Roam();
+            }
+        }
         private class EnemySpottedTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
                 self.targetPlayer = self.CheckLineOfSightForClosestPlayer(180f, 60, 2);
@@ -186,7 +202,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
         }
         private bool IsEnemyInRange() {
-            PlayerControllerB nearestPlayer = CheckLineOfSightForClosestPlayer(180f, 20, 2);
+            PlayerControllerB nearestPlayer = CheckLineOfSightForClosestPlayer(90f, 10, 2);
             if (nearestPlayer != null) {
                 targetPlayer = nearestPlayer;
             }
