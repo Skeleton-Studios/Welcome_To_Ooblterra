@@ -36,7 +36,6 @@ namespace Welcome_To_Ooblterra.Patches {
             OoblFacilityDungeon.rarity = 99999;
 
             Dungeon.AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.ExperimentationLevel);
-            WTOBase.LogToConsole("Dungeon Added: " + OoblFacilityDungeon.ToString());
 
         }
 
@@ -50,7 +49,7 @@ namespace Welcome_To_Ooblterra.Patches {
             int iVentsFound = 0;
             foreach (SpawnSyncedObject syncedObject in SyncedObjects) {
                 if (syncedObject.spawnPrefab.name == "EntranceTeleportA_EMPTY") {
-                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(x => x.Prefab.name == "EntranceTeleportA");
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.Last(x => x.Prefab.name == "EntranceTeleportA");
                     if (networkPrefab == null) {
                         WTOBase.LogToConsole("Failed to find EntranceTeleportA prefab.");
                         return;
