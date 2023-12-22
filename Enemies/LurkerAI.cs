@@ -43,49 +43,53 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Stalk : BehaviorState {
+            //Find a spot behind the player and go to it
             Vector3 StalkPos;
             LurkerAI Lurker;
             private int MoveCooldown = 0;
             private bool MovingToNextPos;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Lurker = self as LurkerAI;
-                self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position).position);
+                StalkPos = self.targetPlayer.transform.position - (Vector3.Scale(new Vector3(-1, 0, -1), (self.targetPlayer.transform.forward * -1)));
+                self.SetDestinationToPosition(StalkPos);
                 self.agent.speed = 5f;
                 MovingToNextPos = true;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                StalkPos = self.targetPlayer.transform.position - (Vector3.Scale(new Vector3(-1, 0, -1), (self.targetPlayer.transform.forward * -1)));
-                if (Vector3.Distance(self.transform.position, StalkPos) < GrabDistance) {
-                    SwitchClingingToCeilingState(true);
-                    self.agent.speed = 0;
-                    MovingToNextPos = false;
-                    if(MoveCooldown <= 0) {
-                        MoveCooldown = 200;
-                    }
-                    return;
-                }
-                if(MoveCooldown > 0) {
-                    MoveCooldown--;
-                    return;
-                }
-                SwitchClingingToCeilingState(false);
-                if (!MovingToNextPos) {
-                    self.SetDestinationToPosition(StalkPos);
-                    self.agent.speed = 5f;
-                    MovingToNextPos = true;
-                }
 
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                if (Lurker.clingingToCeiling) { 
+
+            }
+            public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+                new WaitForPlayerEyes()
+            };
+        }
+        private class Wait : BehaviorState {
+            //Cling to the ceiling and wait to be looked at
+            //If the player moves out of range, go back to stalking
+            Vector3 StalkPos;
+            LurkerAI Lurker;
+            private int MoveCooldown = 0;
+            private bool MovingToNextPos;
+            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                SwitchClingingToCeilingState(true);
+                self.agent.speed = 0;
+            }
+            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+
+            }
+            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                if (Lurker.clingingToCeiling) {
                     SwitchClingingToCeilingState(false);
                 }
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-                new PlayerIsntMoving()
+                new WaitForPlayerEyes(),
+                new PlayerOutOfRange()
             };
             private void SwitchClingingToCeilingState(bool shouldCling) {
-                if(Lurker.clingingToCeiling = shouldCling) {
+                if (Lurker.clingingToCeiling = shouldCling) {
                     return;
                 }
                 Lurker.clingingToCeiling = shouldCling;
@@ -177,20 +181,33 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return new Stalk();
             }
         }
-        private class PlayerIsntMoving : StateTransition {
-            
+        private class WaitForPlayerEyes : StateTransition {    
             public override bool CanTransitionBeTaken() {
                 LurkerAI lurker = self as LurkerAI;
-                if (lurker.clingingToCeiling && self.targetPlayer.HasLineOfSightToPosition(lurker.transform.position + lurker.transform.up *2f)) {
+                if (self.targetPlayer.HasLineOfSightToPosition(lurker.transform.position + lurker.transform.up *2f)) {
                     return true;
                 }
                 return false;
             }
             public override BehaviorState NextState() {
-                if(Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) < GrabDistance) {
+                LurkerAI lurker = self as LurkerAI;
+                if (lurker.clingingToCeiling && Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) < GrabDistance) {
                     return new Drag();
                 }
                 return new Flee();
+            }
+        }
+        private class PlayerOutOfRange : StateTransition {
+
+            public override bool CanTransitionBeTaken() {
+                LurkerAI lurker = self as LurkerAI;
+                if (Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) > GrabDistance) {
+                    return true;
+                }
+                return false;
+            }
+            public override BehaviorState NextState() {
+                return new Stalk();
             }
         }
         private class PlayerDroppedOff : StateTransition {
@@ -208,6 +225,20 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override bool CanTransitionBeTaken() {
                 if(Vector3.Distance(self.transform.position, self.destination) < 2) {
                     return true;
+                }
+                return false;
+            }
+            public override BehaviorState NextState() {
+                return new Roam();
+            }
+        }
+
+        private class TargetPlayerUnreachable : StateTransition {
+
+            public override bool CanTransitionBeTaken() {
+                WTOEnemy selfenemy = self as WTOEnemy;
+                if (self.targetPlayer == null || self.PlayerIsTargetable(self.targetPlayer, true, false)) {
+                    return false;
                 }
                 return false;
             }

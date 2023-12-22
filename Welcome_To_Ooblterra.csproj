@@ -45,7 +45,7 @@
     </Reference>
     <Reference Include="LethalLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Tools\LethalLib\LethalLib.dll</HintPath>
+      <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -167,7 +167,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Patches\SuitPatch.cs" />
     <Compile Include="Things\BatteryRoom.cs" />
-    <Compile Include="Things\Crusher.cs" />
+    <Compile Include="Things\KitchenCrusher.cs" />
     <Compile Include="Things\EnforcerWeapon.cs" />
     <Compile Include="Things\EyeSecScanner.cs" />
     <Compile Include="Things\FrankensteinTerminal.cs" />

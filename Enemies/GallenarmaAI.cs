@@ -1,4 +1,5 @@
 ﻿using GameNetcodeStuff;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
@@ -24,15 +25,16 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class WakingUp : BehaviorState {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
-                self.creatureAnimator.SetBool("Breaking", true);
-                Gallenarma.TimeUntilChainsBroken = enemyRandom.Next(1800, 3600);
+                Gallenarma.Awakening = true;
+                Gallenarma.TimeSpentBreakingChains = enemyRandom.Next(900, 2000);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
-                Gallenarma.TimeSpentBreakingChains++;
+                Gallenarma.TimeSpentBreakingChains--;
+                //WTOBase.LogToConsole("Time to break chains: " + Gallenarma.TimeSpentBreakingChains);
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Breaking", false);
+
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new WakeTimerDone()
@@ -41,9 +43,11 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Patrol : BehaviorState {
             private bool canMakeNextPoint;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                GallenarmaAI Gallenarma = self as GallenarmaAI;
+                Gallenarma.Awakening = false;
                 self.creatureAnimator.SetBool("Moving", true);
-                canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 self.agent.speed = 5f;
+                canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 if(!canMakeNextPoint) {
@@ -125,9 +129,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
-                if(Vector3.Distance(self.GetClosestPlayer(cannotBeInShip: true).transform.position, self.transform.position) < 5) { 
-                    Gallenarma.MeleeAttackPlayer(self.GetClosestPlayer(cannotBeInShip:true));
-                }
+                Gallenarma.TryMeleeAttackPlayer(self.GetClosestPlayer(cannotBeInShip:true));
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Attacking", false);
@@ -200,8 +202,11 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class WakeTimerDone : StateTransition {
             public override bool CanTransitionBeTaken() {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
-
-                return (Gallenarma.TimeSpentBreakingChains > Gallenarma.TimeUntilChainsBroken);
+                if (Gallenarma.TimeSpentBreakingChains > 0) {
+                    self.creatureAnimator.SetBool("Breaking", Gallenarma.TimeSpentBreakingChains <= 40);
+                    return false;
+                }
+                return true;
             }
             public override BehaviorState NextState() {
                 //this is silly but fuck it
@@ -278,11 +283,14 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class VictimEscaped : StateTransition {
             public override bool CanTransitionBeTaken() {
-                if(self.targetPlayer == null) {
+                GallenarmaAI Gallenarma = self as GallenarmaAI;
+                if (self.targetPlayer == null) {
                     return true;
                 }
-                if (Vector3.Distance(self.targetPlayer.transform.position, self.transform.position) > 5) {
+                if (Vector3.Distance(self.targetPlayer.transform.position, self.transform.position) > 3 && Gallenarma.AttackTimer > 30) {
                     self.targetPlayer = null;
+                    Gallenarma.HasAttackedThisCycle = false;
+                    Gallenarma.AttackTimer = 0;
                     return true;
                 }
                 return false;
@@ -315,14 +323,16 @@ namespace Welcome_To_Ooblterra.Enemies {
         int TotalInvestigateTime;
         int InvestigatingTime;
         private bool asleep = true;
+        private bool Awakening = false;
         private bool VictimStrungUp;
-        private int TimeSpentBreakingChains = 0;
+        private int TimeSpentBreakingChains;
         private float hearNoiseCooldown;
         private bool inKillAnimation;
-        private int TimeUntilChainsBroken;
         private int TimeSpentDancing;
         private int TameTimer = 0;
         private Vector3 myBoomboxPos;
+        private int AttackTimer;
+        private bool HasAttackedThisCycle;
 
         private struct NoiseInfo {
             public Vector3 NoisePos { get; private set; }
@@ -369,7 +379,9 @@ namespace Welcome_To_Ooblterra.Enemies {
                 TameTimer = 120;
                 myBoomboxPos = noisePosition;
             }
-
+            if (Awakening) {
+                TimeSpentBreakingChains = Math.Max(TimeSpentBreakingChains - enemyRandom.Next(5, 50), 40);
+            }
             hearNoiseCooldown = 0.03f;
             float num = Vector3.Distance(base.transform.position, noisePosition);
             Debug.Log($"Gallenarma '{base.gameObject.name}': Heard noise! Distance: {num} meters");
@@ -385,9 +397,14 @@ namespace Welcome_To_Ooblterra.Enemies {
             //NoiseStack.Insert(0, new NoiseInfo(noisePosition, noiseLoudness));
             Noise = new NoiseInfo(noisePosition, noiseLoudness);
         }
-        private void MeleeAttackPlayer(PlayerControllerB target) {
-            target.DamagePlayer(100, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
-            target.JumpToFearLevel(1f);
+        private void TryMeleeAttackPlayer(PlayerControllerB target) {
+            if(AttackTimer > 15 
+                && Vector3.Distance(GetClosestPlayer(cannotBeInShip: true).transform.position, transform.position) < 3 
+                    && !HasAttackedThisCycle) {
+                target.DamagePlayer(100, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
+                HasAttackedThisCycle = true;
+            }
+            AttackTimer++;
         }
     }
 }

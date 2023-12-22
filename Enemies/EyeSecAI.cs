@@ -28,6 +28,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     investigateTimer++;
                     if(investigateTimer > 500) {
                         investigate = false;
+                        SearchInProgress = false;
                     }
                     return;
                 }
@@ -37,6 +38,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if (!SearchInProgress) {
                     self.agent.speed = 7f;
                     self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                    SearchInProgress = true;
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
