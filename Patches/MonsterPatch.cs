@@ -71,13 +71,21 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "Update")]
         [HarmonyPostfix]
         public static void SpawnItem(StartOfRound __instance) {
-            /*
+            
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
                 var Monster = UnityEngine.Object.Instantiate(InsideEnemies[3].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
                 Monster.GetComponent<NetworkObject>().Spawn();
                 WTOBase.LogToConsole("EyeSec spawned...");
             }
-            */
+            
+        }
+        public static void Start() {
+            CreateEnemy("Assets/CustomMonsters/Wanderer/Wanderer.asset", DaytimeEnemies, 100);
+            CreateEnemy("Assets/CustomMonsters/AdultWanderer/AdultWanderer.asset", AdultWandererContainer, 10);
+            CreateEnemy("Assets/CustomMonsters/Gallenarma/Gallenarma.asset", InsideEnemies, 30);
+            CreateEnemy("Assets/CustomMonsters/BabyLurker/BabyLurker.asset", InsideEnemies, 10);
+            CreateEnemy("Assets/CustomMonsters/EyeSecurity/EyeSecurity.asset", InsideEnemies, 20);
+            CreateEnemy("Assets/CustomMonsters/Lurker/Lurker.asset", InsideEnemies, 20);
         }
     }
 }

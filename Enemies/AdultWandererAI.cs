@@ -66,13 +66,12 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 AdultWanderer = self as AdultWandererAI;
-                if (Vector3.Distance(AdultWanderer.MainTarget.transform.position, self.transform.position) < 10) {
+                if (Vector3.Distance(AdultWanderer.MainTarget.transform.position, self.transform.position) < 5) {
                     if(AttackCooldown <= 0) {
                         AttackCooldown = 500;
                         AdultWanderer.MeleeAttackPlayer(AdultWanderer.MainTarget);
                         return;
                     }
-                    AttackCooldown--;
                     return;
                 }
                 AttackCooldown = 0;
@@ -124,10 +123,10 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
                 Wanderer = self as AdultWandererAI;
+                self.agent.speed = 8f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Wanderer = self as AdultWandererAI;
-                self.agent.speed = 7f;
                 self.SetDestinationToPosition(Wanderer.MainTarget.transform.position);
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -193,7 +192,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
                 SelfWanderer = self as AdultWandererAI;
-                return !(self.PlayerIsTargetable(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) < 10));
+                return (self.PlayerIsTargetable(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) > 5));
             }
             public override BehaviorState NextState() {
                 return new Roam();
@@ -223,9 +222,16 @@ namespace Welcome_To_Ooblterra.Enemies {
         private bool spawnFinished = false;
         public PlayerControllerB MainTarget = null;
         private bool LostPatience = false;
+        private int AttackCooldown;
         public override void Start() {
             InitialState = new Spawn();
             base.Start();
+        }
+        public override void Update() {
+            if(AttackCooldown > 0) {
+                AttackCooldown--;
+            }
+            base.Update();
         }
         private void MeleeAttackPlayer(PlayerControllerB target) {
             target.DamagePlayer(80, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);

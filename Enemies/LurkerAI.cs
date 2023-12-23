@@ -12,7 +12,7 @@ using static Welcome_To_Ooblterra.Enemies.BabyLurkerAI;
 namespace Welcome_To_Ooblterra.Enemies {
     public class LurkerAI : WTOEnemy {
 
-        public const int GrabDistance = 3;
+        
         //BEHAVIOR STATES
         private class Roam : BehaviorState {
             
@@ -191,7 +191,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             public override BehaviorState NextState() {
                 LurkerAI lurker = self as LurkerAI;
-                if (lurker.clingingToCeiling && Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) < GrabDistance) {
+                if (lurker.clingingToCeiling && Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) < lurker.GrabDistance) {
                     return new Drag();
                 }
                 return new Flee();
@@ -201,7 +201,8 @@ namespace Welcome_To_Ooblterra.Enemies {
 
             public override bool CanTransitionBeTaken() {
                 LurkerAI lurker = self as LurkerAI;
-                if (Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) > GrabDistance) {
+                if (Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) > lurker.GrabDistance) {
+                    WTOBase.LogToConsole("Lurker lost player...");
                     return true;
                 }
                 return false;
@@ -250,6 +251,7 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         bool clingingToCeiling = false;
         bool finishPlayerDrag = false;
+        public int GrabDistance = 5;
         public AISearchRoutine roamMap;
         protected override string __getTypeName() {
             return "LurkerAI";

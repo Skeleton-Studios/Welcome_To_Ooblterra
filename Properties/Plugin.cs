@@ -119,12 +119,7 @@ namespace Welcome_To_Ooblterra.Properties {
             }
             LogToConsole("END PRINTING LOADED ASSETS");
             ItemPatch.AddCustomItems();
-            MonsterPatch.CreateEnemy("Assets/CustomMonsters/Wanderer/Wanderer.asset", MonsterPatch.DaytimeEnemies, 100);
-            MonsterPatch.CreateEnemy("Assets/CustomMonsters/AdultWanderer/AdultWanderer.asset", MonsterPatch.AdultWandererContainer, 10);
-            MonsterPatch.CreateEnemy("Assets/CustomMonsters/Gallenarma/Gallenarma.asset", MonsterPatch.InsideEnemies, 30);
-            MonsterPatch.CreateEnemy("Assets/CustomMonsters/BabyLurker/BabyLurker.asset", MonsterPatch.InsideEnemies, 10);
-            MonsterPatch.CreateEnemy("Assets/CustomMonsters/EyeSecurity/EyeSecurity.asset", MonsterPatch.InsideEnemies, 20);
-            MonsterPatch.CreateEnemy("Assets/CustomMonsters/Lurker/Lurker.asset", MonsterPatch.InsideEnemies, 20);
+            MonsterPatch.Start();
             FactoryPatch.Start();
         }
     }

@@ -16,14 +16,19 @@ namespace Welcome_To_Ooblterra.Things {
         public Vector3 CrusherStartPos;
         public Vector3 CrusherEndPos;
         private PlayerControllerB victim;
+        public AudioSource CrusherSound;
+        public AudioClip SoundToPlay;
 
         private void OnTriggerStay(Collider other) {
             if (!other.gameObject.CompareTag("Player")) {
                 return;
             }
-            if (/*CrusherRandom.Next(1, 100) > 45*/ true) {
+            if (CrusherRandom.Next(1, 100) > 45) {
                 victim = other.gameObject.GetComponent<PlayerControllerB>();
-                ActivateCrusher = true;
+                if(ActivateCrusher == false) {
+                    ActivateCrusher = true;
+                    //CrusherSound.PlayOneShot(SoundToPlay);
+                }
             }
         }
         private void OnTriggerExit(Collider other) { 
