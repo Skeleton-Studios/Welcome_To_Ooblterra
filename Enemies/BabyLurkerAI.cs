@@ -11,22 +11,22 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Spawn : BehaviorState {
 
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Spawning", value: true);
+                creatureAnimator.SetBool("Spawn", value: true);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
 
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Spawning", value: false);
+                creatureAnimator.SetBool("Spawn", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-                new SpawnTransition(500)
+                new SpawnTransition(55)
             };
         }
         private class Roam : BehaviorState {
             bool canMakeNextPoint;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Patrolling", true);
+                self.creatureAnimator.SetBool("Moving", true);
                 canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 self.agent.speed = 7f;
             }
@@ -36,7 +36,6 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Patrolling", true);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> { 
                 new EnemySpottedTransition()
@@ -48,7 +47,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 BabyLurkerAI me = self as BabyLurkerAI;
                 me.LungeComplete = false;
-                self.creatureAnimator.SetBool("Lunging", true);
+                self.creatureAnimator.SetBool("Attacking", true);
                 ray = new Ray(self.transform.position + Vector3.up, self.transform.forward);
                 Vector3 pos = ((!Physics.Raycast(ray, out rayHit, 17f, StartOfRound.Instance.collidersAndRoomMask)) ? ray.GetPoint(17f) : rayHit.point);
                 pos = me.roundManager.GetNavMeshPosition(pos);
@@ -66,7 +65,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Lunging", false);
+                self.creatureAnimator.SetBool("Attacking", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> { 
                 new EnemyKilledTransition(),
@@ -95,28 +94,27 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class StayOnPlayer : BehaviorState {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Staying", true);
+                self.creatureAnimator.SetBool("Moving", false);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Staying", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-                new SpawnTransition(500),
+                new SpawnTransition(90),
             };
         }
 
         //STATE TRANSITIONS
         private class SpawnTransition : StateTransition {
             private int SpawnTime;
-            private int TotalTime = 500;
+            private int TotalTime = 55;
             public SpawnTransition(int newtime){
                 TotalTime = newtime;
             }
             public override bool CanTransitionBeTaken() {
-                if (!(SpawnTime > TotalTime)) {
+                if (SpawnTime < TotalTime) {
                     SpawnTime++;
                     return false;
                 }

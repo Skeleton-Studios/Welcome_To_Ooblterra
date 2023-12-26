@@ -35,7 +35,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             private int LookWaitTimer = 3500;
             AdultWandererAI Wanderer;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Idle", value: false);
+                creatureAnimator.SetBool("Moving", value: false);
                 Wanderer = self as AdultWandererAI;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -47,7 +47,6 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Idle", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new EvaluatePlayerLook()
@@ -121,7 +120,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             public int investigateTimer;
             AdultWandererAI Wanderer;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Moving", value: false);
+                creatureAnimator.SetBool("Moving", value: true);
                 Wanderer = self as AdultWandererAI;
                 self.agent.speed = 8f;
             }

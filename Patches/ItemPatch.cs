@@ -66,11 +66,8 @@ namespace Welcome_To_Ooblterra.Patches {
         }
 
         public static void SpawnItem(Vector3 location) {
-            if (Keyboard.current.f8Key.wasPressedThisFrame) {
-                var Crystal = UnityEngine.Object.Instantiate(ItemList[5].GetItem().spawnPrefab, location, Quaternion.identity);
-                Crystal.GetComponent<NetworkObject>().Spawn();
-                WTOBase.LogToConsole("Custom item spawned...");
-            }
+            var Crystal = UnityEngine.Object.Instantiate(ItemList[5].GetItem().spawnPrefab, location, Quaternion.identity);
+            WTOBase.LogToConsole("Custom item spawned...");
         }
 
         [HarmonyPatch(typeof(RoundManager), "SpawnScrapInLevel")]

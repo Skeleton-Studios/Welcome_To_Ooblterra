@@ -45,6 +45,8 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
                 Gallenarma.Awakening = false;
+                self.creatureSFX.maxDistance = 15;
+                Gallenarma.creatureVoice.PlayOneShot(Gallenarma.Growl);
                 self.creatureAnimator.SetBool("Moving", true);
                 self.agent.speed = 5f;
                 canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
@@ -342,6 +344,8 @@ namespace Welcome_To_Ooblterra.Enemies {
         private int AttackTimer;
         private bool HasAttackedThisCycle;
         private int AttackRange = 2;
+
+        public AudioClip Growl;
 
         private struct NoiseInfo {
             public Vector3 NoisePos { get; private set; }

@@ -25,6 +25,7 @@ using UnityEngine.Rendering.HighDefinition;
 namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
 
+        public static EntranceTeleport NewEntrance;
         private static AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
         internal static DungeonDef OoblFacilityDungeon;
 
@@ -39,6 +40,15 @@ namespace Welcome_To_Ooblterra.Patches {
         }
 
 
+        [HarmonyPatch(typeof(RoundManager), "Awake")]
+        [HarmonyPostfix]
+        private static void ScrapValueAdjuster(RoundManager __instance) {
+            if(__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+                __instance.scrapValueMultiplier = 1.0f;
+                return;
+            }
+            __instance.scrapValueMultiplier = 1.5f;
+        }
 
         [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
         [HarmonyPostfix]
@@ -60,7 +70,7 @@ namespace Welcome_To_Ooblterra.Patches {
             GameObject[] PossibleObjects = GameObject.FindObjectsOfType<GameObject>();
             foreach (GameObject Object in PossibleObjects) {
                 if (Object.name.Contains("SpawnEntranceTrigger")) {
-                    EntranceTeleport NewEntrance = GameObject.Instantiate(MainEntrance);
+                    NewEntrance = GameObject.Instantiate(MainEntrance);
                     if (Network.IsHost) {
                         NewEntrance.GetComponent<NetworkObject>().Spawn();
                     }
@@ -83,7 +93,7 @@ namespace Welcome_To_Ooblterra.Patches {
                         WTOBase.LogToConsole("LC Vent Prefab not found!!");
                         return;
                     }
-                    WTOBase.LogToConsole("LC Vent Prefab: " + networkPrefab.Prefab.ToString());
+                    //WTOBase.LogToConsole("LC Vent Prefab: " + networkPrefab.Prefab.ToString());
                     iVentsFound++;
                     //syncedObject.spawnPrefab = networkPrefab.Prefab;
                     GameObject.Instantiate(networkPrefab.Prefab);

@@ -13,6 +13,8 @@ namespace Welcome_To_Ooblterra.Patches {
 
         public static IDictionary<string, SelectableLevel> Moons = new Dictionary<string, SelectableLevel>();
 
+        private static UnityEngine.Object LevelPrefab = null;
+
         //Identifiers for the Moon
         public static SelectableLevel MyNewMoon;
         public static IDictionary<string, int> ModdedIds = new Dictionary<string, int>();
@@ -25,6 +27,7 @@ namespace Welcome_To_Ooblterra.Patches {
         private static GameObject SunAnimObject;
         private static GameObject IndirectLight;
         private static AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
+        private static bool LevelLoaded;
 
         //Following two methods taken from MoonAPI, thanks Bizzlemip
         public static T[] ResizeArray<T>(T[] oldArray, int newSize) {
@@ -48,6 +51,7 @@ namespace Welcome_To_Ooblterra.Patches {
             return num;
         }
 
+
         //Defining the custom moon for the API
         [HarmonyPatch(typeof(StartOfRound), "Awake")]
         [HarmonyPrefix]
@@ -59,13 +63,13 @@ namespace Welcome_To_Ooblterra.Patches {
 
             //Set certain variables that we can't set in unity or else shit will break
             MyNewMoon.planetPrefab = __instance.levels[2].planetPrefab;
-            MyNewMoon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[] { __instance.levels[0].spawnableOutsideObjects[6] };
+            MyNewMoon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[] {  };
             MyNewMoon.levelAmbienceClips = __instance.levels[2].levelAmbienceClips;
 
             MonsterPatch.SetSecurityObjects(MyNewMoon, __instance.levels[5].spawnableMapObjects);
             ItemPatch.SetMoonItemList(MyNewMoon);
             MonsterPatch.SetInsideMonsters(MyNewMoon);
-            MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {__instance.levels[0].Enemies[0]} );
+            MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {} );
             MonsterPatch.SetDaytimeMonsters(MyNewMoon);
 
             MoonFriendlyName = MyNewMoon.PlanetName;
@@ -88,9 +92,16 @@ namespace Welcome_To_Ooblterra.Patches {
         private static void InitCustomLevel(StartOfRound __instance) {
 
             if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+                LevelLoaded = false;
+                if(LevelPrefab != null) { 
+                    GameObject.Destroy(LevelPrefab);
+                    GameObject.Destroy(FactoryPatch.NewEntrance);
+                }
                 return;
             }
-
+            if (LevelLoaded) {
+                return;
+            }
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
 
             string[] ObjectNamesToDestroy = new string[]{
@@ -138,7 +149,7 @@ namespace Welcome_To_Ooblterra.Patches {
             IndirectLight = GameObject.Find("Indirect");
 
             //Load our custom prefab
-            GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
+            LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
             WTOBase.LogToConsole("Loaded custom terrain object!");
 
             //The prefab contains an object called TeleportSnapLocation that we move the primary door to
@@ -170,6 +181,7 @@ namespace Welcome_To_Ooblterra.Patches {
                     surfaces.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLE_Fall.wav");
                 }
             }
+            LevelLoaded = true;
         }
 
         [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]

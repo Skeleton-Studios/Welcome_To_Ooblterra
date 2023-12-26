@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things {
     internal class KitchenCrusher : MonoBehaviour {
@@ -23,11 +24,13 @@ namespace Welcome_To_Ooblterra.Things {
             if (!other.gameObject.CompareTag("Player")) {
                 return;
             }
+            WTOBase.LogToConsole("Player colliding");
             if (CrusherRandom.Next(1, 100) > 45) {
                 victim = other.gameObject.GetComponent<PlayerControllerB>();
                 if(ActivateCrusher == false) {
+                    WTOBase.LogToConsole("activate crusher!");
                     ActivateCrusher = true;
-                    //CrusherSound.PlayOneShot(SoundToPlay);
+                    CrusherSound.PlayOneShot(SoundToPlay);
                 }
             }
         }
@@ -39,14 +42,14 @@ namespace Welcome_To_Ooblterra.Things {
 
         private void Start() {
             CrusherStartPos = Crusher.transform.position;
-            CrusherEndPos = Crusher.transform.position + new Vector3(-6, 0, 0);
+            CrusherEndPos = Crusher.transform.position + (Vector3.Scale(new Vector3(-6, 0, -6), Crusher.transform.right));
         }
 
         private void SetCrusherRetract() {
             RetractCrusher = true;
         }
 
-        private float LerpDuration = 0.2f;
+        private float LerpDuration = 0.3f;
         private float timeElapsed;
 
         private void Update() {
