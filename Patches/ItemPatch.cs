@@ -44,12 +44,11 @@ namespace Welcome_To_Ooblterra.Patches {
             SpawnableItemWithRarity MoonScrapItem;
 
             foreach(ItemData MyCustomScrap in ItemList){
-                Debug.Log("Adding " + MyCustomScrap.ToString());
                 NextItem = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());
                 NetworkPrefabs.RegisterNetworkPrefab(NextItem.spawnPrefab);
                 
                 MyCustomScrap.SetItem(NextItem);
-                Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.OoblterraLevel);
+                Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
                 
                 MoonScrapItem = new SpawnableItemWithRarity {
                     spawnableItem = NextItem,

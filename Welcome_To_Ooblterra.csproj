@@ -16,7 +16,7 @@
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
+    <DebugType>portable</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
@@ -44,8 +44,8 @@
     <Reference Include="BepInEx">
       <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
-    <Reference Include="LethalLib_publicized">
-      <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLib_publicized.dll</HintPath>
+    <Reference Include="LethalLib">
+      <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

@@ -171,10 +171,10 @@ namespace Welcome_To_Ooblterra.Enemies {
                         //Begin attacking at range. if multiple ranged enemies are all near each other, prefer the RPG, or else choose randomly
                         if (TimeSinceLastRangedAttack > RangedAttackCooldown && !MyWeapon.isLaunchingRocket && !MyWeapon.isTargetingLaser) {
 
-                            if (false/* Enemies are all within explosion radius of each other*/) {
+                            /*if ( Enemies are all within explosion radius of each other) {
                                 MyWeapon.LaunchRocket(targetPlayer);
                                 break;
-                            }
+                            }*/
                             if (enemyRandom.Next(0, 100) % 4 == 0) {
                                 MyWeapon.LaunchRocket(targetPlayer);
                             } else {

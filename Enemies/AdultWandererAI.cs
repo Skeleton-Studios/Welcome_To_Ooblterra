@@ -9,7 +9,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         //BEHAVIOR STATES
         private class Spawn : BehaviorState {
             private int SpawnTimer;
-            private int SpawnTime = 50;
+            private int SpawnTime = 80;
             AdultWandererAI Wanderer;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Spawn", value: false);
@@ -93,6 +93,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             public int TotalInvestigateTime;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
+                TotalInvestigateTime = enemyRandom.Next(100, 300);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 if (investigating) {
@@ -118,9 +119,6 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Chase : BehaviorState {
-            public bool SearchInProgress;
-            public bool investigate;
-            public int investigateTimer;
             AdultWandererAI Wanderer;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
@@ -234,7 +232,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void Update() {
             if(AttackCooldown > 0) {
                 AttackCooldown--;
-            } 
+            }
             base.Update();
         }
         private void MeleeAttackPlayer(PlayerControllerB Target) {

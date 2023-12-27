@@ -21,7 +21,6 @@ namespace Welcome_To_Ooblterra.Patches {
         public static IDictionary<string, int> ModdedIds = new Dictionary<string, int>();
         //public IDictionary<string, SelectableLevel> mlevels;
 
-        //LethalLib.Modules.Levels.LevelTypes OoblterraLevel = (LethalLib.Modules.Levels.LevelTypes)0x200;
 
         public static string MoonFriendlyName;
         private static GameObject SunObject;
@@ -49,6 +48,9 @@ namespace Welcome_To_Ooblterra.Patches {
                 throw new NullReferenceException("No null value found in StartOfRound.levels");
             }
             SOR.levels[num] = Moon;
+            foreach(SelectableLevel level in SOR.levels) {
+                WTOBase.LogToConsole(level.name);
+            }
             return num;
         }
 
@@ -68,9 +70,9 @@ namespace Welcome_To_Ooblterra.Patches {
             MyNewMoon.levelAmbienceClips = __instance.levels[2].levelAmbienceClips;
 
             MonsterPatch.SetSecurityObjects(MyNewMoon, __instance.levels[5].spawnableMapObjects);
-            //ItemPatch.SetMoonItemList(MyNewMoon);
-            MonsterPatch.SetInsideMonsters(MyNewMoon);
-            MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {} );
+            ItemPatch.SetMoonItemList(MyNewMoon);
+            //MonsterPatch.SetInsideMonsters(MyNewMoon);
+            //MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {} );
             //MonsterPatch.SetDaytimeMonsters(MyNewMoon);
 
             MoonFriendlyName = MyNewMoon.PlanetName;

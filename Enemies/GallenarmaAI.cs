@@ -184,6 +184,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 //if we're not near our boombox, move to it
                 if (!MovingToBoombox) {
                     self.SetDestinationToPosition(Gallenarma.myBoomboxPos);
+                    MovingToBoombox = true;
                 }
                 
             }

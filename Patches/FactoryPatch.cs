@@ -26,6 +26,7 @@ namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
 
         public static EntranceTeleport NewEntrance;
+        public static EntranceTeleport NewFireEntrance;
         private static AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
         internal static DungeonDef OoblFacilityDungeon;
 
@@ -36,7 +37,7 @@ namespace Welcome_To_Ooblterra.Patches {
             OoblFacilityDungeon = ScriptableObject.CreateInstance<LethalLib.Extras.DungeonDef>();
             OoblFacilityDungeon.dungeonFlow = OoblFacilityFlow;
             OoblFacilityDungeon.rarity = 99999;
-            Dungeon.AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.OoblterraLevel);
+            Dungeon.AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
         }
 
 
@@ -60,10 +61,12 @@ namespace Welcome_To_Ooblterra.Patches {
 
             EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
             EntranceTeleport MainEntrance = null;
+            EntranceTeleport FireEntrance = null;
             for (int i = 0; i < array.Length; i++) {
                 if (array[i].entranceId == 0) {
                     MainEntrance = array[i];
-                    break;
+                } else {
+                    FireEntrance = array[i];
                 }
             }
             GameObject[] PossibleObjects = GameObject.FindObjectsOfType<GameObject>();
@@ -76,7 +79,15 @@ namespace Welcome_To_Ooblterra.Patches {
                     NewEntrance.transform.position = Object.transform.position;
                     NewEntrance.transform.rotation = Object.transform.rotation;
                     NewEntrance.isEntranceToBuilding = false;
-                    break;
+                }
+                if (Object.name.Contains("SpawnEntranceBTrigger")) {
+                    NewFireEntrance = GameObject.Instantiate(FireEntrance);
+                    if (Network.IsHost) {
+                        NewFireEntrance.GetComponent<NetworkObject>().Spawn();
+                    }
+                    NewFireEntrance.transform.position = Object.transform.position;
+                    NewFireEntrance.transform.rotation = Object.transform.rotation;
+                    NewFireEntrance.isEntranceToBuilding = false;
                 }
             }
 

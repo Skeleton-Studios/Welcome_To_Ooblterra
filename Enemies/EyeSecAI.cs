@@ -56,7 +56,6 @@ namespace Welcome_To_Ooblterra.Enemies {
             public int AnimWaiter = 0;
             public int investigateTimer;
             public EyeSecAI EyeSecSelf;
-            public bool ShouldPatrol;
             bool ScanClipStarted = false;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 EyeSecSelf = self as EyeSecAI;
@@ -165,7 +164,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         //STATE TRANSITIONS
         private class ShouldStartScanTransition : StateTransition {
             EyeSecAI SelfEyeSec;
-            bool ShouldDoScan;
             public override bool CanTransitionBeTaken() {
                 SelfEyeSec = self as EyeSecAI;
                 //Grab a list of every player in range
@@ -185,7 +183,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class ReturnToPatrol : StateTransition {
             EyeSecAI SelfEyeSec;
-            bool ShouldDoScan;
             public override bool CanTransitionBeTaken() {
                 SelfEyeSec = self as EyeSecAI;
                 if (SelfEyeSec.ScanFinished) { 
@@ -212,7 +209,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class FinishKill : StateTransition {
             EyeSecAI SelfEyeSec;
-            bool ShouldDoScan;
             public override bool CanTransitionBeTaken() {
                 SelfEyeSec = self as EyeSecAI;
                 if(self.targetPlayer == null || self.targetPlayer.isPlayerDead) {

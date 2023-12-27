@@ -14,7 +14,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Investigate : BehaviorState {
 
             private WandererAI Wanderer;
-            public AISearchRoutine roamMap;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Wanderer = self as WandererAI;
                 Wanderer.TotalInvestigationTime = enemyRandom.Next(200, 1500);
@@ -117,6 +116,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private List<PlayerControllerB> RegisteredThreats = new List<PlayerControllerB>();
         private int InvestigatingTime = 12;
         private int TotalInvestigationTime;
+        private float previous_speed;
         public override void Start() {
             InitialState = new Investigate();
             base.Start();
@@ -125,6 +125,18 @@ namespace Welcome_To_Ooblterra.Enemies {
                 agent.Warp(hit.point);
             }
         }
+
+        /*public override void Update() {
+            if(stunNormalizedTimer >= 0f) {
+                previous_speed = agent.speed;
+                creatureAnimator.SetBool("Stunned", value: true);
+                agent.speed = 0f;
+            } else {
+                agent.speed = previous_speed;
+                creatureAnimator.SetBool("Stunned", value: false);
+                base.Update();
+            }
+        }*/
         private PlayerControllerB NearestPlayer(List<PlayerControllerB> List) {
             float distance = 100000;
             PlayerControllerB nearestPlayer = null;
@@ -142,9 +154,11 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
             base.HitEnemy(force, playerWhoHit, playHitSFX);
+            creatureAnimator.SetTrigger("Hit");
             enemyHP -= force;
             if (base.IsOwner) {
                 if (enemyHP <= 0) {
+                    creatureAnimator.SetTrigger("Death");
                     ItemPatch.SpawnItem(transform.position + new Vector3(0, 5, 0));
                     Vector3 AdultSpawnPos = playerWhoHit.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), playerWhoHit.transform.forward * -1);
                     Quaternion AdultSpawnRot = new Quaternion(0, Quaternion.LookRotation(playerWhoHit.transform.position - AdultSpawnPos).y, 0, 1);

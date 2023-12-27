@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using LethalLib.Modules;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
@@ -8,7 +7,6 @@ using UnityEngine.InputSystem;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches {
-    
     internal class MonsterPatch {
 
         public static List<SpawnableEnemyWithRarity> InsideEnemies = new List<SpawnableEnemyWithRarity>();
@@ -52,14 +50,14 @@ namespace Welcome_To_Ooblterra.Patches {
 
         public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity, LethalLib.Modules.Enemies.SpawnType SpawnType, bool Wanderer = false) {
             EnemyType enemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>(EnemyName);
-            TerminalNode terminalNode3 = null;
-            TerminalKeyword terminalKeyword = null;
+            TerminalNode WandererInfo = null;
+            TerminalKeyword WandererKeyword = null;
             if (Wanderer) { 
-                terminalNode3 = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>("Assets/CustomMonsters/Wanderer/WandererTerminal.asset");            
-                terminalKeyword = WTOBase.MonsterAssetBundle.LoadAsset<TerminalKeyword>("Assets/CustomMonsters/Wanderer/WandererKeyword.asset");
+                WandererInfo = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>("Assets/CustomMonsters/Wanderer/WandererTerminal.asset");            
+                WandererKeyword = WTOBase.MonsterAssetBundle.LoadAsset<TerminalKeyword>("Assets/CustomMonsters/Wanderer/WandererKeyword.asset");
             }
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(enemyType.enemyPrefab);
-            LethalLib.Modules.Enemies.RegisterEnemy(enemyType, rarity, Levels.LevelTypes.OoblterraLevel, SpawnType, terminalNode3, terminalKeyword);
+            LethalLib.Modules.Enemies.RegisterEnemy(enemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, new string[] { "OoblterraLevel" }, WandererInfo, WandererKeyword);
             EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = enemyType, rarity = rarity });
         }
 
@@ -77,7 +75,7 @@ namespace Welcome_To_Ooblterra.Patches {
             
         }
         public static void Start() {
-            CreateEnemy("Assets/CustomMonsters/Wanderer/Wanderer.asset", DaytimeEnemies, 100, LethalLib.Modules.Enemies.SpawnType.Daytime, true);
+            CreateEnemy("Assets/CustomMonsters/Wanderer/Wanderer.asset", DaytimeEnemies, 50, LethalLib.Modules.Enemies.SpawnType.Daytime, true);
             CreateEnemy("Assets/CustomMonsters/AdultWanderer/AdultWanderer.asset", AdultWandererContainer, 0, LethalLib.Modules.Enemies.SpawnType.Outside);
             CreateEnemy("Assets/CustomMonsters/Gallenarma/Gallenarma.asset", InsideEnemies, 30, LethalLib.Modules.Enemies.SpawnType.Default);
             //CreateEnemy("Assets/CustomMonsters/BabyLurker/BabyLurker.asset", InsideEnemies, 10);

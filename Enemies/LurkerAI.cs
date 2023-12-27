@@ -47,8 +47,6 @@ namespace Welcome_To_Ooblterra.Enemies {
             //Find a spot behind the player and go to it
             Vector3 StalkPos;
             LurkerAI Lurker;
-            private int MoveCooldown = 0;
-            private bool MovingToNextPos;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Lurker = self as LurkerAI;
                 self.creatureAnimator.SetBool("Moving", true);
@@ -56,7 +54,6 @@ namespace Welcome_To_Ooblterra.Enemies {
                     StalkPos = self.targetPlayer.transform.position - (Vector3.Scale(new Vector3(-5, 0, -5), (self.targetPlayer.transform.forward * -1)));
                     self.SetDestinationToPosition(StalkPos);
                     self.agent.speed = 5f;
-                    MovingToNextPos = true;
                 }
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -73,9 +70,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Wait : BehaviorState {
             //Cling to the ceiling and wait to be looked at
             //If the player moves out of range, go back to stalking
-            Vector3 StalkPos;
             LurkerAI Lurker;
-            private bool MovingToNextPos;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Lurker = self as LurkerAI;
                 SwitchClingingToCeilingState(true);

@@ -48,6 +48,7 @@ namespace Welcome_To_Ooblterra.Properties {
         }
 
         void Awake() {
+
             //Load up various things and tell the console we've loaded
             if (Instance == null) {
                 Instance = this;
@@ -119,6 +120,16 @@ namespace Welcome_To_Ooblterra.Properties {
             ItemPatch.AddCustomItems();
             MonsterPatch.Start();
             FactoryPatch.Start();
+            var types = Assembly.GetExecutingAssembly().GetTypes();
+            foreach (var type in types) {
+                var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+                foreach (var method in methods) {
+                    var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
+                    if (attributes.Length > 0) {
+                        method.Invoke(null, null);
+                    }
+                }
+            }
         }
     }
 }

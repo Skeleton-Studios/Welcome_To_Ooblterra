@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 using UnityEngine.Networking;
+using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class WTOEnemy : EnemyAI {
@@ -40,6 +41,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal RoundManager roundManager;
         internal bool PrintDebugs = false;
         internal PlayerState MyValidState;
+        internal StateTransition nextTransition;
         protected override string __getTypeName() {
             return GetType().Name;
         }
@@ -53,11 +55,10 @@ namespace Welcome_To_Ooblterra.Enemies {
             roundManager = FindObjectOfType<RoundManager>();
             enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed + thisEnemyIndex);
             //Debug for the animations not fucking working
-            /*if (!agent.isOnNavMesh) {
+            if (!agent.isOnNavMesh && base.IsOwner) {
                 WTOBase.LogToConsole("CREATURE " + this.__getTypeName() + " WAS NOT PLACED ON NAVMESH, DESTROYING...");
-                Destroy(this);
-                return;
-            }*/
+                KillEnemyOnOwnerClient();
+            }
             creatureAnimator.Rebind();
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
             if (enemyType.isOutsideEnemy) {
@@ -91,12 +92,18 @@ namespace Welcome_To_Ooblterra.Enemies {
                 transition.self = this;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
+                    nextTransition = transition;
+                    if (base.IsOwner) { 
+                        TransitionStateServerRPC();
+                    }
+                    /*
                     LogMessage("Exiting: " + ActiveState.ToString());
                     ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
                     LogMessage("Transitioning Via: " + transition.ToString());
                     ActiveState = transition.NextState();
                     LogMessage("Entering: " + ActiveState.ToString());
                     ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+                    */
                     break;
                 }
             }
@@ -121,5 +128,24 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             return PlayerState.Outside;
         }
+
+        [ServerRpc]
+        public void TransitionStateServerRPC() {
+            TransitionStateClientRpc();
+        }
+        [ClientRpc]
+        public void TransitionStateClientRpc() {
+            TransitionState();
+        }
+
+        public void TransitionState() {
+            LogMessage("Exiting: " + ActiveState.ToString());
+            ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
+            LogMessage("Transitioning Via: " + nextTransition.ToString());
+            ActiveState = nextTransition.NextState();
+            LogMessage("Entering: " + ActiveState.ToString());
+            ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+        }
     }
+
 }
