@@ -58,7 +58,6 @@ namespace Welcome_To_Ooblterra.Patches {
             }
             NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
 
-
             EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
             EntranceTeleport MainEntrance = null;
             for (int i = 0; i < array.Length; i++) {

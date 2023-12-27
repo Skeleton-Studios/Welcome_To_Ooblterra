@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
 using UnityEngine.Rendering.HighDefinition;
+using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Patches {
 
@@ -67,10 +68,10 @@ namespace Welcome_To_Ooblterra.Patches {
             MyNewMoon.levelAmbienceClips = __instance.levels[2].levelAmbienceClips;
 
             MonsterPatch.SetSecurityObjects(MyNewMoon, __instance.levels[5].spawnableMapObjects);
-            ItemPatch.SetMoonItemList(MyNewMoon);
+            //ItemPatch.SetMoonItemList(MyNewMoon);
             MonsterPatch.SetInsideMonsters(MyNewMoon);
             MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {} );
-            MonsterPatch.SetDaytimeMonsters(MyNewMoon);
+            //MonsterPatch.SetDaytimeMonsters(MyNewMoon);
 
             MoonFriendlyName = MyNewMoon.PlanetName;
             Moons[MyNewMoon.name] = MyNewMoon;
@@ -91,17 +92,17 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPostfix]
         private static void InitCustomLevel(StartOfRound __instance) {
 
-            if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+            if (LevelPrefab != null) {
+                GameObject.Destroy(LevelPrefab);
+                GameObject.Destroy(FactoryPatch.NewEntrance);
                 LevelLoaded = false;
-                if(LevelPrefab != null) { 
-                    GameObject.Destroy(LevelPrefab);
-                    GameObject.Destroy(FactoryPatch.NewEntrance);
-                }
+            }
+
+            if (__instance.currentLevel.PlanetName != MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
+                LevelLoaded = false;
                 return;
             }
-            if (LevelLoaded) {
-                return;
-            }
+
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
 
             string[] ObjectNamesToDestroy = new string[]{
@@ -149,9 +150,11 @@ namespace Welcome_To_Ooblterra.Patches {
             IndirectLight = GameObject.Find("Indirect");
 
             //Load our custom prefab
-            LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
-            WTOBase.LogToConsole("Loaded custom terrain object!");
-
+            if (!LevelLoaded) { 
+                LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
+                WTOBase.LogToConsole("Loaded custom terrain object!");
+                LevelLoaded = true;
+            }
             //The prefab contains an object called TeleportSnapLocation that we move the primary door to
             GameObject Entrance = GameObject.Find("EntranceTeleportA");
             GameObject SnapLoc = GameObject.Find("TeleportSnapLocation");

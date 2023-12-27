@@ -54,26 +54,29 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         }
         private class Attack : BehaviorState {
-            public bool SearchInProgress;
-            public bool investigate;
-            public int investigateTimer;
             AdultWandererAI AdultWanderer;
-            public int AttackCooldown = 60;
+            bool HasAttacked;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Attacking", value: true);
+                
                 AdultWanderer = self as AdultWandererAI;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 AdultWanderer = self as AdultWandererAI;
-                if (Vector3.Distance(AdultWanderer.MainTarget.transform.position, self.transform.position) < 5) {
-                    if(AttackCooldown <= 0) {
-                        AttackCooldown = 500;
-                        AdultWanderer.MeleeAttackPlayer(AdultWanderer.MainTarget);
+                if (Vector3.Distance(AdultWanderer.MainTarget.transform.position, self.transform.position) < AdultWanderer.AttackRange) {
+                    if (AdultWanderer.AttackCooldown <= 0) {
+                        AdultWanderer.LogMessage("Attacking!");
+                        AdultWanderer.AttackCooldown = 90;
+                        HasAttacked = false;
+                        creatureAnimator.SetBool("Attacking", value: true);
                         return;
+                    }
+                    if(AdultWanderer.AttackCooldown <= 76 && !HasAttacked) {
+                        AdultWanderer.MeleeAttackPlayer(AdultWanderer.MainTarget);
+                        HasAttacked = true;
                     }
                     return;
                 }
-                AttackCooldown = 0;
+                AdultWanderer.AttackCooldown = 0;
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Attacking", value: false);
@@ -191,7 +194,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
                 SelfWanderer = self as AdultWandererAI;
-                return (self.PlayerIsTargetable(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) > 5));
+                return (self.PlayerIsTargetable(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) > SelfWanderer.AttackRange));
             }
             public override BehaviorState NextState() {
                 return new Roam();
@@ -211,7 +214,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
                 SelfWanderer = self as AdultWandererAI;
-                return (self.PlayerIsTargetable(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) < 10));
+                return (self.PlayerIsTargetable(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) < SelfWanderer.AttackRange));
             }
             public override BehaviorState NextState() {
                 return new Attack();
@@ -221,20 +224,23 @@ namespace Welcome_To_Ooblterra.Enemies {
         private bool spawnFinished = false;
         public PlayerControllerB MainTarget = null;
         private bool LostPatience = false;
-        private int AttackCooldown;
+        private int AttackCooldown = 30;
+        public int AttackRange = 7;
         public override void Start() {
             InitialState = new Spawn();
+            PrintDebugs = true;
             base.Start();
         }
         public override void Update() {
             if(AttackCooldown > 0) {
                 AttackCooldown--;
-            }
+            } 
             base.Update();
         }
-        private void MeleeAttackPlayer(PlayerControllerB target) {
-            target.DamagePlayer(80, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
-            target.JumpToFearLevel(1f);
+        private void MeleeAttackPlayer(PlayerControllerB Target) {
+            LogMessage("Attacking player!");
+            Target.DamagePlayer(80, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
+            Target.JumpToFearLevel(1f);
         }
         public void SetMyTarget(PlayerControllerB player) {
             targetPlayer = player;

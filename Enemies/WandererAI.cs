@@ -146,8 +146,9 @@ namespace Welcome_To_Ooblterra.Enemies {
             if (base.IsOwner) {
                 if (enemyHP <= 0) {
                     ItemPatch.SpawnItem(transform.position + new Vector3(0, 5, 0));
-                    Vector3 AdultSpawnPos = playerWhoHit.transform.position - (Vector3.Scale(new Vector3(-5, 0, -5), (playerWhoHit.transform.forward * -1)) );
-                    GameObject obj = UnityEngine.Object.Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, Quaternion.Euler(Vector3.zero));
+                    Vector3 AdultSpawnPos = playerWhoHit.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), playerWhoHit.transform.forward * -1);
+                    Quaternion AdultSpawnRot = new Quaternion(0, Quaternion.LookRotation(playerWhoHit.transform.position - AdultSpawnPos).y, 0, 1);
+                    GameObject obj = UnityEngine.Object.Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
                     obj.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
                     obj.gameObject.GetComponentInChildren<AdultWandererAI>().SetMyTarget(playerWhoHit);
                     KillEnemyOnOwnerClient();

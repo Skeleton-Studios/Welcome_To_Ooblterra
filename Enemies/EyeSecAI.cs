@@ -121,18 +121,15 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Attacking", value: true);
                 EyeSecSelf.MyLaser.SetLaserEnabled(true);
-                EyeSecSelf.PlayerTracker.transform.position = (self.targetPlayer.transform.position /*- new Vector3(0, 10, 0)*/);
+                EyeSecSelf.PlayerTracker.transform.position = self.targetPlayer.transform.position;
+                Quaternion LookRot = new Quaternion();
+                LookRot.SetLookRotation((self.targetPlayer.transform.position - self.transform.position) * -1);
+                EyeSecSelf.Head.transform.rotation = LookRot;
                 laserTimer++;
                 if (laserTimer > 120) {
-                    self.targetPlayer.DamagePlayer(150, hasDamageSFX: true, callRPC: true, CauseOfDeath.Blast, 0);
+                    self.targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Blast);
                     self.creatureVoice.PlayOneShot(EyeSecSelf.BurnSFX);
-                } else {
-                    creatureAnimator.SetBool("Attacking", value: false);
-                    EyeSecSelf.MyLaser.SetLaserEnabled(false);
-                    EyeSecSelf.PlayerTracker.transform.position = (self.transform.position);
-                    laserTimer = 0;
-                    self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position, true).position);
-                }
+                } 
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Attacking", value: false);
@@ -151,9 +148,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 EyeSecSelf = self as EyeSecAI;
                 self.agent.speed = 9f;
+                EyeSecSelf.MyLaser.SetLaserEnabled(false);
+                EyeSecSelf.PlayerTracker.transform.position = self.transform.position;
+                self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position, true).position);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                EyeSecSelf.PlayerTracker.transform.position = (self.transform.position);
                 self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position).position);
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -216,12 +215,17 @@ namespace Welcome_To_Ooblterra.Enemies {
             bool ShouldDoScan;
             public override bool CanTransitionBeTaken() {
                 SelfEyeSec = self as EyeSecAI;
-                if(self.targetPlayer.health < 0) {
+                if(self.targetPlayer == null || self.targetPlayer.isPlayerDead) {
                     return true;
                 }
                 return false;
             }
             public override BehaviorState NextState() {
+                SelfEyeSec = self as EyeSecAI;
+                SelfEyeSec.MyLaser.SetLaserEnabled(false);
+                SelfEyeSec.PlayerTracker.transform.position = (self.transform.position);
+                SelfEyeSec.FoundPlayerHoldingScrap = false;
+                self.targetPlayer = null;
                 return new Patrol();
             }
 
@@ -230,7 +234,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             EyeSecAI SelfEyeSec;
             public override bool CanTransitionBeTaken() {
                 SelfEyeSec = self as EyeSecAI;
-                return !self.HasLineOfSightToPosition(self.targetPlayer.transform.position + new Vector3(0, 5, 0), 360f);
+                return !self.HasLineOfSightToPosition(self.targetPlayer.transform.position, 360f);
             }
             public override BehaviorState NextState() {
                 if (!self.PlayerIsTargetable(self.targetPlayer)) { 
@@ -245,7 +249,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if (!self.PlayerIsTargetable(self.targetPlayer)) {
                     return true;
                 }
-                return self.HasLineOfSightToPosition(self.targetPlayer.transform.position + new Vector3(0, 5, 0), 360f);
+                return self.HasLineOfSightToPosition(self.targetPlayer.transform.position, 360f);
             }
             public override BehaviorState NextState() {
                 if (!self.PlayerIsTargetable(self.targetPlayer)) {

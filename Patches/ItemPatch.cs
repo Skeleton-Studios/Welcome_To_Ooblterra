@@ -45,10 +45,11 @@ namespace Welcome_To_Ooblterra.Patches {
 
             foreach(ItemData MyCustomScrap in ItemList){
                 Debug.Log("Adding " + MyCustomScrap.ToString());
-                NextItem = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());               
+                NextItem = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());
                 NetworkPrefabs.RegisterNetworkPrefab(NextItem.spawnPrefab);
+                
                 MyCustomScrap.SetItem(NextItem);
-                Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.All);
+                Items.RegisterScrap(NextItem, MyCustomScrap.GetRarity(), Levels.LevelTypes.OoblterraLevel);
                 
                 MoonScrapItem = new SpawnableItemWithRarity {
                     spawnableItem = NextItem,
@@ -66,7 +67,16 @@ namespace Welcome_To_Ooblterra.Patches {
         }
 
         public static void SpawnItem(Vector3 location) {
-            var Crystal = UnityEngine.Object.Instantiate(ItemList[5].GetItem().spawnPrefab, location, Quaternion.identity);
+            NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
+            GameObject SpawnedItem = Object.Instantiate(ItemList[5].GetItem().spawnPrefab, location, Quaternion.identity);
+            GrabbableObject ItemObject = SpawnedItem.GetComponent<GrabbableObject>();
+            NetworkObject ItemNetworkObject = SpawnedItem.GetComponent<NetworkObject>();
+
+            ItemObject.scrapValue = (int)(RoundManager.Instance.AnomalyRandom.Next(ItemList[5].GetItem().minValue, ItemList[5].GetItem().maxValue) * RoundManager.Instance.scrapValueMultiplier);
+            if (Network.IsHost) {
+                ItemNetworkObject.Spawn();
+            }
+            
             WTOBase.LogToConsole("Custom item spawned...");
         }
 

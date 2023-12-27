@@ -60,7 +60,6 @@ namespace Welcome_To_Ooblterra.Properties {
 
             WTOHarmony.PatchAll(typeof(WTOBase));
             //WTOHarmony.PatchAll(typeof(WTOConfig));
-            
             WTOHarmony.PatchAll(typeof(FactoryPatch));
             WTOHarmony.PatchAll(typeof(ItemPatch));
             WTOHarmony.PatchAll(typeof(MonsterPatch));
@@ -71,7 +70,6 @@ namespace Welcome_To_Ooblterra.Properties {
             if (/* WTOConfig.WTOCustomSuits.Value*/ true) {
                 
             }
-
             LogToConsole("BEGIN PRINTING LOADED ASSETS");
 
             //AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);

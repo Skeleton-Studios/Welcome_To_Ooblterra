@@ -135,7 +135,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     }
                 }
                 lurker = self as LurkerAI;
-                self.agent.speed = 2f;
+                self.agent.speed = 4f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.targetPlayer.transform.position = self.transform.position;
@@ -144,8 +144,8 @@ namespace Welcome_To_Ooblterra.Enemies {
 
                     lurker.finishPlayerDrag = true;
                 } else {
-                    if(self.agent.speed < 15f) {
-                        self.agent.speed += Time.deltaTime;
+                    if(self.agent.speed < 20f) {
+                        self.agent.speed += Time.deltaTime * 2;
                     }
                     
                 }
@@ -161,12 +161,8 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 LurkerAI lurkerAI = self as LurkerAI;
                 self.creatureAnimator.SetBool("Moving", true);
-                if (lurkerAI.finishPlayerDrag) {
-                    self.SetDestinationToPosition(self.ChooseFarthestNodeFromPosition(self.transform.position).position);
-                    
-                } else {
-                    self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.transform.position).position, true);
-                }
+                
+                self.SetDestinationToPosition(self.ChooseFarthestNodeFromPosition(self.transform.position).position);
                 self.agent.speed = 15f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {

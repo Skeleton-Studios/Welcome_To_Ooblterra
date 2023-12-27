@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
+using UnityEngine.Networking;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class WTOEnemy : EnemyAI {
@@ -52,11 +53,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             roundManager = FindObjectOfType<RoundManager>();
             enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed + thisEnemyIndex);
             //Debug for the animations not fucking working
-            if (!agent.isOnNavMesh) {
+            /*if (!agent.isOnNavMesh) {
                 WTOBase.LogToConsole("CREATURE " + this.__getTypeName() + " WAS NOT PLACED ON NAVMESH, DESTROYING...");
                 Destroy(this);
                 return;
-            }
+            }*/
             creatureAnimator.Rebind();
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
             if (enemyType.isOutsideEnemy) {
