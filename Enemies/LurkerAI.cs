@@ -76,6 +76,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 SwitchClingingToCeilingState(true);
                 self.agent.speed = 0;
                 Lurker.MoveCooldown = enemyRandom.Next(150, 300);
+                Lurker.creatureVoice.Play();
                 Lurker.finishPlayerDrag = false;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -85,6 +86,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Lurker = self as LurkerAI;
+                Lurker.creatureVoice.Stop();
                 /*
                 if (Lurker.clingingToCeiling) {
                     SwitchClingingToCeilingState(false);
@@ -276,7 +278,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public int GrabDistance = 6;
         public AISearchRoutine roamMap;
         public int MoveCooldown;
-        protected override string __getTypeName() {
+        public override string __getTypeName() {
             return "LurkerAI";
         }
         public override void DoAIInterval() {

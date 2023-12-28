@@ -42,7 +42,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal bool PrintDebugs = false;
         internal PlayerState MyValidState;
         internal StateTransition nextTransition;
-        protected override string __getTypeName() {
+        public override string __getTypeName() {
             return GetType().Name;
         }
         public override void DoAIInterval() {

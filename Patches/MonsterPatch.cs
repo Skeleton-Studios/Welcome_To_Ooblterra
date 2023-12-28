@@ -66,6 +66,12 @@ namespace Welcome_To_Ooblterra.Patches {
         public static void SpawnItem(StartOfRound __instance) {
             
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
+                WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");
+                EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: true);
+                foreach(EntranceTeleport entrance in array){
+                    Debug.Log(entrance);
+                }
+                WTOBase.LogToConsole("END PRINTING LIST OF ENTRANCES");
                 /*
                 var Monster = UnityEngine.Object.Instantiate(InsideEnemies[2].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
                 Monster.GetComponent<NetworkObject>().Spawn();

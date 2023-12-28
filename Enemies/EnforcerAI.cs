@@ -30,7 +30,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private int TimeSinceLastRangedAttack;
 
 
-        protected override string __getTypeName() {
+        public override string __getTypeName() {
             return "EnforcerAI";
         }
         public override void DoAIInterval() {

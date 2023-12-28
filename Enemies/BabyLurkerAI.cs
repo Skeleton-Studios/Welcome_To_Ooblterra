@@ -185,7 +185,7 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         private bool LungeComplete;
         private int LungeCooldown;
-        protected override string __getTypeName() {
+        public override string __getTypeName() {
             return "BabyLurkerAI";
         }
         public override void Start() {

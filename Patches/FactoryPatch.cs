@@ -21,6 +21,7 @@ using static UnityEngine.Rendering.HighDefinition.ScalableSettingLevelParameter;
 using LethalLib.Extras;
 using UnityEngine.InputSystem;
 using UnityEngine.Rendering.HighDefinition;
+using System.Runtime.CompilerServices;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
@@ -69,6 +70,7 @@ namespace Welcome_To_Ooblterra.Patches {
                     FireEntrance = array[i];
                 }
             }
+            FireEntrance.transform.Rotate(0, -90, 0);
             GameObject[] PossibleObjects = GameObject.FindObjectsOfType<GameObject>();
             foreach (GameObject Object in PossibleObjects) {
                 if (Object.name.Contains("SpawnEntranceTrigger")) {
@@ -78,6 +80,7 @@ namespace Welcome_To_Ooblterra.Patches {
                     }
                     NewEntrance.transform.position = Object.transform.position;
                     NewEntrance.transform.rotation = Object.transform.rotation;
+                    NewEntrance.exitPoint = MainEntrance.transform;
                     NewEntrance.isEntranceToBuilding = false;
                 }
                 if (Object.name.Contains("SpawnEntranceBTrigger")) {
@@ -87,6 +90,8 @@ namespace Welcome_To_Ooblterra.Patches {
                     }
                     NewFireEntrance.transform.position = Object.transform.position;
                     NewFireEntrance.transform.rotation = Object.transform.rotation;
+                    NewFireEntrance.transform.Rotate(0, -90, 0);
+                    NewFireEntrance.exitPoint = FireEntrance.transform;
                     NewFireEntrance.isEntranceToBuilding = false;
                 }
             }
@@ -113,6 +118,32 @@ namespace Welcome_To_Ooblterra.Patches {
                 }
             }
             WTOBase.LogToConsole("Vents Found: " + iVentsFound);
+        }
+        [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
+        [HarmonyPostfix]
+        public static void DestroyDoors(EntranceTeleport __instance) {
+            NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
+            if (NewEntrance != null) {
+                if (Network.IsHost) {
+                    NewEntrance.GetComponent<NetworkObject>().Despawn();
+                }
+                GameObject.Destroy(NewEntrance);
+            }
+            if(NewFireEntrance != null) {
+                if (Network.IsHost) {
+                    NewFireEntrance.GetComponent<NetworkObject>().Despawn();
+                }
+
+                GameObject.Destroy(NewFireEntrance);
+            }
+        }
+
+        [HarmonyPatch(typeof(EntranceTeleport), "TeleportPlayer")]
+        [HarmonyPrefix]
+        public static void CheckTeleport(EntranceTeleport __instance) {
+            WTOBase.LogToConsole("Attepting Teleport");
+            WTOBase.LogToConsole("Player Location: " + GameNetworkManager.Instance.localPlayerController.transform.position);
+            WTOBase.LogToConsole("Exit Location: " + __instance.exitPoint.position);
         }
     }
 }
