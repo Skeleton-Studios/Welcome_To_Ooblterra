@@ -115,7 +115,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 creatureAnimator.SetBool("Attacking", value: true);
                 self.agent.speed = 0f;
                 self.creatureVoice.PlayOneShot(EyeSecSelf.AttackSFX);
-                //EyeSecSelf.Flash();
+                EyeSecSelf.Flash();
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Attacking", value: true);
