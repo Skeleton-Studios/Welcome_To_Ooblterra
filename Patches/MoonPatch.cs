@@ -199,20 +199,22 @@ namespace Welcome_To_Ooblterra.Patches {
         private static void DestroyVowObjects() {
             GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
             //If the object has any of the names in the list, it's gotta go
-            /*foreach (GameObject ObjToDestroy in allObjects.Where(obj => ObjectNamesToDestroy.Contains<string>(obj.name) || 
+            foreach (GameObject ObjToDestroy in allObjects.Where(obj => ObjectNamesToDestroy.Any(obj.name.Contains) || 
                 (obj.name.Contains("Plane") && 
                     (obj.transform.parent.gameObject.name.Contains("Foliage") || obj.transform.parent.gameObject.name.Contains("Mounds"))
                                                                                                                                         ))){
                 GameObject.Destroy(ObjToDestroy);
                 continue;
-            }*/
-
+            }
+            GameObject Factory = GameObject.Find("Models2VowFactory");
+            Factory.SetActive(false);
+            /*
             foreach (GameObject ObjToDestroy in allObjects) {
                 if (ObjToDestroy.name.Contains("Models2VowFactory")) {
                     ObjToDestroy.SetActive(false);
                     WTOBase.LogToConsole("Vow factory adjusted.");
                 }
-
+                
                 //If the object's named Plane and its parent is Foliage, it's also gotta go. This gets rid of the grass
                 if (ObjToDestroy.name.Contains("Plane") && (ObjToDestroy.transform.parent.gameObject.name.Contains("Foliage") || ObjToDestroy.transform.parent.gameObject.name.Contains("Mounds"))) {
                     GameObject.Destroy(ObjToDestroy);
@@ -225,6 +227,7 @@ namespace Welcome_To_Ooblterra.Patches {
                     }
                 }
             }
+            */
         }
         private static void MoveDoors() {
 
