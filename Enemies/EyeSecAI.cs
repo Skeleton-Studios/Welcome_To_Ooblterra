@@ -107,7 +107,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Attack : BehaviorState {
-            private int laserTimer = 0;
+            private float laserTimer = 0;
             public EyeSecAI EyeSecSelf;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 EyeSecSelf = self as EyeSecAI;
@@ -124,7 +124,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 Quaternion LookRot = new Quaternion();
                 LookRot.SetLookRotation((self.targetPlayer.transform.position - self.transform.position) * -1);
                 EyeSecSelf.Head.transform.rotation = LookRot;
-                laserTimer++;
+                laserTimer += Time.deltaTime;
                 if (laserTimer > 120) {
                     self.targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Blast);
                     self.creatureVoice.PlayOneShot(EyeSecSelf.BurnSFX);
@@ -372,7 +372,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public void Flash() {           
             creatureVoice.PlayOneShot(flashSFX);
             WalkieTalkie.TransmitOneShotAudio(creatureVoice, flashSFX);
-            StunGrenadeItem.StunExplosion(transform.position, affectAudio: false, 1f, 2f, 2f);      
+            StunGrenadeItem.StunExplosion(transform.position, affectAudio: false, 2f, 4f, 2f);      
         }
     }
 }

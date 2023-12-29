@@ -57,7 +57,7 @@ namespace Welcome_To_Ooblterra.Enemies {
 
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Wanderer = self as WandererAI;
-                self.agent.speed = 2f;
+                self.agent.speed = 10f;
                 self.creatureAnimator.speed = 2f;
                 self.creatureAnimator.SetBool("Moving", true);
             }

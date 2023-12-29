@@ -141,7 +141,7 @@ namespace Welcome_To_Ooblterra.Enemies {
 
                     lurker.finishPlayerDrag = true;
                 } else {
-                    if(self.agent.speed < 20f) {
+                    if(self.agent.speed < 15f) {
                         self.agent.speed += Time.deltaTime * 2;
                     }
                     
