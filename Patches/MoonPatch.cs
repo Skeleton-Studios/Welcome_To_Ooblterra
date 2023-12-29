@@ -113,42 +113,24 @@ namespace Welcome_To_Ooblterra.Patches {
             if (__instance.currentLevel.PlanetName != MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
                 return;
             }
-            DestroyOoblterraPrefab();
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
-
-
-
-
-
-
-            //Load our custom prefab
-            if (!LevelLoaded) { 
-                LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
-                WTOBase.LogToConsole("Loaded custom terrain object!");
-                LevelLoaded = true;
+            if (LevelLoaded) { 
+                DestroyOoblterraPrefab();
             }
-            //The prefab contains an object called TeleportSnapLocation that we move the primary door to
-            GameObject Entrance = GameObject.Find("EntranceTeleportA");
-            GameObject SnapLoc = GameObject.Find("TeleportSnapLocation");
-            Entrance.transform.position = SnapLoc.transform.position;
-            GameObject FireExit = GameObject.Find("EntranceTeleportB");
-            GameObject FireExitSnapLoc = GameObject.Find("FireExitSnapLocation");
-            FireExit.transform.position = FireExitSnapLoc.transform.position;
-
-
-
+            DestroyVowObjects();
+            //Load our custom prefab
+            LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
+            WTOBase.LogToConsole("Loaded custom terrain object!");
+            MoveDoors();
             ManageCustomSun();
             MoveNavNodesToNewPositions();
             ManageFootsteps(__instance);
-            
-            //Footsteps
-
             LevelLoaded = true;
         }
 
         [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
         [HarmonyPostfix]
-        public static void DestroyLevel(StartOfRound __instance, bool ShouldDestroy = true) {
+        public static void DestroyLevel(StartOfRound __instance) {
             if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
                 DestroyOoblterraPrefab();
             }
@@ -214,7 +196,6 @@ namespace Welcome_To_Ooblterra.Patches {
                 }
             }
         }
-
         private static void DestroyVowObjects() {
             GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
             //If the object has any of the names in the list, it's gotta go
@@ -244,6 +225,16 @@ namespace Welcome_To_Ooblterra.Patches {
                     }
                 }
             }
+        }
+        private static void MoveDoors() {
+
+            //The prefab contains an object called TeleportSnapLocation that we move the primary door to
+            GameObject Entrance = GameObject.Find("EntranceTeleportA");
+            GameObject SnapLoc = GameObject.Find("TeleportSnapLocation");
+            Entrance.transform.position = SnapLoc.transform.position;
+            GameObject FireExit = GameObject.Find("EntranceTeleportB");
+            GameObject FireExitSnapLoc = GameObject.Find("FireExitSnapLocation");
+            FireExit.transform.position = FireExitSnapLoc.transform.position;
         }
     }
 }
