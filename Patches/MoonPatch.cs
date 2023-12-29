@@ -14,7 +14,7 @@ namespace Welcome_To_Ooblterra.Patches {
 
         public static IDictionary<string, SelectableLevel> Moons = new Dictionary<string, SelectableLevel>();
 
-        private static UnityEngine.Object LevelPrefab = null;
+        public static UnityEngine.Object LevelPrefab = null;
 
         //Identifiers for the Moon
         public static SelectableLevel MyNewMoon;
@@ -60,7 +60,10 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPrefix]
         [HarmonyPriority(0)]
         private static void AddMoonToList(StartOfRound __instance) {
-
+            if (__instance.currentLevel.PlanetName != MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
+                GameObject.Destroy(LevelPrefab);
+                LevelLoaded = false;
+            }
             //Load our level asset object
             MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>("Assets/CustomScene/OoblterraLevel.asset");
 
@@ -93,18 +96,10 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPostfix]
         private static void InitCustomLevel(StartOfRound __instance) {
-
-            if (LevelPrefab != null) {
-                GameObject.Destroy(LevelPrefab);
-                GameObject.Destroy(FactoryPatch.NewEntrance);
-                LevelLoaded = false;
-            }
-
             if (__instance.currentLevel.PlanetName != MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
-                LevelLoaded = false;
                 return;
             }
-
+            DestroyLevel(__instance);
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
 
             string[] ObjectNamesToDestroy = new string[]{
@@ -187,6 +182,15 @@ namespace Welcome_To_Ooblterra.Patches {
                 }
             }
             LevelLoaded = true;
+        }
+
+        [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
+        [HarmonyPostfix]
+        public static void DestroyLevel(StartOfRound __instance) {
+            if (__instance.currentLevel.PlanetName == MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
+                GameObject.Destroy(LevelPrefab);
+                LevelLoaded = false;
+            }
         }
 
         [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
