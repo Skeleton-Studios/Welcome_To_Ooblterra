@@ -36,7 +36,7 @@ namespace Welcome_To_Ooblterra.Patches {
                 "Tree",
                 "Rock",
                 "StaticLightingSky",
-                "ForestAmbience",
+                //"ForestAmbience",
                 "Sky and Fog Global Volume",
                 "Local Volumetric Fog",
                 "SunTexture"
@@ -135,7 +135,7 @@ namespace Welcome_To_Ooblterra.Patches {
                 DestroyOoblterraPrefab();
             }
         }
-
+        
         [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
         [HarmonyPrefix]
         private static bool SkipTODMusic() {
