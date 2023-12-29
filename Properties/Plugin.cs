@@ -67,15 +67,15 @@ namespace Welcome_To_Ooblterra.Properties {
             WTOHarmony.PatchAll(typeof(MoonPatch));
             WTOHarmony.PatchAll(typeof(SuitPatch));
             WTOHarmony.PatchAll(typeof(TerminalPatch));
-
+            
             if (/* WTOConfig.WTOCustomSuits.Value*/ true) {
                 
             }
             LogToConsole("BEGIN PRINTING LOADED ASSETS");
-
             //AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);
             if (/*InteriorState != AllowedState.Off*/ true) {
                 string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custominterior");
+                
                 FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
                 
                 foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
