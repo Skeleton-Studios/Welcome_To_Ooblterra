@@ -87,12 +87,14 @@ namespace Welcome_To_Ooblterra.Patches {
              * 2 of those. Will probably cause issues
              * TODO: Ensure that the spawn we grab is a GeneralItemSpawn or even make it so we can
              * specify the spawn type for each item 
-            */
+            
             RandomScrapSpawn[] source = Object.FindObjectsOfType<RandomScrapSpawn>();
             foreach (SpawnableItemWithRarity item in MoonScrap) {
                 item.spawnableItem.spawnPositionTypes[0] = source[0].spawnableItems;
             }
+            */
             return true;
+            
         }
 
     }
