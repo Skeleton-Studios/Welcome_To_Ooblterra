@@ -121,7 +121,7 @@ namespace Welcome_To_Ooblterra.Patches {
         }
         [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
         [HarmonyPostfix]
-        public static void DestroyDoors(EntranceTeleport __instance) {
+        public static void DestroyDoors(StartOfRound __instance) {
             NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
             if (NewEntrance != null) {
                 if (Network.IsHost) {
@@ -133,17 +133,21 @@ namespace Welcome_To_Ooblterra.Patches {
                 if (Network.IsHost) {
                     NewFireEntrance.GetComponent<NetworkObject>().Despawn();
                 }
-
                 GameObject.Destroy(NewFireEntrance);
             }
+
         }
 
         [HarmonyPatch(typeof(EntranceTeleport), "TeleportPlayer")]
         [HarmonyPrefix]
         public static void CheckTeleport(EntranceTeleport __instance) {
+            if(RoundManager.Instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+                return;
+            }
             WTOBase.LogToConsole("Attepting Teleport");
             WTOBase.LogToConsole("Player Location: " + GameNetworkManager.Instance.localPlayerController.transform.position);
             WTOBase.LogToConsole("Exit Location: " + __instance.exitPoint.position);
+            TimeOfDay.Instance.insideLighting = __instance.isEntranceToBuilding;
         }
     }
 }
