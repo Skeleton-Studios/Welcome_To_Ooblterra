@@ -12,6 +12,7 @@ using BepInEx.Configuration;
 using Unity.Netcode;
 using System;
 using System.Reflection.Emit;
+using UnityEngine.InputSystem;
 
 namespace Welcome_To_Ooblterra.Properties {
 
@@ -120,6 +121,8 @@ namespace Welcome_To_Ooblterra.Properties {
             ItemPatch.AddCustomItems();
             MonsterPatch.Start();
             FactoryPatch.Start();
+
+            //NetcodeWeaver stuff
             var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types) {
                 var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
@@ -130,6 +133,31 @@ namespace Welcome_To_Ooblterra.Properties {
                     }
                 }
             }
+        }
+
+        [HarmonyPatch(typeof(StartOfRound), "Update")]
+        [HarmonyPostfix]
+        public static void DebugHelper(StartOfRound __instance) {
+            
+            if (Keyboard.current.f8Key.wasPressedThisFrame) {
+                SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
+                foreach(SprayPaintItem sprayPaint in SprayPaints) {
+                    sprayPaint.debugSprayPaint = true;
+                }
+                /*
+                WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");
+                EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: true);
+                foreach (EntranceTeleport entrance in array) {
+                    Debug.Log(entrance);
+                }
+                WTOBase.LogToConsole("END PRINTING LIST OF ENTRANCES");
+                
+                var Monster = UnityEngine.Object.Instantiate(InsideEnemies[2].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
+                Monster.GetComponent<NetworkObject>().Spawn();
+                WTOBase.LogToConsole("EyeSec spawned...");
+                */
+            }
+
         }
     }
 }

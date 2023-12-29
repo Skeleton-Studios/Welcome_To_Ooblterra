@@ -12,21 +12,36 @@ namespace Welcome_To_Ooblterra.Patches {
 
     internal class MoonPatch {
 
-        public static IDictionary<string, SelectableLevel> Moons = new Dictionary<string, SelectableLevel>();
+        public static string MoonFriendlyName;
+        public static IDictionary<string, SelectableLevel> ModdedMoonList = new Dictionary<string, SelectableLevel>();
+        public static IDictionary<string, int> ModdedIds = new Dictionary<string, int>();
+        public static SelectableLevel MyNewMoon;
 
         public static UnityEngine.Object LevelPrefab = null;
 
         //Identifiers for the Moon
-        public static SelectableLevel MyNewMoon;
-        public static IDictionary<string, int> ModdedIds = new Dictionary<string, int>();
+
+
         //public IDictionary<string, SelectableLevel> mlevels;
 
+ 
 
-        public static string MoonFriendlyName;
         private static GameObject SunObject;
         private static GameObject SunAnimObject;
         private static GameObject IndirectLight;
         private static AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
+        private static string[] ObjectNamesToDestroy = new string[]{
+                "CompletedVowTerrain",
+                "tree",
+                "Tree",
+                "Rock",
+                "StaticLightingSky",
+                "ForestAmbience",
+                "Sky and Fog Global Volume",
+                "Local Volumetric Fog",
+                "SunTexture"
+            };
+
         private static bool LevelLoaded;
 
         //Following two methods taken from MoonAPI, thanks Bizzlemip
@@ -60,9 +75,8 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPrefix]
         [HarmonyPriority(0)]
         private static void AddMoonToList(StartOfRound __instance) {
-            if (__instance.currentLevel.PlanetName != MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
-                GameObject.Destroy(LevelPrefab);
-                LevelLoaded = false;
+            if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+                DestroyOoblterraPrefab();
             }
             //Load our level asset object
             MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>("Assets/CustomScene/OoblterraLevel.asset");
@@ -79,13 +93,13 @@ namespace Welcome_To_Ooblterra.Patches {
             //MonsterPatch.SetDaytimeMonsters(MyNewMoon);
 
             MoonFriendlyName = MyNewMoon.PlanetName;
-            Moons[MyNewMoon.name] = MyNewMoon;
+            ModdedMoonList[MyNewMoon.name] = MyNewMoon;
             TerminalPatch.AddMoonToList();
             //new level array should be big enough to fit our modded moons in it
-            __instance.levels = ResizeArray<SelectableLevel>(__instance.levels, __instance.levels.Length + Moons.Count<KeyValuePair<string, SelectableLevel>>());
+            __instance.levels = ResizeArray<SelectableLevel>(__instance.levels, __instance.levels.Length + ModdedMoonList.Count<KeyValuePair<string, SelectableLevel>>());
 
             //Add our modded moons to the array and assign them an ID in the IDs array
-            foreach (KeyValuePair<string, SelectableLevel> keyValuePair in Moons) {
+            foreach (KeyValuePair<string, SelectableLevel> keyValuePair in ModdedMoonList) {
                 int num = AddToMoons(__instance, keyValuePair.Value);
                 keyValuePair.Value.levelID = num;
                 ModdedIds[keyValuePair.Key] = num;
@@ -99,52 +113,13 @@ namespace Welcome_To_Ooblterra.Patches {
             if (__instance.currentLevel.PlanetName != MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
                 return;
             }
-            DestroyLevel(__instance);
+            DestroyOoblterraPrefab();
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
 
-            string[] ObjectNamesToDestroy = new string[]{
-                "CompletedVowTerrain",
-                "tree",
-                "Tree",
-                "Rock",
-                "StaticLightingSky",
-                "ForestAmbience",
-                "Sky and Fog Global Volume",
-                "Local Volumetric Fog",
-                "SunTexture"
-            };
 
-            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
 
-            foreach (GameObject ObjToDestroy in allObjects) {
 
-                if (ObjToDestroy.name.Contains("Models2VowFactory")) {
-                    try {
-                        ObjToDestroy.SetActive(false);
-                        WTOBase.LogToConsole("Vow factory adjusted.");
-                    } catch {
-                        WTOBase.LogToConsole("Issue adjusting vow factory");
-                    }
-                }
 
-                foreach (NavMeshSurface Nav in GameObject.FindObjectsOfType<NavMeshSurface>()) {
-                    Nav.RemoveData();
-                }
-                //If the object's named Plane and its parent is Foliage, it's also gotta go. This gets rid of the grass
-                if (ObjToDestroy.name.Contains("Plane") && (ObjToDestroy.transform.parent.gameObject.name.Contains("Foliage") || ObjToDestroy.transform.parent.gameObject.name.Contains("Mounds"))) {
-                    GameObject.Destroy(ObjToDestroy);
-                }
-                foreach (string UnwantedObjString in ObjectNamesToDestroy) {
-                    //If the object has any of the names in the list, it's gotta go
-                    if (ObjToDestroy.name.Contains(UnwantedObjString)) {
-                        GameObject.Destroy(ObjToDestroy);
-                        continue;
-                    }
-                }
-            }
-            SunObject = GameObject.Find("SunWithShadows");
-            SunAnimObject = GameObject.Find("SunAnimContainer");
-            IndirectLight = GameObject.Find("Indirect");
 
             //Load our custom prefab
             if (!LevelLoaded) { 
@@ -160,36 +135,22 @@ namespace Welcome_To_Ooblterra.Patches {
             GameObject FireExitSnapLoc = GameObject.Find("FireExitSnapLocation");
             FireExit.transform.position = FireExitSnapLoc.transform.position;
 
-            //Testing some sun stuff
-            SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
-            SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
-            GameObject.Destroy(SunObject);
-            GameObject.Destroy(IndirectLight);
 
+
+            ManageCustomSun();
             MoveNavNodesToNewPositions();
+            ManageFootsteps(__instance);
             
             //Footsteps
-            foreach(FootstepSurface surfaces in __instance.footstepSurfaces) {
-                if (surfaces.surfaceTag == "Grass") {
-                    surfaces.clips = new AudioClip[] {
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP01.wav"),
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP02.wav"),
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP03.wav"),
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP04.wav"),
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP05.wav")
-                    };
-                    surfaces.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLE_Fall.wav");
-                }
-            }
+
             LevelLoaded = true;
         }
 
         [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
         [HarmonyPostfix]
-        public static void DestroyLevel(StartOfRound __instance) {
-            if (__instance.currentLevel.PlanetName == MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
-                GameObject.Destroy(LevelPrefab);
-                LevelLoaded = false;
+        public static void DestroyLevel(StartOfRound __instance, bool ShouldDestroy = true) {
+            if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
+                DestroyOoblterraPrefab();
             }
         }
 
@@ -199,6 +160,11 @@ namespace Welcome_To_Ooblterra.Patches {
             return false;
         }
 
+
+        private static void DestroyOoblterraPrefab() {
+            GameObject.Destroy(LevelPrefab);
+            LevelLoaded = false;
+        }
         private static void MoveNavNodesToNewPositions() {
             //Get a list of all outside navigation nodes
             GameObject[] NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
@@ -223,6 +189,61 @@ namespace Welcome_To_Ooblterra.Patches {
             }
             NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
             WTOBase.LogToConsole("Moved nav points: " + NavNodes.Count().ToString());
+        }
+        private static void ManageCustomSun() {
+            //Ooblterra has no sun so we're getting rid of it
+            SunObject = GameObject.Find("SunWithShadows");
+            SunAnimObject = GameObject.Find("SunAnimContainer");
+            IndirectLight = GameObject.Find("Indirect");
+            SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
+            SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
+            GameObject.Destroy(SunObject);
+            GameObject.Destroy(IndirectLight);
+        }
+        private static void ManageFootsteps(StartOfRound __instance) {
+            foreach (FootstepSurface surfaces in __instance.footstepSurfaces) {
+                if (surfaces.surfaceTag == "Grass") {
+                    surfaces.clips = new AudioClip[] {
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP01.wav"),
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP02.wav"),
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP03.wav"),
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP04.wav"),
+                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP05.wav")
+                    };
+                    surfaces.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLE_Fall.wav");
+                }
+            }
+        }
+
+        private static void DestroyVowObjects() {
+            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+            //If the object has any of the names in the list, it's gotta go
+            /*foreach (GameObject ObjToDestroy in allObjects.Where(obj => ObjectNamesToDestroy.Contains<string>(obj.name) || 
+                (obj.name.Contains("Plane") && 
+                    (obj.transform.parent.gameObject.name.Contains("Foliage") || obj.transform.parent.gameObject.name.Contains("Mounds"))
+                                                                                                                                        ))){
+                GameObject.Destroy(ObjToDestroy);
+                continue;
+            }*/
+
+            foreach (GameObject ObjToDestroy in allObjects) {
+                if (ObjToDestroy.name.Contains("Models2VowFactory")) {
+                    ObjToDestroy.SetActive(false);
+                    WTOBase.LogToConsole("Vow factory adjusted.");
+                }
+
+                //If the object's named Plane and its parent is Foliage, it's also gotta go. This gets rid of the grass
+                if (ObjToDestroy.name.Contains("Plane") && (ObjToDestroy.transform.parent.gameObject.name.Contains("Foliage") || ObjToDestroy.transform.parent.gameObject.name.Contains("Mounds"))) {
+                    GameObject.Destroy(ObjToDestroy);
+                }
+                foreach (string UnwantedObjString in ObjectNamesToDestroy) {
+                    
+                    if (ObjToDestroy.name.Contains(UnwantedObjString)) {
+                        GameObject.Destroy(ObjToDestroy);
+                        continue;
+                    }
+                }
+            }
         }
     }
 }

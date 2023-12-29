@@ -58,31 +58,15 @@ namespace Welcome_To_Ooblterra.Patches {
             }
             if (KeywordName != null) {
                 EnemyKeyword = WTOBase.MonsterAssetBundle.LoadAsset<TerminalKeyword>("Assets/CustomMonsters/" + EnemyName + "/" + KeywordName + ".asset");
+                EnemyKeyword.defaultVerb = TerminalPatch.InfoKeyword;
             }
+
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(enemyType.enemyPrefab);
             LethalLib.Modules.Enemies.RegisterEnemy(enemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, new string[] { "OoblterraLevel" }, EnemyInfo, EnemyKeyword);
             EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = enemyType, rarity = rarity });
         }
 
-        [HarmonyPatch(typeof(StartOfRound), "Update")]
-        [HarmonyPostfix]
-        public static void SpawnItem(StartOfRound __instance) {
-            
-            if (Keyboard.current.f8Key.wasPressedThisFrame) {
-                WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");
-                EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: true);
-                foreach(EntranceTeleport entrance in array){
-                    Debug.Log(entrance);
-                }
-                WTOBase.LogToConsole("END PRINTING LIST OF ENTRANCES");
-                /*
-                var Monster = UnityEngine.Object.Instantiate(InsideEnemies[2].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
-                Monster.GetComponent<NetworkObject>().Spawn();
-                WTOBase.LogToConsole("EyeSec spawned...");
-                */
-            }
-            
-        }
+
         public static void Start() {
             CreateEnemy("Wanderer", DaytimeEnemies, 50, LethalLib.Modules.Enemies.SpawnType.Daytime, "WandererTerminal", "WandererKeyword");
             CreateEnemy("AdultWanderer", AdultWandererContainer, 0, LethalLib.Modules.Enemies.SpawnType.Outside, "AdultWandererTerminal", "AdultWandererKeyword");
