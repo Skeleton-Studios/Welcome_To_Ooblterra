@@ -125,7 +125,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 LookRot.SetLookRotation((self.targetPlayer.transform.position - self.transform.position) * -1);
                 EyeSecSelf.Head.transform.rotation = LookRot;
                 laserTimer += Time.deltaTime;
-                if (laserTimer > 120) {
+                if (laserTimer > 2) {
                     self.targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Blast);
                     self.creatureVoice.PlayOneShot(EyeSecSelf.BurnSFX);
                 } 
