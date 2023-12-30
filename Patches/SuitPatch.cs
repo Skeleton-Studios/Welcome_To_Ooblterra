@@ -26,9 +26,11 @@ namespace Welcome_To_Ooblterra.Patches {
             if (SuitsLoaded) {
                 return; 
             }
+            /*
             IEnumerable<UnlockableItem> Unlockables = (IEnumerable<UnlockableItem>)__instance.unlockablesList;
             UnlockableItem Suit = Unlockables.First(x => x.suitMaterial != null);
             WTOBase.LogToConsole("Suit found: " + Suit.unlockableName);
+            */
             //Get all unlockables
             for (int i = 0; i < __instance.unlockablesList.unlockables.Count; i++) {
                 UnlockableItem unlockableItem = __instance.unlockablesList.unlockables[i];
@@ -56,6 +58,7 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "Start")]
         [HarmonyPatch(typeof(RoundManager), "GenerateNewLevelClientRpc")]
         [HarmonyPostfix]
+        [HarmonyPriority(0)]
         private static void PatchPosters(StartOfRound __instance) {
             Material[] materials = ((Renderer)GameObject.Find("HangarShip/Plane.001").GetComponent<MeshRenderer>()).materials;
             materials[1] = WTOBase.ItemAssetBundle.LoadAsset<Material>("Assets/CustomSuits/Poster.mat");

@@ -13,7 +13,7 @@ namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
 
         public static EntranceTeleport NewEntrance;
-        public static EntranceTeleport NewFireEntrance;
+        public static EntranceTeleport NewFireExit;
         private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
         
         [HarmonyPatch(typeof(RoundManager), "Awake")]
@@ -35,37 +35,37 @@ namespace Welcome_To_Ooblterra.Patches {
             NetworkManager NetworkStatus = GameObject.FindObjectOfType<NetworkManager>();
 
             EntranceTeleport[] ExistingEntranceArray = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
-            EntranceTeleport NewMainEntrance = null;
-            EntranceTeleport NewFireExit = null;
+            EntranceTeleport OldMainEntrance = null;
+            EntranceTeleport OldFireExit = null;
             for (int i = 0; i < ExistingEntranceArray.Length; i++) {
                 if (ExistingEntranceArray[i].entranceId == 0) {
-                    NewMainEntrance = ExistingEntranceArray[i];
+                    OldMainEntrance = ExistingEntranceArray[i];
                 } else {
-                    NewFireExit = ExistingEntranceArray[i];
+                    OldFireExit = ExistingEntranceArray[i];
                 }
             }
-            NewFireExit.transform.Rotate(0, -90, 0);
+            OldFireExit.transform.Rotate(0, -90, 0);
             GameObject[] PossibleEntrances = GameObject.FindObjectsOfType<GameObject>();
             foreach (GameObject EntranceSpawnPoint in PossibleEntrances.Where(Obj => Obj.name.Contains("SpawnEntranceTrigger"))) {
-                NewEntrance = GameObject.Instantiate(NewMainEntrance);
+                NewEntrance = GameObject.Instantiate(OldMainEntrance);
                 if (NetworkStatus.IsHost) {
                     NewEntrance.GetComponent<NetworkObject>().Spawn();
                 }
                 NewEntrance.transform.position = EntranceSpawnPoint.transform.position;
                 NewEntrance.transform.rotation = EntranceSpawnPoint.transform.rotation;
-                NewEntrance.exitPoint = NewMainEntrance.transform;
+                NewEntrance.exitPoint = OldMainEntrance.transform;
                 NewEntrance.isEntranceToBuilding = false;
             }
             foreach (GameObject FireExitSpawnPoint in PossibleEntrances.Where(Obj => Obj.name.Contains("SpawnEntranceBTrigger"))) {
-                NewFireEntrance = GameObject.Instantiate(NewFireExit);
+                OldFireExit = GameObject.Instantiate(OldFireExit);
                 if (NetworkStatus.IsHost) {
-                    NewFireEntrance.GetComponent<NetworkObject>().Spawn();
+                    FactoryPatch.NewFireExit.GetComponent<NetworkObject>().Spawn();
                 }
-                NewFireEntrance.transform.position = FireExitSpawnPoint.transform.position;
-                NewFireEntrance.transform.rotation = FireExitSpawnPoint.transform.rotation;
-                NewFireEntrance.transform.Rotate(0, -90, 0);
-                NewFireEntrance.exitPoint = NewFireExit.transform;
-                NewFireEntrance.isEntranceToBuilding = false;
+                FactoryPatch.NewFireExit.transform.position = FireExitSpawnPoint.transform.position;
+                FactoryPatch.NewFireExit.transform.rotation = FireExitSpawnPoint.transform.rotation;
+                FactoryPatch.NewFireExit.transform.Rotate(0, -90, 0);
+                FactoryPatch.NewFireExit.exitPoint = OldFireExit.transform;
+                FactoryPatch.NewFireExit.isEntranceToBuilding = false;
             }
               
             SpawnSyncedObject[] SyncedObjects = GameObject.FindObjectsOfType<SpawnSyncedObject>();
@@ -92,7 +92,7 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPostfix]
         public static void DestroyDoors(StartOfRound __instance) {
             NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
-            EntranceTeleport[] Entrances = new EntranceTeleport[] { NewEntrance, NewFireEntrance };
+            EntranceTeleport[] Entrances = new EntranceTeleport[] { NewEntrance, NewFireExit };
             foreach (EntranceTeleport Entrance in Entrances) {
                 if (Entrance == null) {
                     continue;

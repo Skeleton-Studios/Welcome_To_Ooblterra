@@ -54,13 +54,11 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPostfix]
         private static void InitCustomLevel(StartOfRound __instance) {
+            DestroyOoblterraPrefab();
             if (__instance.currentLevel.PlanetName != MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
                 return;
             }
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
-            if (LevelLoaded) { 
-                DestroyOoblterraPrefab();
-            }
             DestroyVowObjects();
             //Load our custom prefab
             LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
