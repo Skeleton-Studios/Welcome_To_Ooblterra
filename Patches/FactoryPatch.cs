@@ -20,7 +20,7 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPostfix]
         private static void ScrapValueAdjuster(RoundManager __instance) {
             if(__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
-                __instance.scrapValueMultiplier = 1.0f;
+                __instance.scrapValueMultiplier = 0.4f;
                 return;
             }
             __instance.scrapValueMultiplier = 1.5f;
@@ -57,15 +57,15 @@ namespace Welcome_To_Ooblterra.Patches {
                 NewEntrance.isEntranceToBuilding = false;
             }
             foreach (GameObject FireExitSpawnPoint in PossibleEntrances.Where(Obj => Obj.name.Contains("SpawnEntranceBTrigger"))) {
-                OldFireExit = GameObject.Instantiate(OldFireExit);
+                NewFireExit = GameObject.Instantiate(OldFireExit);
                 if (NetworkStatus.IsHost) {
-                    FactoryPatch.NewFireExit.GetComponent<NetworkObject>().Spawn();
+                    NewFireExit.GetComponent<NetworkObject>().Spawn();
                 }
-                FactoryPatch.NewFireExit.transform.position = FireExitSpawnPoint.transform.position;
-                FactoryPatch.NewFireExit.transform.rotation = FireExitSpawnPoint.transform.rotation;
-                FactoryPatch.NewFireExit.transform.Rotate(0, -90, 0);
-                FactoryPatch.NewFireExit.exitPoint = OldFireExit.transform;
-                FactoryPatch.NewFireExit.isEntranceToBuilding = false;
+                NewFireExit.transform.position = FireExitSpawnPoint.transform.position;
+                NewFireExit.transform.rotation = FireExitSpawnPoint.transform.rotation;
+                NewFireExit.transform.Rotate(0, -90, 0);
+                NewFireExit.exitPoint = OldFireExit.transform;
+                NewFireExit.isEntranceToBuilding = false;
             }
               
             SpawnSyncedObject[] SyncedObjects = GameObject.FindObjectsOfType<SpawnSyncedObject>();
@@ -74,7 +74,7 @@ namespace Welcome_To_Ooblterra.Patches {
 
             foreach (SpawnSyncedObject ventSpawnPoint in SyncedObjects) {
                 if (ventSpawnPoint.spawnPrefab.name == "VentDummy") {
-                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(NetworkPrefab => NetworkPrefab.Prefab.name == "VentEntrance");
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(x => x.Prefab.name == "VentEntrance");
                     if (networkPrefab == null) {
                         WTOBase.LogToConsole("LC Vent Prefab not found!!");
                         return;

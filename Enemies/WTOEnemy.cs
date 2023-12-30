@@ -1,13 +1,7 @@
 ﻿using GameNetcodeStuff;
-using System;
 using System.Collections.Generic;
-using System.Data.Common;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
-using UnityEngine.Networking;
 using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Enemies {

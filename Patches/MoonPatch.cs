@@ -4,6 +4,7 @@ using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
+using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Patches {
 
@@ -26,6 +27,7 @@ namespace Welcome_To_Ooblterra.Patches {
                 "SunTexture"
             };
         private static bool LevelLoaded;
+        private static bool LevelStartHasBeenRun = false;
 
         //PATCHES
 
@@ -54,20 +56,30 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPostfix]
         private static void InitCustomLevel(StartOfRound __instance) {
-            DestroyOoblterraPrefab();
-            if (__instance.currentLevel.PlanetName != MoonFriendlyName /*|| !GameNetworkManager.Instance.gameHasStarted*/) {
+            NetworkManager NetworkStatus = GameObject.FindObjectOfType<NetworkManager>();
+            if(NetworkStatus.IsHost && !GameNetworkManager.Instance.gameHasStarted) {
+                return;
+            }
+            if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+                DestroyOoblterraPrefab();
+                LevelStartHasBeenRun = false;
+                return;
+            }
+            WTOBase.LogToConsole("Has level start been run? " + LevelStartHasBeenRun);
+            if (LevelStartHasBeenRun) {
                 return;
             }
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
             DestroyVowObjects();
             //Load our custom prefab
             LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
+            LevelLoaded = true;
             WTOBase.LogToConsole("Loaded custom terrain object!");
             MoveDoors();
             ManageCustomSun();
             MoveNavNodesToNewPositions();
             ManageFootsteps();
-            LevelLoaded = true;
+            LevelStartHasBeenRun = true;
         }
 
         [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
@@ -75,6 +87,7 @@ namespace Welcome_To_Ooblterra.Patches {
         public static void DestroyLevel(StartOfRound __instance) {
             if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
                 DestroyOoblterraPrefab();
+                LevelStartHasBeenRun = false;
             }
         }
         
@@ -122,7 +135,9 @@ namespace Welcome_To_Ooblterra.Patches {
             return num;
         }
         private static void DestroyOoblterraPrefab() {
-            GameObject.Destroy(LevelPrefab);
+            if (LevelLoaded) { 
+                GameObject.Destroy(LevelPrefab);
+            }
             LevelLoaded = false;
         }
         private static void MoveNavNodesToNewPositions() {
