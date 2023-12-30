@@ -1,9 +1,4 @@
-﻿using HarmonyLib;
-using System.Collections.Generic;
-using Unity.Netcode;
-using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.InputSystem;
+﻿using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches {
@@ -12,8 +7,8 @@ namespace Welcome_To_Ooblterra.Patches {
         public static List<SpawnableEnemyWithRarity> InsideEnemies = new List<SpawnableEnemyWithRarity>();
         public static List<SpawnableEnemyWithRarity> OutsideEnemies = new List<SpawnableEnemyWithRarity>();
         public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
-        public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
         public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
+        public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
 
         public static void SetInsideMonsters(SelectableLevel Moon) {
             Moon.Enemies = InsideEnemies;

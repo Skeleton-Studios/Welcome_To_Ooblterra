@@ -1,36 +1,20 @@
 ﻿using HarmonyLib;
 using System;
 using UnityEngine;
-using Unity.AI.Navigation;
 using System.Linq;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
-using UnityEngine.Rendering.HighDefinition;
-using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Patches {
 
     internal class MoonPatch {
 
         public static string MoonFriendlyName;
-        public static IDictionary<string, SelectableLevel> ModdedMoonList = new Dictionary<string, SelectableLevel>();
-        public static IDictionary<string, int> ModdedIds = new Dictionary<string, int>();
         public static SelectableLevel MyNewMoon;
-
-        public static UnityEngine.Object LevelPrefab = null;
-
-        //Identifiers for the Moon
-
-
-        //public IDictionary<string, SelectableLevel> mlevels;
-
- 
-
-        private static GameObject SunObject;
-        private static GameObject SunAnimObject;
-        private static GameObject IndirectLight;
-        private static AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
-        private static string[] ObjectNamesToDestroy = new string[]{
+        
+        private static readonly AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
+        private static UnityEngine.Object LevelPrefab = null;
+        private static readonly string[] ObjectNamesToDestroy = new string[]{
                 "CompletedVowTerrain",
                 "tree",
                 "Tree",
@@ -41,69 +25,29 @@ namespace Welcome_To_Ooblterra.Patches {
                 "Local Volumetric Fog",
                 "SunTexture"
             };
-
         private static bool LevelLoaded;
 
-        //Following two methods taken from MoonAPI, thanks Bizzlemip
-        public static T[] ResizeArray<T>(T[] oldArray, int newSize) {
-            T[] array = new T[newSize];
-            oldArray.CopyTo(array, 0);
-            return array;
-        }
+        //PATCHES
 
-        private static int AddToMoons(StartOfRound SOR, SelectableLevel Moon) {
-            int num = -1;
-            for (int i = 0; i < SOR.levels.Length; i++) {
-                if (SOR.levels[i] == null) {
-                    num = i;
-                    break;
-                }
+        [HarmonyPatch(typeof(StartOfRound), "Awake")]
+        [HarmonyPrefix]
+        [HarmonyPriority(0)]
+        private static void FuckThePlanet(StartOfRound __instance) {
+            if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+                DestroyOoblterraPrefab();
             }
-            if (num == -1) {
-                throw new NullReferenceException("No null value found in StartOfRound.levels");
-            }
-            SOR.levels[num] = Moon;
-            foreach(SelectableLevel level in SOR.levels) {
-                WTOBase.LogToConsole(level.name);
-            }
-            return num;
         }
-
 
         //Defining the custom moon for the API
         [HarmonyPatch(typeof(StartOfRound), "Awake")]
         [HarmonyPrefix]
         [HarmonyPriority(0)]
         private static void AddMoonToList(StartOfRound __instance) {
-            if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
-                DestroyOoblterraPrefab();
-            }
             //Load our level asset object
             MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>("Assets/CustomScene/OoblterraLevel.asset");
-
-            //Set certain variables that we can't set in unity or else shit will break
-            MyNewMoon.planetPrefab = __instance.levels[2].planetPrefab;
-            MyNewMoon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[] {  };
-            MyNewMoon.levelAmbienceClips = __instance.levels[2].levelAmbienceClips;
-
-            MonsterPatch.SetSecurityObjects(MyNewMoon, __instance.levels[5].spawnableMapObjects);
-            ItemPatch.SetMoonItemList(MyNewMoon);
-            //MonsterPatch.SetInsideMonsters(MyNewMoon);
-            //MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {} );
-            //MonsterPatch.SetDaytimeMonsters(MyNewMoon);
-
             MoonFriendlyName = MyNewMoon.PlanetName;
-            ModdedMoonList[MyNewMoon.name] = MyNewMoon;
-            TerminalPatch.AddMoonToList();
-            //new level array should be big enough to fit our modded moons in it
-            __instance.levels = ResizeArray<SelectableLevel>(__instance.levels, __instance.levels.Length + ModdedMoonList.Count<KeyValuePair<string, SelectableLevel>>());
-
-            //Add our modded moons to the array and assign them an ID in the IDs array
-            foreach (KeyValuePair<string, SelectableLevel> keyValuePair in ModdedMoonList) {
-                int num = AddToMoons(__instance, keyValuePair.Value);
-                keyValuePair.Value.levelID = num;
-                ModdedIds[keyValuePair.Key] = num;
-            }
+            SetMoonVariables(MyNewMoon, __instance);
+            AddToMoons(MyNewMoon, __instance);
         }
 
         //Destroy the necessary actors and set our scene
@@ -124,7 +68,7 @@ namespace Welcome_To_Ooblterra.Patches {
             MoveDoors();
             ManageCustomSun();
             MoveNavNodesToNewPositions();
-            ManageFootsteps(__instance);
+            ManageFootsteps();
             LevelLoaded = true;
         }
 
@@ -142,7 +86,43 @@ namespace Welcome_To_Ooblterra.Patches {
             return false;
         }
 
+        //METHODS
+        private static void SetMoonVariables(SelectableLevel Moon, StartOfRound Instance) {
+            Moon.planetPrefab = Instance.levels[2].planetPrefab;
+            Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
+            Moon.levelAmbienceClips = Instance.levels[2].levelAmbienceClips;
 
+            MonsterPatch.SetSecurityObjects(Moon, Instance.levels[5].spawnableMapObjects);
+            ItemPatch.SetMoonItemList(Moon);
+            //MonsterPatch.SetInsideMonsters(MyNewMoon);
+            //MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {} );
+            //MonsterPatch.SetDaytimeMonsters(MyNewMoon);
+
+        }
+        //Following two methods taken from MoonAPI, thanks Bizzlemip
+        public static T[] ResizeArray<T>(T[] oldArray, int newSize) {
+            T[] array = new T[newSize];
+            oldArray.CopyTo(array, 0);
+            return array;
+        }
+        private static int AddToMoons(SelectableLevel Moon, StartOfRound Instance) {
+            Instance.levels = ResizeArray(Instance.levels, Instance.levels.Length + 1);
+            int num = -1;
+            for (int i = 0; i < Instance.levels.Length; i++) {
+                if (Instance.levels[i] == null) {
+                    num = i;
+                    break;
+                }
+            }
+            if (num == -1) {
+                throw new NullReferenceException("No null value found in StartOfRound.levels");
+            }
+            Instance.levels[num] = Moon;
+            foreach (SelectableLevel level in Instance.levels) {
+                WTOBase.LogToConsole(level.name);
+            }
+            return num;
+        }
         private static void DestroyOoblterraPrefab() {
             GameObject.Destroy(LevelPrefab);
             LevelLoaded = false;
@@ -151,17 +131,15 @@ namespace Welcome_To_Ooblterra.Patches {
             //Get a list of all outside navigation nodes
             GameObject[] NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
 
-            //Get a list of all our Oobltera nodes
+            //Build a list of all our Oobltera nodes
             List<GameObject> CustomNodes = new List<GameObject>();
-            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+            IEnumerable<GameObject> allObjects = GameObject.FindObjectsOfType<GameObject>().Where(obj => obj.name == "OoblOutsideNode");
             foreach (GameObject Object in allObjects) {
-                if (Object.name == "OoblOutsideNode") {
                     CustomNodes.Add(Object);
-                }
             }
             WTOBase.LogToConsole("Outside nav points: " + allObjects.Count().ToString());
-            //For each of the outside navigation nodes, move its position to the corresponding custom node. If the custom node list is
-            //exhausted, destroy the outside navigation node.
+
+            //Put outside nav nodes at the location of our ooblterra nodes. Destroy any extraneous ones
             for (int i = 0; i < NavNodes.Count(); i++) {
                 if (CustomNodes.Count() > i) {
                     NavNodes[i].transform.position = CustomNodes[i].transform.position;
@@ -169,21 +147,19 @@ namespace Welcome_To_Ooblterra.Patches {
                     GameObject.Destroy(NavNodes[i]);
                 }
             }
-            NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
-            WTOBase.LogToConsole("Moved nav points: " + NavNodes.Count().ToString());
         }
         private static void ManageCustomSun() {
             //Ooblterra has no sun so we're getting rid of it
-            SunObject = GameObject.Find("SunWithShadows");
-            SunAnimObject = GameObject.Find("SunAnimContainer");
-            IndirectLight = GameObject.Find("Indirect");
+            GameObject SunObject = GameObject.Find("SunWithShadows");
+            GameObject SunAnimObject = GameObject.Find("SunAnimContainer");
+            GameObject IndirectLight = GameObject.Find("Indirect");
             SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
             SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
             GameObject.Destroy(SunObject);
             GameObject.Destroy(IndirectLight);
         }
-        private static void ManageFootsteps(StartOfRound __instance) {
-            foreach (FootstepSurface surfaces in __instance.footstepSurfaces) {
+        private static void ManageFootsteps() {
+            foreach (FootstepSurface surfaces in StartOfRound.Instance.footstepSurfaces) {
                 if (surfaces.surfaceTag == "Grass") {
                     surfaces.clips = new AudioClip[] {
                         LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP01.wav"),
@@ -197,12 +173,9 @@ namespace Welcome_To_Ooblterra.Patches {
             }
         }
         private static void DestroyVowObjects() {
-            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
-            //If the object has any of the names in the list, it's gotta go
-            foreach (GameObject ObjToDestroy in allObjects.Where(obj => ObjectNamesToDestroy.Any(obj.name.Contains) || 
-                (obj.name.Contains("Plane") && 
-                    (obj.transform.parent.gameObject.name.Contains("Foliage") || obj.transform.parent.gameObject.name.Contains("Mounds"))
-                                                                                                                                        ))){
+            //I have no fucking clue why this works for the foliage too but fuck it I guess
+            IEnumerable<GameObject> allObjects = GameObject.FindObjectsOfType<GameObject>().Where(obj => ObjectNamesToDestroy.Any(obj.name.Contains));
+            foreach (GameObject ObjToDestroy in allObjects) {
                 GameObject.Destroy(ObjToDestroy);
                 continue;
             }
@@ -230,7 +203,6 @@ namespace Welcome_To_Ooblterra.Patches {
             */
         }
         private static void MoveDoors() {
-
             //The prefab contains an object called TeleportSnapLocation that we move the primary door to
             GameObject Entrance = GameObject.Find("EntranceTeleportA");
             GameObject SnapLoc = GameObject.Find("TeleportSnapLocation");

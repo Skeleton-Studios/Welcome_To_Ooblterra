@@ -1,47 +1,21 @@
-﻿using BepInEx;
-using BepInEx.Configuration;
-using BepInEx.Logging;
-using DunGen;
-using System;
-using System.IO;
-using System.Linq;
-using System.Reflection;
+﻿using System.Linq;
 using Unity.Netcode;
-using static LethalLib.Modules.Levels;
 using UnityEngine;
 using LethalLib.Modules;
 using HarmonyLib;
-using Dungeon = LethalLib.Modules.Dungeon;
 using Welcome_To_Ooblterra.Properties;
-using System.Xml.Linq;
 using static LethalLib.Modules.Dungeon;
 using DunGen.Graph;
-using System.Collections.Generic;
-using static UnityEngine.Rendering.HighDefinition.ScalableSettingLevelParameter;
 using LethalLib.Extras;
-using UnityEngine.InputSystem;
-using UnityEngine.Rendering.HighDefinition;
-using System.Runtime.CompilerServices;
+
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
 
         public static EntranceTeleport NewEntrance;
         public static EntranceTeleport NewFireEntrance;
-        private static AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
-        internal static DungeonDef OoblFacilityDungeon;
-
-        public static void Start() {
-            DungeonFlow OoblFacilityFlow = FactoryBundle.LoadAsset<DungeonFlow>("Assets/CustomInterior/Data/WTOFlow.asset");
-
-
-            OoblFacilityDungeon = ScriptableObject.CreateInstance<LethalLib.Extras.DungeonDef>();
-            OoblFacilityDungeon.dungeonFlow = OoblFacilityFlow;
-            OoblFacilityDungeon.rarity = 99999;
-            Dungeon.AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
-        }
-
-
+        private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
+        
         [HarmonyPatch(typeof(RoundManager), "Awake")]
         [HarmonyPostfix]
         private static void ScrapValueAdjuster(RoundManager __instance) {
@@ -58,84 +32,76 @@ namespace Welcome_To_Ooblterra.Patches {
             if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
                 return;
             }
-            NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
+            NetworkManager NetworkStatus = GameObject.FindObjectOfType<NetworkManager>();
 
-            EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
-            EntranceTeleport MainEntrance = null;
-            EntranceTeleport FireEntrance = null;
-            for (int i = 0; i < array.Length; i++) {
-                if (array[i].entranceId == 0) {
-                    MainEntrance = array[i];
+            EntranceTeleport[] ExistingEntranceArray = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
+            EntranceTeleport NewMainEntrance = null;
+            EntranceTeleport NewFireExit = null;
+            for (int i = 0; i < ExistingEntranceArray.Length; i++) {
+                if (ExistingEntranceArray[i].entranceId == 0) {
+                    NewMainEntrance = ExistingEntranceArray[i];
                 } else {
-                    FireEntrance = array[i];
+                    NewFireExit = ExistingEntranceArray[i];
                 }
             }
-            FireEntrance.transform.Rotate(0, -90, 0);
-            GameObject[] PossibleObjects = GameObject.FindObjectsOfType<GameObject>();
-            foreach (GameObject Object in PossibleObjects) {
-                if (Object.name.Contains("SpawnEntranceTrigger")) {
-                    NewEntrance = GameObject.Instantiate(MainEntrance);
-                    if (Network.IsHost) {
-                        NewEntrance.GetComponent<NetworkObject>().Spawn();
-                    }
-                    NewEntrance.transform.position = Object.transform.position;
-                    NewEntrance.transform.rotation = Object.transform.rotation;
-                    NewEntrance.exitPoint = MainEntrance.transform;
-                    NewEntrance.isEntranceToBuilding = false;
+            NewFireExit.transform.Rotate(0, -90, 0);
+            GameObject[] PossibleEntrances = GameObject.FindObjectsOfType<GameObject>();
+            foreach (GameObject EntranceSpawnPoint in PossibleEntrances.Where(Obj => Obj.name.Contains("SpawnEntranceTrigger"))) {
+                NewEntrance = GameObject.Instantiate(NewMainEntrance);
+                if (NetworkStatus.IsHost) {
+                    NewEntrance.GetComponent<NetworkObject>().Spawn();
                 }
-                if (Object.name.Contains("SpawnEntranceBTrigger")) {
-                    NewFireEntrance = GameObject.Instantiate(FireEntrance);
-                    if (Network.IsHost) {
-                        NewFireEntrance.GetComponent<NetworkObject>().Spawn();
-                    }
-                    NewFireEntrance.transform.position = Object.transform.position;
-                    NewFireEntrance.transform.rotation = Object.transform.rotation;
-                    NewFireEntrance.transform.Rotate(0, -90, 0);
-                    NewFireEntrance.exitPoint = FireEntrance.transform;
-                    NewFireEntrance.isEntranceToBuilding = false;
-                }
+                NewEntrance.transform.position = EntranceSpawnPoint.transform.position;
+                NewEntrance.transform.rotation = EntranceSpawnPoint.transform.rotation;
+                NewEntrance.exitPoint = NewMainEntrance.transform;
+                NewEntrance.isEntranceToBuilding = false;
             }
-
+            foreach (GameObject FireExitSpawnPoint in PossibleEntrances.Where(Obj => Obj.name.Contains("SpawnEntranceBTrigger"))) {
+                NewFireEntrance = GameObject.Instantiate(NewFireExit);
+                if (NetworkStatus.IsHost) {
+                    NewFireEntrance.GetComponent<NetworkObject>().Spawn();
+                }
+                NewFireEntrance.transform.position = FireExitSpawnPoint.transform.position;
+                NewFireEntrance.transform.rotation = FireExitSpawnPoint.transform.rotation;
+                NewFireEntrance.transform.Rotate(0, -90, 0);
+                NewFireEntrance.exitPoint = NewFireExit.transform;
+                NewFireEntrance.isEntranceToBuilding = false;
+            }
               
             SpawnSyncedObject[] SyncedObjects = GameObject.FindObjectsOfType<SpawnSyncedObject>();
             NetworkManager networkManager = GameObject.FindObjectOfType<NetworkManager>();
-            int iVentsFound = 0;
+            int VentsFound = 0;
 
-            foreach (SpawnSyncedObject syncedObject in SyncedObjects) {
-                if (syncedObject.spawnPrefab.name == "VentDummy") {
-                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(x => x.Prefab.name == "VentEntrance");
+            foreach (SpawnSyncedObject ventSpawnPoint in SyncedObjects) {
+                if (ventSpawnPoint.spawnPrefab.name == "VentDummy") {
+                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(NetworkPrefab => NetworkPrefab.Prefab.name == "VentEntrance");
                     if (networkPrefab == null) {
                         WTOBase.LogToConsole("LC Vent Prefab not found!!");
                         return;
                     }
-                    //WTOBase.LogToConsole("LC Vent Prefab: " + networkPrefab.Prefab.ToString());
-                    iVentsFound++;
-                    //syncedObject.spawnPrefab = networkPrefab.Prefab;
+                    VentsFound++;
                     GameObject.Instantiate(networkPrefab.Prefab);
-                    //networkPrefab.Prefab.GetComponent<NetworkObject>().Spawn();
-                    networkPrefab.Prefab.transform.position = syncedObject.transform.position;
-                    networkPrefab.Prefab.transform.rotation = syncedObject.transform.rotation;
+                    networkPrefab.Prefab.transform.position = ventSpawnPoint.transform.position;
+                    networkPrefab.Prefab.transform.rotation = ventSpawnPoint.transform.rotation;
                 }
             }
-            WTOBase.LogToConsole("Vents Found: " + iVentsFound);
+            WTOBase.LogToConsole("Vents Found: " + VentsFound);
         }
+
         [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
         [HarmonyPostfix]
         public static void DestroyDoors(StartOfRound __instance) {
             NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
-            if (NewEntrance != null) {
-                if (Network.IsHost) {
-                    NewEntrance.GetComponent<NetworkObject>().Despawn();
+            EntranceTeleport[] Entrances = new EntranceTeleport[] { NewEntrance, NewFireEntrance };
+            foreach (EntranceTeleport Entrance in Entrances) {
+                if (Entrance == null) {
+                    continue;
                 }
-                GameObject.Destroy(NewEntrance);
-            }
-            if(NewFireEntrance != null) {
                 if (Network.IsHost) {
-                    NewFireEntrance.GetComponent<NetworkObject>().Despawn();
+                    Entrance.GetComponent<NetworkObject>().Despawn();
                 }
-                GameObject.Destroy(NewFireEntrance);
+                GameObject.Destroy(Entrance);
             }
-
         }
 
         [HarmonyPatch(typeof(EntranceTeleport), "TeleportPlayer")]
@@ -149,5 +115,14 @@ namespace Welcome_To_Ooblterra.Patches {
             WTOBase.LogToConsole("Exit Location: " + __instance.exitPoint.position);
             TimeOfDay.Instance.insideLighting = __instance.isEntranceToBuilding;
         }
+
+        public static void Start() {
+            DungeonFlow OoblFacilityFlow = FactoryBundle.LoadAsset<DungeonFlow>("Assets/CustomInterior/Data/WTOFlow.asset");
+            DungeonDef OoblFacilityDungeon = ScriptableObject.CreateInstance<LethalLib.Extras.DungeonDef>();
+            OoblFacilityDungeon.dungeonFlow = OoblFacilityFlow;
+            OoblFacilityDungeon.rarity = 99999;
+            AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
+        }
+
     }
 }

@@ -1,5 +1,7 @@
 ﻿using HarmonyLib;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
@@ -9,8 +11,6 @@ namespace Welcome_To_Ooblterra.Patches {
      * which gives explicit permission on both the repo and in 
      * the plugin.cs file. Thank you!
      */
-
-
     internal class SuitPatch {
 
         static string[] SuitMaterialPaths = new string[] {
@@ -26,9 +26,11 @@ namespace Welcome_To_Ooblterra.Patches {
             if (SuitsLoaded) {
                 return; 
             }
+            IEnumerable<UnlockableItem> Unlockables = (IEnumerable<UnlockableItem>)__instance.unlockablesList;
+            UnlockableItem Suit = Unlockables.First(x => x.suitMaterial != null);
+            WTOBase.LogToConsole("Suit found: " + Suit.unlockableName);
             //Get all unlockables
             for (int i = 0; i < __instance.unlockablesList.unlockables.Count; i++) {
-
                 UnlockableItem unlockableItem = __instance.unlockablesList.unlockables[i];
                 WTOBase.LogToConsole("Processing unlockable {index=" + i + ", name=" + unlockableItem.unlockableName + "}");
 
@@ -36,17 +38,13 @@ namespace Welcome_To_Ooblterra.Patches {
                 if (unlockableItem.suitMaterial == null || !unlockableItem.alreadyUnlocked) {
                     continue;
                 }
-
                 //Create new suits based on the materials
                 foreach (string SuitPath in SuitMaterialPaths) {
-
                     UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
                     newUnlockableItem.suitMaterial = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath);
-
                     //prepare and set name
                     String SuitName = SuitPath.Substring(19,8);
                     newUnlockableItem.unlockableName = SuitName;
-
                     //add new item to the listing of tracked unlockable items
                     __instance.unlockablesList.unlockables.Add(newUnlockableItem);
                 }
@@ -54,6 +52,7 @@ namespace Welcome_To_Ooblterra.Patches {
                 break;
             }
         }
+
         [HarmonyPatch(typeof(StartOfRound), "Start")]
         [HarmonyPatch(typeof(RoundManager), "GenerateNewLevelClientRpc")]
         [HarmonyPostfix]
