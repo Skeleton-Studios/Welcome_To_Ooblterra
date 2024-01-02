@@ -13,9 +13,12 @@ namespace Welcome_To_Ooblterra.Patches {
      */
     internal class SuitPatch {
 
+        private const string SuitPath = "Assets/CustomSuits/";
+        private const string PosterGameObject = "HangarShip/Plane.001";
+
         static string[] SuitMaterialPaths = new string[] {
-            "Assets/CustomSuits/ProtSuit.mat",
-            "Assets/CustomSuits/MackSuit.mat"
+            SuitPath + "ProtSuit.mat",
+            SuitPath + "MackSuit.mat"
         };
 
         public static bool SuitsLoaded = false;
@@ -60,9 +63,13 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPostfix]
         [HarmonyPriority(0)]
         private static void PatchPosters(StartOfRound __instance) {
-            Material[] materials = ((Renderer)GameObject.Find("HangarShip/Plane.001").GetComponent<MeshRenderer>()).materials;
-            materials[1] = WTOBase.ItemAssetBundle.LoadAsset<Material>("Assets/CustomSuits/Poster.mat");
-            ((Renderer)GameObject.Find("HangarShip/Plane.001").GetComponent<MeshRenderer>()).materials = materials;
+            Material[] materials = ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials;
+            materials[1] = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath + "Poster.mat");
+            ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials = materials;
+        }
+
+        public static void Start() {
+
         }
     }
 }

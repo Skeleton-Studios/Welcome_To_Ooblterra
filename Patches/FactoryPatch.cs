@@ -12,10 +12,19 @@ using LethalLib.Extras;
 namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
 
-        public static EntranceTeleport NewEntrance;
-        public static EntranceTeleport NewFireExit;
+        public static EntranceTeleport MainExit;
+        public static EntranceTeleport FireExit;
         private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
-        
+        private static NetworkManager networkManagerRef;
+        private const string DungeonPath = "Assets/CustomDungeon/Data/";
+
+        //PATCHES 
+        [HarmonyPatch (typeof(StartOfRound), "Awake")]
+        [HarmonyPostfix]
+        private static void GetNetworkManager(StartOfRound __instance) {
+            networkManagerRef = __instance.NetworkManager;
+        }
+
         [HarmonyPatch(typeof(RoundManager), "Awake")]
         [HarmonyPostfix]
         private static void ScrapValueAdjuster(RoundManager __instance) {
@@ -28,85 +37,47 @@ namespace Welcome_To_Ooblterra.Patches {
 
         [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
         [HarmonyPostfix]
-        static void FixTeleportDoors(RoundManager __instance) {
+        private static void CreateCorrespondingExits(RoundManager __instance) {
             if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
                 return;
             }
-            NetworkManager NetworkStatus = GameObject.FindObjectOfType<NetworkManager>();
 
+            //Grab all the entranceteleports and use the IDs to determine which is the main and fire entrance 
+            /* NOTE:
+             * The best way to make this function work for March is probably to set id 0 as normal, but then set subsequent IDs to instantiate 
+             * a new list item. Make the FireEntrance variable a list that can have either 1 thing added to it or 3, and then run the CreateExit
+             * on a loop iterating over that list
+             */
+            EntranceTeleport MainEntrance = null;
+            EntranceTeleport FireEntrance = null;
             EntranceTeleport[] ExistingEntranceArray = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
-            EntranceTeleport OldMainEntrance = null;
-            EntranceTeleport OldFireExit = null;
             for (int i = 0; i < ExistingEntranceArray.Length; i++) {
                 if (ExistingEntranceArray[i].entranceId == 0) {
-                    OldMainEntrance = ExistingEntranceArray[i];
+                    MainEntrance = ExistingEntranceArray[i];
                 } else {
-                    OldFireExit = ExistingEntranceArray[i];
+                    FireEntrance = ExistingEntranceArray[i];
                 }
             }
-            OldFireExit.transform.Rotate(0, -90, 0);
-            GameObject[] PossibleEntrances = GameObject.FindObjectsOfType<GameObject>();
-            foreach (GameObject EntranceSpawnPoint in PossibleEntrances.Where(Obj => Obj.name.Contains("SpawnEntranceTrigger"))) {
-                NewEntrance = GameObject.Instantiate(OldMainEntrance);
-                if (NetworkStatus.IsHost) {
-                    NewEntrance.GetComponent<NetworkObject>().Spawn();
-                }
-                NewEntrance.transform.position = EntranceSpawnPoint.transform.position;
-                NewEntrance.transform.rotation = EntranceSpawnPoint.transform.rotation;
-                NewEntrance.exitPoint = OldMainEntrance.transform;
-                NewEntrance.isEntranceToBuilding = false;
-            }
-            foreach (GameObject FireExitSpawnPoint in PossibleEntrances.Where(Obj => Obj.name.Contains("SpawnEntranceBTrigger"))) {
-                NewFireExit = GameObject.Instantiate(OldFireExit);
-                if (NetworkStatus.IsHost) {
-                    NewFireExit.GetComponent<NetworkObject>().Spawn();
-                }
-                NewFireExit.transform.position = FireExitSpawnPoint.transform.position;
-                NewFireExit.transform.rotation = FireExitSpawnPoint.transform.rotation;
-                NewFireExit.transform.Rotate(0, -90, 0);
-                NewFireExit.exitPoint = OldFireExit.transform;
-                NewFireExit.isEntranceToBuilding = false;
-            }
-              
-            SpawnSyncedObject[] SyncedObjects = GameObject.FindObjectsOfType<SpawnSyncedObject>();
-            NetworkManager networkManager = GameObject.FindObjectOfType<NetworkManager>();
-            int VentsFound = 0;
 
-            foreach (SpawnSyncedObject ventSpawnPoint in SyncedObjects) {
-                if (ventSpawnPoint.spawnPrefab.name == "VentDummy") {
-                    NetworkPrefab networkPrefab = networkManager.NetworkConfig.Prefabs.m_Prefabs.First(x => x.Prefab.name == "VentEntrance");
-                    if (networkPrefab == null) {
-                        WTOBase.LogToConsole("LC Vent Prefab not found!!");
-                        return;
-                    }
-                    VentsFound++;
-                    GameObject.Instantiate(networkPrefab.Prefab);
-                    networkPrefab.Prefab.transform.position = ventSpawnPoint.transform.position;
-                    networkPrefab.Prefab.transform.rotation = ventSpawnPoint.transform.rotation;
-                }
-            }
-            WTOBase.LogToConsole("Vents Found: " + VentsFound);
+            MainExit = CreateExit("SpawnEntranceTrigger", MainEntrance);
+            FireExit = CreateExit("SpawnEntranceBTrigger", FireEntrance);
+
+            //Fire exits are rotated wrong on Ooblterra for some reason 
+            FireEntrance.transform.Rotate(0, -90, 0);
+            FireExit.transform.Rotate(0, -90, 0);
+            ReplaceVents();
         }
 
         [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
         [HarmonyPostfix]
-        public static void DestroyDoors(StartOfRound __instance) {
-            NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
-            EntranceTeleport[] Entrances = new EntranceTeleport[] { NewEntrance, NewFireExit };
-            foreach (EntranceTeleport Entrance in Entrances) {
-                if (Entrance == null) {
-                    continue;
-                }
-                if (Network.IsHost) {
-                    Entrance.GetComponent<NetworkObject>().Despawn();
-                }
-                GameObject.Destroy(Entrance);
-            }
+        private static void DestroyExitsOnLeave(StartOfRound __instance) {
+            DestroyExit(MainExit);
+            DestroyExit(FireExit);
         }
 
         [HarmonyPatch(typeof(EntranceTeleport), "TeleportPlayer")]
         [HarmonyPrefix]
-        public static void CheckTeleport(EntranceTeleport __instance) {
+        private static void CheckTeleport(EntranceTeleport __instance) {
             if(RoundManager.Instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
                 return;
             }
@@ -116,13 +87,69 @@ namespace Welcome_To_Ooblterra.Patches {
             TimeOfDay.Instance.insideLighting = __instance.isEntranceToBuilding;
         }
 
+        //METHODS
         public static void Start() {
-            DungeonFlow OoblFacilityFlow = FactoryBundle.LoadAsset<DungeonFlow>("Assets/CustomInterior/Data/WTOFlow.asset");
+            //Create the Dungeon and load it 
+            DungeonFlow OoblFacilityFlow = FactoryBundle.LoadAsset<DungeonFlow>(DungeonPath + "WTOFlow.asset");
             DungeonDef OoblFacilityDungeon = ScriptableObject.CreateInstance<LethalLib.Extras.DungeonDef>();
+            OoblFacilityDungeon.name = "Oobl Laboratory";
             OoblFacilityDungeon.dungeonFlow = OoblFacilityFlow;
             OoblFacilityDungeon.rarity = 99999;
             AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
+            Debug.Log("Dungeon Loaded: " + OoblFacilityDungeon.name);
         }
+        private static void DestroyExit(EntranceTeleport ExitToDestroy) {
+            if (ExitToDestroy == null) {
+                return;
+            } 
+            if (networkManagerRef.IsHost) {
+                ExitToDestroy.GetComponent<NetworkObject>().Despawn();
+            }
+            GameObject.Destroy(ExitToDestroy);
+        }
+        private static void ReplaceVents() {
+            int VentsFound = 0;
+            SpawnSyncedObject[] SyncedObjects = GameObject.FindObjectsOfType<SpawnSyncedObject>();
+            NetworkPrefab networkPrefab = networkManagerRef.NetworkConfig.Prefabs.m_Prefabs.First(x => x.Prefab.name == "VentEntrance");
+            if (networkPrefab == null) {
+                WTOBase.LogToConsole("LC Vent Prefab not found!!");
+                return;
+            }
+            foreach (SpawnSyncedObject ventSpawnPoint in SyncedObjects.Where(objectToTest => objectToTest.spawnPrefab.name == "VentDummy")) {
+                VentsFound++;
+                GameObject.Instantiate(networkPrefab.Prefab);
+                networkPrefab.Prefab.transform.position = ventSpawnPoint.transform.position;
+                networkPrefab.Prefab.transform.rotation = ventSpawnPoint.transform.rotation;
+            }
+            WTOBase.LogToConsole("Vents Found: " + VentsFound);
+        }
+        private static EntranceTeleport CreateExit(string SpawnLocationName, EntranceTeleport ExistingEntrance) {
+            //Grab a list of every game object
+            GameObject[] PossibleEntrances = GameObject.FindObjectsOfType<GameObject>();
 
+            //Create a copy of the entrance that already exists 
+            EntranceTeleport NewExit = GameObject.Instantiate(ExistingEntrance);
+            if (networkManagerRef.IsHost) {
+                NewExit.GetComponent<NetworkObject>().Spawn();
+            }
+            //Iterate through the list and find an object with the spawntrigger dummy's name 
+            /* NOTE: 
+             * I was about to make it so that this uses a GameObject.Find instead of a foreach, but actually with slight
+             * modification it may be possible to adapt this function to allow The Laboratory to work properly with March's 3 fire exits. 
+             */
+            foreach (GameObject NewExitSpawnPoint in PossibleEntrances.Where(Obj => Obj.name.Contains(SpawnLocationName))) {              
+                //Set the exit's transform to match the spawn point we found 
+                NewExit.transform.position = NewExitSpawnPoint.transform.position;
+                NewExit.transform.rotation = NewExitSpawnPoint.transform.rotation;
+
+                //Link it to our entrance 
+                NewExit.exitPoint = ExistingEntrance.transform;
+                NewExit.isEntranceToBuilding = false;
+                //For march we will probably need to destroy or flag this Spawn Point so it isn't used again when we call the function again
+                return NewExit;
+            }
+            WTOBase.LogToConsole("Exit Spawn not found!!!!");
+            return null;
+        }
     }
 }

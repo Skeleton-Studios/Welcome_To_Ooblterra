@@ -26,7 +26,7 @@ namespace Welcome_To_Ooblterra.Properties {
         public static ConfigFile ConfigFile;
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
-        private const string modVersion = "0.7.0";
+        private const string modVersion = "0.7.1";
 
         private readonly Harmony WTOHarmony = new Harmony(modGUID);
         internal ManualLogSource WTOLogSource;
@@ -75,32 +75,19 @@ namespace Welcome_To_Ooblterra.Properties {
             LogToConsole("BEGIN PRINTING LOADED ASSETS");
             //AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);
             if (/*InteriorState != AllowedState.Off*/ true) {
-                string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custominterior");
-                
+                string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
                 FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-                
-                foreach (string AssetNameToPrint in FactoryAssetBundle.GetAllAssetNames()) {
-                    Debug.Log("Asset in Factory bundle: " + AssetNameToPrint);
-                }
             }
 
             //AllowedState.TryParse(WTOConfig.SpawnScrapStatus.ToString(), out AllowedState ItemState);
             if (/*ItemState != AllowedState.Off*/ true) {
                 string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
                 ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
-                
-                foreach (string AssetNameToPrint in ItemAssetBundle.GetAllAssetNames()) {
-                    Debug.Log("Asset in Item bundle: " + AssetNameToPrint);
-                }
             }
 
             if (/* WTOConfig.OoblterraEnabled.Value*/ true) {
                 string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
                 LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
-                
-                foreach (string AssetNameToPrint in LevelAssetBundle.GetAllAssetNames()) {
-                    Debug.Log("Asset in Level bundle: " + AssetNameToPrint);
-                }
             }
 
             /*
@@ -114,13 +101,14 @@ namespace Welcome_To_Ooblterra.Properties {
             */
             string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
             MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
-            foreach (string AssetNameToPrint in MonsterAssetBundle.GetAllAssetNames()) {
-                Debug.Log("Asset in Monster bundle: " + AssetNameToPrint);
-            }
-            LogToConsole("END PRINTING LOADED ASSETS");
-            ItemPatch.AddCustomItems();
-            MonsterPatch.Start();
+
             FactoryPatch.Start();
+            ItemPatch.Start();
+            MonsterPatch.Start();
+            MoonPatch.Start();
+            SuitPatch.Start();
+            TerminalPatch.Start();
+            
 
             //NetcodeWeaver stuff
             var types = Assembly.GetExecutingAssembly().GetTypes();

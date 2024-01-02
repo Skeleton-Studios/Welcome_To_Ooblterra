@@ -5,6 +5,7 @@ using System.Linq;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
 using Unity.Netcode;
+using System.Runtime.CompilerServices;
 
 namespace Welcome_To_Ooblterra.Patches {
 
@@ -29,6 +30,7 @@ namespace Welcome_To_Ooblterra.Patches {
         private static bool LevelLoaded;
         private static bool LevelStartHasBeenRun = false;
 
+        private const string MoonPath = "Assets/CustomMoon/";
         //PATCHES
 
         [HarmonyPatch(typeof(StartOfRound), "Awake")]
@@ -45,9 +47,6 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPrefix]
         [HarmonyPriority(0)]
         private static void AddMoonToList(StartOfRound __instance) {
-            //Load our level asset object
-            MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>("Assets/CustomScene/OoblterraLevel.asset");
-            MoonFriendlyName = MyNewMoon.PlanetName;
             SetMoonVariables(MyNewMoon, __instance);
             AddToMoons(MyNewMoon, __instance);
         }
@@ -72,7 +71,7 @@ namespace Welcome_To_Ooblterra.Patches {
             WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
             DestroyVowObjects();
             //Load our custom prefab
-            LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset("Assets/CustomScene/customlevel.prefab"));
+            LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset(MoonPath + "customlevel.prefab"));
             LevelLoaded = true;
             WTOBase.LogToConsole("Loaded custom terrain object!");
             MoveDoors();
@@ -98,6 +97,13 @@ namespace Welcome_To_Ooblterra.Patches {
         }
 
         //METHODS
+
+        public static void Start() {
+            //Load our level asset object
+            MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>(MoonPath + "OoblterraLevel.asset");
+            MoonFriendlyName = MyNewMoon.PlanetName;
+            Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
+        }
         private static void SetMoonVariables(SelectableLevel Moon, StartOfRound Instance) {
             Moon.planetPrefab = Instance.levels[2].planetPrefab;
             Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
@@ -172,16 +178,17 @@ namespace Welcome_To_Ooblterra.Patches {
             GameObject.Destroy(IndirectLight);
         }
         private static void ManageFootsteps() {
+            const string FootstepPath = MoonPath + "Sound/Footsteps/";
             foreach (FootstepSurface surfaces in StartOfRound.Instance.footstepSurfaces) {
                 if (surfaces.surfaceTag == "Grass") {
                     surfaces.clips = new AudioClip[] {
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP01.wav"),
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP02.wav"),
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP03.wav"),
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP04.wav"),
-                        LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLESTEP05.wav")
+                        LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP01.wav"),
+                        LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP02.wav"),
+                        LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP03.wav"),
+                        LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP04.wav"),
+                        LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP05.wav")
                     };
-                    surfaces.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>("Assets/CustomScene/Sound/Footsteps/TENTACLE_Fall.wav");
+                    surfaces.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLE_Fall.wav");
                 }
             }
         }

@@ -8,36 +8,37 @@ using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class ItemPatch {
-
-        private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
         public class ItemData {
-            private string ItemPath;
+            private string AssetName;
             private int Rarity;
             private Item Itemref;
-            public ItemData(string path, int rarity) {
-                ItemPath = path;
+            public ItemData(string name, int rarity) {
+                AssetName = ItemPath + name;
                 Rarity = rarity;
             }
-            public string GetItemPath(){  return ItemPath; }
-            public int GetRarity(){ return Rarity; }
-            public void SetItem(Item ItemToSet){ Itemref= ItemToSet; }
-            public Item GetItem(){ return Itemref; }
+            public string GetItemPath() { return AssetName; }
+            public int GetRarity() { return Rarity; }
+            public void SetItem(Item ItemToSet) { Itemref = ItemToSet; }
+            public Item GetItem() { return Itemref; }
 
         }
+
+        private const string ItemPath = "Assets/CustomItems/";
+        private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
+        
         //This array stores all our custom items
         public static ItemData[] ItemList = new ItemData[] { 
-            new ItemData("Assets/CustomItems/AlienCrate.asset", 30),
-            new ItemData("Assets/Customitems/FiveSixShovel.asset", 10),
-            new ItemData("Assets/CustomItems/HandCrystal.asset", 30),
-            new ItemData("Assets/CustomItems/OoblCorpse.asset", 5),
-            new ItemData("Assets/CustomItems/StatueSmall.asset", 40),
-            new ItemData("Assets/CustomItems/WandCorpse.asset", 5),
-            new ItemData("Assets/CustomItems/WandFeed.asset", 20),
+            new ItemData("AlienCrate.asset", 30),
+            new ItemData("FiveSixShovel.asset", 10),
+            new ItemData("HandCrystal.asset", 30),
+            new ItemData("OoblCorpse.asset", 5),
+            new ItemData("StatueSmall.asset", 40),
+            new ItemData("WandCorpse.asset", 5),
+            new ItemData("WandFeed.asset", 20),
         };
 
         //Add our custom items
-        public static void AddCustomItems() {
-            WTOBase.LogToConsole("Adding custom items...");
+        public static void Start() {
             //Create our custom items
             Item NextItemToProcess;
             SpawnableItemWithRarity MoonScrapItem;
@@ -56,6 +57,7 @@ namespace Welcome_To_Ooblterra.Patches {
                     rarity = MyCustomScrap.GetRarity()
                 };
                 MoonScrap.Add(MoonScrapItem);
+                Debug.Log("Item Loaded: " + MoonScrapItem.spawnableItem.name);
             }
         }       
         public static void SetMoonItemList(SelectableLevel Moon) {
