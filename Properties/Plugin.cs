@@ -128,11 +128,13 @@ namespace Welcome_To_Ooblterra.Properties {
         public static void DebugHelper(StartOfRound __instance) {
             
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
+
+                /*
                 SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
                 foreach(SprayPaintItem sprayPaint in SprayPaints) {
                     sprayPaint.debugSprayPaint = true;
                 }
-                /*
+                
                 WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");
                 EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: true);
                 foreach (EntranceTeleport entrance in array) {

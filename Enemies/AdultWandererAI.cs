@@ -63,20 +63,20 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 AdultWanderer = self as AdultWandererAI;
                 if (Vector3.Distance(AdultWanderer.MainTarget.transform.position, self.transform.position) < AdultWanderer.AttackRange) {
-                    if (AdultWanderer.AttackCooldown <= 0) {
+                    if (AdultWanderer.AttackCooldownSeconds <= 0) {
                         AdultWanderer.LogMessage("Attacking!");
-                        AdultWanderer.AttackCooldown = 90;
+                        AdultWanderer.AttackCooldownSeconds = 0.95f;
                         HasAttacked = false;
                         creatureAnimator.SetBool("Attacking", value: true);
                         return;
                     }
-                    if(AdultWanderer.AttackCooldown <= 76 && !HasAttacked) {
+                    if(AdultWanderer.AttackCooldownSeconds <= 0.76f && !HasAttacked) {
                         AdultWanderer.MeleeAttackPlayer(AdultWanderer.MainTarget);
                         HasAttacked = true;
                     }
                     return;
                 }
-                AdultWanderer.AttackCooldown = 0;
+                AdultWanderer.AttackCooldownSeconds = 0;
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Attacking", value: false);
@@ -137,6 +137,23 @@ namespace Welcome_To_Ooblterra.Enemies {
                 new EnemyEnteredRange()
             };
         }
+        private class Stunned : BehaviorState {
+            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                creatureAnimator.SetBool("Stunned", value: true);
+                self.agent.speed = 0f;
+                self.targetPlayer = self.stunnedByPlayer;
+            }
+            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+
+            }
+            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+                creatureAnimator.SetBool("Stunned", value: false);
+                self.agent.speed = 8f;
+            }
+            public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+                new NoLongerStunned()
+            };
+        }
 
         //STATE TRANSITIONS
         private class EvaluateEnemyState : StateTransition {
@@ -182,7 +199,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if(SelfWanderer.targetPlayer == null) {
                     return false;
                 }
-                return self.PlayerIsTargetable(SelfWanderer.MainTarget, true);
+                return SelfWanderer.PlayerCanBeTargeted(SelfWanderer.MainTarget);
             }
             public override BehaviorState NextState() {
                 return new Chase();
@@ -205,6 +222,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return (SelfWanderer.MainTarget.health < 0); 
             }
             public override BehaviorState NextState() {
+                SelfWanderer.MainTarget = null;
                 return new Roam();
             }
         }
@@ -212,27 +230,37 @@ namespace Welcome_To_Ooblterra.Enemies {
             AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
                 SelfWanderer = self as AdultWandererAI;
-                return (self.PlayerIsTargetable(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) < SelfWanderer.AttackRange));
+                return (SelfWanderer.PlayerCanBeTargeted(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) < SelfWanderer.AttackRange));
             }
             public override BehaviorState NextState() {
                 return new Attack();
+            }
+        }
+        private class NoLongerStunned : StateTransition {
+            AdultWandererAI SelfWanderer;
+            public override bool CanTransitionBeTaken() {
+                SelfWanderer = self as AdultWandererAI;
+                return self.stunNormalizedTimer <= 0;
+            }
+            public override BehaviorState NextState() {
+                return new Chase();
             }
         }
 
         private bool spawnFinished = false;
         public PlayerControllerB MainTarget = null;
         private bool LostPatience = false;
-        private int AttackCooldown = 30;
+        private float AttackCooldownSeconds = 1.2f;
         public int AttackRange = 7;
         public override void Start() {
             InitialState = new Spawn();
             PrintDebugs = true;
             base.Start();
+            MyValidState = PlayerState.Outside;
+            enemyHP = 10;
         }
         public override void Update() {
-            if(AttackCooldown > 0) {
-                AttackCooldown--;
-            }
+            LowerTimerValue(ref AttackCooldownSeconds);
             base.Update();
         }
         private void MeleeAttackPlayer(PlayerControllerB Target) {
@@ -246,6 +274,21 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         public bool CheckForPlayerLOS() {
             return MainTarget.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);
+        }
+        public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+            base.HitEnemy(force, playerWhoHit, playHitSFX);
+            enemyHP -= force;
+            creatureAnimator.SetTrigger("Hit");
+            if (base.IsOwner) {
+                if (enemyHP <= 0) {
+                    creatureAnimator.SetTrigger("Killed");
+                    KillEnemyOnOwnerClient();
+                    return;
+                }
+            }
+            //If we're attacked by a player, they need to be immediately set to our target player
+            targetPlayer = playerWhoHit;
+            OverrideState(new Attack());
         }
     }
 }

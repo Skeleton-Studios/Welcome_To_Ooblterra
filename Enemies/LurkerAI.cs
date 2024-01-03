@@ -1,5 +1,6 @@
 ﻿using GameNetcodeStuff;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -75,7 +76,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 Lurker = self as LurkerAI;
                 SwitchClingingToCeilingState(true);
                 self.agent.speed = 0;
-                Lurker.MoveCooldown = enemyRandom.Next(150, 300);
+                Lurker.MoveCooldownSeconds = enemyRandom.Next(2, 5);
                 Lurker.creatureVoice.Play();
                 Lurker.finishPlayerDrag = false;
             }
@@ -227,7 +228,7 @@ namespace Welcome_To_Ooblterra.Enemies {
 
             public override bool CanTransitionBeTaken() {
                 LurkerAI lurker = self as LurkerAI;
-                if (Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) > lurker.GrabDistance && lurker.MoveCooldown > 0) {
+                if (Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) > lurker.GrabDistance && lurker.MoveCooldownSeconds > 0f) {
                     WTOBase.LogToConsole("Lurker lost player...");
                     return true;
                 }
@@ -277,7 +278,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         bool finishPlayerDrag = false;
         public int GrabDistance = 6;
         public AISearchRoutine roamMap;
-        public int MoveCooldown;
+        public float MoveCooldownSeconds;
         public override string __getTypeName() {
             return "LurkerAI";
         }
@@ -292,9 +293,19 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         public override void Update() {
             base.Update();
-            if (MoveCooldown > 0) {
-                MoveCooldown--;
+            LowerTimerValue(ref MoveCooldownSeconds);
+        }
+        public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+            base.HitEnemy(force, playerWhoHit, playHitSFX);
+            enemyHP -= force;
+            if (base.IsOwner) {
+                if (enemyHP <= 0) {
+                    creatureAnimator.SetTrigger("Killed");
+                    KillEnemyOnOwnerClient();
+                    return;
+                }
             }
+            OverrideState(new Flee());
         }
     }
 }

@@ -65,7 +65,7 @@ namespace Welcome_To_Ooblterra.Patches {
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(enemyType.enemyPrefab);
             LethalLib.Modules.Enemies.RegisterEnemy(enemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, new string[] { "OoblterraLevel" }, EnemyInfo, EnemyKeyword);
             EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = enemyType, rarity = rarity });
-            Debug.Log("Monster Loaded:" + EnemyName);
+            Debug.Log("Monster Loaded: " + EnemyName);
         }
 
         public static void Start() {

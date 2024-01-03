@@ -6,11 +6,12 @@ using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class WTOEnemy : EnemyAI {
-
         public abstract class BehaviorState {
+
             public abstract void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
             public abstract void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
             public abstract void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
+
             public virtual List<StateTransition> transitions { get; set; }
         }
         public abstract class StateTransition {
@@ -34,8 +35,10 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal int AITimer;
         internal RoundManager roundManager;
         internal bool PrintDebugs = false;
-        internal PlayerState MyValidState;
+        internal PlayerState MyValidState = PlayerState.Inside;
         internal StateTransition nextTransition;
+        internal List<StateTransition> GlobalTransitions = new List<StateTransition>();
+
         public override string __getTypeName() {
             return GetType().Name;
         }
@@ -82,6 +85,17 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             */
             bool RunUpdate = true;
+            foreach (StateTransition transition in GlobalTransitions) {
+                transition.self = this;
+                if (transition.CanTransitionBeTaken()) {
+                    RunUpdate = false;
+                    nextTransition = transition;
+                    if (base.IsOwner) {
+                        TransitionStateServerRPC();
+                    }
+                    return;
+                }
+            }
             foreach (StateTransition transition in ActiveState.transitions) {
                 transition.self = this;
                 if (transition.CanTransitionBeTaken()) {
@@ -90,15 +104,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     if (base.IsOwner) { 
                         TransitionStateServerRPC();
                     }
-                    /*
-                    LogMessage("Exiting: " + ActiveState.ToString());
-                    ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-                    LogMessage("Transitioning Via: " + transition.ToString());
-                    ActiveState = transition.NextState();
-                    LogMessage("Entering: " + ActiveState.ToString());
-                    ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
-                    */
-                    break;
+                    return;
                 }
             }
             if (RunUpdate) {
@@ -111,9 +117,9 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
         }
         internal bool PlayerCanBeTargeted(PlayerControllerB myPlayer) {
-            return (ValidatePlayer(myPlayer) == MyValidState);
+            return (GetPlayerState(myPlayer) == MyValidState);
         }
-        internal PlayerState ValidatePlayer(PlayerControllerB myPlayer) {
+        internal PlayerState GetPlayerState(PlayerControllerB myPlayer) {
             if (myPlayer.isPlayerDead) {
                 return PlayerState.Dead;
             }
@@ -124,21 +130,34 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
 
         [ServerRpc]
-        public void TransitionStateServerRPC() {
+        internal void TransitionStateServerRPC() {
             TransitionStateClientRpc();
         }
         [ClientRpc]
-        public void TransitionStateClientRpc() {
+        internal void TransitionStateClientRpc() {
             TransitionState();
         }
-
-        public void TransitionState() {
+        internal void TransitionState() {
             LogMessage("Exiting: " + ActiveState.ToString());
             ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
             LogMessage("Transitioning Via: " + nextTransition.ToString());
             ActiveState = nextTransition.NextState();
             LogMessage("Entering: " + ActiveState.ToString());
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+        }
+        internal void LowerTimerValue(ref float Timer) {
+            if (Timer == 0) {
+                return;
+            }
+            Timer -= Time.deltaTime;
+        }
+        internal void OverrideState(BehaviorState state) {
+            ActiveState = state;
+            ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+            return;
+        }
+        internal float GetDistanceFromPlayer(PlayerControllerB player) {
+            return Vector3.Distance(player.transform.position, this.transform.position);
         }
     }
 

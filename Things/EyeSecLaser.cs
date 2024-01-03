@@ -39,6 +39,11 @@ namespace Welcome_To_Ooblterra.Things {
         }
         public void SetLaserEnabled(bool NewEnabled) {
             Laser.enabled = NewEnabled;
+            if(NewEnabled == false) {
+                Laser.startColor = Color.green;
+                Laser.endColor = Color.green;
+                timeElapsed = 0;
+            }
         }
     }
 }

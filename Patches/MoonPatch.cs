@@ -49,6 +49,7 @@ namespace Welcome_To_Ooblterra.Patches {
         private static void AddMoonToList(StartOfRound __instance) {
             SetMoonVariables(MyNewMoon, __instance);
             AddToMoons(MyNewMoon, __instance);
+            LevelStartHasBeenRun = false;
         }
 
         //Destroy the necessary actors and set our scene

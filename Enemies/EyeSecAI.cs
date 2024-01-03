@@ -128,18 +128,17 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if (laserTimer > 2) {
                     self.targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Blast);
                     self.creatureVoice.PlayOneShot(EyeSecSelf.BurnSFX);
-                } 
+                }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Attacking", value: false);
-                
+                creatureAnimator.SetBool("Attacking", value: false);                
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new FinishKill(),
-                new PlayerOutOfRange()
+                new PlayerOutOfRange(),
+                new PlayerLeft()
             };
         }
-
         private class MoveToAttackPosition : BehaviorState {
             public EyeSecAI EyeSecSelf;
 
@@ -158,7 +157,8 @@ namespace Welcome_To_Ooblterra.Enemies {
 
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-                new InRangeOfPlayer()
+                new InRangeOfPlayer(),
+                new PlayerLeft()
             };
         }
         //STATE TRANSITIONS
@@ -254,6 +254,16 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return new Attack();
             }
         }
+        private class PlayerLeft : StateTransition {
+            public override bool CanTransitionBeTaken() {
+                EyeSecAI SelfAI = self as EyeSecAI;
+                return !SelfAI.PlayerCanBeTargeted(self.targetPlayer);
+            }
+            public override BehaviorState NextState() {
+                self.targetPlayer = null;
+                return new Patrol();
+            }
+        }
 
         [SerializeField]
         public GameObject Head;
@@ -289,12 +299,9 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void Update() {
             if(ScanCooldown > 0) {
                 ScanCooldown--;
-            }
-            
+            }           
             SpinWheel();
             base.Update();
-            
-            
         }
         public static void RefreshGrabbableObjectsInMapList() {
             grabbableObjectsInMap.Clear();
@@ -335,7 +342,6 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return;
             }
         }
-
         private void SpinWheel() {
             //Wheel.transform.forward = agent.transform.forward;
             if(agent.speed > 0) {
@@ -352,27 +358,15 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
         }
-
-        [ClientRpc]
-        public void RadarBoosterFlashClientRpc() {
-            NetworkManager networkManager = base.NetworkManager;
-            if ((object)networkManager != null && networkManager.IsListening) {
-                if (__rpc_exec_stage != __RpcExecStage.Client && (networkManager.IsServer || networkManager.IsHost)) {
-                    ClientRpcParams clientRpcParams = default(ClientRpcParams);
-                    FastBufferWriter bufferWriter = __beginSendClientRpc(720948839u, clientRpcParams, RpcDelivery.Reliable);
-                    __endSendClientRpc(ref bufferWriter, 720948839u, clientRpcParams, RpcDelivery.Reliable);
-                }
-
-                if (__rpc_exec_stage == __RpcExecStage.Client && (networkManager.IsClient || networkManager.IsHost)) {
-                    Flash();
-                }
-            }
-        }
-
         public void Flash() {           
             creatureVoice.PlayOneShot(flashSFX);
             WalkieTalkie.TransmitOneShotAudio(creatureVoice, flashSFX);
             StunGrenadeItem.StunExplosion(transform.position, affectAudio: false, 2f, 4f, 2f);      
+        }
+        public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+            base.HitEnemy(force, playerWhoHit, playHitSFX);
+            targetPlayer = playerWhoHit;
+            OverrideState(new Attack());
         }
     }
 }
