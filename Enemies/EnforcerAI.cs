@@ -10,6 +10,7 @@ using Welcome_To_Ooblterra.Things;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class EnforcerAI : EnemyAI {
+        /*
         public DeadBodyInfo bodyBeingCarried;
         private RoundManager roundManager;
         private float AITimer;
@@ -75,7 +76,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             } else {
                 creatureAnimator.SetLayerWeight(1, 0f);
             }
-            */
+            
 
             //Custom Enforcer Code
             GetArmedEnemyList();
@@ -174,7 +175,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                             /*if ( Enemies are all within explosion radius of each other) {
                                 MyWeapon.LaunchRocket(targetPlayer);
                                 break;
-                            }*/
+                            }
                             if (enemyRandom.Next(0, 100) % 4 == 0) {
                                 MyWeapon.LaunchRocket(targetPlayer);
                             } else {
@@ -246,5 +247,6 @@ namespace Welcome_To_Ooblterra.Enemies {
             target.DamagePlayer(70, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
             target.JumpToFearLevel(1f);
         }
+        */
     }
 }

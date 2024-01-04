@@ -218,7 +218,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Stunned : BehaviorState {
 
             GallenarmaAI Gallenarma;
-            private bool MovingToBoombox;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Gallenarma = self as GallenarmaAI;
                 creatureAnimator.SetTrigger("Stunned");
@@ -391,7 +390,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         private bool Awakening = false;
         private float SecondsUntilChainsBroken;
         private float hearNoiseCooldown;
-        private bool inKillAnimation;
         private float SecondsUntilBored;
         private float TameTimerSeconds = 0;
         private Vector3 myBoomboxPos;
@@ -456,7 +454,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             if (noiseID == 5) {
                 TameTimerSeconds = 2;
                 myBoomboxPos = noisePosition;
-            } else if (stunNormalizedTimer > 0f || noiseID == 7 || noiseID == 546 || inKillAnimation || hearNoiseCooldown > 0f || timesNoisePlayedInOneSpot > 15) {
+            } else if (stunNormalizedTimer > 0f || noiseID == 7 || noiseID == 546 || hearNoiseCooldown > 0f || timesNoisePlayedInOneSpot > 15) {
                 return;
             }
 
