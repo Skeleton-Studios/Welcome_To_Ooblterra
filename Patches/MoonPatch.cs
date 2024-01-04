@@ -13,7 +13,9 @@ namespace Welcome_To_Ooblterra.Patches {
 
         public static string MoonFriendlyName;
         public static SelectableLevel MyNewMoon;
-        
+
+        public static Animator OoblFogAnimator;
+
         private static readonly AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
         private static UnityEngine.Object LevelPrefab = null;
         private static readonly string[] ObjectNamesToDestroy = new string[]{
@@ -97,8 +99,21 @@ namespace Welcome_To_Ooblterra.Patches {
             return false;
         }
 
-        //METHODS
+        [HarmonyPatch(typeof(StartOfRound), "OnShipLandedMiscEvents")]
+        [HarmonyPostfix]
+        private static void SetFogTies(StartOfRound __instance) {
+            if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+                return;
+            }
+            OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
+            WTOBase.LogToConsole($"Fog animator found : {OoblFogAnimator != null}");
+            if (TimeOfDay.Instance.sunAnimator == OoblFogAnimator){
+                return;
+            }
+            TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
+        }
 
+        //METHODS
         public static void Start() {
             //Load our level asset object
             MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>(MoonPath + "OoblterraLevel.asset");
@@ -177,6 +192,7 @@ namespace Welcome_To_Ooblterra.Patches {
             SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
             GameObject.Destroy(SunObject);
             GameObject.Destroy(IndirectLight);
+            OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
         }
         private static void ManageFootsteps() {
             const string FootstepPath = MoonPath + "Sound/Footsteps/";
