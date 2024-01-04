@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Welcome_To_Ooblterra.Properties;
+using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class GallenarmaAI : WTOEnemy, INoiseListener {
@@ -222,6 +223,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 Gallenarma = self as GallenarmaAI;
                 creatureAnimator.SetTrigger("Stunned");
                 self.targetPlayer = self.stunnedByPlayer;
+                Gallenarma.ChangeOwnershipOfEnemy(self.targetPlayer.actualClientId);
                 Gallenarma.LatestNoise = new NoiseInfo(self.stunnedByPlayer.transform.position, 5);
                 Gallenarma.StunTimeSeconds = 3.15f;
             }
@@ -289,6 +291,7 @@ namespace Welcome_To_Ooblterra.Enemies {
 
                 if (Vector3.Distance(PotentialTargetPlayer.transform.position, self.transform.position) < Gallenarma.AttackRange) {
                     self.targetPlayer = PotentialTargetPlayer;
+                    Gallenarma.ChangeOwnershipOfEnemy(self.targetPlayer.actualClientId);
                     return true;
                 }
                 return false;
@@ -415,7 +418,6 @@ namespace Welcome_To_Ooblterra.Enemies {
                 Loudness = -1;
             }
         }
-        private List<NoiseInfo> NoiseStack = new List<NoiseInfo>();
         private NoiseInfo LatestNoise = new NoiseInfo(new Vector3(-1,-1,-1), -1);
 
         public override void Start() {
@@ -438,15 +440,18 @@ namespace Welcome_To_Ooblterra.Enemies {
             base.HitEnemy(force, playerWhoHit, playHitSFX);
             enemyHP -= force;
             creatureAnimator.SetTrigger("Hit");
-            if (base.IsOwner) {
-                if (enemyHP <= 0) {
-                    creatureAnimator.SetTrigger("Killed");
+            if (enemyHP <= 0) {
+                creatureAnimator.SetTrigger("Killed");
+                if (base.IsOwner) {
                     KillEnemyOnOwnerClient();
-                    return;
+
                 }
+                return;
             }
+
             //If we're attacked by a player, they need to be immediately set to our target player
             targetPlayer = playerWhoHit;
+            ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
             OverrideState(new Investigate());
         }
         public override void DetectNoise(Vector3 noisePosition, float noiseLoudness, int timesNoisePlayedInOneSpot = 0, int noiseID = 0) {
@@ -454,7 +459,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             if (noiseID == 5) {
                 TameTimerSeconds = 2;
                 myBoomboxPos = noisePosition;
-            } else if (stunNormalizedTimer > 0f || noiseID == 7 || noiseID == 546 || hearNoiseCooldown > 0f || timesNoisePlayedInOneSpot > 15) {
+            } else if (stunNormalizedTimer > 0f || noiseID == 7 || noiseID == 546 || hearNoiseCooldown > 0f || timesNoisePlayedInOneSpot > 15 || isEnemyDead) {
                 return;
             }
 
@@ -464,7 +469,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             hearNoiseCooldown = 0.03f;
             float num = Vector3.Distance(base.transform.position, noisePosition);
-            Debug.Log($"Gallenarma '{gameObject.name}': Heard noise! Distance: {num} meters. Location: {noisePosition} ");
+            Debug.Log($"Gallenarma '{gameObject.name}': Heard noise! Distance: {num} meters. Location: {noisePosition}");
             float num2 = 18f * noiseLoudness;
             if (Physics.Linecast(base.transform.position, noisePosition, 256)) {
                 noiseLoudness /= 2f;
@@ -473,6 +478,9 @@ namespace Welcome_To_Ooblterra.Enemies {
 
             if (noiseLoudness < 0.025f) {
                 return;
+            }
+            if (!(ActiveState is Attack || ActiveState is Chase)) { 
+                ChangeOwnershipOfEnemy(NetworkManager.Singleton.LocalClientId);
             }
             //NoiseStack.Insert(0, new NoiseInfo(noisePosition, noiseLoudness));
             LatestNoise = new NoiseInfo(noisePosition, noiseLoudness);

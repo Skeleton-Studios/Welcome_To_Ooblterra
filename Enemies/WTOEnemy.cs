@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 using Unity.Netcode;
+using System;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class WTOEnemy : EnemyAI {
@@ -16,19 +17,14 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         public abstract class StateTransition {
             public EnemyAI self { get; set; }
-
             public abstract bool CanTransitionBeTaken();
             public abstract BehaviorState NextState();
-
-
         }
-
         public enum PlayerState {
             Dead,
             Outside,
             Inside
         }
-
         internal BehaviorState InitialState { get; set; }
         internal BehaviorState ActiveState = null;
         internal System.Random enemyRandom;
@@ -67,32 +63,19 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void Update() {
             base.Update();
             AITimer++;
+
             //don't run enemy ai if they're dead
             if (isEnemyDead || !ventAnimationFinished) {
                 return;
             }
-
-            //play the stun animation if they're stunned 
-            //TODO: SetLayerWeight switches between the basic animation layer (0) and the stun animation layer (1). 
-            //The wanderer will need a similar setup if we want to be able to stun him, plus a stun animation 
-            /*
-            if (stunNormalizedTimer > 0f && !isEnemyDead) {
-                if (stunnedByPlayer != null && currentBehaviourStateIndex != 2 && base.IsOwner) {
-                    creatureAnimator.SetLayerWeight(1, 1f);
-                }
-            } else {
-                creatureAnimator.SetLayerWeight(1, 0f);
-            }
-            */
+            
             bool RunUpdate = true;
             foreach (StateTransition transition in GlobalTransitions) {
                 transition.self = this;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
-                    nextTransition = transition;
-                    if (base.IsOwner) {
-                        TransitionStateServerRPC();
-                    }
+                    nextTransition = transition;                   
+                    TransitionStateServerRpc(nextTransition.ToString());
                     return;
                 }
             }
@@ -100,10 +83,8 @@ namespace Welcome_To_Ooblterra.Enemies {
                 transition.self = this;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
-                    nextTransition = transition;
-                    if (base.IsOwner) { 
-                        TransitionStateServerRPC();
-                    }
+                    nextTransition = transition; 
+                    TransitionStateServerRpc(nextTransition.ToString());
                     return;
                 }
             }
@@ -129,21 +110,30 @@ namespace Welcome_To_Ooblterra.Enemies {
             return PlayerState.Outside;
         }
 
-        [ServerRpc]
-        internal void TransitionStateServerRPC() {
-            TransitionStateClientRpc();
+        [ServerRpc(RequireOwnership = false)]
+        internal void TransitionStateServerRpc(string StateName) {
+            TransitionStateClientRpc(StateName);
         }
         [ClientRpc]
-        internal void TransitionStateClientRpc() {
-            TransitionState();
+        internal void TransitionStateClientRpc(string StateName) {
+            TransitionState(StateName);
         }
-        internal void TransitionState() {
-            LogMessage("Exiting: " + ActiveState.ToString());
+        internal void TransitionState(string StateName) {
+
+            LogMessage(StateName);
+            //Jesus fuck I can't believe I have to do this
+            Type type = Type.GetType(StateName);
+            StateTransition LocalTransition = (StateTransition)Activator.CreateInstance(type);
+            LocalTransition.self = this;
+
+            //LogMessage("Exiting: " + ActiveState.ToString());
             ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-            LogMessage("Transitioning Via: " + nextTransition.ToString());
-            ActiveState = nextTransition.NextState();
-            LogMessage("Entering: " + ActiveState.ToString());
+            //LogMessage("Transitioning Via: " + LocalTransition.ToString());
+            ActiveState = LocalTransition.NextState();
+            //LogMessage("Entering: " + ActiveState.ToString());
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+            StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
+            LogMessage($"CREATURE: {enemyType.name} #{thisEnemyIndex} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
         }
         internal void LowerTimerValue(ref float Timer) {
             if (Timer == 0) {

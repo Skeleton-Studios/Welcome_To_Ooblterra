@@ -20,7 +20,7 @@ namespace Welcome_To_Ooblterra.Things {
         public AudioSource CrusherSound;
         public AudioClip SoundToPlay;
 
-        private void OnTriggerStay(Collider other) {
+        private void OnTriggerEnter(Collider other) {
             if (!other.gameObject.CompareTag("Player")) {
                 return;
             }

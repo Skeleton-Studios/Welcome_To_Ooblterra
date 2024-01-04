@@ -126,7 +126,6 @@ namespace Welcome_To_Ooblterra.Properties {
         [HarmonyPatch(typeof(StartOfRound), "Update")]
         [HarmonyPostfix]
         public static void DebugHelper(StartOfRound __instance) {
-            
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
                 /*
                 bool flag = TimeOfDay.Instance.sunAnimator == MoonPatch.OoblFogAnimator;
@@ -153,7 +152,6 @@ namespace Welcome_To_Ooblterra.Properties {
                 WTOBase.LogToConsole("EyeSec spawned...");
                 */
             }
-
         }
     }
 }
