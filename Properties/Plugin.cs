@@ -26,7 +26,7 @@ namespace Welcome_To_Ooblterra.Properties {
         public static ConfigFile ConfigFile;
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
-        private const string modVersion = "0.7.1";
+        private const string modVersion = "0.7.5";
 
         private readonly Harmony WTOHarmony = new Harmony(modGUID);
         internal ManualLogSource WTOLogSource;
@@ -128,12 +128,18 @@ namespace Welcome_To_Ooblterra.Properties {
         public static void DebugHelper(StartOfRound __instance) {
             
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
-
                 /*
+                bool flag = TimeOfDay.Instance.sunAnimator == MoonPatch.OoblFogAnimator;
+                WTOBase.LogToConsole($"Is fog animator correct? {flag}");
+                if (!flag) {
+                    TimeOfDay.Instance.sunAnimator = MoonPatch.OoblFogAnimator;
+                }
+                
                 SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
                 foreach(SprayPaintItem sprayPaint in SprayPaints) {
                     sprayPaint.debugSprayPaint = true;
                 }
+
                 
                 WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");
                 EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: true);
