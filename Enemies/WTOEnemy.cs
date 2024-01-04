@@ -162,7 +162,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal bool AnimationIsFinished(string AnimName) {
             if (!creatureAnimator.GetCurrentAnimatorStateInfo(0).IsName(AnimName)) {
                 LogMessage(__getTypeName() + ": Checking for animation " + AnimName + ", but current animation is " + creatureAnimator.GetCurrentAnimatorClipInfo(0)[0].clip.name);
-                return false;
+                return true;
             }
             return (creatureAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f);
         }

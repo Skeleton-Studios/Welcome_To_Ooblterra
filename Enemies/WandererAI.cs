@@ -19,7 +19,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             private WandererAI Wanderer;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Wanderer = self as WandererAI;
-                Wanderer.TotalInvestigationSeconds = 500; //enemyRandom.Next(4, 9);
+                Wanderer.TotalInvestigationSeconds = enemyRandom.Next(4, 9);
                 Wanderer.LogMessage("Investigating for: " + Wanderer.TotalInvestigationSeconds + "s");
                 self.creatureAnimator.speed = 1f;
                 self.agent.speed = 0f;
