@@ -236,6 +236,16 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return new Attack();
             }
         }
+        private class HitByStunGun : StateTransition {
+            AdultWandererAI SelfWanderer;
+            public override bool CanTransitionBeTaken() {
+                SelfWanderer = self as AdultWandererAI;
+                return self.stunNormalizedTimer > 0 && !(SelfWanderer.ActiveState is Stunned);
+            }
+            public override BehaviorState NextState() {
+                return new Stunned();
+            }
+        }
         private class NoLongerStunned : StateTransition {
             AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
@@ -254,10 +264,11 @@ namespace Welcome_To_Ooblterra.Enemies {
         public int AttackRange = 7;
         public override void Start() {
             InitialState = new Spawn();
-            PrintDebugs = true;
+            //PrintDebugs = true;
             base.Start();
             MyValidState = PlayerState.Outside;
             enemyHP = 10;
+            GlobalTransitions.Add(new HitByStunGun());
         }
         public override void Update() {
             LowerTimerValue(ref AttackCooldownSeconds);
@@ -278,8 +289,9 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
             base.HitEnemy(force, playerWhoHit, playHitSFX);
             enemyHP -= force;
+            LogMessage("Adult Wanderer HP remaining: " + enemyHP);
             creatureAnimator.SetTrigger("Hit");
-            if (base.IsOwner) {
+            if (IsOwner) {
                 if (enemyHP <= 0) {
                     creatureAnimator.SetTrigger("Killed");
                     KillEnemyOnOwnerClient();
@@ -288,6 +300,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             //If we're attacked by a player, they need to be immediately set to our target player
             targetPlayer = playerWhoHit;
+            MainTarget = playerWhoHit;
             OverrideState(new Attack());
         }
     }

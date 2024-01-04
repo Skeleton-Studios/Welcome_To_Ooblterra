@@ -12,7 +12,6 @@ using static Welcome_To_Ooblterra.Enemies.BabyLurkerAI;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class LurkerAI : WTOEnemy {
-
         
         //BEHAVIOR STATES
         private class Roam : BehaviorState {
@@ -287,7 +286,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             _ = StartOfRound.Instance.livingPlayers;
         }
         public override void Start() {
-            PrintDebugs = true;
+            //PrintDebugs = true;
             InitialState = new Roam();
             base.Start();
         }

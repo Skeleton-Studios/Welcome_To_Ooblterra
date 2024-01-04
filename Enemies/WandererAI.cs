@@ -34,7 +34,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if (self.targetPlayer == null) {
                     return;
                 }
-                Wanderer.shouldLookAtPlayer = Wanderer.GetDistanceFromPlayer(self.targetPlayer) < 4 && Wanderer.HasLineOfSightToPosition(self.targetPlayer.transform.position, 90);
+                //Wanderer.shouldLookAtPlayer = Wanderer.GetDistanceFromPlayer(self.targetPlayer) < 4 && Wanderer.HasLineOfSightToPosition(self.targetPlayer.transform.position, 90);
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Investigating", false);
@@ -147,7 +147,8 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class HitByStunGun : StateTransition {
             public override bool CanTransitionBeTaken() {
-                return self.stunNormalizedTimer > 0;
+                WandererAI MyWanderer = self as WandererAI;
+                return self.stunNormalizedTimer > 0 && !(MyWanderer.ActiveState is Stunned);
             }
             public override BehaviorState NextState() {
                 return new Stunned();
@@ -171,7 +172,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             stunNormalizedTimer = -1;
             GlobalTransitions.Add(new HitByStunGun());
-            PrintDebugs = true;
+            //PrintDebugs = true;
         }
         public override void Update() {
             base.Update();

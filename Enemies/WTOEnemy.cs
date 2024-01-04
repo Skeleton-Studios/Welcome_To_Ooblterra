@@ -156,8 +156,15 @@ namespace Welcome_To_Ooblterra.Enemies {
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
             return;
         }
-        internal float GetDistanceFromPlayer(PlayerControllerB player) {
+        internal float DistanceFromPlayer(PlayerControllerB player) {
             return Vector3.Distance(player.transform.position, this.transform.position);
+        }
+        internal bool AnimationIsFinished(string AnimName) {
+            if (!creatureAnimator.GetCurrentAnimatorStateInfo(0).IsName(AnimName)) {
+                LogMessage(__getTypeName() + ": Checking for animation " + AnimName + ", but current animation is " + creatureAnimator.GetCurrentAnimatorClipInfo(0)[0].clip.name);
+                return false;
+            }
+            return (creatureAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f);
         }
     }
 

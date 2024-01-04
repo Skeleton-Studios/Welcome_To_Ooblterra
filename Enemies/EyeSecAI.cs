@@ -14,7 +14,6 @@ namespace Welcome_To_Ooblterra.Enemies {
 
     public class EyeSecAI : WTOEnemy {
 
-
         //BEHAVIOR STATES
         private class Patrol : BehaviorState {
             EyeSecAI SelfEyeSec;
@@ -161,6 +160,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 new PlayerLeft()
             };
         }
+
         //STATE TRANSITIONS
         private class ShouldStartScanTransition : StateTransition {
             EyeSecAI SelfEyeSec;
@@ -292,7 +292,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void Start() {
             InitialState = new Patrol();
             RefreshGrabbableObjectsInMapList();
-            PrintDebugs = true;
+            //PrintDebugs = true;
             base.Start();
 
         }

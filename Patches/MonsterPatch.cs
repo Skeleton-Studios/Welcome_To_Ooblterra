@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using HarmonyLib;
+using LethalLib;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
@@ -12,6 +15,57 @@ namespace Welcome_To_Ooblterra.Patches {
         public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
 
         private const string EnemyPathRoot = "Assets/CustomEnemies/";
+        private static bool enemiesInList;
+
+        [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
+        [HarmonyPrefix]
+        private static void AddMonstersToDebug(QuickMenuManager __instance) {
+            if (enemiesInList) {
+                return;
+            }
+            var testLevel = __instance.testAllEnemiesLevel;
+            var firstEnemy = testLevel.Enemies.FirstOrDefault(); //Grab all of the test enemies 
+            if (firstEnemy == null) { //check to see if the list of enemies actually exists
+                Debug.Log("Failed to get first enemy for debug list!");
+                return;
+            }
+            
+            var enemies = testLevel.Enemies;
+            var outsideEnemies = testLevel.OutsideEnemies;
+            var daytimeEnemies = testLevel.DaytimeEnemies;
+
+            enemies.Clear();
+            foreach(SpawnableEnemyWithRarity InsideEnemy in InsideEnemies) { 
+                if (!enemies.Contains(InsideEnemy)) {
+                    enemies.Add(new SpawnableEnemyWithRarity {
+                        enemyType = InsideEnemy.enemyType,
+                        rarity = InsideEnemy.rarity
+                    });
+                    Debug.Log("Added " + InsideEnemy.enemyType.name + "To debug list");
+                }
+            }
+
+            daytimeEnemies.Clear();
+            foreach (SpawnableEnemyWithRarity DaytimeEnemy in DaytimeEnemies) {
+                if (!daytimeEnemies.Contains(DaytimeEnemy)) {
+                    daytimeEnemies.Add(new SpawnableEnemyWithRarity {
+                        enemyType = DaytimeEnemy.enemyType,
+                        rarity = DaytimeEnemy.rarity
+                    });
+                    Debug.Log("Added " + DaytimeEnemy.enemyType.name + "To debug list");
+                }
+            }
+
+            outsideEnemies.Clear();
+            outsideEnemies.Add(new SpawnableEnemyWithRarity {
+                enemyType = AdultWandererContainer[0].enemyType,
+                rarity = AdultWandererContainer[0].rarity
+            });
+            Debug.Log("Added " + AdultWandererContainer[0].enemyType.name + "To debug list");
+
+            enemiesInList = true;
+        }
+
 
         public static void SetInsideMonsters(SelectableLevel Moon) {
             Moon.Enemies = InsideEnemies;
@@ -65,7 +119,7 @@ namespace Welcome_To_Ooblterra.Patches {
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(enemyType.enemyPrefab);
             LethalLib.Modules.Enemies.RegisterEnemy(enemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, new string[] { "OoblterraLevel" }, EnemyInfo, EnemyKeyword);
             EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = enemyType, rarity = rarity });
-            Debug.Log("Monster Loaded: " + EnemyName);
+            Debug.Log("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
         }
 
         public static void Start() {
