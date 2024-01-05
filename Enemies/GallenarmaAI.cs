@@ -5,19 +5,22 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Welcome_To_Ooblterra.Properties;
 using Unity.Netcode;
+using UnityEngine.Networking;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class GallenarmaAI : WTOEnemy, INoiseListener {
 
         //BEHAVIOR STATES
         private class Asleep : BehaviorState {
+            GallenarmaAI Gallenarma;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
 
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetTrigger("WakeUp");
+                Gallenarma = self as GallenarmaAI;
+                Gallenarma.SetAnimTriggerOnServerRpc("WakeUp");
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new HeardNoise()
@@ -27,7 +30,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
                 Gallenarma.Awakening = true;
-                Gallenarma.SecondsUntilChainsBroken = enemyRandom.Next(15, 35);
+                Gallenarma.SecondsUntilChainsBroken = 5;//enemyRandom.Next(15, 35);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
@@ -42,14 +45,15 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class Patrol : BehaviorState {
             private bool canMakeNextPoint;
+            GallenarmaAI Gallenarma;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                GallenarmaAI Gallenarma = self as GallenarmaAI;
+                Gallenarma = self as GallenarmaAI;
                 Gallenarma.Awakening = false;
                 self.creatureSFX.maxDistance = 15;
                 Gallenarma.creatureVoice.PlayOneShot(Gallenarma.Growl);
-                self.creatureAnimator.SetBool("Investigating", false);
-                self.creatureAnimator.SetBool("Attack", false);
-                self.creatureAnimator.SetBool("Moving", true);
+                Gallenarma.SetAnimBoolOnServerRpc("Investigating", false);
+                Gallenarma.SetAnimBoolOnServerRpc("Attack", false);
+                Gallenarma.SetAnimBoolOnServerRpc("Moving", true);
                 self.agent.speed = 5f;
                 canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 10), checkForPath: true);
             }
@@ -62,7 +66,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Moving", false);
+                Gallenarma.SetAnimBoolOnServerRpc("Moving", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new HeardNoise(),
@@ -75,31 +79,31 @@ namespace Welcome_To_Ooblterra.Enemies {
             Transform NodeNearestToTargetNoise;
             NoiseInfo CurrentNoise;
             Vector3 NextPoint;
-            GallenarmaAI MyGallenarma;
+            GallenarmaAI Gallenarma;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 //pass the latest noise to our gallenarma and tell it to go there
-                MyGallenarma = self as GallenarmaAI;
-                self.creatureAnimator.SetBool("Moving", true);
-                if (MyGallenarma.LatestNoise.Loudness != -1) {
-                    NodeNearestToTargetNoise = self.ChooseClosestNodeToPosition(MyGallenarma.LatestNoise.Location);
-                    CurrentNoise = MyGallenarma.LatestNoise;
+                Gallenarma = self as GallenarmaAI;
+                Gallenarma.SetAnimBoolOnServerRpc("Moving", true);
+                if (Gallenarma.LatestNoise.Loudness != -1) {
+                    NodeNearestToTargetNoise = self.ChooseClosestNodeToPosition(Gallenarma.LatestNoise.Location);
+                    CurrentNoise = Gallenarma.LatestNoise;
                     OnRouteToNextPoint = self.SetDestinationToPosition(NodeNearestToTargetNoise.position, true);
                     self.agent.speed = 7f;
                     return;
                 }
-                MyGallenarma.LogMessage("Noise does not have any loudness!");
+                Gallenarma.LogMessage("Noise does not have any loudness!");
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                if (MyGallenarma.LatestNoise.Location != CurrentNoise.Location) {
-                    CurrentNoise = MyGallenarma.LatestNoise;
+                if (Gallenarma.LatestNoise.Location != CurrentNoise.Location) {
+                    CurrentNoise = Gallenarma.LatestNoise;
                     NodeNearestToTargetNoise = self.ChooseClosestNodeToPosition(CurrentNoise.Location);
                     OnRouteToNextPoint = self.SetDestinationToPosition(NodeNearestToTargetNoise.position, true);
                     self.agent.speed = 6f;
                 }
                 if (!OnRouteToNextPoint) {
-                    MyGallenarma.LogMessage("Noise was unreachable!");
-                    if (MyGallenarma.LatestNoise.Loudness != -1) {
-                        NextPoint = MyGallenarma.LatestNoise.Location;
+                    Gallenarma.LogMessage("Noise was unreachable!");
+                    if (Gallenarma.LatestNoise.Loudness != -1) {
+                        NextPoint = Gallenarma.LatestNoise.Location;
                     } else {
                         NextPoint = RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5);
                         WTOBase.LogToConsole("Gallenarma off to random point!");
@@ -108,7 +112,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Moving", false);
+                Gallenarma.SetAnimBoolOnServerRpc("Moving", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new ReachedNoise(),
@@ -116,17 +120,18 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Investigate : BehaviorState {
+            GallenarmaAI Gallenarma;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                GallenarmaAI Gallenarma = self as GallenarmaAI;
+                Gallenarma = self as GallenarmaAI;
                 Gallenarma.LatestNoise.Invalidate();
                 Gallenarma.TotalInvestigateSeconds = enemyRandom.Next(5, 9);
-                self.creatureAnimator.SetBool("Investigating", true);
+                Gallenarma.SetAnimBoolOnServerRpc("Investigating", true);
                 self.agent.speed = 0f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
                 if (Gallenarma.TotalInvestigateSeconds < 0.8) {
-                    self.creatureAnimator.SetBool("Investigating", false);
+                    Gallenarma.SetAnimBoolOnServerRpc("Investigating", false);
                 }
 
                 if (Gallenarma.TotalInvestigateSeconds > 0) {
@@ -135,7 +140,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                self.creatureAnimator.SetBool("Investigating", false);
+                Gallenarma.SetAnimBoolOnServerRpc("Investigating", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new FoundEnemy(),
@@ -148,7 +153,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             GallenarmaAI Gallenarma;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 Gallenarma = self as GallenarmaAI;
-                creatureAnimator.SetBool("Attack", true);
+                Gallenarma.SetAnimBoolOnServerRpc("Attack", true);
                 self.agent.speed = 0f;
                 Gallenarma.HasAttackedThisCycle = false;
                 Gallenarma.AttackTimerSeconds = Gallenarma.AttackTime;
@@ -157,7 +162,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 Gallenarma.TryMeleeAttackPlayer();
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Attack", false);
+                Gallenarma.SetAnimBoolOnServerRpc("Attack", false);
                 Gallenarma.HasAttackedThisCycle = false;
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -166,17 +171,19 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Chase : BehaviorState {
+            GallenarmaAI Gallenarma;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Investigating", false);
-                creatureAnimator.SetBool("Moving", true);
+                Gallenarma = self as GallenarmaAI;
+                Gallenarma.SetAnimBoolOnServerRpc("Investigating", false);
+                Gallenarma.SetAnimBoolOnServerRpc("Moving", true);
                 self.agent.speed = 6f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                GallenarmaAI Gallenarma = self as GallenarmaAI;
+                
                 self.SetMovingTowardsTargetPlayer(Gallenarma.targetPlayer);
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Moving", false);
+                Gallenarma.SetAnimBoolOnServerRpc("Moving", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new FoundEnemy(),
@@ -190,12 +197,12 @@ namespace Welcome_To_Ooblterra.Enemies {
                 Gallenarma = self as GallenarmaAI;
                 Gallenarma.SecondsUntilBored = 150;
                 self.SetDestinationToPosition(Gallenarma.myBoomboxPos);
-                creatureAnimator.SetBool("Moving", value: true);
+                Gallenarma.SetAnimBoolOnServerRpc("Moving", true);
                 self.agent.speed = 5f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 if (Vector3.Distance(Gallenarma.myBoomboxPos, self.transform.position) < 5) {
-                    creatureAnimator.SetBool("Dancing", value: true);
+                    Gallenarma.SetAnimBoolOnServerRpc("Dancing", true);
                     self.agent.speed = 0f;
                     Gallenarma.IsDancing = true;
                     Gallenarma.LowerTimerValue(ref Gallenarma.SecondsUntilBored);
@@ -209,8 +216,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Dancing", value: false);
-                GallenarmaAI Gallenarma = self as GallenarmaAI;
+                Gallenarma.SetAnimBoolOnServerRpc("Dancing", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new BoredOfDancing()
@@ -255,7 +261,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             public override bool CanTransitionBeTaken() {
                 GallenarmaAI Gallenarma = self as GallenarmaAI;
                 if (Gallenarma.SecondsUntilChainsBroken > 0) {
-                    self.creatureAnimator.SetBool("Breaking", Gallenarma.SecondsUntilChainsBroken <= 2);
+                    Gallenarma.SetAnimBoolOnServerRpc("Breaking", Gallenarma.SecondsUntilChainsBroken <= 2);
                     return false;
                 }
                 return Gallenarma.AnimationIsFinished("Gallenarma Break");
@@ -439,9 +445,9 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
             base.HitEnemy(force, playerWhoHit, playHitSFX);
             enemyHP -= force;
-            creatureAnimator.SetTrigger("Hit");
+            SetAnimTriggerOnServerRpc("Hit");
             if (enemyHP <= 0) {
-                creatureAnimator.SetTrigger("Killed");
+                SetAnimTriggerOnServerRpc("Killed");
                 if (base.IsOwner) {
                     KillEnemyOnOwnerClient();
 

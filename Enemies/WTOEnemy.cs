@@ -1,9 +1,10 @@
 ﻿using GameNetcodeStuff;
-using System.Collections.Generic;
-using UnityEngine;
-using Welcome_To_Ooblterra.Properties;
-using Unity.Netcode;
 using System;
+using System.Collections.Generic;
+using Unity.Netcode;
+using UnityEngine;
+using UnityEngine.Networking;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies {
     public class WTOEnemy : EnemyAI {
@@ -156,6 +157,31 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             return (creatureAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f);
         }
+        [ServerRpc(RequireOwnership = false)]
+        internal void SetAnimTriggerOnServerRpc(string name) {
+            if (IsServer) {
+                //LogMessage("Changing anim!");
+                creatureAnimator.SetTrigger(name);
+            }
+        }
+        [ServerRpc(RequireOwnership = false)]
+        internal void SetAnimBoolOnServerRpc(string name, bool state) {
+            if (IsServer) {
+                //LogMessage("Changing anim!");
+                creatureAnimator.SetBool(name, state);
+            }
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        internal void GenerateFloatServerRpc(ref float InFloat, int min, int max) {
+            int serverRandom;
+            if (IsServer) {
+                serverRandom = enemyRandom.Next(min, max);
+                InFloat = serverRandom;
+            }
+        }
+        
+
     }
 
 }
