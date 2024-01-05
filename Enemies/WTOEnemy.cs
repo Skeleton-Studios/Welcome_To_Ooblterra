@@ -9,7 +9,9 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Enemies {
     public class WTOEnemy : EnemyAI {
         public abstract class BehaviorState {
-
+            public Vector2 RandomRange = new Vector2(0, 0);
+            public int MyRandomInt = 0;
+            public EnemyAI self = SelfInstance;
             public abstract void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
             public abstract void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
             public abstract void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
@@ -34,7 +36,9 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal bool PrintDebugs = false;
         internal PlayerState MyValidState = PlayerState.Inside;
         internal StateTransition nextTransition;
+        private static EnemyAI SelfInstance;
         internal List<StateTransition> GlobalTransitions = new List<StateTransition>();
+        internal List<StateTransition> AllTransitions = new List<StateTransition>();
 
         public override string __getTypeName() {
             return GetType().Name;
@@ -53,6 +57,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 WTOBase.LogToConsole("CREATURE " + this.__getTypeName() + " WAS NOT PLACED ON NAVMESH, DESTROYING...");
                 KillEnemyOnOwnerClient();
             }
+            SelfInstance = this;
             creatureAnimator.Rebind();
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
             if (enemyType.isOutsideEnemy) {
@@ -64,28 +69,20 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void Update() {
             base.Update();
             AITimer++;
-
             //don't run enemy ai if they're dead
             if (isEnemyDead || !ventAnimationFinished) {
                 return;
             }
-            
             bool RunUpdate = true;
-            foreach (StateTransition transition in GlobalTransitions) {
+            AllTransitions.Clear();
+            AllTransitions.AddRange(GlobalTransitions);
+            AllTransitions.AddRange(ActiveState.transitions);
+            foreach (StateTransition transition in AllTransitions) {
                 transition.self = this;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
-                    nextTransition = transition;                   
-                    TransitionStateServerRpc(nextTransition.ToString());
-                    return;
-                }
-            }
-            foreach (StateTransition transition in ActiveState.transitions) {
-                transition.self = this;
-                if (transition.CanTransitionBeTaken()) {
-                    RunUpdate = false;
-                    nextTransition = transition; 
-                    TransitionStateServerRpc(nextTransition.ToString());
+                    nextTransition = transition;
+                    TransitionStateServerRpc(nextTransition.ToString(), GenerateNextRandomInt(nextTransition.NextState().RandomRange));
                     return;
                 }
             }
@@ -111,15 +108,15 @@ namespace Welcome_To_Ooblterra.Enemies {
             return PlayerState.Outside;
         }
 
-        [ServerRpc(RequireOwnership = false)]
-        internal void TransitionStateServerRpc(string StateName) {
-            TransitionStateClientRpc(StateName);
+        [ServerRpc]
+        internal void TransitionStateServerRpc(string StateName, int RandomInt) {
+            TransitionStateClientRpc(StateName, RandomInt);
         }
         [ClientRpc]
-        internal void TransitionStateClientRpc(string StateName) {
-            TransitionState(StateName);
+        internal void TransitionStateClientRpc(string StateName, int RandomInt) {
+            TransitionState(StateName, RandomInt);
         }
-        internal void TransitionState(string StateName) {
+        internal void TransitionState(string StateName, int RandomInt) {
 
             LogMessage(StateName);
             //Jesus fuck I can't believe I have to do this
@@ -127,15 +124,23 @@ namespace Welcome_To_Ooblterra.Enemies {
             StateTransition LocalTransition = (StateTransition)Activator.CreateInstance(type);
             LocalTransition.self = this;
 
-            //LogMessage("Exiting: " + ActiveState.ToString());
+            if (LocalTransition.NextState().GetType() == ActiveState.GetType()) {
+                return;
+            }
+
+            LogMessage("Exiting: " + ActiveState.ToString());
             ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-            //LogMessage("Transitioning Via: " + LocalTransition.ToString());
+            LogMessage("Transitioning Via: " + LocalTransition.ToString());
             ActiveState = LocalTransition.NextState();
-            //LogMessage("Entering: " + ActiveState.ToString());
+            ActiveState.MyRandomInt = RandomInt;
+            LogMessage("Entering: " + ActiveState.ToString());
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+
+            //Debug Prints 
             StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
             LogMessage($"CREATURE: {enemyType.name} #{thisEnemyIndex} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
         }
+
         internal void LowerTimerValue(ref float Timer) {
             if (Timer == 0) {
                 return;
@@ -157,28 +162,26 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             return (creatureAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f);
         }
-        [ServerRpc(RequireOwnership = false)]
+
+        [ServerRpc]
         internal void SetAnimTriggerOnServerRpc(string name) {
             if (IsServer) {
-                //LogMessage("Changing anim!");
+                LogMessage("Changing anim!");
                 creatureAnimator.SetTrigger(name);
             }
         }
-        [ServerRpc(RequireOwnership = false)]
+        
+        [ServerRpc]
         internal void SetAnimBoolOnServerRpc(string name, bool state) {
             if (IsServer) {
-                //LogMessage("Changing anim!");
+                LogMessage("Changing anim!");
                 creatureAnimator.SetBool(name, state);
             }
         }
 
-        [ServerRpc(RequireOwnership = false)]
-        internal void GenerateFloatServerRpc(ref float InFloat, int min, int max) {
-            int serverRandom;
-            if (IsServer) {
-                serverRandom = enemyRandom.Next(min, max);
-                InFloat = serverRandom;
-            }
+        internal int GenerateNextRandomInt(Vector2 Range) {
+            Range = nextTransition.NextState().RandomRange;
+            return enemyRandom.Next((int)Range.x, (int)Range.y);
         }
         
 
