@@ -157,14 +157,14 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         //STATE TRANSITIONS
         private class EvaluateEnemyState : StateTransition {
-            AdultWandererAI SelfWanderer;
+            
             public override bool CanTransitionBeTaken() {
-                SelfWanderer = self as AdultWandererAI;
-                return SelfWanderer.spawnFinished;
+                
+                return Instance.spawnFinished;
             }
             public override BehaviorState NextState() {
-                SelfWanderer = self as AdultWandererAI;
-                if (SelfWanderer.MainTarget == null) {
+                
+                if (Instance.MainTarget == null) {
                     return new Roam();
                 }
                 return new WaitForTargetLook();
@@ -172,22 +172,20 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EvaluatePlayerLook : StateTransition {
             public override bool CanTransitionBeTaken() {
-                AdultWandererAI SelfWanderer = self as AdultWandererAI;
-                WTOBase.LogToConsole("Player sees Adult Wanderer: " + SelfWanderer.CheckForPlayerLOS().ToString());
-                if (SelfWanderer.CheckForPlayerLOS()){
+                WTOBase.LogToConsole("Player sees Adult Wanderer: " + Instance.CheckForPlayerLOS().ToString());
+                if (Instance.CheckForPlayerLOS()){
                     return true;
                 }
-                return SelfWanderer.LostPatience;
+                return Instance.LostPatience;
             }
             public override BehaviorState NextState() {
                 return new Attack();
             }
         }
         private class EnemyInShipOrFacility : StateTransition {
-            AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
-                SelfWanderer = self as AdultWandererAI;
-                return !self.PlayerIsTargetable(SelfWanderer.MainTarget);
+                
+                return !Instance.PlayerIsTargetable(Instance.MainTarget);
             }
             public override BehaviorState NextState() {
                     return new Roam();
@@ -195,62 +193,58 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EnemyInOverworld : StateTransition {
             public override bool CanTransitionBeTaken() {
-                AdultWandererAI SelfWanderer = self as AdultWandererAI;
-                if(SelfWanderer.targetPlayer == null) {
+                if(Instance.targetPlayer == null) {
                     return false;
                 }
-                return SelfWanderer.PlayerCanBeTargeted(SelfWanderer.MainTarget);
+                return Instance.PlayerCanBeTargeted(Instance.MainTarget);
             }
             public override BehaviorState NextState() {
                 return new Chase();
             }
         }
         private class EnemyLeftRange : StateTransition{
-            AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
-                SelfWanderer = self as AdultWandererAI;
-                return (self.PlayerIsTargetable(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) > SelfWanderer.AttackRange));
+                
+                return (Instance.PlayerIsTargetable(Instance.MainTarget) && (Vector3.Distance(Instance.transform.position, Instance.MainTarget.transform.position) > Instance.AttackRange));
             }
             public override BehaviorState NextState() {
                 return new Roam();
             }
         }
         private class EnemyKilled : StateTransition {
-            AdultWandererAI SelfWanderer;
+            
             public override bool CanTransitionBeTaken() {
-                SelfWanderer = self as AdultWandererAI;
-                return (SelfWanderer.MainTarget.health < 0); 
+                
+                return (Instance.MainTarget.health < 0); 
             }
             public override BehaviorState NextState() {
-                SelfWanderer.MainTarget = null;
+                Instance.MainTarget = null;
                 return new Roam();
             }
         }
         private class EnemyEnteredRange : StateTransition {
-            AdultWandererAI SelfWanderer;
+            
             public override bool CanTransitionBeTaken() {
-                SelfWanderer = self as AdultWandererAI;
-                return (SelfWanderer.PlayerCanBeTargeted(SelfWanderer.MainTarget) && (Vector3.Distance(self.transform.position, SelfWanderer.MainTarget.transform.position) < SelfWanderer.AttackRange));
+                
+                return (Instance.PlayerCanBeTargeted(Instance.MainTarget) && (Vector3.Distance(Instance.transform.position, Instance.MainTarget.transform.position) < Instance.AttackRange));
             }
             public override BehaviorState NextState() {
                 return new Attack();
             }
         }
         private class HitByStunGun : StateTransition {
-            AdultWandererAI SelfWanderer;
+            
             public override bool CanTransitionBeTaken() {
-                SelfWanderer = self as AdultWandererAI;
-                return self.stunNormalizedTimer > 0 && !(SelfWanderer.ActiveState is Stunned);
+                
+                return Instance.stunNormalizedTimer > 0 && !(Instance.ActiveState is Stunned);
             }
             public override BehaviorState NextState() {
                 return new Stunned();
             }
         }
         private class NoLongerStunned : StateTransition {
-            AdultWandererAI SelfWanderer;
             public override bool CanTransitionBeTaken() {
-                SelfWanderer = self as AdultWandererAI;
-                return self.stunNormalizedTimer <= 0;
+                return Instance.stunNormalizedTimer <= 0;
             }
             public override BehaviorState NextState() {
                 return new Chase();
@@ -262,7 +256,10 @@ namespace Welcome_To_Ooblterra.Enemies {
         private bool LostPatience = false;
         private float AttackCooldownSeconds = 1.2f;
         public int AttackRange = 7;
+        public static AdultWandererAI Instance;
+
         public override void Start() {
+            Instance = this;
             InitialState = new Spawn();
             //PrintDebugs = true;
             base.Start();

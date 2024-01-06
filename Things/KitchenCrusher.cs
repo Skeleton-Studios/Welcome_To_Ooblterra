@@ -24,11 +24,11 @@ namespace Welcome_To_Ooblterra.Things {
             if (!other.gameObject.CompareTag("Player")) {
                 return;
             }
+            victim = other.gameObject.GetComponent<PlayerControllerB>();
             WTOBase.LogToConsole("Player colliding");
             if (CrusherRandom.Next(1, 100) > 45) {
-                victim = other.gameObject.GetComponent<PlayerControllerB>();
                 if(ActivateCrusher == false) {
-                    WTOBase.LogToConsole("activate crusher!");
+                    WTOBase.LogToConsole("activate crusher!");    
                     ActivateCrusher = true;
                     CrusherSound.PlayOneShot(SoundToPlay);
                 }

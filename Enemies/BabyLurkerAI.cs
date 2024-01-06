@@ -45,22 +45,22 @@ namespace Welcome_To_Ooblterra.Enemies {
             private Ray ray;
             private RaycastHit rayHit;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                BabyLurkerAI me = self as BabyLurkerAI;
-                me.LungeComplete = false;
+
+                Instance.LungeComplete = false;
                 self.creatureAnimator.SetBool("Attacking", true);
                 ray = new Ray(self.transform.position + Vector3.up, self.transform.forward);
                 Vector3 pos = ((!Physics.Raycast(ray, out rayHit, 17f, StartOfRound.Instance.collidersAndRoomMask)) ? ray.GetPoint(17f) : rayHit.point);
-                pos = me.roundManager.GetNavMeshPosition(pos);
+                pos = Instance.roundManager.GetNavMeshPosition(pos);
                 self.SetDestinationToPosition(self.targetPlayer.transform.position);
                 self.agent.speed = 13f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                BabyLurkerAI me = self as BabyLurkerAI;
+                
                 self.agent.speed -= Time.deltaTime * 5f;
                 if (self.agent.speed < 1.5f){
-                    me.LungeComplete = true;
-                    if(me.LungeCooldown < 1) { 
-                        me.LungeCooldown = 500;
+                    Instance.LungeComplete = true;
+                    if(Instance.LungeCooldown < 1) { 
+                        Instance.LungeCooldown = 500;
                     }
                 }
             }
@@ -121,8 +121,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 return true;
             }
             public override BehaviorState NextState() {
-                BabyLurkerAI me = self as BabyLurkerAI;
-                if (me.IsEnemyInRange()) {
+                if (Instance.IsEnemyInRange()) {
                     return new Lunge();
                 }
                 return new Roam();
@@ -130,12 +129,12 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class InPositionTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                BabyLurkerAI me = self as BabyLurkerAI;
-                return (Vector3.Distance(self.transform.position, self.destination) < 3) && me.LungeCooldown <= 0; 
+                
+                return (Vector3.Distance(Instance.transform.position, Instance.destination) < 3) && Instance.LungeCooldown <= 0; 
             }
             public override BehaviorState NextState() {
-                BabyLurkerAI me = self as BabyLurkerAI;
-                if (me.IsEnemyInRange()) {
+                
+                if (Instance.IsEnemyInRange()) {
                     return new Lunge();
                 } 
                 return new Roam();
@@ -143,22 +142,22 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EnemyOutOfRange : StateTransition {
             public override bool CanTransitionBeTaken() {
-                BabyLurkerAI me = self as BabyLurkerAI;
-                if ((Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) > 15)){
-                    self.targetPlayer = null;
+                
+                if ((Vector3.Distance(Instance.transform.position, Instance.targetPlayer.transform.position) > 15)){
+                    Instance.targetPlayer = null;
                     return true;
                 }
                 return false;
             }
             public override BehaviorState NextState() {
-                BabyLurkerAI me = self as BabyLurkerAI;
+                
                 return new Roam();
             }
         }
         private class EnemySpottedTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                self.targetPlayer = self.CheckLineOfSightForClosestPlayer(180f, 60, 2);
-                return (self.targetPlayer != null);
+                Instance.targetPlayer = Instance.CheckLineOfSightForClosestPlayer(180f, 60, 2);
+                return (Instance.targetPlayer != null);
             }
             public override BehaviorState NextState() {
                 return new Reposition();
@@ -166,8 +165,8 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EnemyAliveTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                BabyLurkerAI me = self as BabyLurkerAI;
-                return self.targetPlayer.health > 0 && me.LungeComplete;
+                
+                return Instance.targetPlayer.health > 0 && Instance.LungeComplete;
             }
             public override BehaviorState NextState() {
                 return new Reposition();
@@ -175,8 +174,8 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EnemyKilledTransition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                BabyLurkerAI me = self as BabyLurkerAI;
-                return self.targetPlayer.health <= 0 && me.LungeComplete;
+                
+                return Instance.targetPlayer.health <= 0 && Instance.LungeComplete;
             }
             public override BehaviorState NextState() {
                 return new StayOnPlayer();
@@ -185,10 +184,12 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         private bool LungeComplete;
         private int LungeCooldown;
+        private static BabyLurkerAI Instance;
         public override string __getTypeName() {
             return "BabyLurkerAI";
         }
         public override void Start() {
+            Instance = this;
             InitialState = new Spawn();
             PrintDebugs = true;
             base.Start();

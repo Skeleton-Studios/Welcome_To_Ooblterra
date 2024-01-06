@@ -15,19 +15,19 @@ namespace Welcome_To_Ooblterra.Enemies {
     public class WandererAI : WTOEnemy {
         //STATES
         private class Investigate : BehaviorState {
-
-            private WandererAI Wanderer;
+            public Investigate() {
+                RandomRange = new Vector2(4, 9);
+            }
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Wanderer = self as WandererAI;
-                Wanderer.TotalInvestigationSeconds = enemyRandom.Next(4, 9);
-                Wanderer.LogMessage("Investigating for: " + Wanderer.TotalInvestigationSeconds + "s");
+                Instance.TotalInvestigationSeconds = MyRandomInt;
+                Instance.LogMessage("Investigating for: " + Instance.TotalInvestigationSeconds + "s");
                 self.creatureAnimator.speed = 1f;
                 self.agent.speed = 0f;
                 self.creatureAnimator.SetBool("Investigating", true);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Wanderer.LowerTimerValue(ref Wanderer.TotalInvestigationSeconds);
-                if(Wanderer.TotalInvestigationSeconds < 0.2) {
+                Instance.LowerTimerValue(ref Instance.TotalInvestigationSeconds);
+                if(Instance.TotalInvestigationSeconds < 0.2) {
                     self.creatureAnimator.SetBool("Investigating", false);
                 }
                 self.targetPlayer = self.GetClosestPlayer();
@@ -45,10 +45,8 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Roam : BehaviorState {
-            WandererAI Wanderer;
 
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Wanderer = self as WandererAI;
                 self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 self.agent.speed = 7f;
                 self.creatureAnimator.SetBool("Moving", true);
@@ -65,17 +63,13 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Flee : BehaviorState {
-
-            private WandererAI Wanderer;
-            
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Wanderer = self as WandererAI;
                 self.creatureAnimator.speed = 2f;
                 self.creatureAnimator.SetBool("Moving", true);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.agent.speed = 10f;
-                self.SetDestinationToPosition(self.ChooseFarthestNodeFromPosition(Wanderer.NearestPlayer(Wanderer.RegisteredThreats).transform.position).position);
+                self.SetDestinationToPosition(self.ChooseFarthestNodeFromPosition(Instance.NearestPlayer(Instance.RegisteredThreats).transform.position).position);
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Moving", false);
@@ -86,13 +80,10 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Stunned : BehaviorState {
-
-            WandererAI MyWanderer;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Stunned", value: true);
                 self.agent.speed = 0f;
-                MyWanderer = self as WandererAI;
-                MyWanderer.RegisteredThreats.Add(self.stunnedByPlayer);
+                Instance.RegisteredThreats.Add(self.stunnedByPlayer);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -109,8 +100,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         //TRANSITIONS
         private class DoneInvestigating : StateTransition {
             public override bool CanTransitionBeTaken() {
-                WandererAI MyWanderer = self as WandererAI;
-                return (MyWanderer.TotalInvestigationSeconds <= 0);
+                return (Instance.TotalInvestigationSeconds <= 0);
             }
             public override BehaviorState NextState() {
                 return new Roam();
@@ -118,7 +108,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class FoundNextPoint : StateTransition {
             public override bool CanTransitionBeTaken() {
-                return (Vector3.Distance(self.transform.position, self.destination) < 5);
+                return (Vector3.Distance(Instance.transform.position, Instance.destination) < 5);
             }
             public override BehaviorState NextState() {
                 return new Investigate();
@@ -126,11 +116,10 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class InDanger : StateTransition {
             public override bool CanTransitionBeTaken() {
-                WandererAI MyWanderer = self as WandererAI;
-                if (MyWanderer.RegisteredThreats.Count <= 0 || self.stunNormalizedTimer > 0) {
+                if (Instance.RegisteredThreats.Count <= 0 || Instance.stunNormalizedTimer > 0) {
                     return false;
                 }
-                return (Vector3.Distance(self.transform.position, MyWanderer.NearestPlayer(MyWanderer.RegisteredThreats).transform.position) < 5);
+                return (Vector3.Distance(Instance.transform.position, Instance.NearestPlayer(Instance.RegisteredThreats).transform.position) < 5);
             }
             public override BehaviorState NextState() {
                 return new Flee();
@@ -138,8 +127,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class NoLongerInDanger : StateTransition {
             public override bool CanTransitionBeTaken() {
-                WandererAI MyWanderer = self as WandererAI;
-                return !(Vector3.Distance(self.transform.position, MyWanderer.NearestPlayer(MyWanderer.RegisteredThreats).transform.position) < 5);
+                return !(Vector3.Distance(Instance.transform.position, Instance.NearestPlayer(Instance.RegisteredThreats).transform.position) < 5);
             }
             public override BehaviorState NextState() {
                 return new Roam();
@@ -147,8 +135,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class HitByStunGun : StateTransition {
             public override bool CanTransitionBeTaken() {
-                WandererAI MyWanderer = self as WandererAI;
-                return self.stunNormalizedTimer > 0 && !(MyWanderer.ActiveState is Stunned);
+                return Instance.stunNormalizedTimer > 0 && !(Instance.ActiveState is Stunned);
             }
             public override BehaviorState NextState() {
                 return new Stunned();
@@ -161,10 +148,12 @@ namespace Welcome_To_Ooblterra.Enemies {
         public Transform WandererHead;
         bool shouldLookAtPlayer = false;
         private float HeadTurnTime;
+        public static WandererAI Instance;
 
         public override void Start() {
             MyValidState = PlayerState.Outside;
             InitialState = new Investigate();
+            Instance = this;
             base.Start();
             if (!agent.isOnNavMesh) {
                 Physics.Raycast(new Ray(new Vector3(0, 0, 0), Vector3.down), out var hit, LayerMask.GetMask("Terrain"));
@@ -223,7 +212,9 @@ namespace Welcome_To_Ooblterra.Enemies {
                     return;
                 }
             }
-            if(!RegisteredThreats.Contains(playerWhoHit)) RegisteredThreats.Add(playerWhoHit);
+
+            ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
+            if (!RegisteredThreats.Contains(playerWhoHit)) RegisteredThreats.Add(playerWhoHit);
         }
         
     }

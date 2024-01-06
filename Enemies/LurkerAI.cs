@@ -19,13 +19,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             private bool MovingToPosition;
 
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                LurkerAI lurker = self as LurkerAI;
                 self.creatureAnimator.SetBool("Moving", true);
                 MovingToPosition = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 self.agent.speed = 5f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                LurkerAI lurker = self as LurkerAI;
                 if (!MovingToPosition) {
                     MovingToPosition = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 }
@@ -35,8 +33,7 @@ namespace Welcome_To_Ooblterra.Enemies {
 
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                LurkerAI lurker = self as LurkerAI;
-                self.StopSearch(lurker.roamMap);
+                self.StopSearch(Instance.roamMap);
                 self.creatureAnimator.SetBool("Moving", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -46,9 +43,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Stalk : BehaviorState {
             //Find a spot behind the player and go to it
             Vector3 StalkPos;
-            LurkerAI Lurker;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Lurker = self as LurkerAI;
                 self.creatureAnimator.SetBool("Moving", true);
                 if (self.PlayerIsTargetable(self.targetPlayer)) { 
                     StalkPos = self.targetPlayer.transform.position - (Vector3.Scale(new Vector3(-5, 0, -5), (self.targetPlayer.transform.forward * -1)));
@@ -70,23 +65,20 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Wait : BehaviorState {
             //Cling to the ceiling and wait to be looked at
             //If the player moves out of range, go back to stalking
-            LurkerAI Lurker;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Lurker = self as LurkerAI;
                 SwitchClingingToCeilingState(true);
                 self.agent.speed = 0;
-                Lurker.MoveCooldownSeconds = enemyRandom.Next(2, 5);
-                Lurker.creatureVoice.Play();
-                Lurker.finishPlayerDrag = false;
+                Instance.MoveCooldownSeconds = enemyRandom.Next(2, 5);
+                Instance.creatureVoice.Play();
+                Instance.finishPlayerDrag = false;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                if (!Lurker.clingingToCeiling) {
-                    Lurker.clingingToCeiling = true;
+                if (!Instance.clingingToCeiling) {
+                    Instance.clingingToCeiling = true;
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Lurker = self as LurkerAI;
-                Lurker.creatureVoice.Stop();
+                Instance.creatureVoice.Stop();
                 /*
                 if (Lurker.clingingToCeiling) {
                     SwitchClingingToCeilingState(false);
@@ -99,21 +91,19 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
             private void SwitchClingingToCeilingState(bool shouldCling) {
                 
-                if (Lurker.clingingToCeiling = shouldCling) {
+                if (Instance.clingingToCeiling = shouldCling) {
                     return;
                 }
-                Lurker.clingingToCeiling = shouldCling;
+                Instance.clingingToCeiling = shouldCling;
                 if (shouldCling) {
-                    Lurker.creatureAnimator.SetBool("Flipping", true);
+                    Instance.creatureAnimator.SetBool("Flipping", true);
                     return;
                 }
-                Lurker.creatureAnimator.SetBool("Flipping", false);
+                Instance.creatureAnimator.SetBool("Flipping", false);
                 return;
             }
         }
         private class Drag : BehaviorState {
-
-            LurkerAI lurker;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Holding", true);
                 List<BabyLurkerEgg> LurkerEggs = new List<BabyLurkerEgg>();
@@ -131,7 +121,6 @@ namespace Welcome_To_Ooblterra.Enemies {
                         }
                     }
                 }
-                lurker = self as LurkerAI;
                 self.agent.speed = 4f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -139,7 +128,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if(Vector3.Distance(self.transform.position, self.destination) < 5) {
                     self.creatureAnimator.SetBool("Holding", false);
 
-                    lurker.finishPlayerDrag = true;
+                    Instance.finishPlayerDrag = true;
                 } else {
                     if(self.agent.speed < 15f) {
                         self.agent.speed += Time.deltaTime * 2;
@@ -156,7 +145,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class Flee : BehaviorState {
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                LurkerAI lurkerAI = self as LurkerAI;
                 self.creatureAnimator.SetBool("Moving", true);
                 
                 self.SetDestinationToPosition(self.ChooseFarthestNodeFromPosition(self.transform.position).position);
@@ -178,12 +166,12 @@ namespace Welcome_To_Ooblterra.Enemies {
 
             public override bool CanTransitionBeTaken() {
                 
-                if (self.GetAllPlayersInLineOfSight(90f) == null) {
+                if (Instance.GetAllPlayersInLineOfSight(90f) == null) {
                     return false;
                 }
-                foreach (var possiblePlayer in self.GetAllPlayersInLineOfSight(90f)) { 
-                    if(!possiblePlayer.HasLineOfSightToPosition(self.transform.position /*+ Vector3.up * 1.6f*/)){
-                        self.targetPlayer = possiblePlayer;
+                foreach (var possiblePlayer in Instance.GetAllPlayersInLineOfSight(90f)) { 
+                    if(!possiblePlayer.HasLineOfSightToPosition(Instance.transform.position /*+ Vector3.up * 1.6f*/)){
+                        Instance.targetPlayer = possiblePlayer;
                         return true;
                     }
                 }
@@ -195,17 +183,21 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class WaitForPlayerEyes : StateTransition {    
             public override bool CanTransitionBeTaken() {
-                LurkerAI lurker = self as LurkerAI;
-                if (self.targetPlayer.HasLineOfSightToPosition(lurker.transform.position + lurker.transform.up *2f)) {
+                if(Instance.targetPlayer == null) {
+                    return true;
+                }
+                if (Instance.targetPlayer.HasLineOfSightToPosition(Instance.transform.position + Instance.transform.up *2f)) {
                     return true;
                 }
                 return false;
             }
             public override BehaviorState NextState() {
-                LurkerAI lurker = self as LurkerAI;
-                WTOBase.LogToConsole("Clinging to ceiling: " + lurker.clingingToCeiling);
-                WTOBase.LogToConsole("Distance: " + Vector3.Distance(self.transform.position, self.targetPlayer.transform.position));
-                if (lurker.clingingToCeiling && Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) < lurker.GrabDistance) {
+                if(Instance.targetPlayer == null) {
+                    return new Flee();
+                }
+                WTOBase.LogToConsole("Clinging to ceiling: " + Instance.clingingToCeiling);
+                WTOBase.LogToConsole("Distance: " + Vector3.Distance(Instance.transform.position, Instance.targetPlayer.transform.position));
+                if (Instance.clingingToCeiling && Vector3.Distance(Instance.transform.position, Instance.targetPlayer.transform.position) < Instance.GrabDistance) {
                     return new Drag();
                 }
                 return new Flee();
@@ -213,8 +205,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class HoldPosition : StateTransition {
             public override bool CanTransitionBeTaken() {
-                LurkerAI lurker = self as LurkerAI;
-                if (Vector3.Distance(self.transform.position, self.destination) < 2) {
+                if (Vector3.Distance(Instance.transform.position, Instance.destination) < 2) {
                     return true;
                 }
                 return false;
@@ -226,8 +217,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class PlayerOutOfRange : StateTransition {
 
             public override bool CanTransitionBeTaken() {
-                LurkerAI lurker = self as LurkerAI;
-                if (Vector3.Distance(self.transform.position, self.targetPlayer.transform.position) > lurker.GrabDistance && lurker.MoveCooldownSeconds > 0f) {
+                if (Vector3.Distance(Instance.transform.position, Instance.targetPlayer.transform.position) > Instance.GrabDistance && Instance.MoveCooldownSeconds > 0f) {
                     WTOBase.LogToConsole("Lurker lost player...");
                     return true;
                 }
@@ -240,8 +230,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class PlayerDroppedOff : StateTransition {
 
             public override bool CanTransitionBeTaken() {
-                LurkerAI Lurker = self as LurkerAI;
-                return Lurker.finishPlayerDrag;
+                return Instance.finishPlayerDrag;
             }
             public override BehaviorState NextState() {
                 return new Flee();
@@ -250,7 +239,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class DoneFleeing : StateTransition {
 
             public override bool CanTransitionBeTaken() {
-                if(Vector3.Distance(self.transform.position, self.destination) < 2) {
+                if(Vector3.Distance(Instance.transform.position, Instance.destination) < 2) {
                     return true;
                 }
                 return false;
@@ -262,8 +251,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class TargetPlayerUnreachable : StateTransition {
 
             public override bool CanTransitionBeTaken() {
-                WTOEnemy selfenemy = self as WTOEnemy;
-                if (self.targetPlayer == null || self.PlayerIsTargetable(self.targetPlayer, true, false)) {
+                if (Instance.targetPlayer == null || Instance.PlayerIsTargetable(Instance.targetPlayer, true, false)) {
                     return false;
                 }
                 return false;
@@ -278,6 +266,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public int GrabDistance = 6;
         public AISearchRoutine roamMap;
         public float MoveCooldownSeconds;
+        public static LurkerAI Instance;
         public override string __getTypeName() {
             return "LurkerAI";
         }
@@ -286,6 +275,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             _ = StartOfRound.Instance.livingPlayers;
         }
         public override void Start() {
+            Instance = this;
             //PrintDebugs = true;
             InitialState = new Roam();
             base.Start();

@@ -16,18 +16,16 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         //BEHAVIOR STATES
         private class Patrol : BehaviorState {
-            EyeSecAI SelfEyeSec;
             public bool SearchInProgress;
             private int PatrolPointAttempts;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                SelfEyeSec = self as EyeSecAI;
                 creatureAnimator.SetBool("Moving", value: true);
                 SearchInProgress = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 self.agent.speed = 7f;
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 if (Vector3.Distance(self.transform.position, self.destination) < 3 && SearchInProgress) {
-                    SelfEyeSec.LogMessage("Finding next patrol point");
+                    Instance.LogMessage("Finding next patrol point");
                     PatrolPointAttempts = 0;
                     SearchInProgress = false;
                     return;
@@ -36,7 +34,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     return;
                 }
                 PatrolPointAttempts++;
-                SelfEyeSec.LogMessage("Attempt #" + PatrolPointAttempts + " Didn't find patrol point, trying again...");
+                Instance.LogMessage("Attempt #" + PatrolPointAttempts + " Didn't find patrol point, trying again...");
                 if (PatrolPointAttempts < 10) {
                     SearchInProgress = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 } else {
@@ -54,19 +52,19 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class ScanEnemies : BehaviorState {
             public int AnimWaiter = 0;
             public int investigateTimer;
-            public EyeSecAI EyeSecSelf;
             bool ScanClipStarted = false;
+            public ScanEnemies() {
+                RandomRange = new Vector2(5, 8);
+            }
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                EyeSecSelf = self as EyeSecAI;
                 creatureAnimator.SetBool("Scanning", value: true);
-                EyeSecSelf.ScanAnim.SetBool("Scanning", value: true);
+                Instance.SetScannerBoolOnServerRpc("Scanning", true);
                 self.agent.speed = 0f;
-                EyeSecSelf = self as EyeSecAI;
-                EyeSecSelf.ScanFinished = false;
+                Instance.ScanFinished = false;
                 investigateTimer = 0;
-                EyeSecSelf.IsScanning = true;
-                EyeSecSelf.Collider.enabled = true;
-                self.creatureVoice.PlayOneShot(EyeSecSelf.StartScanSFX);
+                Instance.IsScanning = true;
+                Instance.Collider.enabled = true;
+                self.creatureVoice.PlayOneShot(Instance.StartScanSFX);
 
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -75,30 +73,30 @@ namespace Welcome_To_Ooblterra.Enemies {
                     AnimWaiter++;
                     return;
                 } else if(!ScanClipStarted) {
-                    self.creatureVoice.clip = EyeSecSelf.ScanSFX;
+                    self.creatureVoice.clip = Instance.ScanSFX;
                     self.creatureVoice.loop = true;
                     self.creatureVoice.Play();
                     ScanClipStarted = true;
                 }
                 if(investigateTimer <= 360) {
-                    EyeSecSelf.ScanRoom();
+                    Instance.ScanRoom();
                 } else {
                     self.creatureVoice.Stop();
                     self.creatureVoice.loop = false;
-                    self.creatureVoice.PlayOneShot(EyeSecSelf.EndScanSFX);
-                    EyeSecSelf.ScanFinished = true;
-                    
-                    EyeSecSelf.ScanCooldown = 300;
-                    EyeSecSelf.IsScanning = false;
-                    EyeSecSelf.ScanAnim.SetBool("Scanning", value: false);
+                    self.creatureVoice.PlayOneShot(Instance.EndScanSFX);
+                    Instance.ScanFinished = true;
+
+                    Instance.ScanCooldownSeconds = MyRandomInt;
+                    Instance.IsScanning = false;
+                    Instance.SetScannerBoolOnServerRpc("Scanning", false);
                 }
                 investigateTimer++;
                                    
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Scanning", value: false);
-                
-                EyeSecSelf.Collider.enabled = false;
+
+                Instance.Collider.enabled = false;
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new ReturnToPatrol(),
@@ -107,26 +105,25 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class Attack : BehaviorState {
             private float laserTimer = 0;
-            public EyeSecAI EyeSecSelf;
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                EyeSecSelf = self as EyeSecAI;
-                EyeSecSelf.MyLaser.SetLaserEnabled(true);
+                Instance.MyLaser.SetLaserEnabled(true);
                 creatureAnimator.SetBool("Attacking", value: true);
                 self.agent.speed = 0f;
-                self.creatureVoice.PlayOneShot(EyeSecSelf.AttackSFX);
-                EyeSecSelf.Flash();
+                self.creatureVoice.PlayOneShot(Instance.AttackSFX);
+                
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Attacking", value: true);
-                EyeSecSelf.MyLaser.SetLaserEnabled(true);
-                EyeSecSelf.PlayerTracker.transform.position = self.targetPlayer.transform.position;
+                Instance.TryFlash();
+                Instance.MyLaser.SetLaserEnabled(true);
+                Instance.PlayerTracker.transform.position = self.targetPlayer.transform.position;
                 Quaternion LookRot = new Quaternion();
                 LookRot.SetLookRotation((self.targetPlayer.transform.position - self.transform.position) * -1);
-                EyeSecSelf.Head.transform.rotation = LookRot;
+                Instance.Head.transform.rotation = LookRot;
                 laserTimer += Time.deltaTime;
                 if (laserTimer > 2) {
                     self.targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Blast);
-                    self.creatureVoice.PlayOneShot(EyeSecSelf.BurnSFX);
+                    self.creatureVoice.PlayOneShot(Instance.BurnSFX);
                 }
             }
             public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -139,14 +136,12 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class MoveToAttackPosition : BehaviorState {
-            public EyeSecAI EyeSecSelf;
 
 
             public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                EyeSecSelf = self as EyeSecAI;
                 self.agent.speed = 9f;
-                EyeSecSelf.MyLaser.SetLaserEnabled(false);
-                EyeSecSelf.PlayerTracker.transform.position = self.transform.position;
+                Instance.MyLaser.SetLaserEnabled(false);
+                Instance.PlayerTracker.transform.position = self.transform.position;
                 self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position, true).position);
             }
             public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
@@ -163,15 +158,15 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         //STATE TRANSITIONS
         private class ShouldStartScanTransition : StateTransition {
-            EyeSecAI SelfEyeSec;
             public override bool CanTransitionBeTaken() {
-                SelfEyeSec = self as EyeSecAI;
                 //Grab a list of every player in range
-                PlayerControllerB[] players = self.GetAllPlayersInLineOfSight(180, 30);
-                if(players == null || SelfEyeSec.ScanCooldown > 0) {
+                bool CanInvestigate = Instance.enemyRandom.Next(0, 50) > 35;
+                PlayerControllerB[] players = Instance.GetAllPlayersInLineOfSight(180, 30);
+
+                if (players == null || Instance.ScanCooldownSeconds > 0) {
                     return false;
                 }
-                if(players.Length > 0 && SelfEyeSec.enemyRandom.Next(0,50) > 35) {
+                if(players.Length > 0 && CanInvestigate) {
                     return true;
                 }
                 return false;
@@ -182,11 +177,9 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         }
         private class ReturnToPatrol : StateTransition {
-            EyeSecAI SelfEyeSec;
             public override bool CanTransitionBeTaken() {
-                SelfEyeSec = self as EyeSecAI;
-                if (SelfEyeSec.ScanFinished) { 
-                    return !SelfEyeSec.FoundPlayerHoldingScrap;
+                if (Instance.ScanFinished) { 
+                    return !Instance.FoundPlayerHoldingScrap;
                 }
                 return false;
             }
@@ -197,10 +190,8 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         }
         private class BeginAttack : StateTransition {
-            EyeSecAI SelfEyeSec;
             public override bool CanTransitionBeTaken() {
-                SelfEyeSec = self as EyeSecAI;
-                return SelfEyeSec.FoundPlayerHoldingScrap;
+                return Instance.FoundPlayerHoldingScrap;
             }
             public override BehaviorState NextState() {
                 return new Attack();
@@ -208,32 +199,26 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         }
         private class FinishKill : StateTransition {
-            EyeSecAI SelfEyeSec;
             public override bool CanTransitionBeTaken() {
-                SelfEyeSec = self as EyeSecAI;
-                if(self.targetPlayer == null || self.targetPlayer.isPlayerDead) {
+                if(Instance.targetPlayer == null || Instance.targetPlayer.isPlayerDead) {
                     return true;
                 }
                 return false;
             }
             public override BehaviorState NextState() {
-                SelfEyeSec = self as EyeSecAI;
-                SelfEyeSec.MyLaser.SetLaserEnabled(false);
-                SelfEyeSec.PlayerTracker.transform.position = (self.transform.position);
-                SelfEyeSec.FoundPlayerHoldingScrap = false;
-                self.targetPlayer = null;
+                Instance.MyLaser.SetLaserEnabled(false);
+                Instance.FoundPlayerHoldingScrap = false;
+                Instance.targetPlayer = null;
                 return new Patrol();
             }
 
         }
         private class PlayerOutOfRange : StateTransition {
-            EyeSecAI SelfEyeSec;
             public override bool CanTransitionBeTaken() {
-                SelfEyeSec = self as EyeSecAI;
-                return !self.HasLineOfSightToPosition(self.targetPlayer.transform.position, 360f);
+                return !Instance.HasLineOfSightToPosition(Instance.targetPlayer.transform.position, 360f);
             }
             public override BehaviorState NextState() {
-                if (!self.PlayerIsTargetable(self.targetPlayer)) { 
+                if (!Instance.PlayerIsTargetable(Instance.targetPlayer)) { 
                     return new Patrol();
                 }
                 return new MoveToAttackPosition();
@@ -242,13 +227,13 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class InRangeOfPlayer : StateTransition {
             public override bool CanTransitionBeTaken() {
-                if (!self.PlayerIsTargetable(self.targetPlayer)) {
+                if (!Instance.PlayerIsTargetable(Instance.targetPlayer)) {
                     return true;
                 }
-                return self.HasLineOfSightToPosition(self.targetPlayer.transform.position, 360f);
+                return Instance.HasLineOfSightToPosition(Instance.targetPlayer.transform.position, 360f);
             }
             public override BehaviorState NextState() {
-                if (!self.PlayerIsTargetable(self.targetPlayer)) {
+                if (!Instance.PlayerIsTargetable(Instance.targetPlayer)) {
                     return new Patrol();
                 }
                 return new Attack();
@@ -256,11 +241,10 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class PlayerLeft : StateTransition {
             public override bool CanTransitionBeTaken() {
-                EyeSecAI SelfAI = self as EyeSecAI;
-                return !SelfAI.PlayerCanBeTargeted(self.targetPlayer);
+                return !Instance.PlayerCanBeTargeted(Instance.targetPlayer);
             }
             public override BehaviorState NextState() {
-                self.targetPlayer = null;
+                Instance.targetPlayer = null;
                 return new Patrol();
             }
         }
@@ -272,6 +256,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public Animator ScanAnim;
         public EyeSecLaser MyLaser;
         public Transform PlayerTracker;
+        public static EyeSecAI Instance;
 
         public AudioClip flashSFX;
         public AudioClip StartScanSFX;
@@ -286,20 +271,21 @@ namespace Welcome_To_Ooblterra.Enemies {
         private bool FoundPlayerHoldingScrap = false;
         private bool ScanFinished = false;
         private bool IsScanning;
-        private int ScanCooldown;
+        private float ScanCooldownSeconds;
+        private float FlashCooldownSeconds = 10f;
         private bool PlayingMoveSound;
 
         public override void Start() {
+            Instance = this;
             InitialState = new Patrol();
             RefreshGrabbableObjectsInMapList();
-            //PrintDebugs = true;
+            PrintDebugs = true;
             base.Start();
 
         }
         public override void Update() {
-            if(ScanCooldown > 0) {
-                ScanCooldown--;
-            }           
+            LowerTimerValue(ref ScanCooldownSeconds);
+            LowerTimerValue(ref FlashCooldownSeconds);
             SpinWheel();
             base.Update();
         }
@@ -337,7 +323,8 @@ namespace Welcome_To_Ooblterra.Enemies {
                 FoundPlayerHoldingScrap = true;
                 ScanFinished = true;
                 targetPlayer = victim;
-                ScanCooldown = 300;
+                ChangeOwnershipOfEnemy(victim.actualClientId);
+                ScanCooldownSeconds = 5;
                 IsScanning = false;
                 return;
             }
@@ -358,6 +345,12 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             }
         }
+        private void TryFlash() {
+            if(FlashCooldownSeconds <= 0) {
+                Flash();
+                FlashCooldownSeconds = 10f;
+            }
+        }
         public void Flash() {           
             creatureVoice.PlayOneShot(flashSFX);
             WalkieTalkie.TransmitOneShotAudio(creatureVoice, flashSFX);
@@ -366,7 +359,16 @@ namespace Welcome_To_Ooblterra.Enemies {
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
             base.HitEnemy(force, playerWhoHit, playHitSFX);
             targetPlayer = playerWhoHit;
+            ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
             OverrideState(new Attack());
+        }
+
+        [ServerRpc]
+        internal void SetScannerBoolOnServerRpc(string name, bool state) {
+            if (IsServer) {
+                LogMessage("Changing anim!");
+                ScanAnim.SetBool(name, state);
+            }
         }
     }
 }

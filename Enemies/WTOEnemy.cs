@@ -11,7 +11,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         public abstract class BehaviorState {
             public Vector2 RandomRange = new Vector2(0, 0);
             public int MyRandomInt = 0;
-            public EnemyAI self = SelfInstance;
             public abstract void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
             public abstract void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
             public abstract void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
@@ -19,7 +18,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             public virtual List<StateTransition> transitions { get; set; }
         }
         public abstract class StateTransition {
-            public EnemyAI self { get; set; }
+            //public EnemyAI self { get; set; }
             public abstract bool CanTransitionBeTaken();
             public abstract BehaviorState NextState();
         }
@@ -36,7 +35,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal bool PrintDebugs = false;
         internal PlayerState MyValidState = PlayerState.Inside;
         internal StateTransition nextTransition;
-        private static EnemyAI SelfInstance;
         internal List<StateTransition> GlobalTransitions = new List<StateTransition>();
         internal List<StateTransition> AllTransitions = new List<StateTransition>();
 
@@ -49,36 +47,42 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         public override void Start() {
             base.Start();
-            ActiveState = InitialState;
-            roundManager = FindObjectOfType<RoundManager>();
-            enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed + thisEnemyIndex);
-            //Debug for the animations not fucking working
-            if (!agent.isOnNavMesh && base.IsOwner) {
-                WTOBase.LogToConsole("CREATURE " + this.__getTypeName() + " WAS NOT PLACED ON NAVMESH, DESTROYING...");
-                KillEnemyOnOwnerClient();
-            }
-            SelfInstance = this;
-            creatureAnimator.Rebind();
+            
+            //Initializers
+                ActiveState = InitialState;
+                roundManager = FindObjectOfType<RoundManager>();
+                enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed + thisEnemyIndex);
+                if (enemyType.isOutsideEnemy) {
+                    MyValidState = PlayerState.Outside;
+                } else {
+                    MyValidState = PlayerState.Inside;
+                }
+            //Debug to make sure that the agent is actually on the navmesh
+                if (!agent.isOnNavMesh && base.IsOwner) {
+                    WTOBase.LogToConsole("CREATURE " + this.__getTypeName() + " WAS NOT PLACED ON NAVMESH, DESTROYING...");
+                    KillEnemyOnOwnerClient();
+                }
+            //Fix for the animator sometimes deciding to just not work
+                creatureAnimator.Rebind();
+
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
-            if (enemyType.isOutsideEnemy) {
-                MyValidState = PlayerState.Outside;
-            } else {
-                MyValidState = PlayerState.Inside;
-            }
+
         }
         public override void Update() {
             base.Update();
             AITimer++;
             //don't run enemy ai if they're dead
-            if (isEnemyDead || !ventAnimationFinished) {
-                return;
-            }
+                if (isEnemyDead || !ventAnimationFinished) {
+                    return;
+                }
             bool RunUpdate = true;
-            AllTransitions.Clear();
-            AllTransitions.AddRange(GlobalTransitions);
-            AllTransitions.AddRange(ActiveState.transitions);
+
+            //Reset transition list to match all those in our current state, along with any global transitions that exist regardless of state (stunned, mostly)
+                AllTransitions.Clear();
+                AllTransitions.AddRange(GlobalTransitions);
+                AllTransitions.AddRange(ActiveState.transitions);
+
             foreach (StateTransition transition in AllTransitions) {
-                transition.self = this;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
                     nextTransition = transition;
@@ -86,6 +90,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     return;
                 }
             }
+
             if (RunUpdate) {
                 ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
             }
@@ -117,21 +122,17 @@ namespace Welcome_To_Ooblterra.Enemies {
             TransitionState(StateName, RandomInt);
         }
         internal void TransitionState(string StateName, int RandomInt) {
-
-            LogMessage(StateName);
             //Jesus fuck I can't believe I have to do this
             Type type = Type.GetType(StateName);
-            StateTransition LocalTransition = (StateTransition)Activator.CreateInstance(type);
-            LocalTransition.self = this;
-
-            if (LocalTransition.NextState().GetType() == ActiveState.GetType()) {
+            StateTransition LocalNextTransition = (StateTransition)Activator.CreateInstance(type);
+            if (LocalNextTransition.NextState().GetType() == ActiveState.GetType()) {
                 return;
             }
-
+            LogMessage(StateName);
             LogMessage("Exiting: " + ActiveState.ToString());
             ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-            LogMessage("Transitioning Via: " + LocalTransition.ToString());
-            ActiveState = LocalTransition.NextState();
+            LogMessage("Transitioning Via: " + LocalNextTransition.ToString());
+            ActiveState = LocalNextTransition.NextState();
             ActiveState.MyRandomInt = RandomInt;
             LogMessage("Entering: " + ActiveState.ToString());
             ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
@@ -183,8 +184,5 @@ namespace Welcome_To_Ooblterra.Enemies {
             Range = nextTransition.NextState().RandomRange;
             return enemyRandom.Next((int)Range.x, (int)Range.y);
         }
-        
-
     }
-
 }
