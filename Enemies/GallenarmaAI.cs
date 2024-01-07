@@ -263,11 +263,10 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class WakeTimerDone : StateTransition {
             public override bool CanTransitionBeTaken() {
                 if (GallenarmaList[enemyIndex].SecondsUntilChainsBroken > 0) {
-                    GallenarmaList[enemyIndex].LogMessage($"GALLENARMA: {GallenarmaList[enemyIndex].thisEnemyIndex} TIME REMAINING: {GallenarmaList[enemyIndex].SecondsUntilChainsBroken})");
                     GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Breaking", GallenarmaList[enemyIndex].SecondsUntilChainsBroken <= 2);
                     return false;
                 }
-                return true;
+                return GallenarmaList[enemyIndex].AnimationIsFinished("Gallenarma Break");
             }
             public override BehaviorState NextState() {
                 //this is silly but fuck it
@@ -427,8 +426,8 @@ namespace Welcome_To_Ooblterra.Enemies {
             base.Start();
             LogMessage($"Adding Gallenarma {this} at {thisEnemyIndex}");
             GallenarmaList.Add(thisEnemyIndex, this);
-            if (enemyRandom.Next(0, 10) > 9) {
-                //LatestNoise = new NoiseInfo(Instance.transform.position, 2);
+            if (enemyRandom.Next(1, 10) > 8) {
+                LatestNoise = new NoiseInfo(transform.position, 2);
             }
         }
         public override void Update() {

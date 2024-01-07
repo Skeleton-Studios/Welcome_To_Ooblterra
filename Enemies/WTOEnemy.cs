@@ -66,8 +66,8 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             //Fix for the animator sometimes deciding to just not work
                 creatureAnimator.Rebind();
-            //ActiveState.enemyIndex = thisEnemyIndex;
-            //ActiveState.OnStateEntered(thisEnemyIndex, enemyRandom, creatureAnimator);
+            ActiveState.enemyIndex = thisEnemyIndex;
+            ActiveState.OnStateEntered(thisEnemyIndex, enemyRandom, creatureAnimator);
 
         }
         public override void Update() {
@@ -164,7 +164,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal bool AnimationIsFinished(string AnimName) {
             if (!creatureAnimator.GetCurrentAnimatorStateInfo(0).IsName(AnimName)) {
                 LogMessage(__getTypeName() + ": Checking for animation " + AnimName + ", but current animation is " + creatureAnimator.GetCurrentAnimatorClipInfo(0)[0].clip.name);
-                return false;
+                return true;
             }
             return (creatureAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f);
         }
