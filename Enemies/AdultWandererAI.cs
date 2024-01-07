@@ -4,26 +4,24 @@ using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies {
-    public class AdultWandererAI : WTOEnemy {
+     public class AdultWandererAI : WTOEnemy {
 
         //BEHAVIOR STATES
         private class Spawn : BehaviorState {
             private int SpawnTimer;
             private int SpawnTime = 80;
             AdultWandererAI Wanderer;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Spawn", value: false);
-                Wanderer = self as AdultWandererAI;
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Wanderer = self as AdultWandererAI;
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (SpawnTimer > SpawnTime) {
                     Wanderer.spawnFinished = true;
                 } else {
                     SpawnTimer++;
                 }
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Spawn", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -33,20 +31,17 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class WaitForTargetLook : BehaviorState {
             private int LookWaitTime = 0;
             private int LookWaitTimer = 3500;
-            AdultWandererAI Wanderer;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
-                Wanderer = self as AdultWandererAI;
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Wanderer = self as AdultWandererAI;
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (LookWaitTime > LookWaitTimer) {
-                    Wanderer.LostPatience = true;
+                    AWandList[enemyIndex].LostPatience = true;
                 } else {
                     LookWaitTime++;
                 }
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new EvaluatePlayerLook()
@@ -54,31 +49,27 @@ namespace Welcome_To_Ooblterra.Enemies {
 
         }
         private class Attack : BehaviorState {
-            AdultWandererAI AdultWanderer;
             bool HasAttacked;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                
-                AdultWanderer = self as AdultWandererAI;
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                AdultWanderer = self as AdultWandererAI;
-                if (Vector3.Distance(AdultWanderer.MainTarget.transform.position, self.transform.position) < AdultWanderer.AttackRange) {
-                    if (AdultWanderer.AttackCooldownSeconds <= 0) {
-                        AdultWanderer.LogMessage("Attacking!");
-                        AdultWanderer.AttackCooldownSeconds = 0.95f;
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                if (Vector3.Distance(AWandList[enemyIndex].MainTarget.transform.position, AWandList[enemyIndex].transform.position) < AWandList[enemyIndex].AttackRange) {
+                    if (AWandList[enemyIndex].AttackCooldownSeconds <= 0) {
+                        AWandList[enemyIndex].LogMessage("Attacking!");
+                        AWandList[enemyIndex].AttackCooldownSeconds = 0.95f;
                         HasAttacked = false;
                         creatureAnimator.SetBool("Attacking", value: true);
                         return;
                     }
-                    if(AdultWanderer.AttackCooldownSeconds <= 0.76f && !HasAttacked) {
-                        AdultWanderer.MeleeAttackPlayer(AdultWanderer.MainTarget);
+                    if(AWandList[enemyIndex].AttackCooldownSeconds <= 0.76f && !HasAttacked) {
+                        AWandList[enemyIndex].MeleeAttackPlayer(AWandList[enemyIndex].MainTarget);
                         HasAttacked = true;
                     }
                     return;
                 }
-                AdultWanderer.AttackCooldownSeconds = 0;
+                AWandList[enemyIndex].AttackCooldownSeconds = 0;
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Attacking", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -91,11 +82,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             public bool investigating;
             public int investigateTimer;
             public int TotalInvestigateTime;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
                 TotalInvestigateTime = enemyRandom.Next(100, 300);
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (investigating) {
                     investigateTimer++;
                     return;
@@ -106,12 +97,12 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
                 
                 if (!SearchInProgress) {
-                    self.agent.speed = 7f;
-                    self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                    AWandList[enemyIndex].agent.speed = 7f;
+                    AWandList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(AWandList[enemyIndex].allAINodes[enemyRandom.Next(AWandList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                     SearchInProgress = true;
                 }
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -120,16 +111,14 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class Chase : BehaviorState {
             AdultWandererAI Wanderer;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
-                Wanderer = self as AdultWandererAI;
-                self.agent.speed = 8f;
+                AWandList[enemyIndex].agent.speed = 8f;
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
-                Wanderer = self as AdultWandererAI;
-                self.SetDestinationToPosition(Wanderer.MainTarget.transform.position);
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                AWandList[enemyIndex].SetDestinationToPosition(Wanderer.MainTarget.transform.position);
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -138,17 +127,17 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Stunned : BehaviorState {
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Stunned", value: true);
-                self.agent.speed = 0f;
-                self.targetPlayer = self.stunnedByPlayer;
+                AWandList[enemyIndex].agent.speed = 0f;
+                AWandList[enemyIndex].targetPlayer = AWandList[enemyIndex].stunnedByPlayer;
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Stunned", value: false);
-                self.agent.speed = 8f;
+                AWandList[enemyIndex].agent.speed = 8f;
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new NoLongerStunned()
@@ -160,11 +149,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             
             public override bool CanTransitionBeTaken() {
                 
-                return Instance.spawnFinished;
+                return AWandList[enemyIndex].spawnFinished;
             }
             public override BehaviorState NextState() {
                 
-                if (Instance.MainTarget == null) {
+                if (AWandList[enemyIndex].MainTarget == null) {
                     return new Roam();
                 }
                 return new WaitForTargetLook();
@@ -172,11 +161,11 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EvaluatePlayerLook : StateTransition {
             public override bool CanTransitionBeTaken() {
-                WTOBase.LogToConsole("Player sees Adult Wanderer: " + Instance.CheckForPlayerLOS().ToString());
-                if (Instance.CheckForPlayerLOS()){
+                WTOBase.LogToConsole("Player sees Adult Wanderer: " + AWandList[enemyIndex].CheckForPlayerLOS().ToString());
+                if (AWandList[enemyIndex].CheckForPlayerLOS()){
                     return true;
                 }
-                return Instance.LostPatience;
+                return AWandList[enemyIndex].LostPatience;
             }
             public override BehaviorState NextState() {
                 return new Attack();
@@ -185,7 +174,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class EnemyInShipOrFacility : StateTransition {
             public override bool CanTransitionBeTaken() {
                 
-                return !Instance.PlayerIsTargetable(Instance.MainTarget);
+                return !AWandList[enemyIndex].PlayerIsTargetable(AWandList[enemyIndex].MainTarget);
             }
             public override BehaviorState NextState() {
                     return new Roam();
@@ -193,10 +182,10 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class EnemyInOverworld : StateTransition {
             public override bool CanTransitionBeTaken() {
-                if(Instance.targetPlayer == null) {
+                if(AWandList[enemyIndex].targetPlayer == null) {
                     return false;
                 }
-                return Instance.PlayerCanBeTargeted(Instance.MainTarget);
+                return AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].MainTarget);
             }
             public override BehaviorState NextState() {
                 return new Chase();
@@ -205,7 +194,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class EnemyLeftRange : StateTransition{
             public override bool CanTransitionBeTaken() {
                 
-                return (Instance.PlayerIsTargetable(Instance.MainTarget) && (Vector3.Distance(Instance.transform.position, Instance.MainTarget.transform.position) > Instance.AttackRange));
+                return (AWandList[enemyIndex].PlayerIsTargetable(AWandList[enemyIndex].MainTarget) && (Vector3.Distance(AWandList[enemyIndex].transform.position, AWandList[enemyIndex].MainTarget.transform.position) > AWandList[enemyIndex].AttackRange));
             }
             public override BehaviorState NextState() {
                 return new Roam();
@@ -215,10 +204,10 @@ namespace Welcome_To_Ooblterra.Enemies {
             
             public override bool CanTransitionBeTaken() {
                 
-                return (Instance.MainTarget.health < 0); 
+                return (AWandList[enemyIndex].MainTarget.health < 0); 
             }
             public override BehaviorState NextState() {
-                Instance.MainTarget = null;
+                AWandList[enemyIndex].MainTarget = null;
                 return new Roam();
             }
         }
@@ -226,7 +215,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             
             public override bool CanTransitionBeTaken() {
                 
-                return (Instance.PlayerCanBeTargeted(Instance.MainTarget) && (Vector3.Distance(Instance.transform.position, Instance.MainTarget.transform.position) < Instance.AttackRange));
+                return (AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].MainTarget) && (Vector3.Distance(AWandList[enemyIndex].transform.position, AWandList[enemyIndex].MainTarget.transform.position) < AWandList[enemyIndex].AttackRange));
             }
             public override BehaviorState NextState() {
                 return new Attack();
@@ -236,7 +225,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             
             public override bool CanTransitionBeTaken() {
                 
-                return Instance.stunNormalizedTimer > 0 && !(Instance.ActiveState is Stunned);
+                return AWandList[enemyIndex].stunNormalizedTimer > 0 && !(AWandList[enemyIndex].ActiveState is Stunned);
             }
             public override BehaviorState NextState() {
                 return new Stunned();
@@ -244,7 +233,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class NoLongerStunned : StateTransition {
             public override bool CanTransitionBeTaken() {
-                return Instance.stunNormalizedTimer <= 0;
+                return AWandList[enemyIndex].stunNormalizedTimer <= 0;
             }
             public override BehaviorState NextState() {
                 return new Chase();
@@ -256,13 +245,13 @@ namespace Welcome_To_Ooblterra.Enemies {
         private bool LostPatience = false;
         private float AttackCooldownSeconds = 1.2f;
         public int AttackRange = 7;
-        public static AdultWandererAI Instance;
+        public static Dictionary<int, AdultWandererAI> AWandList = new Dictionary<int, AdultWandererAI>();
 
         public override void Start() {
-            Instance = this;
             InitialState = new Spawn();
             //PrintDebugs = true;
             base.Start();
+            AWandList.Add(thisEnemyIndex, this);
             MyValidState = PlayerState.Outside;
             enemyHP = 10;
             GlobalTransitions.Add(new HitByStunGun());
