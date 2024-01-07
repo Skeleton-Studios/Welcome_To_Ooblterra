@@ -17,10 +17,10 @@ namespace Welcome_To_Ooblterra.Enemies {
             public bool MovingToNextPoint;
             private Ray newRaycast;
             private RaycastHit raycastHit;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (!MovingToNextPoint) {
                     newRaycast.origin = self.transform.position;
                     newRaycast.direction = self.transform.forward;
@@ -29,7 +29,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     MovingToNextPoint = true;
                 }
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -40,13 +40,13 @@ namespace Welcome_To_Ooblterra.Enemies {
             public bool SearchInProgress;
             public bool investigate;
             public int investigateTimer;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -57,13 +57,13 @@ namespace Welcome_To_Ooblterra.Enemies {
             public bool SearchInProgress;
             public bool investigate;
             public int investigateTimer;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -74,13 +74,13 @@ namespace Welcome_To_Ooblterra.Enemies {
             public bool SearchInProgress;
             public bool investigate;
             public int investigateTimer;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {

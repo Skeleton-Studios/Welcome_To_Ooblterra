@@ -11,14 +11,16 @@ namespace Welcome_To_Ooblterra.Enemies {
         public abstract class BehaviorState {
             public Vector2 RandomRange = new Vector2(0, 0);
             public int MyRandomInt = 0;
-            public abstract void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
-            public abstract void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
-            public abstract void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator);
+            public int enemyIndex;
+            public abstract void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator);
+            public abstract void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator);
+            public abstract void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator);
 
             public virtual List<StateTransition> transitions { get; set; }
         }
         public abstract class StateTransition {
-            //public EnemyAI self { get; set; }
+            //public int enemyIndex { get; set; }
+            public int enemyIndex;
             public abstract bool CanTransitionBeTaken();
             public abstract BehaviorState NextState();
         }
@@ -64,8 +66,8 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             //Fix for the animator sometimes deciding to just not work
                 creatureAnimator.Rebind();
-
-            ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+            //ActiveState.enemyIndex = thisEnemyIndex;
+            //ActiveState.OnStateEntered(thisEnemyIndex, enemyRandom, creatureAnimator);
 
         }
         public override void Update() {
@@ -83,6 +85,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 AllTransitions.AddRange(ActiveState.transitions);
 
             foreach (StateTransition transition in AllTransitions) {
+                transition.enemyIndex = thisEnemyIndex;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
                     nextTransition = transition;
@@ -92,7 +95,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
 
             if (RunUpdate) {
-                ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
+                ActiveState.UpdateBehavior(thisEnemyIndex, enemyRandom, creatureAnimator);
             }
         }
         internal void LogMessage(string message) {
@@ -125,17 +128,19 @@ namespace Welcome_To_Ooblterra.Enemies {
             //Jesus fuck I can't believe I have to do this
             Type type = Type.GetType(StateName);
             StateTransition LocalNextTransition = (StateTransition)Activator.CreateInstance(type);
+            LocalNextTransition.enemyIndex = thisEnemyIndex;
             if (LocalNextTransition.NextState().GetType() == ActiveState.GetType()) {
                 return;
             }
-            LogMessage(StateName);
-            LogMessage("Exiting: " + ActiveState.ToString());
-            ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-            LogMessage("Transitioning Via: " + LocalNextTransition.ToString());
+            //LogMessage(StateName);
+            LogMessage($"{__getTypeName()} #{thisEnemyIndex} is Exiting:  {ActiveState}");
+            ActiveState.OnStateExit(thisEnemyIndex, enemyRandom, creatureAnimator);
+            LogMessage($"{__getTypeName()} #{thisEnemyIndex} is Transitioning via:  {LocalNextTransition}");
             ActiveState = LocalNextTransition.NextState();
             ActiveState.MyRandomInt = RandomInt;
-            LogMessage("Entering: " + ActiveState.ToString());
-            ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+            ActiveState.enemyIndex = thisEnemyIndex;
+            LogMessage($"{__getTypeName()} #{thisEnemyIndex} is Entering:  {ActiveState}");
+            ActiveState.OnStateEntered(thisEnemyIndex, enemyRandom, creatureAnimator);
 
             //Debug Prints 
             StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
@@ -150,7 +155,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         internal void OverrideState(BehaviorState state) {
             ActiveState = state;
-            ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
+            ActiveState.OnStateEntered(thisEnemyIndex, enemyRandom, creatureAnimator);
             return;
         }
         internal float DistanceFromPlayer(PlayerControllerB player) {
@@ -159,7 +164,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal bool AnimationIsFinished(string AnimName) {
             if (!creatureAnimator.GetCurrentAnimatorStateInfo(0).IsName(AnimName)) {
                 LogMessage(__getTypeName() + ": Checking for animation " + AnimName + ", but current animation is " + creatureAnimator.GetCurrentAnimatorClipInfo(0)[0].clip.name);
-                return true;
+                return false;
             }
             return (creatureAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f);
         }
@@ -167,7 +172,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         [ServerRpc]
         internal void SetAnimTriggerOnServerRpc(string name) {
             if (IsServer) {
-                LogMessage("Changing anim!");
                 creatureAnimator.SetTrigger(name);
             }
         }
@@ -175,7 +179,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         [ServerRpc]
         internal void SetAnimBoolOnServerRpc(string name, bool state) {
             if (IsServer) {
-                LogMessage("Changing anim!");
                 creatureAnimator.SetBool(name, state);
             }
         }

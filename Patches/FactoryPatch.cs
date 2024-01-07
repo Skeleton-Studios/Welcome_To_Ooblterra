@@ -25,14 +25,14 @@ namespace Welcome_To_Ooblterra.Patches {
             networkManagerRef = __instance.NetworkManager;
         }
 
-        [HarmonyPatch(typeof(RoundManager), "Awake")]
-        [HarmonyPostfix]
+        [HarmonyPatch(typeof(RoundManager), "SpawnScrapInLevel")]
+        [HarmonyPrefix]
         private static void ScrapValueAdjuster(RoundManager __instance) {
             if(__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
                 __instance.scrapValueMultiplier = 0.4f;
                 return;
             }
-            __instance.scrapValueMultiplier = 1.5f;
+            __instance.scrapValueMultiplier = 1f;
         }
 
         [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
