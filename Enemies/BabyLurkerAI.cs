@@ -5,18 +5,18 @@ using UnityEngine.AI;
 using UnityEngine.Assertions.Must;
 
 namespace Welcome_To_Ooblterra.Enemies {
-    public class BabyLurkerAI : WTOEnemy {
+    /*public class BabyLurkerAI : WTOEnemy {
 
         //BEHAVIOR STATES
         private class Spawn : BehaviorState {
 
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Spawn", value: true);
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Spawn", value: false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -25,17 +25,17 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class Roam : BehaviorState {
             bool canMakeNextPoint;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Moving", true);
                 canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 self.agent.speed = 7f;
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (!canMakeNextPoint) {
                     canMakeNextPoint = self.SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(self.allAINodes[enemyRandom.Next(self.allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 }
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> { 
                 new EnemySpottedTransition()
@@ -44,7 +44,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Lunge : BehaviorState {
             private Ray ray;
             private RaycastHit rayHit;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
                 Instance.LungeComplete = false;
                 self.creatureAnimator.SetBool("Attacking", true);
@@ -54,7 +54,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 self.SetDestinationToPosition(self.targetPlayer.transform.position);
                 self.agent.speed = 13f;
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 
                 self.agent.speed -= Time.deltaTime * 5f;
                 if (self.agent.speed < 1.5f){
@@ -64,7 +64,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     }
                 }
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Attacking", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> { 
@@ -74,17 +74,17 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class Reposition : BehaviorState {
             bool isRepositioning;
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Moving", true);
                 isRepositioning = self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position).position);
                 self.agent.speed = 8f;
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (!isRepositioning) {
                     isRepositioning = self.SetDestinationToPosition(self.ChooseClosestNodeToPosition(self.targetPlayer.transform.position).position);
                 }
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Moving", false);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -93,13 +93,13 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class StayOnPlayer : BehaviorState {
-            public override void OnStateEntered(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 self.creatureAnimator.SetBool("Moving", false);
             }
-            public override void UpdateBehavior(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 
             }
-            public override void OnStateExit(EnemyAI self, System.Random enemyRandom, Animator creatureAnimator) {
+            public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new SpawnTransition(90),
@@ -207,5 +207,5 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
             return nearestPlayer != null;
         }
-    }
+    }*/
 }
