@@ -291,6 +291,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             RefreshGrabbableObjectsInMapList();
             PrintDebugs = true;
             base.Start();
+            LogMessage($"Adding EyeSec {this} at {thisEnemyIndex}");
             EyeSecList.Add(thisEnemyIndex, this);
 
         }

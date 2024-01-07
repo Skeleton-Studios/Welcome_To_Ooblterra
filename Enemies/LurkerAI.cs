@@ -259,6 +259,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             PrintDebugs = true;
             InitialState = new Roam();
             base.Start();
+            LogMessage($"Adding Lurker {this} at {thisEnemyIndex}");
             LurkerList.Add(thisEnemyIndex, this);
         }
         public override void Update() {

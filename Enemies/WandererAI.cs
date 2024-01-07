@@ -154,13 +154,14 @@ namespace Welcome_To_Ooblterra.Enemies {
             MyValidState = PlayerState.Outside;
             InitialState = new Investigate();
             base.Start();
+            WandererList.Add(thisEnemyIndex, this);
             if (!agent.isOnNavMesh) {
                 Physics.Raycast(new Ray(new Vector3(0, 0, 0), Vector3.down), out var hit, LayerMask.GetMask("Terrain"));
                 agent.Warp(hit.point);
             }
             stunNormalizedTimer = -1;
             GlobalTransitions.Add(new HitByStunGun());
-            WandererList.Add(thisEnemyIndex, this);
+            
             //PrintDebugs = true;
         }
         public override void Update() {
@@ -202,12 +203,12 @@ namespace Welcome_To_Ooblterra.Enemies {
             if (base.IsOwner) {
                 if (enemyHP <= 0) {
                     creatureAnimator.SetTrigger("Death");
-                    ItemPatch.SpawnItem(transform.position + new Vector3(0, 5, 0), 5);
+                    ItemPatch.SpawnItem(transform.position + new Vector3(0, 5, 0), internalID: 5);
                     Vector3 AdultSpawnPos = playerWhoHit.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), playerWhoHit.transform.forward * -1);
                     Quaternion AdultSpawnRot = new Quaternion(0, Quaternion.LookRotation(playerWhoHit.transform.position - AdultSpawnPos).y, 0, 1);
-                    GameObject obj = UnityEngine.Object.Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
-                    obj.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
-                    //obj.gameObject.GetComponentInChildren<AdultWandererAI>().SetMyTarget(playerWhoHit);
+                    GameObject AdultWanderer = Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
+                    AdultWanderer.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
+                    AdultWanderer.gameObject.GetComponentInChildren<AdultWandererAI>().SetMyTarget(playerWhoHit);
                     KillEnemyOnOwnerClient();
                     return;
                 }

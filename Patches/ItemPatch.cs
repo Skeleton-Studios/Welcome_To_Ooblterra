@@ -73,7 +73,7 @@ namespace Welcome_To_Ooblterra.Patches {
             NetworkObject ItemNetworkObject = SpawnedItem.GetComponent<NetworkObject>();
 
             //this needs to be synced with local clients
-            ItemGrabbableObject.scrapValue = (int)(RoundManager.Instance.AnomalyRandom.Next(ItemList[5].GetItem().minValue, ItemList[5].GetItem().maxValue) * RoundManager.Instance.scrapValueMultiplier);
+            ItemGrabbableObject.scrapValue = (int)(RoundManager.Instance.AnomalyRandom.Next(ItemList[internalID].GetItem().minValue, ItemList[internalID].GetItem().maxValue) * RoundManager.Instance.scrapValueMultiplier);
 
             if (Network.IsHost) {
                 ItemNetworkObject.Spawn();

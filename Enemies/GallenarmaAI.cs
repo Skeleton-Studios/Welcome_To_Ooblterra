@@ -47,9 +47,6 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private class Patrol : BehaviorState {
             private bool canMakeNextPoint;
-            public Patrol() {
-                RandomRange = new Vector2(0, GallenarmaList[enemyIndex].allAINodes.Length - 1);
-            }
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaList[enemyIndex].Awakening = false;
                 GallenarmaList[enemyIndex].creatureSFX.maxDistance = 15;
@@ -81,9 +78,6 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class GoToNoise : BehaviorState {
-            public GoToNoise() {
-                RandomRange = new Vector2(0, GallenarmaList[enemyIndex].allAINodes.Length - 1);
-            }
             bool OnRouteToNextPoint;
             Transform NodeNearestToTargetNoise;
             NoiseInfo CurrentNoise;

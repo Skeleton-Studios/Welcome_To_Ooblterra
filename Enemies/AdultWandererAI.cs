@@ -10,13 +10,12 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Spawn : BehaviorState {
             private int SpawnTimer;
             private int SpawnTime = 80;
-            AdultWandererAI Wanderer;
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Spawn", value: false);
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (SpawnTimer > SpawnTime) {
-                    Wanderer.spawnFinished = true;
+                    AWandList[enemyIndex].spawnFinished = true;
                 } else {
                     SpawnTimer++;
                 }
@@ -97,8 +96,8 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
                 
                 if (!SearchInProgress) {
-                    AWandList[enemyIndex].agent.speed = 7f;
-                    AWandList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(AWandList[enemyIndex].allAINodes[enemyRandom.Next(AWandList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                    AWandList[base.enemyIndex].agent.speed = 7f;
+                    AWandList[base.enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(AWandList[enemyIndex].allAINodes[enemyRandom.Next(AWandList[base.enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                     SearchInProgress = true;
                 }
             }
@@ -110,13 +109,12 @@ namespace Welcome_To_Ooblterra.Enemies {
             };
         }
         private class Chase : BehaviorState {
-            AdultWandererAI Wanderer;
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
                 AWandList[enemyIndex].agent.speed = 8f;
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-                AWandList[enemyIndex].SetDestinationToPosition(Wanderer.MainTarget.transform.position);
+                AWandList[enemyIndex].SetDestinationToPosition(AWandList[enemyIndex].MainTarget.transform.position);
             }
             public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
@@ -174,7 +172,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class EnemyInShipOrFacility : StateTransition {
             public override bool CanTransitionBeTaken() {
                 
-                return !AWandList[enemyIndex].PlayerIsTargetable(AWandList[enemyIndex].MainTarget);
+                return !AWandList[base.enemyIndex].PlayerIsTargetable(AWandList[base.enemyIndex].MainTarget);
             }
             public override BehaviorState NextState() {
                     return new Roam();
