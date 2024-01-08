@@ -154,7 +154,7 @@ namespace Welcome_To_Ooblterra.Enemies
                 GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", true);
                 GallenarmaList[enemyIndex].agent.speed = 0f;
                 GallenarmaList[enemyIndex].HasAttackedThisCycle = false;
-                GallenarmaList[enemyIndex].AttackTimerSeconds = GallenarmaList[enemyIndex].AttackTime;
+                //GallenarmaList[enemyIndex].AttackTimerSeconds = GallenarmaList[enemyIndex].AttackTime;
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaList[enemyIndex].TryMeleeAttackPlayer();
