@@ -266,6 +266,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public EyeSecLaser MyLaser;
         public Transform PlayerTracker;
         public static Dictionary<int, EyeSecAI> EyeSecList = new Dictionary<int, EyeSecAI>();
+        public static int EyeSecID;
 
         public AudioClip flashSFX;
         public AudioClip StartScanSFX;
@@ -291,8 +292,10 @@ namespace Welcome_To_Ooblterra.Enemies {
             RefreshGrabbableObjectsInMapList();
             PrintDebugs = true;
             base.Start();
-            LogMessage($"Adding EyeSec {this} at {thisEnemyIndex}");
-            EyeSecList.Add(thisEnemyIndex, this);
+            EyeSecID++;
+            WTOEnemyID = EyeSecID;
+            LogMessage($"Adding EyeSec {this} at {EyeSecID}");
+            EyeSecList.Add(EyeSecID, this);
 
         }
         public override void Update() {

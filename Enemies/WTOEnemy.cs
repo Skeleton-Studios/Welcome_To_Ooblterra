@@ -39,6 +39,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         internal StateTransition nextTransition;
         internal List<StateTransition> GlobalTransitions = new List<StateTransition>();
         internal List<StateTransition> AllTransitions = new List<StateTransition>();
+        internal int WTOEnemyID;
 
         public override string __getTypeName() {
             return GetType().Name;
@@ -85,7 +86,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 AllTransitions.AddRange(ActiveState.transitions);
 
             foreach (StateTransition transition in AllTransitions) {
-                transition.enemyIndex = thisEnemyIndex;
+                transition.enemyIndex = WTOEnemyID;
                 if (transition.CanTransitionBeTaken()) {
                     RunUpdate = false;
                     nextTransition = transition;
@@ -95,7 +96,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             }
 
             if (RunUpdate) {
-                ActiveState.UpdateBehavior(thisEnemyIndex, enemyRandom, creatureAnimator);
+                ActiveState.UpdateBehavior(WTOEnemyID, enemyRandom, creatureAnimator);
             }
         }
         internal void LogMessage(string message) {
@@ -128,23 +129,23 @@ namespace Welcome_To_Ooblterra.Enemies {
             //Jesus fuck I can't believe I have to do this
             Type type = Type.GetType(StateName);
             StateTransition LocalNextTransition = (StateTransition)Activator.CreateInstance(type);
-            LocalNextTransition.enemyIndex = thisEnemyIndex;
+            LocalNextTransition.enemyIndex = WTOEnemyID;
             if (LocalNextTransition.NextState().GetType() == ActiveState.GetType()) {
                 return;
             }
             //LogMessage(StateName);
-            LogMessage($"{__getTypeName()} #{thisEnemyIndex} is Exiting:  {ActiveState}");
-            ActiveState.OnStateExit(thisEnemyIndex, enemyRandom, creatureAnimator);
-            LogMessage($"{__getTypeName()} #{thisEnemyIndex} is Transitioning via:  {LocalNextTransition}");
+            LogMessage($"{__getTypeName()} #{WTOEnemyID} is Exiting:  {ActiveState}");
+            ActiveState.OnStateExit(WTOEnemyID, enemyRandom, creatureAnimator);
+            LogMessage($"{__getTypeName()} #{WTOEnemyID} is Transitioning via:  {LocalNextTransition}");
             ActiveState = LocalNextTransition.NextState();
             ActiveState.MyRandomInt = RandomInt;
-            ActiveState.enemyIndex = thisEnemyIndex;
-            LogMessage($"{__getTypeName()} #{thisEnemyIndex} is Entering:  {ActiveState}");
-            ActiveState.OnStateEntered(thisEnemyIndex, enemyRandom, creatureAnimator);
+            ActiveState.enemyIndex = WTOEnemyID;
+            LogMessage($"{__getTypeName()} #{WTOEnemyID} is Entering:  {ActiveState}");
+            ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
 
             //Debug Prints 
             StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
-            LogMessage($"CREATURE: {enemyType.name} #{thisEnemyIndex} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
+            LogMessage($"CREATURE: {enemyType.name} #{WTOEnemyID} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
         }
 
         internal void LowerTimerValue(ref float Timer) {
@@ -155,7 +156,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         internal void OverrideState(BehaviorState state) {
             ActiveState = state;
-            ActiveState.OnStateEntered(thisEnemyIndex, enemyRandom, creatureAnimator);
+            ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
             return;
         }
         internal float DistanceFromPlayer(PlayerControllerB player) {

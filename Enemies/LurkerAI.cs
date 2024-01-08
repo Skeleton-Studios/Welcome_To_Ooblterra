@@ -246,6 +246,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         public AISearchRoutine roamMap;
         public float MoveCooldownSeconds;
         public static Dictionary<int, LurkerAI> LurkerList = new Dictionary<int, LurkerAI>();
+        public static int LurkerID;
         public static List<GameObject> LurkerPoints;
         public override string __getTypeName() {
             return "LurkerAI";
@@ -258,9 +259,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             //GetAllLurkerPoints();
             PrintDebugs = true;
             InitialState = new Roam();
+            LurkerID++;
+            WTOEnemyID = LurkerID;
+            LogMessage($"Adding Lurker {this} at {LurkerID}");
+            LurkerList.Add(LurkerID, this);
             base.Start();
-            LogMessage($"Adding Lurker {this} at {thisEnemyIndex}");
-            LurkerList.Add(thisEnemyIndex, this);
         }
         public override void Update() {
             base.Update();

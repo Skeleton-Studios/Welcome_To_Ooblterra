@@ -244,12 +244,16 @@ namespace Welcome_To_Ooblterra.Enemies {
         private float AttackCooldownSeconds = 1.2f;
         public int AttackRange = 7;
         public static Dictionary<int, AdultWandererAI> AWandList = new Dictionary<int, AdultWandererAI>();
+        public static int AWandID;
 
         public override void Start() {
             InitialState = new Spawn();
             //PrintDebugs = true;
             base.Start();
-            AWandList.Add(thisEnemyIndex, this);
+            AWandID++;
+            WTOEnemyID = AWandID;
+            LogMessage($"Adding Adult Wanderer {this} #{AWandID}");
+            AWandList.Add(AWandID, this);
             MyValidState = PlayerState.Outside;
             enemyHP = 10;
             GlobalTransitions.Add(new HitByStunGun());

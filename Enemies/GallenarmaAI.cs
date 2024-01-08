@@ -2,13 +2,11 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Welcome_To_Ooblterra.Properties;
 using Unity.Netcode;
-using UnityEngine.Networking;
-using static UnityEngine.Rendering.DebugUI;
 
-namespace Welcome_To_Ooblterra.Enemies {
+namespace Welcome_To_Ooblterra.Enemies
+{
     public class GallenarmaAI : WTOEnemy, INoiseListener {
 
         //BEHAVIOR STATES
@@ -394,6 +392,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private bool HasAttackedThisCycle;
         private readonly float AttackTime = 1.92f;
         public static Dictionary<int, GallenarmaAI> GallenarmaList = new Dictionary<int, GallenarmaAI>();
+        public static int GallenarmaID;
 
         public AudioClip Growl;
         public List<AudioClip> Search = new List<AudioClip>();
@@ -417,9 +416,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             InitialState = new Asleep();
             enemyHP = 20;
             PrintDebugs = true;
+            GallenarmaID++;
+            WTOEnemyID = GallenarmaID;
+            LogMessage($"Adding Gallenarma {this} at {GallenarmaID}");
+            GallenarmaList.Add(GallenarmaID, this);
             base.Start();
-            LogMessage($"Adding Gallenarma {this} at {thisEnemyIndex}");
-            GallenarmaList.Add(thisEnemyIndex, this);
             if (enemyRandom.Next(1, 10) > 8) {
                 LatestNoise = new NoiseInfo(transform.position, 2);
             }

@@ -1,16 +1,12 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
 using GameNetcodeStuff;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem.XR;
 using Welcome_To_Ooblterra.Patches;
-using Welcome_To_Ooblterra.Properties;
-using static UnityEngine.GraphicsBuffer;
 
-namespace Welcome_To_Ooblterra.Enemies {
+namespace Welcome_To_Ooblterra.Enemies
+{
 
     public class WandererAI : WTOEnemy {
         //STATES
@@ -149,20 +145,23 @@ namespace Welcome_To_Ooblterra.Enemies {
         bool shouldLookAtPlayer = false;
         private float HeadTurnTime;
         public static Dictionary<int, WandererAI> WandererList = new Dictionary<int, WandererAI>();
+        private static int WandererID;
 
         public override void Start() {
             MyValidState = PlayerState.Outside;
             InitialState = new Investigate();
+            PrintDebugs = true;
+            WandererID++;
+            WTOEnemyID = WandererID;
             base.Start();
-            WandererList.Add(thisEnemyIndex, this);
+            LogMessage($"Adding Wanderer {this} #{WandererID}");
+            WandererList.Add(WandererID, this);
             if (!agent.isOnNavMesh) {
                 Physics.Raycast(new Ray(new Vector3(0, 0, 0), Vector3.down), out var hit, LayerMask.GetMask("Terrain"));
                 agent.Warp(hit.point);
             }
             stunNormalizedTimer = -1;
             GlobalTransitions.Add(new HitByStunGun());
-            
-            //PrintDebugs = true;
         }
         public override void Update() {
             base.Update();
