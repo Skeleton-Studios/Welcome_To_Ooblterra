@@ -150,7 +150,7 @@ namespace Welcome_To_Ooblterra.Enemies
         public override void Start() {
             MyValidState = PlayerState.Outside;
             InitialState = new Investigate();
-            PrintDebugs = true;
+            //PrintDebugs = true;
             WandererID++;
             WTOEnemyID = WandererID;
             base.Start();

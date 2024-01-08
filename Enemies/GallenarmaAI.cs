@@ -152,9 +152,9 @@ namespace Welcome_To_Ooblterra.Enemies
         private class Attack : BehaviorState {
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", true);
-                GallenarmaList[enemyIndex].agent.speed = 0f;
+                GallenarmaList[enemyIndex].agent.speed = 2f;
                 GallenarmaList[enemyIndex].HasAttackedThisCycle = false;
-                //GallenarmaList[enemyIndex].AttackTimerSeconds = GallenarmaList[enemyIndex].AttackTime;
+                GallenarmaList[enemyIndex].AttackTimerSeconds = 1.7f;
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 GallenarmaList[enemyIndex].TryMeleeAttackPlayer();
@@ -175,7 +175,7 @@ namespace Welcome_To_Ooblterra.Enemies
                 GallenarmaList[enemyIndex].creatureVoice.loop = true;
                 GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
                 GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
-                GallenarmaList[enemyIndex].agent.speed = 6f;
+                GallenarmaList[enemyIndex].agent.speed = 7f;
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 
@@ -333,7 +333,7 @@ namespace Welcome_To_Ooblterra.Enemies
                 if (GallenarmaList[enemyIndex].targetPlayer == null) {
                     return true;
                 }
-                if (Vector3.Distance(GallenarmaList[enemyIndex].targetPlayer.transform.position, GallenarmaList[enemyIndex].transform.position) > GallenarmaList[enemyIndex].AttackRange) {
+                if (Vector3.Distance(GallenarmaList[enemyIndex].targetPlayer.transform.position, GallenarmaList[enemyIndex].transform.position) > GallenarmaList[enemyIndex].AttackRange + 2.5) {
                     GallenarmaList[enemyIndex].AttackTimerSeconds = 0;
                     return true;
                 }
@@ -415,7 +415,7 @@ namespace Welcome_To_Ooblterra.Enemies
         public override void Start() {
             InitialState = new Asleep();
             enemyHP = 20;
-            PrintDebugs = true;
+            //PrintDebugs = true;
             GallenarmaID++;
             WTOEnemyID = GallenarmaID;
             LogMessage($"Adding Gallenarma {this} at {GallenarmaID}");
@@ -426,6 +426,7 @@ namespace Welcome_To_Ooblterra.Enemies
             }
         }
         public override void Update() {
+            LowerTimerValue(ref AttackTimerSeconds);
             LowerTimerValue(ref TameTimerSeconds);
             if(TameTimerSeconds <= 0) {
                 IsDancing = false;
@@ -485,11 +486,11 @@ namespace Welcome_To_Ooblterra.Enemies
             LatestNoise = new NoiseInfo(noisePosition, noiseLoudness);
         }
         public void TryMeleeAttackPlayer() {
-            LowerTimerValue(ref AttackTimerSeconds);
+            
             if(targetPlayer == null) {
                 return;
             }
-            if (AttackTimerSeconds <= .71f && Vector3.Distance(targetPlayer.transform.position, transform.position) < AttackRange && !HasAttackedThisCycle) {
+            if (AttackTimerSeconds <= .71f && Vector3.Distance(targetPlayer.transform.position, transform.position) < AttackRange + 2.5 && !HasAttackedThisCycle) {
                 LogMessage("Attacking!");
                 targetPlayer.DamagePlayer(120, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
                 HasAttackedThisCycle = true;

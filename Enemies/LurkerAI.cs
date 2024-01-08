@@ -257,7 +257,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         public override void Start() {
             //GetAllLurkerPoints();
-            PrintDebugs = true;
+            //PrintDebugs = true;
             InitialState = new Roam();
             LurkerID++;
             WTOEnemyID = LurkerID;
