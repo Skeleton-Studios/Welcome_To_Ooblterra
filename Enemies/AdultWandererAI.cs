@@ -55,10 +55,13 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if (Vector3.Distance(AWandList[enemyIndex].MainTarget.transform.position, AWandList[enemyIndex].transform.position) < AWandList[enemyIndex].AttackRange) {
                     if (AWandList[enemyIndex].AttackCooldownSeconds <= 0) {
                         AWandList[enemyIndex].LogMessage("Attacking!");
-                        AWandList[enemyIndex].AttackCooldownSeconds = 0.95f;
+                        AWandList[enemyIndex].AttackCooldownSeconds = 3f;
                         HasAttacked = false;
-                        creatureAnimator.SetBool("Attacking", value: true);
+                        
                         return;
+                    }
+                    if (AWandList[enemyIndex].AttackCooldownSeconds <= 0.96f) {
+                        creatureAnimator.SetBool("Attacking", value: true);
                     }
                     if(AWandList[enemyIndex].AttackCooldownSeconds <= 0.76f && !HasAttacked) {
                         AWandList[enemyIndex].MeleeAttackPlayer(AWandList[enemyIndex].MainTarget);
