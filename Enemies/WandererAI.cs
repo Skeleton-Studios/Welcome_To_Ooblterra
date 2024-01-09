@@ -154,7 +154,7 @@ namespace Welcome_To_Ooblterra.Enemies{
             //PrintDebugs = true;
             WandererID++;
             WTOEnemyID = WandererID;
-            base.Start();
+            
             LogMessage($"Adding Wanderer {this} #{WandererID}");
             WandererList.Add(WandererID, this);
             if (!agent.isOnNavMesh) {
@@ -163,6 +163,7 @@ namespace Welcome_To_Ooblterra.Enemies{
             }
             stunNormalizedTimer = -1;
             GlobalTransitions.Add(new HitByStunGun());
+            base.Start();
         }
         public override void Update() {
             base.Update();

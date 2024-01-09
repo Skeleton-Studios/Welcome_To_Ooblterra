@@ -67,8 +67,8 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
             //Fix for the animator sometimes deciding to just not work
                 creatureAnimator.Rebind();
-            //ActiveState.enemyIndex = thisEnemyIndex;
-            //ActiveState.OnStateEntered(thisEnemyIndex, enemyRandom, creatureAnimator);
+            ActiveState.enemyIndex = WTOEnemyID;
+            ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
 
         }
         public override void Update() {

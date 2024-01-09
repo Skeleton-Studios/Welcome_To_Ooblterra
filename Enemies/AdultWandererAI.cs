@@ -11,7 +11,9 @@ namespace Welcome_To_Ooblterra.Enemies {
             private int SpawnTimer;
             private int SpawnTime = 80;
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-                creatureAnimator.SetBool("Spawn", value: false);
+                WTOBase.LogToConsole("SPAWN WANDERER");
+                creatureAnimator.SetBool("Spawn", value: true);
+                AWandList[enemyIndex].creatureSFX.PlayOneShot(AWandList[enemyIndex].SpawnSound);
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (SpawnTimer > SpawnTime) {
@@ -50,17 +52,18 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Attack : BehaviorState {
             bool HasAttacked;
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                AWandList[enemyIndex].AttackCooldownSeconds = 1.5f;
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (Vector3.Distance(AWandList[enemyIndex].MainTarget.transform.position, AWandList[enemyIndex].transform.position) < AWandList[enemyIndex].AttackRange) {
                     if (AWandList[enemyIndex].AttackCooldownSeconds <= 0) {
                         AWandList[enemyIndex].LogMessage("Attacking!");
-                        AWandList[enemyIndex].AttackCooldownSeconds = 3f;
+                        AWandList[enemyIndex].AttackCooldownSeconds = 1.5f;
                         HasAttacked = false;
                         
                         return;
                     }
-                    if (AWandList[enemyIndex].AttackCooldownSeconds <= 0.96f) {
+                    if (AWandList[enemyIndex].AttackCooldownSeconds <= 1.2f) {
                         creatureAnimator.SetBool("Attacking", value: true);
                     }
                     if(AWandList[enemyIndex].AttackCooldownSeconds <= 0.76f && !HasAttacked) {
@@ -248,18 +251,19 @@ namespace Welcome_To_Ooblterra.Enemies {
         public int AttackRange = 7;
         public static Dictionary<int, AdultWandererAI> AWandList = new Dictionary<int, AdultWandererAI>();
         public static int AWandID;
+        public AudioClip SpawnSound;
 
         public override void Start() {
             InitialState = new Spawn();
-            //PrintDebugs = true;
-            base.Start();
             AWandID++;
             WTOEnemyID = AWandID;
+            //PrintDebugs = true;
             LogMessage($"Adding Adult Wanderer {this} #{AWandID}");
             AWandList.Add(AWandID, this);
             MyValidState = PlayerState.Outside;
             enemyHP = 10;
             GlobalTransitions.Add(new HitByStunGun());
+            base.Start();
         }
         public override void Update() {
             LowerTimerValue(ref AttackCooldownSeconds);
@@ -267,7 +271,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         }
         private void MeleeAttackPlayer(PlayerControllerB Target) {
             LogMessage("Attacking player!");
-            Target.DamagePlayer(80, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
+            Target.DamagePlayer(40, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
             Target.JumpToFearLevel(1f);
         }
         public void SetMyTarget(PlayerControllerB player) {
@@ -278,13 +282,16 @@ namespace Welcome_To_Ooblterra.Enemies {
             return MainTarget.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);
         }
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+            if (isEnemyDead) { return; }
             base.HitEnemy(force, playerWhoHit, playHitSFX);
             enemyHP -= force;
             LogMessage("Adult Wanderer HP remaining: " + enemyHP);
             creatureAnimator.SetTrigger("Hit");
             if (IsOwner) {
                 if (enemyHP <= 0) {
+                    isEnemyDead = true;
                     creatureAnimator.SetTrigger("Killed");
+                    creatureVoice.Stop();
                     KillEnemyOnOwnerClient();
                     return;
                 }

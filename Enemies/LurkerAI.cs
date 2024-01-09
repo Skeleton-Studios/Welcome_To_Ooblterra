@@ -278,6 +278,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             LowerTimerValue(ref MoveCooldownSeconds);
         }
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+            if (isEnemyDead) { return; }
             base.HitEnemy(force, playerWhoHit, playHitSFX);
             enemyHP -= force;
             if (base.IsOwner) {

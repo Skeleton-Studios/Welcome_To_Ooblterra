@@ -293,11 +293,11 @@ namespace Welcome_To_Ooblterra.Enemies {
             InitialState = new Patrol();
             RefreshGrabbableObjectsInMapList();
             PrintDebugs = true;
-            base.Start();
             EyeSecID++;
             WTOEnemyID = EyeSecID;
             LogMessage($"Adding EyeSec {this} at {EyeSecID}");
             EyeSecList.Add(EyeSecID, this);
+            base.Start();
 
         }
         public override void Update() {
@@ -376,6 +376,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             StunGrenadeItem.StunExplosion(transform.position, affectAudio: false, 2f, 4f, 2f);      
         }
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+
             base.HitEnemy(force, playerWhoHit, playHitSFX);
             targetPlayer = playerWhoHit;
             ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
