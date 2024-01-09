@@ -54,13 +54,13 @@ namespace Welcome_To_Ooblterra.Enemies
                 GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
                 GallenarmaList[enemyIndex].agent.speed = 5f;
                 if (GallenarmaList[enemyIndex].IsOwner) { 
-                    canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 10), checkForPath: true);
+                    canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
                 }
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 if (GallenarmaList[enemyIndex].IsOwner) {
                     if (!canMakeNextPoint) {
-                    canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                    canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
                     }
                     if(Vector3.Distance(GallenarmaList[enemyIndex].transform.position, GallenarmaList[enemyIndex].destination) < 10) {
                         canMakeNextPoint = false;
@@ -104,7 +104,7 @@ namespace Welcome_To_Ooblterra.Enemies
                     if (GallenarmaList[enemyIndex].LatestNoise.Loudness != -1) {
                         NextPoint = GallenarmaList[enemyIndex].LatestNoise.Location;
                     } else {
-                        NextPoint = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[MyRandomInt].transform.position, 5);
+                        NextPoint = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[MyRandomInt].transform.position, 15);
                         WTOBase.LogToConsole("Gallenarma off to random point!");
                     }
                     OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(NextPoint).position);

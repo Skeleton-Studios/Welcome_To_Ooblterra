@@ -103,7 +103,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                 
                 if (!SearchInProgress) {
                     AWandList[base.enemyIndex].agent.speed = 7f;
-                    AWandList[base.enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(AWandList[enemyIndex].allAINodes[enemyRandom.Next(AWandList[base.enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                    AWandList[base.enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(AWandList[enemyIndex].allAINodes[enemyRandom.Next(AWandList[base.enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
                     SearchInProgress = true;
                 }
             }

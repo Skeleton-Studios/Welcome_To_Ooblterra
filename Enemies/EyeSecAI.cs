@@ -20,7 +20,7 @@ namespace Welcome_To_Ooblterra.Enemies {
             private int PatrolPointAttempts;
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
-                SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
                 EyeSecList[enemyIndex].agent.speed = 9f;
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -36,12 +36,11 @@ namespace Welcome_To_Ooblterra.Enemies {
                 }
                 PatrolPointAttempts++;
                 EyeSecList[enemyIndex].LogMessage("Attempt #" + PatrolPointAttempts + " Didn't find patrol point, trying again...");
-                if (PatrolPointAttempts < 10) {
-                    SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                if (PatrolPointAttempts < 20) {
+                    SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
                 } else {
-                    SearchInProgress = true;
-                    EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].transform.position, 500));
-
+                    EyeSecList[enemyIndex].LogMessage("EyeSec could not find patrol point. Scanning in place...");
+                    EyeSecList[enemyIndex].OverrideState(new ScanEnemies());
                 }
             }
             public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
