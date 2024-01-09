@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
 using Unity.Netcode;
 using System.Runtime.CompilerServices;
+using DunGen.Adapters;
 
 namespace Welcome_To_Ooblterra.Patches {
 
@@ -80,6 +81,7 @@ namespace Welcome_To_Ooblterra.Patches {
             MoveDoors();
             ManageCustomSun();
             MoveNavNodesToNewPositions();
+            HandleInsideNavigation();
             ManageFootsteps();
             LevelStartHasBeenRun = true;
         }
@@ -161,6 +163,14 @@ namespace Welcome_To_Ooblterra.Patches {
                 GameObject.Destroy(LevelPrefab);
             }
             LevelLoaded = false;
+        }
+        private static void HandleInsideNavigation() {
+            UnityNavMeshAdapter NavMeshAdapter = GameObject.FindObjectOfType<UnityNavMeshAdapter>();
+            if (NavMeshAdapter != null) {
+                WTOBase.LogToConsole("Found Navmesh adapter! Setting bake mode to FullDungeonBake...");
+            }
+            NavMeshAdapter.BakeMode = UnityNavMeshAdapter.RuntimeNavMeshBakeMode.FullDungeonBake;
+            NavMeshAdapter.AddNavMeshLinksBetweenRooms = true;
         }
         private static void MoveNavNodesToNewPositions() {
             //Get a list of all outside navigation nodes

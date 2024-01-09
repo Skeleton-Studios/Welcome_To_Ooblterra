@@ -20,10 +20,18 @@ namespace Welcome_To_Ooblterra.Enemies {
             private int PatrolPointAttempts;
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: true);
-                SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
+                /*
+                SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 15));
+                */
                 EyeSecList[enemyIndex].agent.speed = 9f;
+                
+                EyeSecList[enemyIndex].StartSearch(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].SearchLab);
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                if (!EyeSecList[enemyIndex].SearchLab.inProgress) {
+                    EyeSecList[enemyIndex].StartSearch(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].SearchLab);
+                }
+                /*
                 if (Vector3.Distance(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].destination) < 10 && SearchInProgress) {
                     EyeSecList[enemyIndex].LogMessage("Finding next patrol point");
                     PatrolPointAttempts = 0;
@@ -39,12 +47,14 @@ namespace Welcome_To_Ooblterra.Enemies {
                 if (PatrolPointAttempts < 20) {
                     SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
                 } else {
-                    EyeSecList[enemyIndex].LogMessage("EyeSec could not find patrol point. Scanning in place...");
+                    EyeSecList[enemyIndex].LogMessage($"EyeSec could not find patrol point among {EyeSecList[enemyIndex].allAINodes.Length} nodes. Scanning in place...");
                     EyeSecList[enemyIndex].OverrideState(new ScanEnemies());
                 }
+                */
             }
             public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 creatureAnimator.SetBool("Moving", value: false);
+                EyeSecList[enemyIndex].StopSearch(EyeSecList[enemyIndex].SearchLab);
             }
             public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
                 new ShouldStartScanTransition()
@@ -287,6 +297,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         private float FlashCooldownSeconds = 10f;
         private float ShutdownTimerSeconds = 0f;
         private bool PlayingMoveSound;
+        private AISearchRoutine SearchLab = new AISearchRoutine();
 
         public override void Start() {
             InitialState = new Patrol();
