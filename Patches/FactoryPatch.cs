@@ -7,7 +7,7 @@ using Welcome_To_Ooblterra.Properties;
 using static LethalLib.Modules.Dungeon;
 using DunGen.Graph;
 using LethalLib.Extras;
-
+using GameNetcodeStuff;
 
 namespace Welcome_To_Ooblterra.Patches {
     internal class FactoryPatch {
@@ -51,6 +51,7 @@ namespace Welcome_To_Ooblterra.Patches {
             EntranceTeleport MainEntrance = null;
             EntranceTeleport FireEntrance = null;
             EntranceTeleport[] ExistingEntranceArray = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
+            WTOBase.LogToConsole($"Found {ExistingEntranceArray.Length} fire exits to iterate over...");
             for (int i = 0; i < ExistingEntranceArray.Length; i++) {
                 if (ExistingEntranceArray[i].entranceId == 0) {
                     MainEntrance = ExistingEntranceArray[i];
@@ -65,11 +66,16 @@ namespace Welcome_To_Ooblterra.Patches {
             //Fire exits are rotated wrong on Ooblterra for some reason 
             FireEntrance.transform.Rotate(0, -90, 0);
             FireExit.transform.Rotate(0, -90, 0);
+            Object[] AllTeleports = Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
+            foreach(EntranceTeleport Teleport in AllTeleports){ 
+                Teleport.FindExitPoint();
+                WTOBase.LogToConsole($"Entrance #{System.Array.IndexOf(AllTeleports, Teleport)} exitPoint: {Teleport.exitPoint}");
+            }
             ReplaceVents();
         }
 
         [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
-        [HarmonyPostfix]
+        [HarmonyPrefix]
         private static void DestroyExitsOnLeave(StartOfRound __instance) {
             DestroyExit(MainExit);
             DestroyExit(FireExit);
@@ -78,12 +84,12 @@ namespace Welcome_To_Ooblterra.Patches {
         [HarmonyPatch(typeof(EntranceTeleport), "TeleportPlayer")]
         [HarmonyPrefix]
         private static void CheckTeleport(EntranceTeleport __instance) {
-            if(RoundManager.Instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+            WTOBase.LogToConsole("Attempting Teleport");
+            if (RoundManager.Instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
                 return;
             }
-            WTOBase.LogToConsole("Attepting Teleport");
             WTOBase.LogToConsole("Player Location: " + GameNetworkManager.Instance.localPlayerController.transform.position);
-            WTOBase.LogToConsole("Exit Location: " + __instance.exitPoint.position);
+            //WTOBase.LogToConsole("Exit Location: " + __instance.exitPoint.position);
             TimeOfDay.Instance.insideLighting = __instance.isEntranceToBuilding;
         }
 
@@ -142,8 +148,11 @@ namespace Welcome_To_Ooblterra.Patches {
                 NewExit.transform.position = NewExitSpawnPoint.transform.position;
                 NewExit.transform.rotation = NewExitSpawnPoint.transform.rotation;
 
-                //Link it to our entrance 
-                NewExit.exitPoint = ExistingEntrance.transform;
+                //IDK why the fuck I need to do this but for some reason I need to remove the teleport player delegate and add a new one :) 
+                InteractTrigger ExitInteractor = NewExit.GetComponent<InteractTrigger>();
+                ExitInteractor.onInteract.RemoveAllListeners();
+                ExitInteractor.onInteract.AddListener(delegate { NewExit.TeleportPlayer(); });
+
                 NewExit.isEntranceToBuilding = false;
                 //For march we will probably need to destroy or flag this Spawn Point so it isn't used again when we call the function again
                 return NewExit;

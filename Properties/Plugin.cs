@@ -13,6 +13,7 @@ using Unity.Netcode;
 using System;
 using System.Reflection.Emit;
 using UnityEngine.InputSystem;
+using GameNetcodeStuff;
 
 namespace Welcome_To_Ooblterra.Properties {
 
@@ -37,6 +38,8 @@ namespace Welcome_To_Ooblterra.Properties {
         public static AssetBundle FactoryAssetBundle;
         public static AssetBundle MonsterAssetBundle;
 
+        public static bool DoInteractCheck = false;
+        public static int InteractNumber = 0;
         public static void LogToConsole(string text) {
             text = "=======" + text + "=======";
             Debug.Log (text);
@@ -58,7 +61,8 @@ namespace Welcome_To_Ooblterra.Properties {
             //ConfigFile = Instance.Config ;
             //ConfigFile.Save();
             WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
-            WTOLogSource.LogInfo("Welcome to Ooblterra!");
+            const string appendix = "";
+            WTOLogSource.LogInfo("Welcome to Ooblterra! " + appendix);
 
             WTOHarmony.PatchAll(typeof(WTOBase));
             //WTOHarmony.PatchAll(typeof(WTOConfig));
@@ -128,6 +132,16 @@ namespace Welcome_To_Ooblterra.Properties {
         public static void DebugHelper(StartOfRound __instance) {
             if (Keyboard.current.f8Key.wasPressedThisFrame) {
                 /*
+                DoInteractCheck = !DoInteractCheck;
+                LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");
+                
+                UnityEngine.Object[] NumberOfEntrances = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
+                LogToConsole($"Number of entrances on map: {NumberOfEntrances.Length}");
+                for (int i = 0; i < NumberOfEntrances.Length; i++) {
+                    ((EntranceTeleport)NumberOfEntrances[i]).FindExitPoint();
+                    LogToConsole($"Entrance #{i} exitPoint: {((EntranceTeleport)NumberOfEntrances[i]).exitPoint}");
+                }
+                
                 bool flag = TimeOfDay.Instance.sunAnimator == MoonPatch.OoblFogAnimator;
                 WTOBase.LogToConsole($"Is fog animator correct? {flag}");
                 if (!flag) {
