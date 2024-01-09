@@ -40,7 +40,7 @@ namespace Welcome_To_Ooblterra.Enemies {
                     SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 } else {
                     SearchInProgress = true;
-                    EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].transform.position, 50));
+                    EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].transform.position, 500));
 
                 }
             }

@@ -16,17 +16,22 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Roam : BehaviorState {
             private bool MovingToPosition;
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                
                 LurkerList[enemyIndex].SetAnimBoolOnServerRpc("Grabbing", false);
-                MovingToPosition = LurkerList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(LurkerList[enemyIndex].allAINodes[enemyRandom.Next(LurkerList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 LurkerList[enemyIndex].agent.speed = 5f;
+                MovingToPosition = LurkerList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(LurkerList[enemyIndex].allAINodes[enemyRandom.Next(LurkerList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
+                
+                
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                
                 if (!MovingToPosition) {
                     MovingToPosition = LurkerList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(LurkerList[enemyIndex].allAINodes[enemyRandom.Next(LurkerList[enemyIndex].allAINodes.Length - 1)].transform.position, 5), checkForPath: true);
                 }
                 if(Vector3.Distance(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].destination) < 2) {
                     MovingToPosition = false;
                 }
+                
 
             }
             public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -126,9 +131,12 @@ namespace Welcome_To_Ooblterra.Enemies {
         private class Flee : BehaviorState {
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 LurkerList[enemyIndex].SetAnimBoolOnServerRpc("Grabbing", false);
-
                 LurkerList[enemyIndex].WaitingForGrab = false;
-                LurkerList[enemyIndex].SetDestinationToPosition(LurkerList[enemyIndex].ChooseFarthestNodeFromPosition(LurkerList[enemyIndex].transform.position).position);
+                //if (LurkerList[enemyIndex].finishPlayerDrag) {
+                    LurkerList[enemyIndex].SetDestinationToPosition(LurkerList[enemyIndex].ChooseFarthestNodeFromPosition(LurkerList[enemyIndex].transform.position).position);
+                    //LurkerList[enemyIndex].finishPlayerDrag = false;
+                //}
+                //LurkerList[enemyIndex].SetDestinationToPosition(LurkerList[enemyIndex].ChooseClosestNodeToPosition(LurkerList[enemyIndex].transform.position).position, true);
                 LurkerList[enemyIndex].agent.speed = 15f;
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -243,7 +251,7 @@ namespace Welcome_To_Ooblterra.Enemies {
         bool WaitingForGrab = false;
         bool finishPlayerDrag = false;
         public readonly float GrabDistance = 1f;
-        public AISearchRoutine roamMap;
+        public AISearchRoutine roamMap = new AISearchRoutine();
         public float MoveCooldownSeconds;
         public static Dictionary<int, LurkerAI> LurkerList = new Dictionary<int, LurkerAI>();
         public static int LurkerID;
