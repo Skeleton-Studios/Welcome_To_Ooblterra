@@ -37,7 +37,8 @@
     <Reference Include="0Harmony">
       <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
-    <Reference Include="Assembly-CSharp-nstrip">
+    <Reference Include="Assembly-CSharp-nstrip, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Assembly-CSharp-nstrip.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx">
@@ -176,6 +177,7 @@
     <Compile Include="Things\FrankensteinTerminal.cs" />
     <Compile Include="Things\FrankensteinBodyPoint.cs" />
     <Compile Include="Things\HideSpot.cs" />
+    <Compile Include="Things\SprintTotem.cs" />
     <Compile Include="Things\TripLaser.cs" />
   </ItemGroup>
   <ItemGroup>

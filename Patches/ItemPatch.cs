@@ -35,6 +35,7 @@ namespace Welcome_To_Ooblterra.Patches {
             new ItemData("StatueSmall.asset", 40),
             new ItemData("WandCorpse.asset", 5),
             new ItemData("WandFeed.asset", 20),
+            new ItemData("SprintTotem.asset", 5)
         };
 
         //Add our custom items
