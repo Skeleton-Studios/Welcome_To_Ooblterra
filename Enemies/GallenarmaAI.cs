@@ -406,7 +406,6 @@ namespace Welcome_To_Ooblterra.Enemies
                 return new Investigate();
             }
         }
-
         private class HitByStunGun : StateTransition {
             public override bool CanTransitionBeTaken() {
                 return GallenarmaList[enemyIndex].stunNormalizedTimer > 0 && !(GallenarmaList[enemyIndex].ActiveState is Chase);
@@ -462,9 +461,9 @@ namespace Welcome_To_Ooblterra.Enemies
             GallenarmaList.Add(GallenarmaID, this);
             GlobalTransitions.Add(new HitByStunGun());
             base.Start();
-            if (enemyRandom.Next(1, 10) > 8) {
-                LatestNoise = new NoiseInfo(transform.position, 2);
-            }
+            //if (enemyRandom.Next(1, 10) > 8) {
+            //    LatestNoise = new NoiseInfo(transform.position, 2);
+            //}
         }
         public override void Update() {
             LowerTimerValue(ref AttackTimerSeconds);
