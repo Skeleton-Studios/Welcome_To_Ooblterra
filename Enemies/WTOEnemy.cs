@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.Networking;
 using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra.Enemies {
+namespace Welcome_To_Ooblterra.Enemies;
     public class WTOEnemy : EnemyAI {
         public abstract class BehaviorState {
             public Vector2 RandomRange = new Vector2(0, 0);
@@ -189,4 +189,3 @@ namespace Welcome_To_Ooblterra.Enemies {
             return enemyRandom.Next((int)Range.x, (int)Range.y);
         }
     }
-}
