@@ -19,23 +19,22 @@ public class LurkerAI : WTOEnemy {
                 
             LurkerList[enemyIndex].SetAnimBoolOnServerRpc("Grabbing", false);
             LurkerList[enemyIndex].agent.speed = 5f;
-            MovingToPosition = LurkerList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(LurkerList[enemyIndex].allAINodes[enemyRandom.Next(LurkerList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
-                
-                
+            LurkerList[enemyIndex].StartSearch(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].CrawlAroundLab);
+            //MovingToPosition = LurkerList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(LurkerList[enemyIndex].allAINodes[enemyRandom.Next(LurkerList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-                
-            if (!MovingToPosition) {
+            if (!LurkerList[enemyIndex].CrawlAroundLab.inProgress) {
+                LurkerList[enemyIndex].StartSearch(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].CrawlAroundLab);
+            }
+            /*if (!MovingToPosition) {
                 MovingToPosition = LurkerList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(LurkerList[enemyIndex].allAINodes[enemyRandom.Next(LurkerList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
             }
             if(Vector3.Distance(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].destination) < 2) {
                 MovingToPosition = false;
-            }
-                
-
+            }*/
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            LurkerList[enemyIndex].StopSearch(LurkerList[enemyIndex].roamMap);
+            LurkerList[enemyIndex].StopSearch(LurkerList[enemyIndex].CrawlAroundLab, clear: false);
             LurkerList[enemyIndex].creatureAnimator.SetBool("Moving", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -251,7 +250,7 @@ public class LurkerAI : WTOEnemy {
     bool WaitingForGrab = false;
     bool finishPlayerDrag = false;
     public readonly float GrabDistance = 1f;
-    public AISearchRoutine roamMap = new AISearchRoutine();
+    public AISearchRoutine CrawlAroundLab = new AISearchRoutine();
     public float MoveCooldownSeconds;
     public static Dictionary<int, LurkerAI> LurkerList = new Dictionary<int, LurkerAI>();
     public static int LurkerID;

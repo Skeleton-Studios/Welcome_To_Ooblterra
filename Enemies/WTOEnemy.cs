@@ -101,7 +101,7 @@ namespace Welcome_To_Ooblterra.Enemies;
         }
         internal void LogMessage(string message) {
             if (PrintDebugs) {
-                Debug.Log(message);
+                //Debug.Log(message);
             }
         }
         internal bool PlayerCanBeTargeted(PlayerControllerB myPlayer) {

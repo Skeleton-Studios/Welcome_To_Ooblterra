@@ -14,6 +14,7 @@ using System;
 using System.Reflection.Emit;
 using UnityEngine.InputSystem;
 using GameNetcodeStuff;
+using Welcome_To_Ooblterra.Things;
 
 namespace Welcome_To_Ooblterra.Properties;
 
@@ -131,6 +132,9 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
+            FrankensteinTerminal Terminal = FindObjectOfType<FrankensteinTerminal>();
+            WTOBase.LogToConsole("REVIVING PLAYER!!!!!");
+            Terminal.ReviveDeadPlayerServerRpc();
             /*
             DoInteractCheck = !DoInteractCheck;
             LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");

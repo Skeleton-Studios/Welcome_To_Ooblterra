@@ -46,6 +46,7 @@ internal class SuitPatch {
             //Create new suits based on the materials
             foreach (string SuitPath in SuitMaterialPaths) {
                 UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
+                UnlockableSuit newSuit = new UnlockableSuit();
                 newUnlockableItem.suitMaterial = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath);
                 //prepare and set name
                 String SuitName = SuitPath.Substring(19,8);

@@ -6,14 +6,22 @@ using System.Text;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
 public class FrankensteinBodyPoint : NetworkBehaviour {
+    
+    [InspectorName("Defaults")]
     public InteractTrigger triggerScript;
-    public bool HasBody;
-    public NetworkObject deskObjectsContainer;
+    public NetworkObject TableBodyContainer;
+    public BoxCollider triggerCollider;
+    public FrankensteinTerminal ConnectedTerminal;
+
     private float updateInterval;
-    private BoxCollider triggerCollider;
+    public GrabbableObject BodyGO;
+    private RagdollGrabbableObject PlayerRagdoll;
+    private NetworkObject lastObjectAddedToTable;
+    public Vector3 RespawnPos;
 
     //Figure out how to create an interaction point
 
@@ -22,30 +30,58 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         if (NetworkManager.Singleton == null) {
             return;
         }
-
         if (updateInterval > 1f) {
             updateInterval = 0f;
             if (GameNetworkManager.Instance != null && GameNetworkManager.Instance.localPlayerController != null) {
-                triggerScript.interactable = GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer != null && GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer.itemProperties.itemName == "Body";
+                triggerScript.interactable = GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer != null && GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is RagdollGrabbableObject;
             }
         } else {
             updateInterval += Time.deltaTime;
         }
     }
-    //when interacted, attach the body to the point
-    private void AttachBody(PlayerControllerB player) {
-        if (deskObjectsContainer.GetComponentsInChildren<GrabbableObject>().Length < 1 && GameNetworkManager.Instance != null && player == GameNetworkManager.Instance.localPlayerController) {
-            Vector3 vector = RoundManager.RandomPointInBounds(triggerCollider.bounds);
-            vector.y = triggerCollider.bounds.min.y;
-            if (Physics.Raycast(new Ray(vector + Vector3.up * 3f, Vector3.down), out var hitInfo, 8f, 1048640, QueryTriggerInteraction.Collide)) {
-                vector = hitInfo.point;
-            }
 
-            vector.y += player.currentlyHeldObjectServer.itemProperties.verticalOffset;
-            vector = deskObjectsContainer.transform.InverseTransformPoint(vector);
-            //AddObjectToDeskServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
-            player.DiscardHeldObject(placeObject: true, deskObjectsContainer, vector, matchRotationOfParent: false);
-            Debug.Log("discard held object called from deposit items desk");
+    //when interacted, attach the body to the point
+    public void AttachBody(PlayerControllerB player) {
+        if (TableBodyContainer.GetComponentsInChildren<GrabbableObject>().Length > 0 || GameNetworkManager.Instance == null || player != GameNetworkManager.Instance.localPlayerController) {
+            return;
+        }
+        BodyGO = player.currentlyHeldObjectServer;
+        try {
+            PlayerRagdoll = BodyGO as RagdollGrabbableObject;
+        } catch {
+            WTOBase.LogToConsole("Body is not a Ragdoll?!?");
+        }
+        Vector3 vector = RoundManager.RandomPointInBounds(triggerCollider.bounds);
+        vector.y = triggerCollider.bounds.min.y;
+        if (Physics.Raycast(new Ray(vector + Vector3.up * 3f, Vector3.down), out var hitInfo, 8f, 1048640, QueryTriggerInteraction.Collide)) {
+            vector = hitInfo.point;
+        }
+        vector.y += player.currentlyHeldObjectServer.itemProperties.verticalOffset;
+        vector = TableBodyContainer.transform.InverseTransformPoint(vector);
+        if(PlayerRagdoll != null) { 
+            WTOBase.LogToConsole($"Player Body ID is {PlayerRagdoll.bodyID.Value}");
+            ConnectedTerminal.SetVariables(vector, PlayerRagdoll.bodyID.Value);
+        }
+        PutObjectOnTableServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
+        player.DiscardHeldObject(placeObject: true, TableBodyContainer, vector, matchRotationOfParent: false);
+        
+        Debug.Log("Body placed on frankenstein point");
+    }
+    [ServerRpc]
+    public void PutObjectOnTableServerRpc(NetworkObjectReference grabbableObjectNetObject) {
+        if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {
+                PutObjectOnTableClientRpc(grabbableObjectNetObject);
+        } else {
+            Debug.LogError("ServerRpc: Could not find networkobject in the object that was placed on table.");
+        }
+    }
+
+    [ClientRpc]
+    public void PutObjectOnTableClientRpc(NetworkObjectReference grabbableObjectNetObject) {
+        if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {
+            lastObjectAddedToTable.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
+        } else {
+            Debug.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
         }
     }
 }

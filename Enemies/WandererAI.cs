@@ -5,6 +5,7 @@ using GameNetcodeStuff;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Patches;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
 public class WandererAI : WTOEnemy {
@@ -14,6 +15,7 @@ public class WandererAI : WTOEnemy {
             RandomRange = new Vector2(4, 9);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            WandererList[enemyIndex].ReachedNextPoint = false;
             WandererList[enemyIndex].TotalInvestigationSeconds = MyRandomInt;
             WandererList[enemyIndex].LogMessage("Investigating for: " + WandererList[enemyIndex].TotalInvestigationSeconds + "s");
             WandererList[enemyIndex].creatureAnimator.speed = 1f;
@@ -33,6 +35,7 @@ public class WandererAI : WTOEnemy {
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             WandererList[enemyIndex].creatureAnimator.SetBool("Investigating", false);
+            WandererList[enemyIndex].ReachedNextPoint = false;
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new DoneInvestigating(),
@@ -42,17 +45,23 @@ public class WandererAI : WTOEnemy {
     private class Roam : BehaviorState {
         bool Wandering;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            Wandering = WandererList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(WandererList[enemyIndex].allAINodes[enemyRandom.Next(WandererList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
+            
+            //Wandering = WandererList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(WandererList[enemyIndex].allAINodes[enemyRandom.Next(WandererList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
             WandererList[enemyIndex].agent.speed = 7f;
             WandererList[enemyIndex].creatureAnimator.SetBool("Moving", true);
+            WandererList[enemyIndex].StartSearch(WandererList[enemyIndex].transform.position, WandererList[enemyIndex].RoamPlanet);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (!Wandering) {
-                WandererList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(WandererList[enemyIndex].allAINodes[enemyRandom.Next(WandererList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
+            if (!WandererList[enemyIndex].RoamPlanet.inProgress) {
+                WandererList[enemyIndex].StartSearch(WandererList[enemyIndex].transform.position, WandererList[enemyIndex].RoamPlanet);
             }
+            //if (!Wandering) {
+                //WandererList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(WandererList[enemyIndex].allAINodes[enemyRandom.Next(WandererList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
+            //}
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             WandererList[enemyIndex].creatureAnimator.SetBool("Moving", false);
+            WandererList[enemyIndex].StopSearch(WandererList[enemyIndex].RoamPlanet, clear: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new FoundNextPoint(),
@@ -105,7 +114,7 @@ public class WandererAI : WTOEnemy {
     }
     private class FoundNextPoint : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return (Vector3.Distance(WandererList[enemyIndex].transform.position, WandererList[enemyIndex].destination) < 5);
+            return WandererList[enemyIndex].ReachedNextPoint;
         }
         public override BehaviorState NextState() {
             return new Investigate();
@@ -147,11 +156,13 @@ public class WandererAI : WTOEnemy {
     private float HeadTurnTime;
     public static Dictionary<int, WandererAI> WandererList = new Dictionary<int, WandererAI>();
     private static int WandererID;
+    private AISearchRoutine RoamPlanet = new AISearchRoutine();
+    private bool ReachedNextPoint = false;
 
     public override void Start() {
         MyValidState = PlayerState.Outside;
         InitialState = new Investigate();
-        //PrintDebugs = true;
+        PrintDebugs = true;
         WandererID++;
         WTOEnemyID = WandererID;
             
@@ -218,5 +229,9 @@ public class WandererAI : WTOEnemy {
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
         if (!RegisteredThreats.Contains(playerWhoHit)) RegisteredThreats.Add(playerWhoHit);
     }
-        
+
+    public override void ReachedNodeInSearch() {
+        base.ReachedNodeInSearch();
+        ReachedNextPoint = true;
+    }
 }

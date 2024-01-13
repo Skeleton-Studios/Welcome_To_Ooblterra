@@ -107,7 +107,7 @@ internal class MonsterPatch {
         TerminalKeyword EnemyKeyword = null;
 
         EnemyType enemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>(EnemyPathRoot + EnemyFolderName + EnemyName);
-        enemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = true;
+        enemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
 
         if (InfoName != null) {
             EnemyInfo = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>(EnemyPathRoot + EnemyFolderName + InfoName);
