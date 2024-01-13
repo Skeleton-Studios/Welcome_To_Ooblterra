@@ -14,6 +14,9 @@ internal class WideDoorway : NetworkBehaviour {
 
     public BoxCollider OverlapTrigger;
     public Transform Doorway;
+    public AudioClip CloseSound;
+    public AudioSource CloseSoundSource;
+
     private const float TotalDistanceToTravel = -4;
     private float DistanceToTravelEachTime;
     private Vector3 FinalDoorPosition;
@@ -26,7 +29,6 @@ internal class WideDoorway : NetworkBehaviour {
     private List<Collider> CurrentColliderList = new();
     private bool ShouldFall;
 
-    //this should be seeded
     private int TotalTimesBeforeClose;
     private System.Random MyRandom; 
 

@@ -123,7 +123,6 @@ public static void Start() {
     Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
 }
 private static void SetMoonVariables(SelectableLevel Moon, StartOfRound Instance) {
-    Moon.planetPrefab = Instance.levels[2].planetPrefab;
     Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
     Moon.levelAmbienceClips = Instance.levels[2].levelAmbienceClips;
 

@@ -7,18 +7,25 @@ using System.Threading.Tasks;
 using UnityEngine;
 using static UnityEngine.GraphicsBuffer;
 using Welcome_To_Ooblterra.Properties;
+using System.Collections;
 
 namespace Welcome_To_Ooblterra.Things;
 internal class KitchenCrusher : MonoBehaviour {
-    public GameObject Crusher;
-    System.Random CrusherRandom = new System.Random();
-    bool ActivateCrusher;
-    bool RetractCrusher;
+
     public Vector3 CrusherStartPos;
     public Vector3 CrusherEndPos;
-    private PlayerControllerB victim;
     public AudioSource CrusherSound;
     public AudioClip SoundToPlay;
+    public GameObject Crusher;
+
+    private PlayerControllerB victim;
+    System.Random CrusherRandom;
+    private bool ActivateCrusher;
+    private bool RetractCrusher;
+
+
+    private float LerpDuration = 0.3f;
+    private float timeElapsed;
 
     private void OnTriggerEnter(Collider other) {
         if (!other.gameObject.CompareTag("Player")) {
@@ -41,17 +48,10 @@ internal class KitchenCrusher : MonoBehaviour {
     }
 
     private void Start() {
+        CrusherRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         CrusherStartPos = Crusher.transform.position;
         CrusherEndPos = Crusher.transform.position + (Vector3.Scale(new Vector3(-6, 0, -6), Crusher.transform.right));
     }
-
-    private void SetCrusherRetract() {
-        RetractCrusher = true;
-    }
-
-    private float LerpDuration = 0.3f;
-    private float timeElapsed;
-
     private void Update() {
         if (ActivateCrusher) {
             if(timeElapsed < LerpDuration) { 
@@ -71,5 +71,9 @@ internal class KitchenCrusher : MonoBehaviour {
             timeElapsed += Time.deltaTime;
             return;
         }
+    }
+
+    IEnumerator StartCrusher() {
+        yield return null;
     }
 }
