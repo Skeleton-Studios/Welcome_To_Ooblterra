@@ -53,7 +53,7 @@ public class EyeSecAI : WTOEnemy {
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: false);
-            EyeSecList[enemyIndex].StopSearch(EyeSecList[enemyIndex].SearchLab);
+            EyeSecList[enemyIndex].StopSearch(EyeSecList[enemyIndex].SearchLab, clear: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new ShouldStartScanTransition()

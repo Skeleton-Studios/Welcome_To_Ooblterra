@@ -46,16 +46,22 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].Awakening = false;
             GallenarmaList[enemyIndex].creatureSFX.maxDistance = 15;
-
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             GallenarmaList[enemyIndex].agent.speed = 5f;
+            GallenarmaList[enemyIndex].StartSearch(GallenarmaList[enemyIndex].transform.position, GallenarmaList[enemyIndex].RoamLab);
+            /*
             if (GallenarmaList[enemyIndex].IsOwner) { 
                 canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
             }
+            */
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            if (!GallenarmaList[enemyIndex].RoamLab.inProgress) {
+                GallenarmaList[enemyIndex].StartSearch(GallenarmaList[enemyIndex].transform.position, GallenarmaList[enemyIndex].RoamLab);
+            }
+            /*
             if (GallenarmaList[enemyIndex].IsOwner) {
                 if (!canMakeNextPoint) {
                 canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
@@ -64,8 +70,10 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                     canMakeNextPoint = false;
                 }
             }
+            */
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            GallenarmaList[enemyIndex].StopSearch(GallenarmaList[enemyIndex].RoamLab, clear: false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -430,6 +438,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     private readonly float AttackTime = 1.92f;
     public static Dictionary<int, GallenarmaAI> GallenarmaList = new Dictionary<int, GallenarmaAI>();
     public static int GallenarmaID;
+    private AISearchRoutine RoamLab = new AISearchRoutine();
 
     public AudioClip Growl;
     public List<AudioClip> Search = new List<AudioClip>();
