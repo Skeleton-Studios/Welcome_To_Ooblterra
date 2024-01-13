@@ -48,7 +48,7 @@ internal class ItemPatch {
             NextItemToProcess = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());
             //Register it with LethalLib
             NetworkPrefabs.RegisterNetworkPrefab(NextItemToProcess.spawnPrefab);
-            Items.RegisterScrap(NextItemToProcess, MyCustomScrap.GetRarity(), Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
+            LethalLib.Modules.Items.RegisterScrap(NextItemToProcess, MyCustomScrap.GetRarity(), Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
             //Set the item reference in the ItemData class
             MyCustomScrap.SetItem(NextItemToProcess);
 
