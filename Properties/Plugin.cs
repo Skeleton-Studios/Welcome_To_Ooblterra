@@ -38,6 +38,9 @@ public class WTOBase : BaseUnityPlugin {
     public static AssetBundle ItemAssetBundle;
     public static AssetBundle FactoryAssetBundle;
     public static AssetBundle MonsterAssetBundle;
+    public static GameObject LabPrefab;
+    public static FrankensteinTerminal LabTerminal;
+
 
     public static bool DoInteractCheck = false;
     public static int InteractNumber = 0;
@@ -132,9 +135,9 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
-            FrankensteinTerminal Terminal = FindObjectOfType<FrankensteinTerminal>();
-            WTOBase.LogToConsole("REVIVING PLAYER!!!!!");
-            Terminal.ReviveDeadPlayerServerRpc();
+            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
+            WTOBase.LogToConsole($"REVIVING PLAYER at {LabTerminal}");
+            LabTerminal.ReviveDeadPlayer();
             /*
             DoInteractCheck = !DoInteractCheck;
             LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");

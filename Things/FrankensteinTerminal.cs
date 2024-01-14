@@ -14,7 +14,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
     private FrankensteinBodyPoint TargetBodyPoint;
     private PlayerControllerB PlayerToRevive;
     private Vector3 TargetPosition;
-    private int PlayerID;
+    private int PlayerID = 1;
     //Create a new terminal, change what it displays and what you can type into it
 
     //for now we're just gonna have two commands: revive and fail.
@@ -26,8 +26,9 @@ public class FrankensteinTerminal : NetworkBehaviour {
     }
 
     //Both commands should fail unless the associated BodyPoint has a body
-    private bool TableHasBody() {
-        return TargetBodyPoint.BodyGO != null;
+    public void Wrapper() {
+        Debug.Log("Wrapper calling Server RPC...");
+        ReviveDeadPlayerServerRpc();
     }
 
     //if revive, bring the player back from the dead, steal this from the roundmanager
