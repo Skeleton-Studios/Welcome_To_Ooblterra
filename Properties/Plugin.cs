@@ -68,56 +68,40 @@ public class WTOBase : BaseUnityPlugin {
         const string appendix = "";
         WTOLogSource.LogInfo("Welcome to Ooblterra! " + appendix);
 
+        LogToConsole("BEGIN PRINTING LOADED ASSETS");
+
         WTOHarmony.PatchAll(typeof(WTOBase));
         //WTOHarmony.PatchAll(typeof(WTOConfig));
-        WTOHarmony.PatchAll(typeof(FactoryPatch));
-        WTOHarmony.PatchAll(typeof(ItemPatch));
-        WTOHarmony.PatchAll(typeof(MonsterPatch));
-        WTOHarmony.PatchAll(typeof(MoonPatch));
-        WTOHarmony.PatchAll(typeof(SuitPatch));
-        WTOHarmony.PatchAll(typeof(TerminalPatch));
-            
-        if (/* WTOConfig.WTOCustomSuits.Value*/ true) {
-                
-        }
-        LogToConsole("BEGIN PRINTING LOADED ASSETS");
-        //AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);
-        if (/*InteriorState != AllowedState.Off*/ true) {
-            string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
-            FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-        }
 
-        //AllowedState.TryParse(WTOConfig.SpawnScrapStatus.ToString(), out AllowedState ItemState);
-        if (/*ItemState != AllowedState.Off*/ true) {
-            string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
-            ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
-        }
-
-        if (/* WTOConfig.OoblterraEnabled.Value*/ true) {
-            string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
-            LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
-        }
-
+        
+        string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");
+        FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
         /*
-        AllowedState.TryParse(WTOConfig.SpawnOutdoorEnemyStatus.ToString(), out AllowedState OutdoorMonsterState);
-        AllowedState.TryParse(WTOConfig.SpawnIndoorEnemyStatus.ToString(), out AllowedState IndoorMonsterState);
-        AllowedState.TryParse(WTOConfig.SpawnAmbientEnemyStatus.ToString(), out AllowedState DaytimeMonsterState);
-        AllowedState.TryParse(WTOConfig.SpawnSecurityStatus.ToString(), out AllowedState SecurityState);
-        if (OutdoorMonsterState != AllowedState.Off || IndoorMonsterState != AllowedState.Off
-            || DaytimeMonsterState != AllowedState.Off || SecurityState != AllowedState.Off
-        true) {
+        WTOHarmony.PatchAll(typeof(FactoryPatch));
+        FactoryPatch.Start();
         */
+        string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
+        ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
+        WTOHarmony.PatchAll(typeof(ItemPatch));
+        ItemPatch.Start();
+
+        WTOHarmony.PatchAll(typeof(SuitPatch));
+        SuitPatch.Start();
+
         string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
         MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
-
-        FactoryPatch.Start();
-        ItemPatch.Start();
+        WTOHarmony.PatchAll(typeof(MonsterPatch));
         MonsterPatch.Start();
+        
+        string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
+        LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
+        /*
+        WTOHarmony.PatchAll(typeof(MoonPatch));
         MoonPatch.Start();
-        SuitPatch.Start();
+        
+        WTOHarmony.PatchAll(typeof(TerminalPatch));
         TerminalPatch.Start();
-            
-
+        */
         //NetcodeWeaver stuff
         var types = Assembly.GetExecutingAssembly().GetTypes();
         foreach (var type in types) {
