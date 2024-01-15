@@ -16,10 +16,10 @@ public class WandererAI : WTOEnemy {
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             WandererList[enemyIndex].ReachedNextPoint = false;
+            WandererList[enemyIndex].agent.speed = 0f;
             WandererList[enemyIndex].TotalInvestigationSeconds = MyRandomInt;
             WandererList[enemyIndex].LogMessage("Investigating for: " + WandererList[enemyIndex].TotalInvestigationSeconds + "s");
             WandererList[enemyIndex].creatureAnimator.speed = 1f;
-            WandererList[enemyIndex].agent.speed = 0f;
             WandererList[enemyIndex].creatureAnimator.SetBool("Investigating", true);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -49,7 +49,9 @@ public class WandererAI : WTOEnemy {
             //Wandering = WandererList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(WandererList[enemyIndex].allAINodes[enemyRandom.Next(WandererList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
             WandererList[enemyIndex].agent.speed = 7f;
             WandererList[enemyIndex].creatureAnimator.SetBool("Moving", true);
-            WandererList[enemyIndex].StartSearch(WandererList[enemyIndex].transform.position, WandererList[enemyIndex].RoamPlanet);
+            if (!WandererList[enemyIndex].RoamPlanet.inProgress) { 
+                WandererList[enemyIndex].StartSearch(WandererList[enemyIndex].transform.position, WandererList[enemyIndex].RoamPlanet);
+            }
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (!WandererList[enemyIndex].RoamPlanet.inProgress) {
@@ -61,7 +63,7 @@ public class WandererAI : WTOEnemy {
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             WandererList[enemyIndex].creatureAnimator.SetBool("Moving", false);
-            WandererList[enemyIndex].StopSearch(WandererList[enemyIndex].RoamPlanet, clear: false);
+            //WandererList[enemyIndex].StopSearch(WandererList[enemyIndex].RoamPlanet, clear: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new FoundNextPoint(),
@@ -156,7 +158,7 @@ public class WandererAI : WTOEnemy {
     private float HeadTurnTime;
     public static Dictionary<int, WandererAI> WandererList = new Dictionary<int, WandererAI>();
     private static int WandererID;
-    private AISearchRoutine RoamPlanet = new AISearchRoutine();
+    private AISearchRoutine RoamPlanet = new();
     private bool ReachedNextPoint = false;
 
     public override void Start() {
@@ -165,7 +167,7 @@ public class WandererAI : WTOEnemy {
         PrintDebugs = true;
         WandererID++;
         WTOEnemyID = WandererID;
-            
+
         LogMessage($"Adding Wanderer {this} #{WandererID}");
         WandererList.Add(WandererID, this);
         if (!agent.isOnNavMesh) {
@@ -178,7 +180,6 @@ public class WandererAI : WTOEnemy {
     }
     public override void Update() {
         base.Update();
-        Resources.FindObjectsOfTypeAll(typeof(GameObject));
     }
 
     public void LateUpdate() {
