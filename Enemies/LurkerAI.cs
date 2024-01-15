@@ -15,8 +15,7 @@ public class LurkerAI : WTOEnemy {
     //BEHAVIOR STATES
     private class Roam : BehaviorState {
         private bool MovingToPosition;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-                
+        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {  
             LurkerList[enemyIndex].SetAnimBoolOnServerRpc("Grabbing", false);
             LurkerList[enemyIndex].agent.speed = 5f;
             LurkerList[enemyIndex].StartSearch(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].CrawlAroundLab);
@@ -151,13 +150,12 @@ public class LurkerAI : WTOEnemy {
 
     //STATE TRANSITIONS
     private class FindPlayer : StateTransition {
-
         public override bool CanTransitionBeTaken() {
                 
             if (LurkerList[enemyIndex].GetAllPlayersInLineOfSight(90f) == null) {
                 return false;
             }
-            foreach (var possiblePlayer in LurkerList[enemyIndex].GetAllPlayersInLineOfSight(90f)) { 
+            foreach (PlayerControllerB possiblePlayer in LurkerList[enemyIndex].GetAllPlayersInLineOfSight(90f)) { 
                 if(!possiblePlayer.HasLineOfSightToPosition(LurkerList[enemyIndex].transform.position /*+ Vector3.up * 1.6f*/)){
                     LurkerList[enemyIndex].targetPlayer = possiblePlayer;
                     return true;
@@ -250,7 +248,7 @@ public class LurkerAI : WTOEnemy {
     bool WaitingForGrab = false;
     bool finishPlayerDrag = false;
     public readonly float GrabDistance = 1f;
-    public AISearchRoutine CrawlAroundLab = new AISearchRoutine();
+    private AISearchRoutine CrawlAroundLab = new();
     public float MoveCooldownSeconds;
     public static Dictionary<int, LurkerAI> LurkerList = new Dictionary<int, LurkerAI>();
     public static int LurkerID;
@@ -264,7 +262,8 @@ public class LurkerAI : WTOEnemy {
     }
     public override void Start() {
         //GetAllLurkerPoints();
-        //PrintDebugs = true;
+        MyValidState = PlayerState.Inside;
+        PrintDebugs = true;
         InitialState = new Roam();
         LurkerID++;
         WTOEnemyID = LurkerID;

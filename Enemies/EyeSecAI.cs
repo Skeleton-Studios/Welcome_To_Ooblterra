@@ -296,7 +296,7 @@ public class EyeSecAI : WTOEnemy {
     private float FlashCooldownSeconds = 10f;
     private float ShutdownTimerSeconds = 0f;
     private bool PlayingMoveSound;
-    private AISearchRoutine SearchLab = new AISearchRoutine();
+    private AISearchRoutine SearchLab = new();
 
     public override void Start() {
         InitialState = new Patrol();

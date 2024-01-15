@@ -468,9 +468,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         GallenarmaList.Add(GallenarmaID, this);
         GlobalTransitions.Add(new HitByStunGun());
         base.Start();
-        //if (enemyRandom.Next(1, 10) > 8) {
-        //    LatestNoise = new NoiseInfo(transform.position, 2);
-        //}
+        if (enemyRandom.Next(1, 10) > 8) {
+            LatestNoise = new NoiseInfo(transform.position, 2);
+        }
     }
     public override void Update() {
         LowerTimerValue(ref AttackTimerSeconds);
