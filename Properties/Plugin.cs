@@ -15,6 +15,8 @@ using System.Reflection.Emit;
 using UnityEngine.InputSystem;
 using GameNetcodeStuff;
 using Welcome_To_Ooblterra.Things;
+using DunGen.Graph;
+using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Properties;
 
@@ -102,6 +104,16 @@ public class WTOBase : BaseUnityPlugin {
         WTOHarmony.PatchAll(typeof(TerminalPatch));
         TerminalPatch.Start();
         */
+
+        // LLL Dungeon Stuff
+
+        DungeonFlow myDungeonFlow = FactoryAssetBundle.LoadAsset<DungeonFlow>("Assets/CustomDungeon/Data/WTOFlow.asset");
+        ExtendedDungeonFlow myExtendedDungeonFlow = ScriptableObject.CreateInstance<ExtendedDungeonFlow>();
+        myExtendedDungeonFlow.dungeonFlow = myDungeonFlow;
+        myExtendedDungeonFlow.dynamicLevelTagsList.Add(new StringWithRarity("WTO", 30000));
+        AssetBundleLoader.RegisterExtendedDungeonFlow(myExtendedDungeonFlow);
+
+
         //NetcodeWeaver stuff
         var types = Assembly.GetExecutingAssembly().GetTypes();
         foreach (var type in types) {
