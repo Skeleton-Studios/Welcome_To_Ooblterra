@@ -15,12 +15,12 @@ internal class MonsterPatch {
     public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
 
     private const string EnemyPathRoot = "Assets/CustomEnemies/";
-    private static bool enemiesInList;
+    private static bool EnemiesInList;
 
     [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
     [HarmonyPrefix]
     private static void AddMonstersToDebug(QuickMenuManager __instance) {
-        if (enemiesInList) {
+        if (EnemiesInList) {
             return;
         }
         var testLevel = __instance.testAllEnemiesLevel;
@@ -63,7 +63,7 @@ internal class MonsterPatch {
         });
         Debug.Log("Added " + AdultWandererContainer[0].enemyType.name + "To debug list");
 
-        enemiesInList = true;
+        EnemiesInList = true;
     }
 
 
@@ -89,8 +89,8 @@ internal class MonsterPatch {
     }
 
     public static void SetSecurityObjects(SelectableLevel Moon) {
-        SpawnableMapObject[] spawnableMapObjects = new SpawnableMapObject[SecurityList.Count];
-        Moon.spawnableMapObjects = spawnableMapObjects;
+        SpawnableMapObject[] SpawnableMapObjects = new SpawnableMapObject[SecurityList.Count];
+        Moon.spawnableMapObjects = SpawnableMapObjects;
         for (int i = 0; i < SecurityList.Count; i++) {
             Moon.spawnableMapObjects.SetValue(SecurityList[i], i);
         }
@@ -106,8 +106,8 @@ internal class MonsterPatch {
         TerminalNode EnemyInfo = null;
         TerminalKeyword EnemyKeyword = null;
 
-        EnemyType enemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>(EnemyPathRoot + EnemyFolderName + EnemyName);
-        enemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
+        EnemyType EnemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>(EnemyPathRoot + EnemyFolderName + EnemyName);
+        EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = true;
 
         if (InfoName != null) {
             EnemyInfo = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>(EnemyPathRoot + EnemyFolderName + InfoName);
@@ -117,9 +117,9 @@ internal class MonsterPatch {
             EnemyKeyword.defaultVerb = TerminalPatch.InfoKeyword;
         }
 
-        LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(enemyType.enemyPrefab);
-        LethalLib.Modules.Enemies.RegisterEnemy(enemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, new string[] { "OoblterraLevel" }, EnemyInfo, EnemyKeyword);
-        EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = enemyType, rarity = rarity });
+        LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
+        LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, new string[] { "OoblterraLevel" }, EnemyInfo, EnemyKeyword);
+        EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
         Debug.Log("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
     }
 
