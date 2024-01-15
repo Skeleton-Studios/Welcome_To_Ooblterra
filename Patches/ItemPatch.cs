@@ -35,7 +35,8 @@ internal class ItemPatch {
         new ItemData("StatueSmall.asset", 40),
         new ItemData("WandCorpse.asset", 5),
         new ItemData("WandFeed.asset", 20),
-        new ItemData("SprintTotem.asset", 5)
+        new ItemData("SprintTotem.asset", 5),
+        new ItemData("CursedTotem.asset", 2)
     };
 
     //Add our custom items
@@ -74,7 +75,7 @@ internal class ItemPatch {
         NetworkObject ItemNetworkObject = SpawnedItem.GetComponent<NetworkObject>();
 
         //this needs to be synced with local clients
-        ItemGrabbableObject.scrapValue = (int)(RoundManager.Instance.AnomalyRandom.Next(ItemList[internalID].GetItem().minValue, ItemList[internalID].GetItem().maxValue) * RoundManager.Instance.scrapValueMultiplier);
+        ItemGrabbableObject.SetScrapValue((int)(RoundManager.Instance.AnomalyRandom.Next(ItemList[internalID].GetItem().minValue, ItemList[internalID].GetItem().maxValue) * RoundManager.Instance.scrapValueMultiplier));
 
         if (Network.IsHost) {
             ItemNetworkObject.Spawn();

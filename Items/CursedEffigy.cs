@@ -8,6 +8,7 @@ using Unity.Netcode;
 using GameNetcodeStuff;
 using System.Collections;
 using UnityEngine.AI;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Items;
 internal class CursedEffigy : GrabbableObject {
@@ -17,15 +18,15 @@ internal class CursedEffigy : GrabbableObject {
     public EnemyType TheMimic;
 
     private PlayerControllerB MyOwner;
-
-
     public override void GrabItem() {
         base.GrabItem();
         MyOwner = playerHeldBy;
     }
     public override void DiscardItem() {
         base.DiscardItem();
-        MyOwner = null;
+        if (!MyOwner.isPlayerDead) { 
+            MyOwner = null;
+        }
     }
     public override void Update() {
         base.Update();
@@ -33,7 +34,8 @@ internal class CursedEffigy : GrabbableObject {
             return;
         }
         if (MyOwner.isPlayerDead) {
-            TurnPlayerToWTOMimic(playerHeldBy);
+            WTOBase.LogToConsole($"Effigy knows that owning player {MyOwner} is dead!");
+            //TurnPlayerToWTOMimic(playerHeldBy);
             Destroy(this);
         }
     }
@@ -50,37 +52,39 @@ internal class CursedEffigy : GrabbableObject {
     public void CreateMimicServerRpc(bool inFactory, Vector3 playerPositionAtDeath) {
         if (MyOwner == null) {
             Debug.LogError("Effigy does not have owner!");
+            return;
         }
         Debug.Log("Server creating mimic from Effigy");
-        Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(playerPositionAtDeath, default(NavMeshHit), 10f);
-        if (RoundManager.Instance.GotNavMeshPositionResult) {
-            if (TheMimic == null) {
-                Debug.Log("No mimic enemy set for Effigy");
-                return;
-            }
-            NetworkObjectReference netObjectRef = RoundManager.Instance.SpawnEnemyGameObject(navMeshPosition, MyOwner.transform.eulerAngles.y, -1, TheMimic);
-            if (netObjectRef.TryGet(out var networkObject)) {
-                Debug.Log("Got network object for WTOMimic");
-                MaskedPlayerEnemy component = networkObject.GetComponent<MaskedPlayerEnemy>();
-                component.SetSuit(MyOwner.currentSuitID);
-                component.mimickingPlayer = MyOwner;
-                component.SetEnemyOutside(!inFactory);
-                component.SetVisibilityOfMaskedEnemy();
-
-                //This makes it such that the mimic has no visible mask :)
-                component.maskTypes[0].SetActive(value: false);
-                component.maskTypes[1].SetActive(value: false);
-                component.maskTypeIndex = 0;
-                
-                MyOwner.redirectToEnemy = component;
-                if (MyOwner.deadBody != null) {
-                    MyOwner.deadBody.DeactivateBody(setActive: false);
-                }
-            }
-            CreateMimicClientRpc(netObjectRef, inFactory);
-        } else {
+        Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(playerPositionAtDeath, default, 10f);
+        if (!RoundManager.Instance.GotNavMeshPositionResult) {
             Debug.Log("No nav mesh found; no WTOMimic could be created");
+            return;
         }
+        if (TheMimic == null) {
+            const int MimicIndex = 0;
+            TheMimic = StartOfRound.Instance.levels[5].Enemies[MimicIndex].enemyType;
+            Debug.Log($"Mimic Found: {TheMimic != null}");
+        }
+
+        NetworkObjectReference netObjectRef = RoundManager.Instance.SpawnEnemyGameObject(navMeshPosition, MyOwner.transform.eulerAngles.y, -1, TheMimic);
+
+        if (netObjectRef.TryGet(out var networkObject)) {
+            Debug.Log("Got network object for WTOMimic");
+            MaskedPlayerEnemy component = networkObject.GetComponent<MaskedPlayerEnemy>();
+            component.SetSuit(MyOwner.currentSuitID);
+            component.mimickingPlayer = MyOwner;
+            component.SetEnemyOutside(!inFactory);
+            component.SetVisibilityOfMaskedEnemy();
+
+            //This makes it such that the mimic has no visible mask :)
+            component.maskTypes[0].SetActive(value: false);
+            component.maskTypes[1].SetActive(value: false);
+            component.maskTypeIndex = 0;
+
+            MyOwner.redirectToEnemy = component;
+            MyOwner.deadBody?.DeactivateBody(setActive: false);
+        }
+        CreateMimicClientRpc(netObjectRef, inFactory);
     }
 
     [ClientRpc]
@@ -96,24 +100,22 @@ internal class CursedEffigy : GrabbableObject {
             startTime = Time.realtimeSinceStartup;
             yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || MyOwner.deadBody != null);
         }
-        if (!(MyOwner.deadBody == null)) {
-            MyOwner.deadBody.DeactivateBody(setActive: false);
-            if (netObject != null) {
-                Debug.Log("Got network object for WTOMimic enemy client");
-                MaskedPlayerEnemy component = netObject.GetComponent<MaskedPlayerEnemy>();
-                component.mimickingPlayer = MyOwner;
-                component.SetSuit(MyOwner.currentSuitID);
-                component.SetEnemyOutside(!inFactory);
-                component.SetVisibilityOfMaskedEnemy();
-
-                //This makes it such that the mimic has no visible mask :)
-                component.maskTypes[0].SetActive(value: false);
-                component.maskTypes[1].SetActive(value: false);
-                component.maskTypeIndex = 0;
-                
-                MyOwner.redirectToEnemy = component;
-            }
+        MyOwner.deadBody.DeactivateBody(setActive: false);
+        if (netObject == null) {
+            yield break;
         }
-    }
+        Debug.Log("Got network object for WTOMimic enemy client");
+        MaskedPlayerEnemy component = netObject.GetComponent<MaskedPlayerEnemy>();
+        component.mimickingPlayer = MyOwner;
+        component.SetSuit(MyOwner.currentSuitID);
+        component.SetEnemyOutside(!inFactory);
+        component.SetVisibilityOfMaskedEnemy();
 
+        //This makes it such that the mimic has no visible mask :)
+        component.maskTypes[0].SetActive(value: false);
+        component.maskTypes[1].SetActive(value: false);
+        component.maskTypeIndex = 0;
+
+        MyOwner.redirectToEnemy = component;
+    }
 }
