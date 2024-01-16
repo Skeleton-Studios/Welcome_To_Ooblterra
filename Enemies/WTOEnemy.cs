@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Networking;
+using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
@@ -101,7 +102,7 @@ public class WTOEnemy : EnemyAI {
     }
 
     internal void LogMessage(string message) {
-        if (PrintDebugs) {
+        if (PrintDebugs && MonsterPatch.ShouldDebugEnemies) {
             Debug.Log(message);
         }
     }
