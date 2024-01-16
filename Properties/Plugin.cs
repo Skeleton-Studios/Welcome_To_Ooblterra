@@ -137,7 +137,7 @@ public class WTOBase : BaseUnityPlugin {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
             LabTerminal = FindObjectOfType<FrankensteinTerminal>();
             WTOBase.LogToConsole($"REVIVING PLAYER at {LabTerminal}");
-            LabTerminal.ReviveDeadPlayer();
+            LabTerminal.ReviveDeadPlayerServerRpc();
             /*
             DoInteractCheck = !DoInteractCheck;
             LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");

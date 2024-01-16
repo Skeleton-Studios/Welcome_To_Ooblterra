@@ -151,6 +151,7 @@
     <Compile Include="Enemies\SecBotAI.cs" />
     <Compile Include="Enemies\EyeSecAI.cs" />
     <Compile Include="Enemies\WTOEnemy.cs" />
+    <Compile Include="Items\Chemical.cs" />
     <Compile Include="Items\CursedEffigy.cs" />
     <Compile Include="Properties\Publicizer.cs" />
     <Compile Include="Properties\WTONetworkHandler.cs" />
@@ -172,6 +173,7 @@
     <Compile Include="Patches\SuitPatch.cs" />
     <Compile Include="Things\BatteryRoom.cs" />
     <Compile Include="Enemies\EnemyThings\EyeSecLaser.cs" />
+    <Compile Include="Things\FrankensteinChemPoint.cs" />
     <Compile Include="Things\KitchenCrusher.cs" />
     <Compile Include="Enemies\EnemyThings\EnforcerWeapon.cs" />
     <Compile Include="Enemies\EnemyThings\EyeSecScanner.cs" />

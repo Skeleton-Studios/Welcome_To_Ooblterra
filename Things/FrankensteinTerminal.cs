@@ -11,14 +11,13 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 public class FrankensteinTerminal : NetworkBehaviour {
 
-    private FrankensteinBodyPoint TargetBodyPoint;
     private PlayerControllerB PlayerToRevive;
     private Vector3 TargetPosition;
     private int PlayerID = 1;
     //Create a new terminal, change what it displays and what you can type into it
 
     //for now we're just gonna have two commands: revive and fail.
-    //  Later this will be tied to a minigame and your performance in it will determine which happens
+    //Later this will be tied to a minigame and your performance in it will determine which happens
     public void SetVariables(Vector3 Target, int ID) {
         TargetPosition = Target;
         PlayerID = ID;
@@ -108,18 +107,20 @@ public class FrankensteinTerminal : NetworkBehaviour {
         PlayerToRevive.voiceMuffledByEnemy = false;
         SoundManager.Instance.playerVoicePitchTargets[PlayerID] = 1f;
         SoundManager.Instance.SetPlayerPitch(1f, PlayerID);
+        
         if (PlayerToRevive.currentVoiceChatIngameSettings == null) {
             StartOfRound.Instance.RefreshPlayerVoicePlaybackObjects();
         }
         if (PlayerToRevive.currentVoiceChatIngameSettings != null) {
             if (PlayerToRevive.currentVoiceChatIngameSettings.voiceAudio == null) {
-                PlayerToRevive.currentVoiceChatIngameSettings.InitializeComponents();
+               PlayerToRevive.currentVoiceChatIngameSettings.InitializeComponents();
             }
             if (PlayerToRevive.currentVoiceChatIngameSettings.voiceAudio == null) {
                 return;
             }
             PlayerToRevive.currentVoiceChatIngameSettings.voiceAudio.GetComponent<OccludeAudio>().overridingLowPass = false;
         }
+        
         Debug.Log("Reviving players G");
         PlayerControllerB playerControllerB = GameNetworkManager.Instance.localPlayerController;
         playerControllerB.bleedingHeavily = false;

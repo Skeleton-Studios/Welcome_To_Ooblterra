@@ -8,6 +8,8 @@ using static LethalLib.Modules.Dungeon;
 using DunGen.Graph;
 using LethalLib.Extras;
 using GameNetcodeStuff;
+using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
+using System;
 
 namespace Welcome_To_Ooblterra.Patches;
 internal class FactoryPatch {
@@ -17,6 +19,7 @@ internal class FactoryPatch {
     private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
     private static NetworkManager networkManagerRef;
     private const string DungeonPath = "Assets/CustomDungeon/Data/";
+    private const string BehaviorPath = "Assets/CustomDungeon/Behaviors/";
 
     //PATCHES 
     [HarmonyPatch (typeof(StartOfRound), "Awake")]
@@ -25,15 +28,6 @@ internal class FactoryPatch {
         networkManagerRef = __instance.NetworkManager;
     }
 
-    [HarmonyPatch(typeof(RoundManager), "SpawnScrapInLevel")]
-    [HarmonyPrefix]
-    private static void ScrapValueAdjuster(RoundManager __instance) {
-        if(__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
-            __instance.scrapValueMultiplier = 0.4f;
-            return;
-        }
-        __instance.scrapValueMultiplier = 1f;
-    }
 
     [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
     [HarmonyPostfix]
@@ -66,7 +60,7 @@ internal class FactoryPatch {
         //Fire exits are rotated wrong on Ooblterra for some reason 
         FireEntrance.transform.Rotate(0, -90, 0);
         FireExit.transform.Rotate(0, -90, 0);
-        Object[] AllTeleports = Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
+        UnityEngine.Object[] AllTeleports = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
         foreach(EntranceTeleport Teleport in AllTeleports){ 
             Teleport.FindExitPoint();
             WTOBase.LogToConsole($"Entrance #{System.Array.IndexOf(AllTeleports, Teleport)} exitPoint: {Teleport.exitPoint}");
@@ -81,6 +75,48 @@ internal class FactoryPatch {
         DestroyExit(FireExit);
     }
 
+    //I have no actual fucking clue why this is the case, but I have to do this in order to get the frankenstein stuff to spawn properly
+    //This is pretty much a verbatim copy of the original function, just with some logs thrown in for sake of debugging
+    [HarmonyPatch(typeof(RoundManager), "SpawnSyncedProps")]
+    [HarmonyPrefix]
+    private static bool WTOSpawnSyncedProps(RoundManager __instance) {
+        
+
+        __instance.spawnedSyncedObjects.Clear();
+        SpawnSyncedObject[] array = UnityEngine.Object.FindObjectsOfType<SpawnSyncedObject>();
+        if (array == null) {
+            return true;
+        }
+        //WTOBase.LogToConsole("BEGIN CHECKING PROPS");
+        foreach (SpawnSyncedObject obj in array) {
+            //Debug.Log($"Synced object: {obj}");
+            //Debug.Log($"Synced object prefab: {obj.spawnPrefab}");
+        }
+        //WTOBase.LogToConsole("END CHECKING PROPS");
+
+        __instance.mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
+        //Debug.Log($"Found map props container?: {__instance.mapPropsContainer != null}");
+        
+        //Debug.Log($"Spawning synced props on server. Length: {array.Length}");
+        for (int i = 0; i < array.Length; i++) {
+            GameObject gameObject = null;
+            try { 
+                gameObject = UnityEngine.Object.Instantiate(array[i].spawnPrefab, array[i].transform.position, array[i].transform.rotation, __instance.mapPropsContainer.transform);
+            } catch {
+                //WTOBase.LogToConsole($"Instantiation of {array[i].spawnPrefab} failed!");
+            }
+            if (gameObject != null) {
+                try {
+                    gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+                    __instance.spawnedSyncedObjects.Add(gameObject);
+                } catch {
+                    //WTOBase.LogToConsole($"Instantiation of {array[i].spawnPrefab} passed, but does not have a network object!");
+                }
+            }
+        }
+        return false;
+    }
+    
     [HarmonyPatch(typeof(EntranceTeleport), "TeleportPlayer")]
     [HarmonyPrefix]
     private static void CheckTeleport(EntranceTeleport __instance) {
@@ -103,6 +139,8 @@ internal class FactoryPatch {
         OoblFacilityDungeon.rarity = 99999;
         AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
         Debug.Log("Dungeon Loaded: " + OoblFacilityDungeon.name);
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinPoint.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinWorkbench.prefab"));
     }
     private static void DestroyExit(EntranceTeleport ExitToDestroy) {
         if (ExitToDestroy == null) {
