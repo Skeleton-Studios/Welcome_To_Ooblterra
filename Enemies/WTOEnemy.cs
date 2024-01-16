@@ -7,20 +7,36 @@ using UnityEngine.Networking;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
-public class WTOEnemy : EnemyAI {
+
+public abstract class WTOEnemy<T> : WTOEnemy where T : WTOEnemy<T>
+{
+    public static T instance { get; private set; }
+
+    public WTOEnemy()
+    {
+        if(instance != null)
+        {
+            LogMessage("Singleton Instantiated twice! Skipping");
+            return;
+        }
+        instance = this as T;
+    }
+}
+
+public abstract class WTOEnemy : EnemyAI {
     public abstract class BehaviorState {
         public Vector2 RandomRange = new Vector2(0, 0);
         public int MyRandomInt = 0;
-        public int enemyIndex;
-        public abstract void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator);
-        public abstract void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator);
-        public abstract void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator);
+        
+        public abstract void OnStateEntered(WTOEnemy enemyInstance, System.Random enemyRandom, Animator creatureAnimator);
+        public abstract void UpdateBehavior(WTOEnemy enemyInstance, System.Random enemyRandom, Animator creatureAnimator);
+        public abstract void OnStateExit(WTOEnemy enemyInstance, System.Random enemyRandom, Animator creatureAnimator);
 
         public virtual List<StateTransition> transitions { get; set; }
     }
     public abstract class StateTransition {
         //public int enemyIndex { get; set; }
-        public int enemyIndex;
+       
         public abstract bool CanTransitionBeTaken();
         public abstract BehaviorState NextState();
     }
@@ -39,7 +55,7 @@ public class WTOEnemy : EnemyAI {
     internal StateTransition nextTransition;
     internal List<StateTransition> GlobalTransitions = new List<StateTransition>();
     internal List<StateTransition> AllTransitions = new List<StateTransition>();
-    internal int WTOEnemyID;
+    internal WTOEnemy _WTOEnemyInstance;
 
     public override string __getTypeName() {
         return GetType().Name;
@@ -67,8 +83,8 @@ public class WTOEnemy : EnemyAI {
             }
         //Fix for the animator sometimes deciding to just not work
             creatureAnimator.Rebind();
-        ActiveState.enemyIndex = WTOEnemyID;
-        ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
+       
+        ActiveState.OnStateEntered(_WTOEnemyInstance, enemyRandom, creatureAnimator);
 
     }
     public override void Update() {
@@ -86,7 +102,7 @@ public class WTOEnemy : EnemyAI {
             AllTransitions.AddRange(ActiveState.transitions);
 
         foreach (StateTransition TransitionToCheck in AllTransitions) {
-            TransitionToCheck.enemyIndex = WTOEnemyID;
+            
             if (TransitionToCheck.CanTransitionBeTaken()) {
                 RunUpdate = false;
                 nextTransition = TransitionToCheck;
@@ -96,7 +112,7 @@ public class WTOEnemy : EnemyAI {
         }
 
         if (RunUpdate) {
-            ActiveState.UpdateBehavior(WTOEnemyID, enemyRandom, creatureAnimator);
+            ActiveState.UpdateBehavior(_WTOEnemyInstance, enemyRandom, creatureAnimator);
         }
     }
 
@@ -121,23 +137,23 @@ public class WTOEnemy : EnemyAI {
         //Jesus fuck I can't believe I have to do this
         Type type = Type.GetType(StateName);
         StateTransition LocalNextTransition = (StateTransition)Activator.CreateInstance(type);
-        LocalNextTransition.enemyIndex = WTOEnemyID;
+        
         if (LocalNextTransition.NextState().GetType() == ActiveState.GetType()) {
             return;
         }
         //LogMessage(StateName);
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Exiting:  {ActiveState}");
-        ActiveState.OnStateExit(WTOEnemyID, enemyRandom, creatureAnimator);
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Transitioning via:  {LocalNextTransition}");
+        LogMessage($"{__getTypeName()} #{_WTOEnemyInstance} is Exiting:  {ActiveState}");
+        ActiveState.OnStateExit(_WTOEnemyInstance, enemyRandom, creatureAnimator);
+        LogMessage($"{__getTypeName()} #{_WTOEnemyInstance} is Transitioning via:  {LocalNextTransition}");
         ActiveState = LocalNextTransition.NextState();
         ActiveState.MyRandomInt = RandomInt;
-        ActiveState.enemyIndex = WTOEnemyID;
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Entering:  {ActiveState}");
-        ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
+        
+        LogMessage($"{__getTypeName()} #{_WTOEnemyInstance} is Entering:  {ActiveState}");
+        ActiveState.OnStateEntered(_WTOEnemyInstance, enemyRandom, creatureAnimator);
 
         //Debug Prints 
         StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
-        LogMessage($"CREATURE: {enemyType.name} #{WTOEnemyID} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
+        LogMessage($"CREATURE: {enemyType.name} #{_WTOEnemyInstance} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
     }
     internal void LowerTimerValue(ref float Timer) {
         if (Timer <= 0) {
@@ -147,7 +163,7 @@ public class WTOEnemy : EnemyAI {
     }
     internal void OverrideState(BehaviorState state) {
         ActiveState = state;
-        ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
+        ActiveState.OnStateEntered(_WTOEnemyInstance, enemyRandom, creatureAnimator);
         return;
     }
     internal float DistanceFromPlayer(PlayerControllerB player) {
