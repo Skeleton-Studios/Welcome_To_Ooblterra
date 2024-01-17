@@ -13,73 +13,65 @@ namespace Welcome_To_Ooblterra.Things;
 public class FrankensteinChemPoint : NetworkBehaviour {
 
     [InspectorName("Defaults")]
+    public NetworkObject parentTo;
+    public Collider placeableBounds;
     public InteractTrigger triggerScript;
-    public NetworkObject ChemContainer;
-    public BoxCollider triggerCollider;
-    public FrankensteinTerminal ConnectedTerminal;
 
-    private bool HasChem = false;
-    private float updateInterval;
-    private NetworkObject lastObjectAddedToChemPoint;
+    private bool hasChemical;
+    private Chemical HeldChemical;
+    private float checkHoverTipInterval;
 
-    private void Awake() {
-        ConnectedTerminal = FindObjectOfType<FrankensteinTerminal>();
-    }
     private void Update() {
-        if (NetworkManager.Singleton == null) {
-            return;
-        }
-        if (ConnectedTerminal == null) {
-            WTOBase.LogToConsole("Connected terminal null!");
-            ConnectedTerminal = FindObjectOfType<FrankensteinTerminal>();
-        }
-        if (updateInterval > 1f) {
-            updateInterval = 0f;
-            if (GameNetworkManager.Instance != null && GameNetworkManager.Instance.localPlayerController != null) {
-                triggerScript.interactable = GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer != null && GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is GrabbableObject;
+        if (GameNetworkManager.Instance != null && GameNetworkManager.Instance.localPlayerController != null) {
+            if (hasChemical && HeldChemical.heldByPlayerOnServer) {
+                hasChemical = false;
+                HeldChemical = null;
+                return;
             }
-        } else {
-            updateInterval += Time.deltaTime;
+            if (hasChemical) {                
+                triggerScript.interactable = false;
+                triggerScript.disabledHoverTip = "[Chemical Placed]";
+                return;
+            }
+            triggerScript.interactable = GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is Chemical;
+            triggerScript.disabledHoverTip = "[No Chemicals in Hand]";
         }
+
     }
 
-    //when interacted, attach the body to the point
-    public void AttachChem(PlayerControllerB player) {
-        if (ChemContainer.GetComponentsInChildren<GrabbableObject>().Length > 0 || GameNetworkManager.Instance == null || player != GameNetworkManager.Instance.localPlayerController) {
+    public void PlaceObject(PlayerControllerB playerWhoTriggered) {
+        if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
             return;
         }
-
-        Vector3 vector = RoundManager.RandomPointInBounds(triggerCollider.bounds);
-        vector.y = triggerCollider.bounds.min.y;
-        if (Physics.Raycast(new Ray(vector + Vector3.up * 3f, Vector3.down), out var hitInfo, 8f, 1048640, QueryTriggerInteraction.Collide)) {
-            vector = hitInfo.point;
+        Debug.Log("Placing object in storage");
+        Vector3 vector = itemPlacementPosition(playerWhoTriggered.gameplayCamera.transform, playerWhoTriggered.currentlyHeldObjectServer);
+        if(vector == Vector3.zero) {
+            return;
         }
-        vector.y += player.currentlyHeldObjectServer.itemProperties.verticalOffset;
-        vector = ChemContainer.transform.InverseTransformPoint(vector);
-        //PutObjectOnTableServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
-        lastObjectAddedToChemPoint = player.currentlyHeldObjectServer.GetComponent<NetworkObject>();
-        lastObjectAddedToChemPoint.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(false);
-        player.DiscardHeldObject(placeObject: true, ChemContainer, vector, matchRotationOfParent: false);
-
-        HasChem = true;
-        Debug.Log("Chemical Placed");
-        return;
-    }
-    [ServerRpc]
-    public void PutObjectOnTableServerRpc(NetworkObjectReference grabbableObjectNetObject) {
-        if (grabbableObjectNetObject.TryGet(out lastObjectAddedToChemPoint)) {
-            PutObjectOnTableClientRpc(grabbableObjectNetObject);
-        } else {
-            Debug.LogError("ServerRpc: Could not find networkobject in the object that was placed on table.");
+        if (parentTo != null) {
+            vector = parentTo.transform.InverseTransformPoint(vector);
         }
+        HeldChemical = (Chemical)playerWhoTriggered.currentlyHeldObjectServer;
+        playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector, matchRotationOfParent: false);
+        Debug.Log("discard held object called from placeobject");
+        hasChemical = true;
     }
 
-    [ClientRpc]
-    public void PutObjectOnTableClientRpc(NetworkObjectReference grabbableObjectNetObject) {
-        if (grabbableObjectNetObject.TryGet(out lastObjectAddedToChemPoint)) {
-            lastObjectAddedToChemPoint.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
-        } else {
-            Debug.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
+    private Vector3 itemPlacementPosition(Transform gameplayCamera, GrabbableObject heldObject) {
+        if (Physics.Raycast(gameplayCamera.position, gameplayCamera.forward, out var hitInfo, 7f, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
+            if (placeableBounds.bounds.Contains(hitInfo.point)) {
+                return hitInfo.point + Vector3.up * heldObject.itemProperties.verticalOffset;
+            }
+            return placeableBounds.ClosestPoint(hitInfo.point);
         }
+        return Vector3.zero;
+    }
+
+    public override void __initializeVariables() {
+        base.__initializeVariables();
+    }
+
+    public override string __getTypeName() {
+        return "PlaceableObjectsSurface";
     }
 }

@@ -35,7 +35,7 @@ internal class CursedEffigy : GrabbableObject {
         }
         if (MyOwner.isPlayerDead) {
             WTOBase.LogToConsole($"Effigy knows that owning player {MyOwner} is dead!");
-            //TurnPlayerToWTOMimic(playerHeldBy);
+            TurnPlayerToWTOMimic(MyOwner);
             Destroy(this);
         }
     }
@@ -61,8 +61,8 @@ internal class CursedEffigy : GrabbableObject {
             return;
         }
         if (TheMimic == null) {
-            const int MimicIndex = 0;
-            TheMimic = StartOfRound.Instance.levels[5].Enemies[MimicIndex].enemyType;
+            const int MimicIndex = 12;
+            TheMimic = StartOfRound.Instance.levels[7].Enemies[MimicIndex].enemyType;
             Debug.Log($"Mimic Found: {TheMimic != null}");
         }
 
