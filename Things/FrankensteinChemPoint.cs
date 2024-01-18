@@ -8,6 +8,7 @@ using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Items;
 using Welcome_To_Ooblterra.Properties;
+using static Welcome_To_Ooblterra.Items.Chemical;
 
 namespace Welcome_To_Ooblterra.Things;
 public class FrankensteinChemPoint : NetworkBehaviour {
@@ -17,16 +18,22 @@ public class FrankensteinChemPoint : NetworkBehaviour {
     public Collider placeableBounds;
     public InteractTrigger triggerScript;
 
-    private bool hasChemical;
+    public bool hasChemical { get; private set; }
+    private int HeldChemicalColorIndex;
     private Chemical HeldChemical;
-    private float checkHoverTipInterval;
 
+    public ChemColor GetCurrentChemicalColor() {
+        return (ChemColor)HeldChemicalColorIndex;
+    }
+    private void Start() {
+    }
     private void Update() {
         if (GameNetworkManager.Instance != null && GameNetworkManager.Instance.localPlayerController != null) {
-            if (hasChemical && HeldChemical.heldByPlayerOnServer) {
-                hasChemical = false;
-                HeldChemical = null;
-                return;
+            if (HeldChemical != null) {
+                if (hasChemical && HeldChemical.heldByPlayerOnServer) {
+                    SetChemStateServerRpc(false, -1);
+                    return;
+                }
             }
             if (hasChemical) {                
                 triggerScript.interactable = false;
@@ -54,7 +61,7 @@ public class FrankensteinChemPoint : NetworkBehaviour {
         HeldChemical = (Chemical)playerWhoTriggered.currentlyHeldObjectServer;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector, matchRotationOfParent: false);
         Debug.Log("discard held object called from placeobject");
-        hasChemical = true;
+        SetChemStateServerRpc(true, (int)HeldChemical.GetCurrentColor());
     }
 
     private Vector3 itemPlacementPosition(Transform gameplayCamera, GrabbableObject heldObject) {
@@ -73,5 +80,17 @@ public class FrankensteinChemPoint : NetworkBehaviour {
 
     public override string __getTypeName() {
         return "PlaceableObjectsSurface";
+    }
+    [ServerRpc(RequireOwnership = false)]
+    private void SetChemStateServerRpc(bool NewState, int NextChemIndex) { 
+        SetChemStateClientRpc(NewState, NextChemIndex);
+    }
+    [ClientRpc]
+    private void SetChemStateClientRpc(bool NewState, int NextChemIndex) {
+        SetChemState(NewState, NextChemIndex);
+    }
+    private void SetChemState(bool NewState, int NextChemIndex) {
+        hasChemical = NewState;
+        HeldChemicalColorIndex = NextChemIndex;
     }
 }

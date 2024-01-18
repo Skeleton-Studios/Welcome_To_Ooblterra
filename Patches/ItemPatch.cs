@@ -25,9 +25,9 @@ internal class ItemPatch {
 
     private const string ItemPath = "Assets/CustomItems/";
     private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
-        
+
     //This array stores all our custom items
-    public static ItemData[] ItemList = new ItemData[] { 
+    public static ItemData[] ItemList = new ItemData[] {
         new ItemData("AlienCrate.asset", 30),
         new ItemData("FiveSixShovel.asset", 10),
         new ItemData("HandCrystal.asset", 30),
@@ -36,7 +36,8 @@ internal class ItemPatch {
         new ItemData("WandCorpse.asset", 5),
         new ItemData("WandFeed.asset", 20),
         new ItemData("SprintTotem.asset", 5),
-        new ItemData("CursedTotem.asset", 2)
+        new ItemData("CursedTotem.asset", 2),
+        new ItemData("Chems.asset", 0)
     };
 
     //Add our custom items

@@ -135,10 +135,11 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
+            /*
             LabTerminal = FindObjectOfType<FrankensteinTerminal>();
             WTOBase.LogToConsole($"REVIVING PLAYER at {LabTerminal}");
             LabTerminal.ReviveDeadPlayerServerRpc();
-            /*
+            
             DoInteractCheck = !DoInteractCheck;
             LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");
                 
