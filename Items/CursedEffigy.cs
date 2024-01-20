@@ -10,6 +10,7 @@ using System.Collections;
 using UnityEngine.AI;
 using Welcome_To_Ooblterra.Properties;
 using LethalLib.Modules;
+using Welcome_To_Ooblterra.Patches;
 
 namespace Welcome_To_Ooblterra.Items;
 internal class CursedEffigy : GrabbableObject {
@@ -21,9 +22,12 @@ internal class CursedEffigy : GrabbableObject {
     private bool MimicSpawned;
     private PlayerControllerB MyOwner;
     private int OwnerID;
+    private DeadBodyInfo OwnerBody;
+
     public override void GrabItem() {
         base.GrabItem();
         MyOwner = playerHeldBy;
+        OwnerBody = playerHeldBy.deadBody;
         OwnerID = Array.IndexOf(StartOfRound.Instance.allPlayerScripts, MyOwner);
         ChangeOwnershipOfProp(playerHeldBy.actualClientId);
     }
@@ -84,7 +88,7 @@ internal class CursedEffigy : GrabbableObject {
             component.maskTypeIndex = 0;
 
             MyOwner.redirectToEnemy = component;
-            MyOwner.deadBody?.DeactivateBody(setActive: false);
+            OwnerBody.DeactivateBody(setActive: false);
         }
         CreateMimicClientRpc(netObjectRef, inFactory);
     }
@@ -102,22 +106,25 @@ internal class CursedEffigy : GrabbableObject {
             startTime = Time.realtimeSinceStartup;
             yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || MyOwner.deadBody != null);
         }
-        MyOwner.deadBody.DeactivateBody(setActive: false);
+        OwnerBody.DeactivateBody(setActive: false);
         if (netObject == null) {
             yield break;
         }
         Debug.Log("Got network object for WTOMimic enemy client");
-        MaskedPlayerEnemy component = netObject.GetComponent<MaskedPlayerEnemy>();
-        component.mimickingPlayer = MyOwner;
-        component.SetSuit(MyOwner.currentSuitID);
-        component.SetEnemyOutside(!inFactory);
-        component.SetVisibilityOfMaskedEnemy();
+        MaskedPlayerEnemy MimicReference = netObject.GetComponent<MaskedPlayerEnemy>();
+        MimicReference.mimickingPlayer = MyOwner;
+        Material suitMaterial = SuitPatch.GhostPlayerSuit;
+        MimicReference.rendererLOD0.material = suitMaterial;
+        MimicReference.rendererLOD1.material = suitMaterial;
+        MimicReference.rendererLOD2.material = suitMaterial;
+        MimicReference.SetEnemyOutside(!inFactory);
+        MimicReference.SetVisibilityOfMaskedEnemy();
 
         //This makes it such that the mimic has no visible mask :)
-        component.maskTypes[0].SetActive(value: false);
-        component.maskTypes[1].SetActive(value: false);
-        component.maskTypeIndex = 0;
+        MimicReference.maskTypes[0].SetActive(value: false);
+        MimicReference.maskTypes[1].SetActive(value: false);
+        MimicReference.maskTypeIndex = 0;
 
-        MyOwner.redirectToEnemy = component;
+        MyOwner.redirectToEnemy = MimicReference;
     }
 }

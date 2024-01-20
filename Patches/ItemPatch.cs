@@ -35,8 +35,8 @@ internal class ItemPatch {
         new ItemData("StatueSmall.asset", 40),
         new ItemData("WandCorpse.asset", 5),
         new ItemData("WandFeed.asset", 20),
-        new ItemData("SprintTotem.asset", 5),
-        new ItemData("CursedTotem.asset", 2),
+        new ItemData("SprintTotem.asset", 25),
+        new ItemData("CursedTotem.asset", 20),
         new ItemData("Chems.asset", 0)
     };
 

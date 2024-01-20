@@ -12,7 +12,7 @@ public class WandererAI : WTOEnemy {
     //STATES
     private class Investigate : BehaviorState {
         public Investigate() {
-            RandomRange = new Vector2(4, 9);
+            RandomRange = new Vector2(12, 17);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             WandererList[enemyIndex].ReachedNextPoint = false;
@@ -31,7 +31,8 @@ public class WandererAI : WTOEnemy {
             if (WandererList[enemyIndex].targetPlayer == null) {
                 return;
             }
-            //Wanderer.shouldLookAtPlayer = Wanderer.GetDistanceFromPlayer(WandererList[enemyIndex].targetPlayer) < 4 && Wanderer.HasLineOfSightToPosition(WandererList[enemyIndex].targetPlayer.transform.position, 90);
+            
+            //WandererList[enemyIndex].shouldLookAtPlayer = WandererList[enemyIndex].DistanceFromPlayer(WandererList[enemyIndex].targetPlayer) < 4 && WandererList[enemyIndex].HasLineOfSightToPosition(WandererList[enemyIndex].targetPlayer.transform.position, 90);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             WandererList[enemyIndex].creatureAnimator.SetBool("Investigating", false);
@@ -186,7 +187,7 @@ public class WandererAI : WTOEnemy {
         Quaternion lookRotation = Quaternion.Euler(-0.094f, 0.009f, -7.474f);
         if (shouldLookAtPlayer) {
             lookRotation = Quaternion.LookRotation(targetPlayer.transform.position - WandererHead.transform.position);
-            lookRotation = Quaternion.Euler(2.445f, lookRotation.eulerAngles.y, -10.813f);
+            lookRotation = Quaternion.Euler(2.445f, lookRotation.eulerAngles.y + -90, -10.813f);
             WandererHead.rotation *= lookRotation;
             HeadTurnTime = 0;
         } else if (HeadTurnTime < 0.2) {

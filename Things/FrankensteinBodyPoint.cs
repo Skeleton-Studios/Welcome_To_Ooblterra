@@ -23,7 +23,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
     public GrabbableObject BodyGO;
     public RagdollGrabbableObject PlayerRagdoll;
     public Transform RespawnPos;
-
+    public bool HasBody;
 
     //Figure out how to create an interaction point
 
@@ -65,7 +65,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         }
         PutObjectOnTableServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
         player.DiscardHeldObject(placeObject: true, TableBodyContainer, vector, matchRotationOfParent: false);
-        
+        HasBody = true;
         Debug.Log("Body placed on frankenstein point");
     }
     [ServerRpc]

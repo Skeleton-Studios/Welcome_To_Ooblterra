@@ -25,21 +25,19 @@ public class Chemical : GrabbableObject {
         Green,
         Blue,
         Indigo,
-        Purple
+        Purple,
+        Clear
     }
     private ChemColor CurrentColor;
     private System.Random MyRandom;
     private int RandomEffectIndex;
     private float ShakeCooldownSeconds = 0;
-    private bool HasChemicals = true;
+    private bool IsFull = true;
 
     public override void Start() {
         base.Start();
         MyRandom = new System.Random();
-        int NextInt = MyRandom.Next(0, 7);
-        RandomEffectIndex = NextInt;
-        CurrentColor = (ChemColor)Enum.GetValues(typeof(ChemColor)).GetValue(NextInt);
-        BeakerMesh.materials[1].SetColor("_BaseColor", GetColorFromEnum(CurrentColor));
+        ChangeChemColorAndEffect();
     }
     public override void Update() {
         base.Update();
@@ -54,31 +52,35 @@ public class Chemical : GrabbableObject {
 
     public override void ItemInteractLeftRight(bool right) {
         base.ItemInteractLeftRight(right);
-        if (!right && ShakeCooldownSeconds <= 0 && HasChemicals) {
+        if (!right && ShakeCooldownSeconds <= 0 && IsFull) {
             ShakeCooldownSeconds = 1.2f;
             playerHeldBy.playerBodyAnimator.SetTrigger("shakeItem");
-            int NextInt = GetNextRandomInt();
-            WTOBase.LogToConsole($"Next Int Value: {NextInt}");
-            RandomEffectIndex = NextInt;
-            CurrentColor = (ChemColor)Enum.GetValues(typeof(ChemColor)).GetValue(NextInt);
-            WTOBase.LogToConsole($"Next Color Value: {CurrentColor}");
-            BeakerMesh.materials[1].SetColor("_BaseColor", GetColorFromEnum(CurrentColor));
+            ChangeChemColorAndEffect();
         }
+    }
+    private void ChangeChemColorAndEffect() {
+        int NextColor = GetNextRandomInt();
+        int NextRandomEffect = MyRandom.Next(0, 7);
+        WTOBase.LogToConsole($"Next Color Value: {(ChemColor)NextColor}");
+        SetColorAndEffectServerRpc(NextColor, NextRandomEffect);
     }
     private int GetNextRandomInt() {
         int NextInt = MyRandom.Next(0, 7);
-        if(NextInt != RandomEffectIndex) {
+        if(NextInt != (int)CurrentColor) {
             return NextInt;
         }
         return GetNextRandomInt();
     }
-
+    public void EmptyBeaker() {
+        SetColorAndEffectServerRpc(7, -1);
+    }
     public ChemColor GetCurrentColor() {
         return CurrentColor;
     }
     private void DrinkChemicals() {
-        if (HasChemicals) { 
+        if (IsFull) { 
             RandomChemEffectServerRpc(RandomEffectIndex);
+            EmptyBeaker();
         }
     }
     private Color GetColorFromEnum(ChemColor inColor) {
@@ -97,12 +99,14 @@ public class Chemical : GrabbableObject {
                 return new Color(0, 0, 1);
             case ChemColor.Purple:
                 return new Color(1, 0, 1);
+            case ChemColor.Clear:
+                return new Color(0, 0, 0, 0);
             default:
                 return new Color(1, 1, 1);
         }
     }
     private void RandomChemEffect(int RandomIndex) {
-        HasChemicals = false;
+        IsFull = false;
         switch (RandomIndex) {
             case 0:
                 break;
@@ -133,5 +137,24 @@ public class Chemical : GrabbableObject {
     [ClientRpc]
     private void RandomChemEffectClientRpc(int RandomIndex) {
         RandomChemEffect(RandomIndex);
+    }
+
+    [ServerRpc]
+    private void SetColorAndEffectServerRpc(int color, int effect) {
+        SetColorAndEffectClientRpc(color, effect);
+    }
+
+    [ClientRpc]
+    private void SetColorAndEffectClientRpc(int color, int effect) {
+        SetColorAndEffect(color, effect);
+    }
+    private void SetColorAndEffect(int color, int effect) {
+        CurrentColor = (ChemColor)Enum.GetValues(typeof(ChemColor)).GetValue(color);
+        BeakerMesh.materials[1].SetColor("_BaseColor", GetColorFromEnum(CurrentColor));
+        RandomEffectIndex = effect;
+        if(color == 7) {
+            IsFull = false;
+            scrapValue /= 2;
+        }
     }
 }

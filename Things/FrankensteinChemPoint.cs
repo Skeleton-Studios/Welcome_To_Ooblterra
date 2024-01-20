@@ -1,14 +1,7 @@
 ﻿using GameNetcodeStuff;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Items;
-using Welcome_To_Ooblterra.Properties;
-using static Welcome_To_Ooblterra.Items.Chemical;
 
 namespace Welcome_To_Ooblterra.Things;
 public class FrankensteinChemPoint : NetworkBehaviour {
@@ -22,27 +15,30 @@ public class FrankensteinChemPoint : NetworkBehaviour {
     private int HeldChemicalColorIndex;
     private Chemical HeldChemical;
 
-    public ChemColor GetCurrentChemicalColor() {
-        return (ChemColor)HeldChemicalColorIndex;
+    public Chemical.ChemColor GetCurrentChemicalColor() {
+        return (Chemical.ChemColor)HeldChemicalColorIndex;
     }
-    private void Start() {
+
+    public void ClearChemical() {
+        HeldChemical.EmptyBeaker();
     }
+
     private void Update() {
-        if (GameNetworkManager.Instance != null && GameNetworkManager.Instance.localPlayerController != null) {
-            if (HeldChemical != null) {
-                if (hasChemical && HeldChemical.heldByPlayerOnServer) {
-                    SetChemStateServerRpc(false, -1);
-                    return;
-                }
-            }
-            if (hasChemical) {                
-                triggerScript.interactable = false;
-                triggerScript.disabledHoverTip = "[Chemical Placed]";
-                return;
-            }
-            triggerScript.interactable = GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is Chemical;
-            triggerScript.disabledHoverTip = "[No Chemicals in Hand]";
+        if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
+            return;
         }
+        if (HeldChemical != null && hasChemical && HeldChemical.isHeld) {
+            HeldChemical = null;
+            SetChemStateServerRpc(false, -1);
+            return;
+        }
+        if (hasChemical) {
+            triggerScript.interactable = false;
+            triggerScript.disabledHoverTip = "[Chemical Placed]";
+            return;
+        }
+        triggerScript.interactable = GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is Chemical;
+        triggerScript.disabledHoverTip = "[No Chemicals in Hand]";
 
     }
 
@@ -65,13 +61,13 @@ public class FrankensteinChemPoint : NetworkBehaviour {
     }
 
     private Vector3 itemPlacementPosition(Transform gameplayCamera, GrabbableObject heldObject) {
-        if (Physics.Raycast(gameplayCamera.position, gameplayCamera.forward, out var hitInfo, 7f, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
-            if (placeableBounds.bounds.Contains(hitInfo.point)) {
-                return hitInfo.point + Vector3.up * heldObject.itemProperties.verticalOffset;
-            }
-            return placeableBounds.ClosestPoint(hitInfo.point);
+        if (!Physics.Raycast(gameplayCamera.position, gameplayCamera.forward, out var hitInfo, 7f, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
+            return Vector3.zero;
         }
-        return Vector3.zero;
+        if (placeableBounds.bounds.Contains(hitInfo.point)) {
+            return hitInfo.point + Vector3.up * heldObject.itemProperties.verticalOffset;
+        }
+        return placeableBounds.ClosestPoint(hitInfo.point);
     }
 
     public override void __initializeVariables() {
