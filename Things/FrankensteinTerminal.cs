@@ -94,7 +94,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
         }
         
         if (!CheckAllChemPoints(true)) {
-            Noisemaker.PlayOneShot(FailSound);
             return;
         }
         if (RemainingGuesses <= 0 || !AllowGuesses) {
@@ -110,7 +109,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
             return;
         }
         if (!CheckAllChemPoints(true)) {
-            Noisemaker.PlayOneShot(FailSound);
             return;
         }
         if(BodyPoint == null || BodyPoint.PlayerRagdoll == null) {
@@ -121,7 +119,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         if (CalculateCorrectnessPercentage() > 50) {
             ReviveDeadPlayerServerRpc(PlayerID, SpawnTarget);
         } else {
-            CreateMimicServerRpc(SpawnTarget);
+            CreateMimicServerRpc(PlayerID, SpawnTarget);
         }
         foreach(FrankensteinChemPoint ChemPoint in FrankensteinChemPoints) {
             ChemPoint.ClearChemical();
@@ -215,6 +213,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         StartCoroutine(SetLightsAndWait(Colorset));
     }
     IEnumerator SetLightsAndWait(Correctness[] Colorset) {
+
         for (int i = 0; i < NumberOfPoints; i++) {
             WTOBase.LogToConsole($"SLOT {i} is {Colorset[i]}");
             switch (Colorset[i]) {
@@ -362,8 +361,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     //if fail, spawn a mimic from the player's body
     [ServerRpc(RequireOwnership = false)]
-    public void CreateMimicServerRpc(Vector3 MimicCreationPoint) {
-
+    public void CreateMimicServerRpc(int ID, Vector3 MimicCreationPoint) {
+        PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
         Debug.Log("Server creating mimic from Frankenstein");
         Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(MimicCreationPoint, default, 10f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
@@ -373,6 +372,10 @@ public class FrankensteinTerminal : NetworkBehaviour {
         const int MimicIndex = 12;
         EnemyType TheMimic = StartOfRound.Instance.levels[8].Enemies[MimicIndex].enemyType;
         Debug.Log($"Mimic Found: {TheMimic != null}");
+
+        WTOBase.LogToConsole($"NAVMESHPOS: {navMeshPosition}");
+        WTOBase.LogToConsole($"PLAYER: {PlayerToRevive}");
+        WTOBase.LogToConsole($"MIMIC: {TheMimic}");
 
         NetworkObjectReference netObjectRef = RoundManager.Instance.SpawnEnemyGameObject(navMeshPosition, PlayerToRevive.transform.eulerAngles.y, -1, TheMimic);
 
@@ -392,13 +395,14 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.redirectToEnemy = component;
             PlayerToRevive.deadBody?.DeactivateBody(setActive: false);
         }
-        CreateMimicClientRpc(netObjectRef);
+        CreateMimicClientRpc(ID, netObjectRef);
     }
     [ClientRpc]
-    public void CreateMimicClientRpc(NetworkObjectReference netObjectRef) {
-        StartCoroutine(waitForMimicEnemySpawn(netObjectRef));
+    public void CreateMimicClientRpc(int ID, NetworkObjectReference netObjectRef) {
+        StartCoroutine(waitForMimicEnemySpawn(ID, netObjectRef));
     }
-    private IEnumerator waitForMimicEnemySpawn(NetworkObjectReference netObjectRef) {
+    private IEnumerator waitForMimicEnemySpawn(int ID, NetworkObjectReference netObjectRef) {
+        PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
         NetworkObject netObject = null;
         float startTime = Time.realtimeSinceStartup;
         yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || netObjectRef.TryGet(out netObject));

@@ -16,6 +16,7 @@ public class Chemical : GrabbableObject {
 
     [InspectorName("Defaults")]
     public MeshRenderer BeakerMesh;
+    public List<AudioClip> ShakeSounds;
 
     [HideInInspector]
     public enum ChemColor {
@@ -53,6 +54,7 @@ public class Chemical : GrabbableObject {
     public override void ItemInteractLeftRight(bool right) {
         base.ItemInteractLeftRight(right);
         if (!right && ShakeCooldownSeconds <= 0 && IsFull) {
+            GetComponent<AudioSource>().PlayOneShot(ShakeSounds[MyRandom.Next(0, ShakeSounds.Count - 1)]);
             ShakeCooldownSeconds = 1.2f;
             playerHeldBy.playerBodyAnimator.SetTrigger("shakeItem");
             ChangeChemColorAndEffect();
@@ -109,20 +111,27 @@ public class Chemical : GrabbableObject {
         IsFull = false;
         switch (RandomIndex) {
             case 0:
+                //Explode
                 break;
             case 1:
+                //Temporary deafness
                 break;
             case 2:
+                //Inverted controls (drunk)
                 break;
             case 3:
                 //Case 3 is a dud and does nothing
                 break;
             case 4:
+                //Teleport back to start room (w/ items)
                 break;
             case 5:
+                //needs good idea
                 break;
             case 6:
+                //Carry weight set to 0
                 break;
+
             default:
                 break;
         }

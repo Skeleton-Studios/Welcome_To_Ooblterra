@@ -44,6 +44,9 @@ internal class WideDoorway : NetworkBehaviour {
     private void Update() {
         if (ShouldFall) {
             StartCoroutine(CloseDoor());
+            if (!CloseSoundSource.isPlaying) {
+                CloseSoundSource.Play();
+            }
         }
     }
 
