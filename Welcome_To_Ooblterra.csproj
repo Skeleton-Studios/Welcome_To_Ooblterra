@@ -184,6 +184,7 @@
     <Compile Include="RoomBehaviors\HideSpot.cs" />
     <Compile Include="Items\SprintTotem.cs" />
     <Compile Include="Things\LightComponent.cs" />
+    <Compile Include="Things\TeslaCoil.cs" />
     <Compile Include="Things\TripLaser.cs" />
     <Compile Include="Things\WideDoorway.cs" />
   </ItemGroup>
