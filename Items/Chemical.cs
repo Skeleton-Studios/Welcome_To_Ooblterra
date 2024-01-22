@@ -85,7 +85,7 @@ public class Chemical : GrabbableObject {
             EmptyBeaker();
         }
     }
-    private Color GetColorFromEnum(ChemColor inColor) {
+    public static Color GetColorFromEnum(ChemColor inColor) {
         switch(inColor) {
             case ChemColor.Red:
                 return new Color(1, 0, 0);
