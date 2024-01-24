@@ -33,6 +33,7 @@ public class WTOBase : BaseUnityPlugin {
     private readonly Harmony WTOHarmony = new Harmony(modGUID);
     internal ManualLogSource WTOLogSource;
     public static WTOBase Instance;
+    public static bool LightsOn = true;
 
     public static AssetBundle LevelAssetBundle;
     public static AssetBundle ItemAssetBundle;
@@ -135,7 +136,18 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
+            SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
+            foreach (SprayPaintItem sprayPaint in SprayPaints) {
+                sprayPaint.debugSprayPaint = true;
+            }
+
             /*
+            LightsOn = !LightsOn;
+            WTOBase.LogToConsole($"SETTING OUTDOOR LIGHTS TO: {(LightsOn ? "ON" : "OFF")}");
+            //GameObject.Find("ActualSun").GetComponent<Light>().enabled = LightsOn;
+            GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = LightsOn;
+            
+            
             LabTerminal = FindObjectOfType<FrankensteinTerminal>();
             WTOBase.LogToConsole($"REVIVING PLAYER at {LabTerminal}");
             LabTerminal.ReviveDeadPlayerServerRpc();
@@ -156,10 +168,7 @@ public class WTOBase : BaseUnityPlugin {
                 TimeOfDay.Instance.sunAnimator = MoonPatch.OoblFogAnimator;
             }
                 
-            SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
-            foreach(SprayPaintItem sprayPaint in SprayPaints) {
-                sprayPaint.debugSprayPaint = true;
-            }
+
 
                 
             WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");

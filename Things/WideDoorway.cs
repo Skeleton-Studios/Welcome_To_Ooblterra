@@ -42,19 +42,23 @@ internal class WideDoorway : NetworkBehaviour {
         FinalDoorPosition = Doorway.transform.position + new Vector3(0, TotalDistanceToTravel, 0);
     }
     private void Update() {
-        if (ShouldFall) {
-            StartCoroutine(CloseDoor());
-            if (!CloseSoundSource.isPlaying) {
-                CloseSoundSource.Play();
-            }
+        if (!ShouldFall) {
+            return;
         }
+        StartCoroutine(CloseDoor());
+
+        if (CloseSoundSource.isPlaying) {
+            return;
+        }
+        
+        CloseSoundSource.Play();
     }
 
     private void OnTriggerEnter(Collider other) {
         if (CurrentColliderList.Contains(other) || !other.gameObject.CompareTag("Player")) {
             return;
         }
-        if (Doorway.transform.position == FinalDoorPosition ){
+        if (Doorway.transform.position.y <= FinalDoorPosition.y ){
             return;
         }
         CurrentColliderList.Add(other);

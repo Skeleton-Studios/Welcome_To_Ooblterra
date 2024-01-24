@@ -19,6 +19,11 @@ internal class LightComponent : MonoBehaviour {
     public Material StartMat;
     public int LightMatIndex = 0;
 
+    private void Start() {
+        SetLightColor(InitLightColor);
+        SetLightBrightness(LightBrightness);
+    }
+
     private void Update() {
         if (!Application.IsPlaying(this)) {
             SetLightColor(InitLightColor);

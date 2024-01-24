@@ -127,6 +127,7 @@ internal class FactoryPatch {
         WTOBase.LogToConsole("Player Location: " + GameNetworkManager.Instance.localPlayerController.transform.position);
         //WTOBase.LogToConsole("Exit Location: " + __instance.exitPoint.position);
         TimeOfDay.Instance.insideLighting = __instance.isEntranceToBuilding;
+        GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = !TimeOfDay.Instance.insideLighting;
     }
 
     //METHODS
