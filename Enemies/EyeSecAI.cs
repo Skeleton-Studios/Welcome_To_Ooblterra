@@ -44,13 +44,9 @@ public class EyeSecAI : WTOEnemy {
             RandomRange = new Vector2(1, 11);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (MyRandomInt % 2 == 0 || EyeSecList[enemyIndex].GetRangeFromNearestTeslaCoil() < 5) {
-                EyeSecList[enemyIndex].IsDeepScan = true;
-                SecondsToScan = 8;
-            } else {
-                EyeSecList[enemyIndex].IsDeepScan = false;
-                SecondsToScan = 4;
-            }
+            bool IsEven = MyRandomInt % 2 == 0;
+            EyeSecList[enemyIndex].IsDeepScan = (EyeSecList[enemyIndex].BuffedByTeslaCoil || IsEven);
+            SecondsToScan = EyeSecList[enemyIndex].BuffedByTeslaCoil ? 4 : (IsEven ? 8 : 4);
             EyeSecList[enemyIndex].StartScanVisuals();
             EyeSecList[enemyIndex].agent.speed = 0f;
         }
@@ -284,7 +280,7 @@ public class EyeSecAI : WTOEnemy {
     private bool PlayingMoveSound;
     private AISearchRoutine SearchLab = new();
 
-
+    public bool BuffedByTeslaCoil;
 
     public override void Start() {
         InitialState = new Patrol();
@@ -457,23 +453,5 @@ public class EyeSecAI : WTOEnemy {
         Quaternion LookRot = new Quaternion();
         LookRot.SetLookRotation((targetPlayer.transform.position - transform.position) * -1);
         Head.transform.rotation = LookRot;
-    }
-    public float GetRangeFromNearestTeslaCoil() {
-        float CurrentNearestDistance = 99999;
-        float DistanceBeingChecked;
-        TeslaCoil[] TeslaCoils = null;
-        try {
-            TeslaCoils = FindObjectsOfType<TeslaCoil>();
-        } catch {
-            Debug.Log("EyeSec found no tesla coils!");
-            return CurrentNearestDistance;
-        }
-        foreach (TeslaCoil CoilToCheck in TeslaCoils.Where(TeslaCoil => TeslaCoil.TeslaCoilOn)) {
-            DistanceBeingChecked = Vector3.Distance(transform.position, CoilToCheck.transform.position);
-            if (DistanceBeingChecked < CurrentNearestDistance) {
-                CurrentNearestDistance = DistanceBeingChecked;
-            }
-        }
-        return CurrentNearestDistance;
     }
 }
