@@ -10,6 +10,7 @@ using LethalLib.Extras;
 using GameNetcodeStuff;
 using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using System;
+using System.Collections.Generic;
 
 namespace Welcome_To_Ooblterra.Patches;
 internal class FactoryPatch {
@@ -20,6 +21,9 @@ internal class FactoryPatch {
     private static NetworkManager networkManagerRef;
     private const string DungeonPath = "Assets/CustomDungeon/Data/";
     private const string BehaviorPath = "Assets/CustomDungeon/Behaviors/";
+    private const string SecurityPath = "Assets/CustomDungeon/Security/";
+    public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
+
 
     //PATCHES 
     [HarmonyPatch (typeof(StartOfRound), "Awake")]
@@ -27,7 +31,6 @@ internal class FactoryPatch {
     private static void GetNetworkManager(StartOfRound __instance) {
         networkManagerRef = __instance.NetworkManager;
     }
-
 
     [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
     [HarmonyPostfix]
@@ -133,15 +136,18 @@ internal class FactoryPatch {
     //METHODS
     public static void Start() {
         //Create the Dungeon and load it 
-        DungeonFlow OoblFacilityFlow = FactoryBundle.LoadAsset<DungeonFlow>(DungeonPath + "WTOFlow.asset");
-        DungeonDef OoblFacilityDungeon = ScriptableObject.CreateInstance<LethalLib.Extras.DungeonDef>();
+        DungeonDef OoblFacilityDungeon = FactoryBundle.LoadAsset<DungeonDef>(DungeonPath + "WTODungeonDef.asset");
         OoblFacilityDungeon.name = "Oobl Laboratory";
-        OoblFacilityDungeon.dungeonFlow = OoblFacilityFlow;
         OoblFacilityDungeon.rarity = 99999;
         AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
         Debug.Log("Dungeon Loaded: " + OoblFacilityDungeon.name);
+        
+        //Register the frankenstein point, will need to add the machine room here
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinPoint.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinWorkbench.prefab"));
+
+        //Register the custom security
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
     }
     private static void DestroyExit(EntranceTeleport ExitToDestroy) {
         if (ExitToDestroy == null) {
@@ -198,5 +204,17 @@ internal class FactoryPatch {
         }
         WTOBase.LogToConsole("Exit Spawn not found!!!!");
         return null;
+    }
+
+    public static void SetSecurityObjects(SelectableLevel Moon) {
+        SpawnableMapObject[] SpawnableMapObjects = new SpawnableMapObject[SecurityList.Count];
+        Moon.spawnableMapObjects = SpawnableMapObjects;
+        for (int i = 0; i < SecurityList.Count; i++) {
+            Moon.spawnableMapObjects.SetValue(SecurityList[i], i);
+        }
+    }
+    public static void SetSecurityObjects(SelectableLevel Moon, SpawnableMapObject[] Objects) {
+        Moon.spawnableMapObjects = Objects;
+
     }
 }

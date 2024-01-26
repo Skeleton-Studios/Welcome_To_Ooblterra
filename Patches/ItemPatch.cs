@@ -59,13 +59,13 @@ internal class ItemPatch {
                 spawnableItem = NextItemToProcess,
                 rarity = MyCustomScrap.GetRarity()
             };
-            MoonScrap.Add(MoonScrapItem);
+            //MoonScrap.Add(MoonScrapItem);
             Debug.Log("Item Loaded: " + MoonScrapItem.spawnableItem.name);
         }
     }       
-    public static void SetMoonItemList(SelectableLevel Moon) {
-        Moon.spawnableScrap = MoonScrap;
-    }
+    //public static void SetMoonItemList(SelectableLevel Moon) {
+    //    Moon.spawnableScrap = MoonScrap;
+    //}
     public static void SetMoonItemList(SelectableLevel Moon, List<SpawnableItemWithRarity> ItemList) {
             Moon.spawnableScrap = ItemList;
     }

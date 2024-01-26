@@ -78,11 +78,14 @@ internal class MoonPatch {
         LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset(MoonPath + "customlevel.prefab"));
         LevelLoaded = true;
         WTOBase.LogToConsole("Loaded custom terrain object!");
+        
         MoveDoors();
         ManageCustomSun();
         MoveNavNodesToNewPositions();
+        
         HandleInsideNavigation();
         ManageFootsteps();
+        
         LevelStartHasBeenRun = true;
     }
 
@@ -123,11 +126,11 @@ internal class MoonPatch {
         Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
     }
     private static void SetMoonVariables(SelectableLevel Moon, StartOfRound Instance) {
-        Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
-        Moon.levelAmbienceClips = Instance.levels[2].levelAmbienceClips;
+        //Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
+        //Moon.levelAmbienceClips = Instance.levels[2].levelAmbienceClips;
 
-        MonsterPatch.SetSecurityObjects(Moon, Instance.levels[5].spawnableMapObjects);
-        ItemPatch.SetMoonItemList(Moon);
+        //FactoryPatch.SetSecurityObjects(Moon, Instance.levels[5].spawnableMapObjects);
+        //ItemPatch.SetMoonItemList(Moon);
         //MonsterPatch.SetInsideMonsters(MyNewMoon);
         //MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {} );
         //MonsterPatch.SetDaytimeMonsters(MyNewMoon);
