@@ -80,6 +80,7 @@ public class Chemical : GrabbableObject {
     }
     public void EmptyBeaker() {
         SetColorAndEffectServerRpc(7, -1);
+        SetScrapValue(scrapValue / 3);
     }
     public ChemColor GetCurrentColor() {
         return CurrentColor;

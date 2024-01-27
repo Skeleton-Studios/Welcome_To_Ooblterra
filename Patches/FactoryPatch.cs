@@ -22,6 +22,7 @@ internal class FactoryPatch {
     private const string DungeonPath = "Assets/CustomDungeon/Data/";
     private const string BehaviorPath = "Assets/CustomDungeon/Behaviors/";
     private const string SecurityPath = "Assets/CustomDungeon/Security/";
+    private const string DoorPath = "Assets/CustomDungeon/Doors/";
     public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
 
 
@@ -145,6 +146,9 @@ internal class FactoryPatch {
         //Register the frankenstein point, will need to add the machine room here
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinPoint.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinWorkbench.prefab"));
+
+        //Register the door 
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(DoorPath + "OoblDoor.prefab"));
 
         //Register the custom security
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));

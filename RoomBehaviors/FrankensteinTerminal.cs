@@ -10,6 +10,7 @@ using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Items;
 using Welcome_To_Ooblterra.Properties;
+using Welcome_To_Ooblterra.RoomBehaviors;
 using static Welcome_To_Ooblterra.Items.Chemical;
 
 namespace Welcome_To_Ooblterra.Things;
@@ -20,10 +21,15 @@ public class FrankensteinTerminal : NetworkBehaviour {
     public FrankensteinChemPoint[] FrankensteinChemPoints = new FrankensteinChemPoint[NumberOfPoints];
     public FrankensteinBodyPoint BodyPoint;
     public MeshRenderer[] LightMeshes;
+    public MeshRenderer SwitchMesh;
+    public Material SwitchRedMat;
+    public Material SwitchGreenMat;
     public AudioClip FailSound;
     public AudioSource Noisemaker;
     public InteractTrigger GuessScript;
     public InteractTrigger ReviveScript;
+
+    public FrankensteinVisuals Visuals;
 
     private enum Correctness {
         Correct,
@@ -31,6 +37,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Wrong
     }
 
+    private bool AnimStarted;
     private ChemColor[] GuessedColorList = new ChemColor[NumberOfPoints];
     private ChemColor[] CorrectColors = new ChemColor[NumberOfPoints];
     private PlayerControllerB PlayerToRevive;
@@ -45,6 +52,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
     private void Start() {
         MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         BodyPoint = FindObjectOfType<FrankensteinBodyPoint>();
+        Visuals = FindObjectOfType<FrankensteinVisuals>();
         SetColorList();
     }
 
@@ -116,11 +124,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             return;
         }
         SetVariables(BodyPoint.RespawnPos.position, BodyPoint.PlayerRagdoll.bodyID.Value);
-        if (CalculateCorrectnessPercentage() > 50) {
-            ReviveDeadPlayerServerRpc(PlayerID, SpawnTarget);
-        } else {
-            CreateMimicServerRpc(PlayerID, SpawnTarget);
-        }
+        StartSceneServerRpc(CalculateCorrectnessPercentage());
         foreach(FrankensteinChemPoint ChemPoint in FrankensteinChemPoints) {
             ChemPoint.ClearChemical();
         }
@@ -204,6 +208,29 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
 
     [ServerRpc(RequireOwnership = false)]
+    public void StartSceneServerRpc(int Correctness) {
+        WTOBase.LogToConsole("Starting visuals on server...");
+        StartSceneClientRpc(Correctness);
+    }
+    [ClientRpc]
+    public void StartSceneClientRpc(int Correctness) {
+        WTOBase.LogToConsole("Starting visuals on client...");
+        StartCoroutine(StartScene(Correctness));
+    }
+    IEnumerator StartScene(int Correctness) {
+        if (!AnimStarted) {
+            WTOBase.LogToConsole("Telling Visuals script to start visuals ...");
+            Visuals.StartVisuals();
+        }
+        yield return new WaitForSeconds(7);
+        if (Correctness > 50) {
+            ReviveDeadPlayerServerRpc(PlayerID, SpawnTarget);
+        } else {
+            CreateMimicServerRpc(PlayerID, SpawnTarget);
+        }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     private void SetLightsServerRpc(Correctness[] Colorset) {
         SetLightsClientRpc(Colorset);
     }
@@ -213,7 +240,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         StartCoroutine(SetLightsAndWait(Colorset));
     }
     IEnumerator SetLightsAndWait(Correctness[] Colorset) {
-
+        SwitchMesh.materials[1] = SwitchGreenMat;
         for (int i = 0; i < NumberOfPoints; i++) {
             WTOBase.LogToConsole($"SLOT {i} is {Colorset[i]}");
             switch (Colorset[i]) {
@@ -232,6 +259,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         for (int i = 0; i < NumberOfPoints; i++) {
             LightMeshes[i].materials[1].SetColor("_EmissiveColor", new Color(0, 0, 0, 1));
         }
+        SwitchMesh.materials[1] = SwitchRedMat;
         AllowGuesses = true;
     }
 

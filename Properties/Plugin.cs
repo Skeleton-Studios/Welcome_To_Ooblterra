@@ -136,12 +136,17 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
+            LogToConsole("Hotkey override triggered to start visuals...");
+            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
+            LabTerminal.StartSceneServerRpc(100);
+
+            /*
             SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
             foreach (SprayPaintItem sprayPaint in SprayPaints) {
                 sprayPaint.debugSprayPaint = true;
             }
 
-            /*
+            
             LightsOn = !LightsOn;
             WTOBase.LogToConsole($"SETTING OUTDOOR LIGHTS TO: {(LightsOn ? "ON" : "OFF")}");
             //GameObject.Find("ActualSun").GetComponent<Light>().enabled = LightsOn;

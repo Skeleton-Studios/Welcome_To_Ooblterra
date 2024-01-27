@@ -9,7 +9,7 @@ using Welcome_To_Ooblterra.Items;
 namespace Welcome_To_Ooblterra.Things;
 
 [ExecuteAlways]
-internal class LightComponent : MonoBehaviour {
+public class LightComponent : MonoBehaviour {
 
     [InspectorName("Default")]
     public Chemical.ChemColor InitLightColor = Chemical.ChemColor.Red;
@@ -39,7 +39,7 @@ internal class LightComponent : MonoBehaviour {
         TargetLight.color = Chemical.GetColorFromEnum(NextColor);
     }
 
-    private void SetLightBrightness(int Brightness) {
+    public void SetLightBrightness(int Brightness) {
         TargetLight.intensity = Brightness;
     }
 }

@@ -119,6 +119,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
@@ -162,6 +166,7 @@
     <Compile Include="Enemies\GallenarmaAI.cs" />
     <Compile Include="Enemies\BabyLurkerAI.cs" />
     <Compile Include="Enemies\LurkerAI.cs" />
+    <Compile Include="RoomBehaviors\FrankensteinVisuals.cs" />
     <Compile Include="Things\AcidWater.cs" />
     <Compile Include="Patches\ItemPatch.cs" />
     <Compile Include="Patches\TerminalPatch.cs" />
