@@ -15,6 +15,7 @@ using System.Reflection.Emit;
 using UnityEngine.InputSystem;
 using GameNetcodeStuff;
 using Welcome_To_Ooblterra.Things;
+using Welcome_To_Ooblterra.Security;
 
 namespace Welcome_To_Ooblterra.Properties;
 
@@ -34,6 +35,7 @@ public class WTOBase : BaseUnityPlugin {
     internal ManualLogSource WTOLogSource;
     public static WTOBase Instance;
     public static bool LightsOn = true;
+    public static bool SwitchState;
 
     public static AssetBundle LevelAssetBundle;
     public static AssetBundle ItemAssetBundle;
@@ -136,11 +138,17 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
-            LogToConsole("Hotkey override triggered to start visuals...");
+            SpikeTrap[] TeslaCoils = FindObjectsOfType<SpikeTrap>();
+            foreach(SpikeTrap coil in TeslaCoils) {
+                coil.RecieveToggleSpikes(SwitchState);
+            }
+            SwitchState = !SwitchState;
+            /*
+            ("Hotkey override triggered to start visuals...");
             LabTerminal = FindObjectOfType<FrankensteinTerminal>();
             LabTerminal.StartSceneServerRpc(100);
 
-            /*
+            
             SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
             foreach (SprayPaintItem sprayPaint in SprayPaints) {
                 sprayPaint.debugSprayPaint = true;

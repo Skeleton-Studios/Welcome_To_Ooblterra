@@ -17,9 +17,12 @@ internal class TeslaCoil : NetworkBehaviour {
     public GameObject MediumRing;
     public GameObject LargeRing;
 
+    public MeshRenderer[] Emissives;
+    public Animator TeslaCoilAnim;
+
     [HideInInspector]
     private bool TeslaCoilOn = true;
-
+    private bool AttemptedFireShotgun = false;
 
     private Vector3 SmallRingStartPos;
     private Vector3 MediumRingStartPos;
@@ -65,9 +68,7 @@ internal class TeslaCoil : NetworkBehaviour {
         LargeRingStartPos = LargeRing.transform.localPosition;
         TeslaCoilOn = true;
     }
-
     private void Update() {
-        //WTOBase.LogToConsole($"TESLA COIL STATUS: {TeslaCoilOn}");
         if (!TeslaCoilOn) {
             return;
         }
@@ -104,24 +105,25 @@ internal class TeslaCoil : NetworkBehaviour {
                 if(HeldObject is RadarBoosterItem) {
                     HeldObject.GetComponent<RadarBoosterItem>().EnableRadarBooster(false);
                 }
+                if(HeldObject is ShotgunItem && AttemptedFireShotgun == false) {
+                    AttemptedFireShotgun = true;
+                    HeldObject.GetComponent<ShotgunItem>().ItemActivate(true);
+                }
             }
         }
     }
-
     private void SpinRings() {
         SmallRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
         MediumRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
         LargeRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
     }
-    private void DropRings() {
-        SmallRing.transform.localPosition = new Vector3(0, 0, 0);
-        MediumRing.transform.localPosition = new Vector3(0, 0, 0);
-        LargeRing.transform.localPosition = new Vector3(0, 0, 0);
-    }
-    private void RaiseRings() {
-        SmallRing.transform.localPosition = SmallRingStartPos;
-        MediumRing.transform.localPosition = MediumRingStartPos;
-        LargeRing.transform.localPosition = LargeRingStartPos;
+    private void ToggleRings(bool State) {
+        TeslaCoilAnim.SetBool("Powered", State);
+        foreach (MeshRenderer Mesh in Emissives) {
+            Color CachedColor = Mesh.materials[0].GetColor("_EmissionColor");
+            Mesh.materials[0].SetColor("_EmissiveColor", CachedColor * (State ? 1 : 0));
+        }
+        AttemptedFireShotgun = false;
     }
 
     public void RecieveToggleTeslaCoil(bool enabled) {
@@ -146,10 +148,6 @@ internal class TeslaCoil : NetworkBehaviour {
     private void ToggleTeslaCoil(bool enabled) {
         TeslaCoilOn = enabled;
         WTOBase.LogToConsole($"TESLA COIL STATE: {TeslaCoilOn}");
-        if (TeslaCoilOn) {
-            RaiseRings();
-        } else {
-            DropRings();
-        }
+        ToggleRings(TeslaCoilOn);
     }
 }
