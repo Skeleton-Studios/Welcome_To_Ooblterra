@@ -1,9 +1,6 @@
 ﻿using GameNetcodeStuff;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies;
@@ -16,6 +13,12 @@ internal class TeslaCoil : NetworkBehaviour {
     public GameObject SmallRing;
     public GameObject MediumRing;
     public GameObject LargeRing;
+    public AudioSource StaticNoiseMaker;
+    public AudioSource RingNoiseMaker;
+
+    public AudioClip RingsOn;
+    public AudioClip RingsOff;
+    public AudioClip RingsActive;
 
     public MeshRenderer[] Emissives;
     public Animator TeslaCoilAnim;
@@ -23,10 +26,6 @@ internal class TeslaCoil : NetworkBehaviour {
     [HideInInspector]
     private bool TeslaCoilOn = true;
     private bool AttemptedFireShotgun = false;
-
-    private Vector3 SmallRingStartPos;
-    private Vector3 MediumRingStartPos;
-    private Vector3 LargeRingStartPos;
 
     private List<PlayerControllerB> PlayerInRangeList = new();
 
@@ -62,12 +61,6 @@ internal class TeslaCoil : NetworkBehaviour {
         } catch { }
     }
 
-    private void Start() {
-        SmallRingStartPos = SmallRing.transform.localPosition;
-        MediumRingStartPos = MediumRing.transform.localPosition;
-        LargeRingStartPos = LargeRing.transform.localPosition;
-        TeslaCoilOn = true;
-    }
     private void Update() {
         if (!TeslaCoilOn) {
             return;
@@ -124,6 +117,15 @@ internal class TeslaCoil : NetworkBehaviour {
             Mesh.materials[0].SetColor("_EmissiveColor", CachedColor * (State ? 1 : 0));
         }
         AttemptedFireShotgun = false;
+        if(State == false) {
+            StaticNoiseMaker.Stop();
+            RingNoiseMaker.clip = RingsOff;
+            RingNoiseMaker.Play();
+        } else {
+            StaticNoiseMaker.Play();
+            RingNoiseMaker.clip = RingsOn;
+            RingNoiseMaker.Play();
+        }
     }
 
     public void RecieveToggleTeslaCoil(bool enabled) {
@@ -131,13 +133,11 @@ internal class TeslaCoil : NetworkBehaviour {
         ToggleTeslaCoilServerRpc(enabled);
         ToggleTeslaCoil(enabled);
     }
-
     [ServerRpc(RequireOwnership = false)]
     public void ToggleTeslaCoilServerRpc(bool enabled) {
         WTOBase.LogToConsole($"Toggling tesla coil to {enabled} serverRpc");
         ToggleTeslaCoilClientRpc(enabled);
     }
-
     [ClientRpc]
     public void ToggleTeslaCoilClientRpc(bool enabled) {
         WTOBase.LogToConsole($"Toggling tesla coil to {enabled} clientRpc");
