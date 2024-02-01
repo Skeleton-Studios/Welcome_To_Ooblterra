@@ -18,6 +18,7 @@ public class LightComponent : MonoBehaviour {
     public MeshRenderer ObjectWithMatToChange;
     public Material StartMat;
     public int LightMatIndex = 0;
+    public bool CannotBeWhite;
 
     private void Start() {
         SetLightColor(InitLightColor);
@@ -29,6 +30,16 @@ public class LightComponent : MonoBehaviour {
             SetLightColor(InitLightColor);
             SetLightBrightness(LightBrightness);
         }
+    }
+
+    public void SetLightColor() {
+        if (CannotBeWhite) {
+            return;
+        }
+        var tempMaterial = new Material(StartMat);
+        tempMaterial.SetColor("_EmissiveColor", new Color(1, 1, 1));
+        ObjectWithMatToChange.sharedMaterial = tempMaterial;
+        TargetLight.color = new Color(1, 1, 1);
     }
 
     private void SetLightColor(Chemical.ChemColor NextColor) {
