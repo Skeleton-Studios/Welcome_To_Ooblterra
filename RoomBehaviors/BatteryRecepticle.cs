@@ -13,7 +13,6 @@ public class BatteryRecepticle : NetworkBehaviour {
 
     [InspectorName("Defaults")]
     public NetworkObject parentTo;
-    public Collider placeableBounds;
     public InteractTrigger triggerScript;
     public Transform BatteryTransform;
 
@@ -29,8 +28,8 @@ public class BatteryRecepticle : NetworkBehaviour {
 
     public void Start() {
         scrapShelf = FindFirstObjectByType<ScrapShelf>();
-
     }
+
     private void Update() {
         if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
             return;
