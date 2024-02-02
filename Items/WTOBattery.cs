@@ -12,7 +12,7 @@ using Welcome_To_Ooblterra.Properties;
 using DunGen;
 
 namespace Welcome_To_Ooblterra.Items;
-public class Battery : GrabbableObject {
+public class WTOBattery : GrabbableObject {
 
     public bool HasCharge;
 

@@ -157,7 +157,7 @@
     <Compile Include="Enemies\SecBotAI.cs" />
     <Compile Include="Enemies\EyeSecAI.cs" />
     <Compile Include="Enemies\WTOEnemy.cs" />
-    <Compile Include="Items\Battery.cs" />
+    <Compile Include="Items\WTOBattery.cs" />
     <Compile Include="Items\Chemical.cs" />
     <Compile Include="Items\CursedEffigy.cs" />
     <Compile Include="Properties\Publicizer.cs" />
