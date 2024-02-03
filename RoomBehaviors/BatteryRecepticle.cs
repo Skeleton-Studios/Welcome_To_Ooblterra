@@ -29,6 +29,9 @@ public class BatteryRecepticle : NetworkBehaviour {
 
     public void Start() {
         scrapShelf = FindFirstObjectByType<ScrapShelf>();
+        WTOBattery[] BatteryList = FindObjectsOfType<WTOBattery>();
+        InsertedBattery = BatteryList.First(x => x.HasCharge == false);
+        RecepticleHasBattery = true;
     }
 
     private void Update() {
@@ -100,7 +103,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         LightComponent[] LightsInLevel = FindObjectsOfType<LightComponent>();
         foreach (LightComponent light in LightsInLevel) {
             light.SetLightColor();
-            light.SetLightBrightness(300);
+            light.SetLightBrightness(150);
         }
         MachineAnimator.SetTrigger("PowerOn");
     }
