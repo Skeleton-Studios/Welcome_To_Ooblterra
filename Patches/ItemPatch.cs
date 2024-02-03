@@ -37,7 +37,8 @@ internal class ItemPatch {
         new ItemData("WandFeed.asset", 20),
         new ItemData("SprintTotem.asset", 25),
         new ItemData("CursedTotem.asset", 20),
-        new ItemData("Chems.asset", 0)
+        new ItemData("Chems.asset", 0),
+        new ItemData("Battery.asset", 0)
     };
 
     //Add our custom items

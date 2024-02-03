@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Items;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
 public class BatteryRecepticle : NetworkBehaviour {
@@ -17,7 +18,7 @@ public class BatteryRecepticle : NetworkBehaviour {
     public Transform BatteryTransform;
 
     private WTOBattery InsertedBattery;
-    private bool HasBattery;
+    private bool RecepticleHasBattery;
 
     public Animator MachineAnimator;
     public AudioSource Noisemaker;
@@ -34,8 +35,9 @@ public class BatteryRecepticle : NetworkBehaviour {
         if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
             return;
         }
-        if (HasBattery) {
+        if (RecepticleHasBattery) {
             if (InsertedBattery.HasCharge) {
+                WTOBase.LogToConsole("Disabling Battery Recepticle Script!");
                 triggerScript.enabled = false;
                 return;
             }
@@ -61,9 +63,9 @@ public class BatteryRecepticle : NetworkBehaviour {
     }
 
     public void TryInsertOrRemoveBattery(PlayerControllerB playerWhoTriggered) {
-        if (HasBattery && !InsertedBattery.HasCharge) {
+        if (RecepticleHasBattery && !InsertedBattery.HasCharge) {
             playerWhoTriggered.GrabObjectServerRpc(InsertedBattery.NetworkObject);
-            HasBattery = false;
+            RecepticleHasBattery = false;
             return;
         }
         if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
@@ -71,11 +73,9 @@ public class BatteryRecepticle : NetworkBehaviour {
         }
         Debug.Log("Placing battery in recepticle");
         Vector3 vector = BatteryTransform.position;
-        /*
         if (parentTo != null) {
             vector = parentTo.transform.InverseTransformPoint(vector);
         }
-        */
         InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
         Debug.Log("discard held object called from placeobject");
