@@ -11,6 +11,7 @@ using GameNetcodeStuff;
 using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using System;
 using System.Collections.Generic;
+using UnityEngine.AI;
 
 namespace Welcome_To_Ooblterra.Patches;
 internal class FactoryPatch {
@@ -134,6 +135,58 @@ internal class FactoryPatch {
         GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = !TimeOfDay.Instance.insideLighting;
     }
 
+    [HarmonyPatch(typeof(RoundManager), "SpawnMapObjects")]
+    [HarmonyPrefix]
+    private static bool WTOSpawnMapObjects(RoundManager __instance) {
+        if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+            return true;
+        }
+        if (__instance.currentLevel.spawnableMapObjects.Length == 0) {
+            return true;
+        }
+        System.Random random = new System.Random(StartOfRound.Instance.randomMapSeed + 587);
+        __instance.mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
+        RandomMapObject[] array = UnityEngine.Object.FindObjectsOfType<RandomMapObject>();
+        /*
+        WTOBase.LogToConsole("BEGIN PRINT LIST OF RANDOM MAP OBJECTS");
+        foreach(RandomMapObject Object in array) {
+            Debug.Log(Object.name);
+        }
+        WTOBase.LogToConsole("END PRINT LIST OF RANDOM MAP OBJECTS");
+        */
+        for (int i = 0; i < __instance.currentLevel.spawnableMapObjects.Length; i++) {
+            List<RandomMapObject> list = new List<RandomMapObject>();
+            //WTOBase.LogToConsole($"CURRENT OBJECT BEING CONSIDERED: {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name}");
+            int num = (int)__instance.currentLevel.spawnableMapObjects[i].numberToSpawn.Evaluate((float)random.NextDouble());
+            if (__instance.increasedMapHazardSpawnRateIndex == i) {
+                num = Mathf.Min(num * 2, 150);
+            }
+            if (num <= 0) {
+                continue;
+            }
+            for (int j = 0; j < array.Length; j++) {
+                //WTOBase.LogToConsole($"DOES OBJECT {array[j].name} CONTAIN {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name} ? -> {array[j].spawnablePrefabs.Contains(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn)} ");
+                if (array[j].spawnablePrefabs.Contains(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn)) {
+                    list.Add(array[j]);
+                }
+            }
+            /*WTOBase.LogToConsole("BEGIN PRINT LIST OF VALID MAP OBJECTS");
+            foreach (RandomMapObject Object in list) {
+                Debug.Log(Object.name);
+            }
+            WTOBase.LogToConsole("END PRINT LIST OF VALID MAP OBJECTS");*/
+            for (int k = 0; k < num; k++) {
+                RandomMapObject randomMapObject = list[random.Next(0, list.Count)];
+                Vector3 position = randomMapObject.transform.position;
+                //WTOBase.LogToConsole($"SPAWNING {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name} AT {randomMapObject.name}");
+                GameObject gameObject = UnityEngine.Object.Instantiate(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn, position, randomMapObject.transform.rotation, __instance.mapPropsContainer.transform);
+                gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+                GameObject.Destroy(randomMapObject);
+            }
+        }
+        return false;
+    }
+
     //METHODS
     public static void Start() {
         //Create the Dungeon and load it 
@@ -148,6 +201,8 @@ internal class FactoryPatch {
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinWorkbench.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "BatteryRecepticle.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "ScrapShelf.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "DrainedBattery.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "ChargedBattery.prefab"));
 
         //Register the door 
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(DoorPath + "OoblDoor.prefab"));
@@ -224,4 +279,5 @@ internal class FactoryPatch {
         Moon.spawnableMapObjects = Objects;
 
     }
+
 }
