@@ -28,7 +28,7 @@ internal class SpikeTrap : NetworkBehaviour {
     private bool AllowDamagePlayer;
     private float SecondsSinceSpikesActivated;
     private float SecondsUntilCanDamagePlayer;
-    private const int PlayerDamageAmount = 80;
+    private int PlayerDamageAmount = 80;
     
     //anim controls
     private float TimeElapsed;
@@ -49,7 +49,8 @@ internal class SpikeTrap : NetworkBehaviour {
         }
     }
     public void OnTriggerStay(Collider other) {
-        if (AllowDamagePlayer && other.gameObject.CompareTag("Player") && SecondsUntilCanDamagePlayer <= 0) { 
+        if (AllowDamagePlayer && other.gameObject.CompareTag("Player") && SecondsUntilCanDamagePlayer <= 0) {
+            PlayerDamageAmount = StartOfRound.Instance.connectedPlayersAmount <= 0 ? 80 : 100;
             other.GetComponent<PlayerControllerB>().DamagePlayer(PlayerDamageAmount, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
             SecondsUntilCanDamagePlayer = 0.75f;
         }
