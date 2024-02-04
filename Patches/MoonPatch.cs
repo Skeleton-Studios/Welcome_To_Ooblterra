@@ -7,6 +7,7 @@ using Welcome_To_Ooblterra.Properties;
 using Unity.Netcode;
 using System.Runtime.CompilerServices;
 using DunGen.Adapters;
+using System.Runtime.InteropServices.WindowsRuntime;
 
 namespace Welcome_To_Ooblterra.Patches;
 
@@ -97,8 +98,45 @@ internal class MoonPatch {
             LevelStartHasBeenRun = false;
         }
     }
-        
-    [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
+
+    [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
+    [HarmonyPrefix]
+    public static bool SettleTimeIssue(StartOfRound __instance) {
+        WTOBase.LogToConsole($"BEGIN PRINT PRE BASE FUNCTION VALUES:");
+        Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
+        Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
+        Debug.Log($"TOTAL TIME: {TimeOfDay.Instance.totalTime}");
+        Debug.Log($"TIME UNTIL DEADLINE: {TimeOfDay.Instance.timeUntilDeadline}");
+        Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
+        WTOBase.LogToConsole($"END PRINT PRE BASE FUNCTION VALUES:");
+        if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
+            Debug.Log("We are on Ooblterra...");
+            TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
+            TimeOfDay.Instance.globalTime *= 0;
+            WTOBase.LogToConsole($"BEGIN PRINT POST MODIFICATION VALUES:");
+            Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
+            Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
+            Debug.Log($"TOTAL TIME: {TimeOfDay.Instance.totalTime}");
+            Debug.Log($"TIME UNTIL DEADLINE: {TimeOfDay.Instance.timeUntilDeadline}");
+            Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
+            WTOBase.LogToConsole($"END PRINT POST MODIFICATION VALUES:");
+            return true;
+        }
+        return true;
+    }
+    [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
+    [HarmonyPostfix]
+    public static void SettleTimeIssue2(StartOfRound __instance) {
+        WTOBase.LogToConsole($"BEGIN PRINT POST BASE FUNCTION VALUES:");
+        Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
+        Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
+        Debug.Log($"TOTAL TIME: {TimeOfDay.Instance.totalTime}");
+        Debug.Log($"TIME UNTIL DEADLINE: {TimeOfDay.Instance.timeUntilDeadline}");
+        Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
+        WTOBase.LogToConsole($"END PRINT POST BASE FUNCTION VALUES:");
+    }
+
+        [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
     [HarmonyPrefix]
     private static bool SkipTODMusic() {
         return false;
