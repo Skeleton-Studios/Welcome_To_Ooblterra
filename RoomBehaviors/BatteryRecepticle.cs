@@ -16,6 +16,7 @@ public class BatteryRecepticle : NetworkBehaviour {
     public NetworkObject parentTo;
     public InteractTrigger triggerScript;
     public Transform BatteryTransform;
+    public BoxCollider BatteryHitbox;
 
     private WTOBattery InsertedBattery;
     private bool RecepticleHasBattery;
@@ -33,12 +34,26 @@ public class BatteryRecepticle : NetworkBehaviour {
         InsertedBattery = BatteryList.First(x => x.HasCharge == false);
         RecepticleHasBattery = true;
     }
-
     private void Update() {
         if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
             return;
         }
         if (RecepticleHasBattery) {
+            //test
+            /*
+            InsertedBattery.EnablePhysics(false);
+            InsertedBattery.transform.position = StartOfRound.Instance.propsContainer.InverseTransformPoint(parentTo.transform.InverseTransformPoint(BatteryTransform.position));
+            InsertedBattery.transform.rotation = BatteryTransform.rotation;
+            */
+            BatteryHitbox.enabled = false;
+            triggerScript.interactable = false;
+            triggerScript.disabledHoverTip = "";
+            if (InsertedBattery != null && InsertedBattery.isHeld) {
+                InsertedBattery = null;
+                RecepticleHasBattery = false;
+                return;
+            }
+            /*
             if (InsertedBattery.HasCharge) {
                 WTOBase.LogToConsole("Disabling Battery Recepticle Script!");
                 triggerScript.enabled = false;
@@ -49,13 +64,16 @@ public class BatteryRecepticle : NetworkBehaviour {
                 triggerScript.disabledHoverTip = "[Hands Full]";
                 return;
             }
-            triggerScript.interactable = true;
+            triggerScript.enabled = false;
             triggerScript.hoverTip = "Take Battery";
             return;
+            */
         } else {
-            if(GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is WTOBattery) {
+            BatteryHitbox.enabled = true;
+            triggerScript.enabled = true;
+            if (GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is WTOBattery) {
                 triggerScript.interactable = true;
-                triggerScript.hoverTip = "Insert Battery";
+                triggerScript.hoverTip = "Insert Battery : [E]";
                 return;
             }
             triggerScript.interactable = false;
@@ -80,9 +98,12 @@ public class BatteryRecepticle : NetworkBehaviour {
             vector = parentTo.transform.InverseTransformPoint(vector);
         }
         InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
+        RecepticleHasBattery = true;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
+        InsertedBattery.transform.rotation = BatteryTransform.rotation;
         Debug.Log("discard held object called from placeobject");
         if(InsertedBattery.HasCharge) {
+            InsertedBattery.grabbable = false;
             TurnOnPowerServerRpc();
         }
     }
