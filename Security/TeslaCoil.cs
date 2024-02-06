@@ -89,15 +89,11 @@ internal class TeslaCoil : NetworkBehaviour {
                     if (HeldObject.isBeingUsed == false) {
                         continue;
                     }
-                    WTOBase.LogToConsole($"Client holding and talking into walkie: {NowYoureOnWalkies.clientIsHoldingAndSpeakingIntoThis}");
-                    if (NowYoureOnWalkies.clientIsHoldingAndSpeakingIntoThis) {
-                        WTOBase.LogToConsole("Turning walkie off before broadcasting SFX");
+                    if (NowYoureOnWalkies.clientIsHoldingAndSpeakingIntoThis) {                    
                         NowYoureOnWalkies.SwitchWalkieTalkieOn(false);
-                        WTOBase.LogToConsole($"Broadcasting death SFX! Player Client ID: {Player.playerClientId} ACTUAL CLIENT ID: {Player.actualClientId}");
                         SendDeathSFXServerRpc((int)Player.actualClientId);
                         continue;
                     }
-                    WTOBase.LogToConsole("Turning walkie off...");
                     NowYoureOnWalkies.SwitchWalkieTalkieOn(false);
                     continue;
                 }
@@ -118,8 +114,8 @@ internal class TeslaCoil : NetworkBehaviour {
                     continue;
                 }
                 if(HeldObject is ShotgunItem && AttemptedFireShotgun == false) {
-                    AttemptedFireShotgun = true;
                     HeldObject.GetComponent<ShotgunItem>().ItemActivate(true);
+                    AttemptedFireShotgun = true;
                     continue;
                 }
             }
@@ -153,6 +149,7 @@ internal class TeslaCoil : NetworkBehaviour {
         ToggleTeslaCoilServerRpc(enabled);
         ToggleTeslaCoil(enabled);
     }
+
     [ServerRpc(RequireOwnership = false)]
     public void ToggleTeslaCoilServerRpc(bool enabled) {
         WTOBase.LogToConsole($"Toggling tesla coil to {enabled} serverRpc");
@@ -170,6 +167,7 @@ internal class TeslaCoil : NetworkBehaviour {
         WTOBase.LogToConsole($"TESLA COIL STATE: {TeslaCoilOn}");
         ToggleRings(TeslaCoilOn);
     }
+
     [ServerRpc(RequireOwnership = false)]
     public void SendDeathSFXServerRpc(int PlayerID) {
         SendDeathSFXClientRpc(PlayerID);
