@@ -138,12 +138,17 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
+            BatteryRecepticle Machine = FindObjectOfType<BatteryRecepticle>();
+            Machine.TurnOnPower();
+            
+            
+            /*
             SpikeTrap[] TeslaCoils = FindObjectsOfType<SpikeTrap>();
             foreach(SpikeTrap coil in TeslaCoils) {
                 coil.RecieveToggleSpikes(SwitchState);
             }
             SwitchState = !SwitchState;
-            /*
+            
             ("Hotkey override triggered to start visuals...");
             LabTerminal = FindObjectOfType<FrankensteinTerminal>();
             LabTerminal.StartSceneServerRpc(100);

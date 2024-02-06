@@ -191,8 +191,10 @@
     <Compile Include="RoomBehaviors\FrankensteinBodyPoint.cs" />
     <Compile Include="RoomBehaviors\HideSpot.cs" />
     <Compile Include="Items\SprintTotem.cs" />
+    <Compile Include="Things\BlinkingMonitors.cs" />
     <Compile Include="Things\LightComponent.cs" />
     <Compile Include="Security\TeslaCoil.cs" />
+    <Compile Include="Things\StartRoomLight.cs" />
     <Compile Include="Things\TripLaser.cs" />
     <Compile Include="Things\WideDoorway.cs" />
   </ItemGroup>

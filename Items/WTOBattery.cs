@@ -22,8 +22,10 @@ public class WTOBattery : GrabbableObject {
         int StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
         if (!HasCharge) {
             StartingScrapValue /= 5;
+            StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
+        } else {
+            StartingScrapValue = ScrapValueRandom.Next(750, 950);
         }
-        StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
         SetScrapValue(StartingScrapValue);
     }
 

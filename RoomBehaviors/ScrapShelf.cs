@@ -11,6 +11,7 @@ public class ScrapShelf : NetworkBehaviour {
 
     public Transform[] ScrapSpawnPoints;
     public Animator ShelfOpener;
+    public AudioSource ShelfSFX;
     System.Random ShelfRandom;
 
     public void Start() {
@@ -35,6 +36,7 @@ public class ScrapShelf : NetworkBehaviour {
 
     public void OpenShelf() {
         ShelfOpener.SetTrigger("Open");
+        ShelfSFX.Play();
     }
 
 }

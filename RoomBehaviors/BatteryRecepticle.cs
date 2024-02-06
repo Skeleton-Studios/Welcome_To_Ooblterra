@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.Rendering.HighDefinition.Attributes;
 using Welcome_To_Ooblterra.Items;
 using Welcome_To_Ooblterra.Properties;
 
@@ -24,22 +25,34 @@ public class BatteryRecepticle : NetworkBehaviour {
     public Animator MachineAnimator;
     public AudioSource Noisemaker;
     public AudioClip FacilityPowerUp;
-
+    public AudioSource Pistons;
+    public AudioSource MachineAmbience;
+    public MeshRenderer[] WallLights;
+    public Material WallLightMat;
+    public Color LightColor;
+    public Light CenterLight;
     private ScrapShelf scrapShelf;
 
+    public Material FrontConsoleMaterial;
+    public Material SideConsoleMaterial;
+    public MeshRenderer MachineMesh;
 
     public void Start() {
         scrapShelf = FindFirstObjectByType<ScrapShelf>();
         WTOBattery[] BatteryList = FindObjectsOfType<WTOBattery>();
         InsertedBattery = BatteryList.First(x => x.HasCharge == false);
         RecepticleHasBattery = true;
+        CenterLight.intensity = 0;
+        foreach(MeshRenderer WallLight in WallLights) {
+            WallLight.sharedMaterial = WallLightMat;
+        }
     }
     private void Update() {
         if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
             return;
         }
+        WallLightMat.SetColor("_EmissiveColor", LightColor);
         if (RecepticleHasBattery) {
-            //test
             /*
             InsertedBattery.EnablePhysics(false);
             InsertedBattery.transform.position = StartOfRound.Instance.propsContainer.InverseTransformPoint(parentTo.transform.InverseTransformPoint(BatteryTransform.position));
@@ -116,16 +129,23 @@ public class BatteryRecepticle : NetworkBehaviour {
     [ClientRpc]
     public void TurnOnPowerClientRpc() {
         TurnOnPower();
-    }
-    
+    } 
     public void TurnOnPower() {
         Noisemaker.PlayOneShot(FacilityPowerUp);
         scrapShelf.OpenShelf();
+        MachineAmbience.Play();
+        Pistons.Play();
         LightComponent[] LightsInLevel = FindObjectsOfType<LightComponent>();
         foreach (LightComponent light in LightsInLevel) {
             light.SetLightColor();
             light.SetLightBrightness(150);
         }
+        Material[] NewMachineMaterials = MachineMesh.materials;
+        NewMachineMaterials[2] = SideConsoleMaterial;
+        NewMachineMaterials[11] = FrontConsoleMaterial;
+        MachineMesh.materials = NewMachineMaterials;
         MachineAnimator.SetTrigger("PowerOn");
+        StartRoomLight StartRoomLights = FindObjectOfType<StartRoomLight>();
+        StartRoomLights.SetCentralRoomWhite();
     }
 }

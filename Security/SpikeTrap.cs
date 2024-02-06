@@ -57,7 +57,6 @@ internal class SpikeTrap : NetworkBehaviour {
     }
 
     public void Update() {
-        RootRotation.eulerAngles = new Vector3(0, 0, 0);
         if(SecondsUntilCanDamagePlayer > 0) {
             SecondsUntilCanDamagePlayer -= Time.deltaTime;
         }
