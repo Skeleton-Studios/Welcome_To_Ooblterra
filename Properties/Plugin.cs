@@ -15,8 +15,7 @@ using System.Reflection.Emit;
 using UnityEngine.InputSystem;
 using GameNetcodeStuff;
 using Welcome_To_Ooblterra.Things;
-using DunGen.Graph;
-using LethalLevelLoader;
+using Welcome_To_Ooblterra.Security;
 
 namespace Welcome_To_Ooblterra.Properties;
 
@@ -30,11 +29,13 @@ public class WTOBase : BaseUnityPlugin {
     public static ConfigFile ConfigFile;
     private const string modGUID = "SkullCrusher.WTO";
     private const string modName = "Welcome To Ooblterra";
-    private const string modVersion = "0.7.5";
+    private const string modVersion = "0.8.0";
 
     private readonly Harmony WTOHarmony = new Harmony(modGUID);
     internal ManualLogSource WTOLogSource;
     public static WTOBase Instance;
+    public static bool LightsOn = true;
+    public static bool SwitchState;
 
     public static AssetBundle LevelAssetBundle;
     public static AssetBundle ItemAssetBundle;
@@ -70,49 +71,55 @@ public class WTOBase : BaseUnityPlugin {
         const string appendix = "";
         WTOLogSource.LogInfo("Welcome to Ooblterra! " + appendix);
 
-        LogToConsole("BEGIN PRINTING LOADED ASSETS");
-
         WTOHarmony.PatchAll(typeof(WTOBase));
         //WTOHarmony.PatchAll(typeof(WTOConfig));
-
-        
-        string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");
-        FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-        /*
         WTOHarmony.PatchAll(typeof(FactoryPatch));
-        FactoryPatch.Start();
-        */
-        string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
-        ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
         WTOHarmony.PatchAll(typeof(ItemPatch));
-        ItemPatch.Start();
-
+        WTOHarmony.PatchAll(typeof(MonsterPatch));
+        WTOHarmony.PatchAll(typeof(MoonPatch));
         WTOHarmony.PatchAll(typeof(SuitPatch));
-        SuitPatch.Start();
+        WTOHarmony.PatchAll(typeof(TerminalPatch));
+            
+        if (/* WTOConfig.WTOCustomSuits.Value*/ true) {
+                
+        }
+        LogToConsole("BEGIN PRINTING LOADED ASSETS");
+        //AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);
+        if (/*InteriorState != AllowedState.Off*/ true) {
+            string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
+            FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
+        }
 
+        //AllowedState.TryParse(WTOConfig.SpawnScrapStatus.ToString(), out AllowedState ItemState);
+        if (/*ItemState != AllowedState.Off*/ true) {
+            string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
+            ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
+        }
+
+        if (/* WTOConfig.OoblterraEnabled.Value*/ true) {
+            string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
+            LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
+        }
+
+        /*
+        AllowedState.TryParse(WTOConfig.SpawnOutdoorEnemyStatus.ToString(), out AllowedState OutdoorMonsterState);
+        AllowedState.TryParse(WTOConfig.SpawnIndoorEnemyStatus.ToString(), out AllowedState IndoorMonsterState);
+        AllowedState.TryParse(WTOConfig.SpawnAmbientEnemyStatus.ToString(), out AllowedState DaytimeMonsterState);
+        AllowedState.TryParse(WTOConfig.SpawnSecurityStatus.ToString(), out AllowedState SecurityState);
+        if (OutdoorMonsterState != AllowedState.Off || IndoorMonsterState != AllowedState.Off
+            || DaytimeMonsterState != AllowedState.Off || SecurityState != AllowedState.Off
+        true) {
+        */
         string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
         MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
-        WTOHarmony.PatchAll(typeof(MonsterPatch));
+
+        FactoryPatch.Start();
+        ItemPatch.Start();
         MonsterPatch.Start();
-        
-        string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
-        LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
-        /*
-        WTOHarmony.PatchAll(typeof(MoonPatch));
         MoonPatch.Start();
-        
-        WTOHarmony.PatchAll(typeof(TerminalPatch));
+        SuitPatch.Start();
         TerminalPatch.Start();
-        */
-
-        // LLL Dungeon Stuff
-
-        DungeonFlow myDungeonFlow = FactoryAssetBundle.LoadAsset<DungeonFlow>("Assets/CustomDungeon/Data/WTOFlow.asset");
-        ExtendedDungeonFlow myExtendedDungeonFlow = ScriptableObject.CreateInstance<ExtendedDungeonFlow>();
-        myExtendedDungeonFlow.dungeonFlow = myDungeonFlow;
-        myExtendedDungeonFlow.dynamicLevelTagsList.Add(new StringWithRarity("WTO", 30000));
-        AssetBundleLoader.RegisterExtendedDungeonFlow(myExtendedDungeonFlow);
-
+            
 
         //NetcodeWeaver stuff
         var types = Assembly.GetExecutingAssembly().GetTypes();
@@ -131,10 +138,38 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
+            BatteryRecepticle Machine = FindObjectOfType<BatteryRecepticle>();
+            Machine.TurnOnPower();
+            
+            
+            /*
+            SpikeTrap[] TeslaCoils = FindObjectsOfType<SpikeTrap>();
+            foreach(SpikeTrap coil in TeslaCoils) {
+                coil.RecieveToggleSpikes(SwitchState);
+            }
+            SwitchState = !SwitchState;
+            
+            ("Hotkey override triggered to start visuals...");
+            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
+            LabTerminal.StartSceneServerRpc(100);
+
+            
+            SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
+            foreach (SprayPaintItem sprayPaint in SprayPaints) {
+                sprayPaint.debugSprayPaint = true;
+            }
+
+            
+            LightsOn = !LightsOn;
+            WTOBase.LogToConsole($"SETTING OUTDOOR LIGHTS TO: {(LightsOn ? "ON" : "OFF")}");
+            //GameObject.Find("ActualSun").GetComponent<Light>().enabled = LightsOn;
+            GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = LightsOn;
+            
+            
             LabTerminal = FindObjectOfType<FrankensteinTerminal>();
             WTOBase.LogToConsole($"REVIVING PLAYER at {LabTerminal}");
-            LabTerminal.ReviveDeadPlayer();
-            /*
+            LabTerminal.ReviveDeadPlayerServerRpc();
+            
             DoInteractCheck = !DoInteractCheck;
             LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");
                 
@@ -151,10 +186,7 @@ public class WTOBase : BaseUnityPlugin {
                 TimeOfDay.Instance.sunAnimator = MoonPatch.OoblFogAnimator;
             }
                 
-            SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
-            foreach(SprayPaintItem sprayPaint in SprayPaints) {
-                sprayPaint.debugSprayPaint = true;
-            }
+
 
                 
             WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");

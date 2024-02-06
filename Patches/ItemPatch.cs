@@ -25,9 +25,9 @@ internal class ItemPatch {
 
     private const string ItemPath = "Assets/CustomItems/";
     private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
-        
+
     //This array stores all our custom items
-    public static ItemData[] ItemList = new ItemData[] { 
+    public static ItemData[] ItemList = new ItemData[] {
         new ItemData("AlienCrate.asset", 30),
         new ItemData("FiveSixShovel.asset", 10),
         new ItemData("HandCrystal.asset", 30),
@@ -35,8 +35,10 @@ internal class ItemPatch {
         new ItemData("StatueSmall.asset", 40),
         new ItemData("WandCorpse.asset", 5),
         new ItemData("WandFeed.asset", 20),
-        new ItemData("SprintTotem.asset", 5),
-        new ItemData("CursedTotem.asset", 2)
+        new ItemData("SprintTotem.asset", 25),
+        new ItemData("CursedTotem.asset", 20),
+        new ItemData("Chems.asset", 0),
+        new ItemData("Battery.asset", 0)
     };
 
     //Add our custom items
@@ -58,13 +60,13 @@ internal class ItemPatch {
                 spawnableItem = NextItemToProcess,
                 rarity = MyCustomScrap.GetRarity()
             };
-            MoonScrap.Add(MoonScrapItem);
+            //MoonScrap.Add(MoonScrapItem);
             Debug.Log("Item Loaded: " + MoonScrapItem.spawnableItem.name);
         }
     }       
-    public static void SetMoonItemList(SelectableLevel Moon) {
-        Moon.spawnableScrap = MoonScrap;
-    }
+    //public static void SetMoonItemList(SelectableLevel Moon) {
+    //    Moon.spawnableScrap = MoonScrap;
+    //}
     public static void SetMoonItemList(SelectableLevel Moon, List<SpawnableItemWithRarity> ItemList) {
             Moon.spawnableScrap = ItemList;
     }

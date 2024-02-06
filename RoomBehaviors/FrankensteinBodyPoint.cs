@@ -15,17 +15,19 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
     public InteractTrigger triggerScript;
     public NetworkObject TableBodyContainer;
     public BoxCollider triggerCollider;
-    public FrankensteinTerminal ConnectedTerminal;
 
     private float updateInterval;
-    public GrabbableObject BodyGO;
-    private RagdollGrabbableObject PlayerRagdoll;
     private NetworkObject lastObjectAddedToTable;
-    public Vector3 RespawnPos;
+
+    [HideInInspector]
+    public GrabbableObject BodyGO;
+    public RagdollGrabbableObject PlayerRagdoll;
+    public Transform RespawnPos;
+    public bool HasBody;
 
     //Figure out how to create an interaction point
 
-    //make it specify that it wants a player body, just how the charger wants battery powered items
+
     private void Update() {
         if (NetworkManager.Singleton == null) {
             return;
@@ -60,11 +62,10 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         vector = TableBodyContainer.transform.InverseTransformPoint(vector);
         if(PlayerRagdoll != null) { 
             WTOBase.LogToConsole($"Player Body ID is {PlayerRagdoll.bodyID.Value}");
-            ConnectedTerminal.SetVariables(vector, PlayerRagdoll.bodyID.Value);
         }
         PutObjectOnTableServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
         player.DiscardHeldObject(placeObject: true, TableBodyContainer, vector, matchRotationOfParent: false);
-        
+        HasBody = true;
         Debug.Log("Body placed on frankenstein point");
     }
     [ServerRpc]

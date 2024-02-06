@@ -3,6 +3,7 @@ using LethalLib;
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.Rendering;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches;
@@ -12,10 +13,10 @@ internal class MonsterPatch {
     public static List<SpawnableEnemyWithRarity> OutsideEnemies = new List<SpawnableEnemyWithRarity>();
     public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
     public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
-    public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
 
     private const string EnemyPathRoot = "Assets/CustomEnemies/";
     private static bool EnemiesInList;
+    public const bool ShouldDebugEnemies = false;
 
     [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
     [HarmonyPrefix]
@@ -65,41 +66,6 @@ internal class MonsterPatch {
 
         EnemiesInList = true;
     }
-
-
-    public static void SetInsideMonsters(SelectableLevel Moon) {
-        Moon.Enemies = InsideEnemies;
-    }
-    public static void SetInsideMonsters(SelectableLevel Moon, List<SpawnableEnemyWithRarity> EnemyList) {
-        Moon.Enemies = EnemyList;
-    }
-
-    public static void SetOutsideMonsters(SelectableLevel Moon) {
-        Moon.OutsideEnemies = OutsideEnemies;
-    }
-    public static void SetOutsideMonsters(SelectableLevel Moon, List<SpawnableEnemyWithRarity> EnemyList) {
-            Moon.OutsideEnemies = EnemyList;
-    }
-
-    public static void SetDaytimeMonsters(SelectableLevel Moon) {
-        Moon.DaytimeEnemies = DaytimeEnemies;
-    }
-    public static void SetDaytimeMonsters(SelectableLevel Moon, List<SpawnableEnemyWithRarity> EnemyList) {
-            Moon.DaytimeEnemies = EnemyList;
-    }
-
-    public static void SetSecurityObjects(SelectableLevel Moon) {
-        SpawnableMapObject[] SpawnableMapObjects = new SpawnableMapObject[SecurityList.Count];
-        Moon.spawnableMapObjects = SpawnableMapObjects;
-        for (int i = 0; i < SecurityList.Count; i++) {
-            Moon.spawnableMapObjects.SetValue(SecurityList[i], i);
-        }
-    }
-    public static void SetSecurityObjects(SelectableLevel Moon, SpawnableMapObject[] Objects) {
-        Moon.spawnableMapObjects = Objects;
-
-    }
-
     public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity, LethalLib.Modules.Enemies.SpawnType SpawnType, string InfoName = null, string KeywordName = null) {
             
         string EnemyFolderName = EnemyName.Remove(EnemyName.Length - 6, 6) + "/";
@@ -107,7 +73,7 @@ internal class MonsterPatch {
         TerminalKeyword EnemyKeyword = null;
 
         EnemyType EnemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>(EnemyPathRoot + EnemyFolderName + EnemyName);
-        EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = true;
+        EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = ShouldDebugEnemies;
 
         if (InfoName != null) {
             EnemyInfo = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>(EnemyPathRoot + EnemyFolderName + InfoName);
@@ -118,11 +84,10 @@ internal class MonsterPatch {
         }
 
         LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
-        LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, new string[] { "OoblterraLevel" }, EnemyInfo, EnemyKeyword);
+        LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
         EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
         Debug.Log("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
     }
-
     public static void Start() {
         CreateEnemy("Wanderer.asset", DaytimeEnemies, 50, LethalLib.Modules.Enemies.SpawnType.Daytime, "WandererTerminal.asset", "WandererKeyword.asset");
         CreateEnemy("AdultWanderer.asset", AdultWandererContainer, 0, LethalLib.Modules.Enemies.SpawnType.Outside, "AdultWandererTerminal.asset", "AdultWandererKeyword.asset");

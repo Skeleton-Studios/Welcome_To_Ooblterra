@@ -1,5 +1,6 @@
 ﻿using GameNetcodeStuff;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -19,71 +20,50 @@ public class EyeSecAI : WTOEnemy {
         private int PatrolPointAttempts;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: true);
-            /*
-            SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 15));
-            */
-            EyeSecList[enemyIndex].agent.speed = 9f;
-                
+            EyeSecList[enemyIndex].agent.speed = 9f; 
             EyeSecList[enemyIndex].StartSearch(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].SearchLab);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (!EyeSecList[enemyIndex].SearchLab.inProgress) {
                 EyeSecList[enemyIndex].StartSearch(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].SearchLab);
             }
-            /*
-            if (Vector3.Distance(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].destination) < 10 && SearchInProgress) {
-                EyeSecList[enemyIndex].LogMessage("Finding next patrol point");
-                PatrolPointAttempts = 0;
-                SearchInProgress = false;
-                return;
-            }
-            if (SearchInProgress) {
-                EyeSecList[enemyIndex].agent.speed = 9f;
-                return;
-            }
-            PatrolPointAttempts++;
-            EyeSecList[enemyIndex].LogMessage("Attempt #" + PatrolPointAttempts + " Didn't find patrol point, trying again...");
-            if (PatrolPointAttempts < 20) {
-                SearchInProgress = EyeSecList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(EyeSecList[enemyIndex].allAINodes[enemyRandom.Next(EyeSecList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
-            } else {
-                EyeSecList[enemyIndex].LogMessage($"EyeSec could not find patrol point among {EyeSecList[enemyIndex].allAINodes.Length} nodes. Scanning in place...");
-                EyeSecList[enemyIndex].OverrideState(new ScanEnemies());
-            }
-            */
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: false);
-            EyeSecList[enemyIndex].StopSearch(EyeSecList[enemyIndex].SearchLab, clear: false);
+            //EyeSecList[enemyIndex].StopSearch(EyeSecList[enemyIndex].SearchLab, clear: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new ShouldStartScanTransition()
         };
     }
     private class ScanEnemies : BehaviorState {
-        public int AnimWaiter = 0;
-        public int investigateTimer;
+        public float AnimWaiterSeconds = 0;
+        public float ScanTimerSeconds = 0;
+        private int SecondsToScan = 4;
         public ScanEnemies() {
-            RandomRange = new Vector2(5, 8);
+            RandomRange = new Vector2(1, 11);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            bool IsEven = MyRandomInt % 2 == 0;
+            EyeSecList[enemyIndex].IsDeepScan = (EyeSecList[enemyIndex].BuffedByTeslaCoil || IsEven);
+            SecondsToScan = EyeSecList[enemyIndex].BuffedByTeslaCoil ? 4 : (IsEven ? 8 : 4);
             EyeSecList[enemyIndex].StartScanVisuals();
-            investigateTimer = 0;
             EyeSecList[enemyIndex].agent.speed = 0f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (AnimWaiter < 15) {
-                AnimWaiter++;
+            if (AnimWaiterSeconds < 0.25) {
+                AnimWaiterSeconds += Time.deltaTime;
                 return;
-            } else if (investigateTimer <= 360) {
-                EyeSecList[enemyIndex].ScanRoom();
-            } else {
-                EyeSecList[enemyIndex].StopScanVisuals(EyeSecList[enemyIndex].EndScanSFX, MyRandomInt);
             }
-            investigateTimer++;
-                                   
+            if (ScanTimerSeconds <= SecondsToScan) {
+                EyeSecList[enemyIndex].ScanRoom(SecondsToScan);
+            } else {
+                EyeSecList[enemyIndex].ScanFinished = true;
+            }
+            ScanTimerSeconds += Time.deltaTime;
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EyeSecList[enemyIndex].ScannerCollider.enabled = false;
+            EyeSecList[enemyIndex].StopScanVisuals(EyeSecList[enemyIndex].EndScanSFX, MyRandomInt);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new ReturnToPatrol(),
@@ -278,6 +258,7 @@ public class EyeSecAI : WTOEnemy {
     public static Dictionary<int, EyeSecAI> EyeSecList = new Dictionary<int, EyeSecAI>();
     public static int EyeSecID;
 
+    public MeshRenderer ScannerMesh;
     public AudioClip flashSFX;
     public AudioClip StartScanSFX;
     public AudioClip EndScanSFX;
@@ -292,11 +273,14 @@ public class EyeSecAI : WTOEnemy {
     private bool FoundPlayerHoldingScrap = false;
     private bool ScanFinished = false;
     private bool IsScanning;
+    public bool IsDeepScan;
     private float ScanCooldownSeconds = 0f;
     private float FlashCooldownSeconds = 10f;
     private float ShutdownTimerSeconds = 0f;
     private bool PlayingMoveSound;
     private AISearchRoutine SearchLab = new();
+
+    public bool BuffedByTeslaCoil;
 
     public override void Start() {
         InitialState = new Patrol();
@@ -325,35 +309,56 @@ public class EyeSecAI : WTOEnemy {
             }
         }
     }
-    private void ScanRoom() {
-        Head.transform.Rotate(0, 1, 0);
+
+    private void ScanRoom(int ScanTimeSeconds) {
+        Head.transform.Rotate(0, 360/ScanTimeSeconds * Time.deltaTime, 0);
     }
-    public void ScanOurEnemy(Collider other) {
-            
+    public void ScanOurEnemy(Collider other) {            
         if (!IsScanning) {
             return;
         }
-
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
-
         if (victim == null) {
             return;
         }
         if (!PlayerCanBeTargeted(victim)) {
             return;
         }
-        LogMessage("Player found, time to scan him...");
+        LogMessage("Player found, trying to scan him...");
+        if (IsDeepScan) {
+            CheckPlayerDeepScan(victim);
+            return;
+        }
+        CheckPlayerWhenScanned(victim);
         //grab a list of all the items he has and check if its in the grabbable objects list
-        if (grabbableObjectsInMap.Contains(victim.currentlyHeldObjectServer)) {
+
+    }
+    private void CheckPlayerWhenScanned(PlayerControllerB Player) {
+        if (grabbableObjectsInMap.Contains(Player.currentlyHeldObjectServer)) {
             //if it is...
             LogMessage("Player is guilty!");
             FoundPlayerHoldingScrap = true;
             ScanFinished = true;
-            targetPlayer = victim;
-            ChangeOwnershipOfEnemy(victim.actualClientId);
+            targetPlayer = Player;
+            ChangeOwnershipOfEnemy(Player.actualClientId);
             ScanCooldownSeconds = 5;
             IsScanning = false;
             return;
+        }
+    }
+    private void CheckPlayerDeepScan(PlayerControllerB Player) {
+        //iterate over every slot in the player's inventory 
+        for(int i = 0; i < Player.ItemSlots.Count(); i++) {
+            if (grabbableObjectsInMap.Contains(Player.ItemSlots[i])) {
+                LogMessage("Player is guilty!");
+                FoundPlayerHoldingScrap = true;
+                ScanFinished = true;
+                targetPlayer = Player;
+                ChangeOwnershipOfEnemy(Player.actualClientId);
+                ScanCooldownSeconds = 5;
+                IsScanning = false;
+                return;
+            }
         }
     }
     private void SpinWheel() {
@@ -381,8 +386,13 @@ public class EyeSecAI : WTOEnemy {
     }
     public void Flash() {           
         creatureVoice.PlayOneShot(flashSFX);
-        WalkieTalkie.TransmitOneShotAudio(creatureVoice, flashSFX);
-        StunGrenadeItem.StunExplosion(transform.position, affectAudio: false, 2f, 4f, 2f);      
+        try { 
+            WalkieTalkie.TransmitOneShotAudio(creatureVoice, flashSFX);
+            StunGrenadeItem.StunExplosion(transform.position, affectAudio: false, 2f, 4f, 2f);
+        } catch (Exception e) {
+            WTOBase.LogToConsole("EyeSec could not stun flash! Error listed: ");
+            Debug.LogError(e);
+        }
     }
     public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
 
@@ -409,13 +419,15 @@ public class EyeSecAI : WTOEnemy {
         creatureVoice.clip = ScanSFX;
         creatureVoice.loop = true;
         creatureVoice.Play();
-
-        SetScannerBoolOnServerRpc("Scanning", true);
-            
         ScannerCollider.enabled = true;
         ScanFinished = false;
         IsScanning = true;
-
+        if (IsDeepScan) {
+            ScannerMesh.materials[0].SetColor("_BaseColor", new Color(1, 0, 0));
+        } else {
+            ScannerMesh.materials[0].SetColor("_BaseColor", new Color(0, 1, 1));
+        }
+        SetScannerBoolOnServerRpc("Scanning", true);
     }
     public void StopScanVisuals(AudioClip StopSound, int NextScanTime) {
         creatureVoice.Stop();
@@ -425,7 +437,6 @@ public class EyeSecAI : WTOEnemy {
         }
         SetScannerBoolOnServerRpc("Scanning", false);
         ScannerCollider.enabled = false;
-        ScanFinished = true;
         IsScanning = false;
         ScanCooldownSeconds = NextScanTime;
     }

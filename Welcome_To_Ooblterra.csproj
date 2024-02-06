@@ -23,6 +23,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -32,6 +33,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="0Harmony">
@@ -49,7 +51,7 @@
     </Reference>
     <Reference Include="LethalLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLib.dll</HintPath>
+      <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLib\LethalLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -120,6 +122,10 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
     </Reference>
+    <Reference Include="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
@@ -154,6 +160,8 @@
     <Compile Include="Enemies\SecBotAI.cs" />
     <Compile Include="Enemies\EyeSecAI.cs" />
     <Compile Include="Enemies\WTOEnemy.cs" />
+    <Compile Include="Items\WTOBattery.cs" />
+    <Compile Include="Items\Chemical.cs" />
     <Compile Include="Items\CursedEffigy.cs" />
     <Compile Include="Properties\Publicizer.cs" />
     <Compile Include="Properties\WTONetworkHandler.cs" />
@@ -162,6 +170,10 @@
     <Compile Include="Enemies\GallenarmaAI.cs" />
     <Compile Include="Enemies\BabyLurkerAI.cs" />
     <Compile Include="Enemies\LurkerAI.cs" />
+    <Compile Include="RoomBehaviors\BatteryRecepticle.cs" />
+    <Compile Include="RoomBehaviors\FrankensteinVisuals.cs" />
+    <Compile Include="RoomBehaviors\ScrapShelf.cs" />
+    <Compile Include="Security\SpikeTrap.cs" />
     <Compile Include="Things\AcidWater.cs" />
     <Compile Include="Patches\ItemPatch.cs" />
     <Compile Include="Patches\TerminalPatch.cs" />
@@ -173,15 +185,19 @@
     <Compile Include="Properties\Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Patches\SuitPatch.cs" />
-    <Compile Include="Things\BatteryRoom.cs" />
     <Compile Include="Enemies\EnemyThings\EyeSecLaser.cs" />
-    <Compile Include="Things\KitchenCrusher.cs" />
+    <Compile Include="RoomBehaviors\FrankensteinChemPoint.cs" />
+    <Compile Include="RoomBehaviors\KitchenCrusher.cs" />
     <Compile Include="Enemies\EnemyThings\EnforcerWeapon.cs" />
     <Compile Include="Enemies\EnemyThings\EyeSecScanner.cs" />
-    <Compile Include="Things\FrankensteinTerminal.cs" />
-    <Compile Include="Things\FrankensteinBodyPoint.cs" />
-    <Compile Include="Things\HideSpot.cs" />
+    <Compile Include="RoomBehaviors\FrankensteinTerminal.cs" />
+    <Compile Include="RoomBehaviors\FrankensteinBodyPoint.cs" />
+    <Compile Include="RoomBehaviors\HideSpot.cs" />
     <Compile Include="Items\SprintTotem.cs" />
+    <Compile Include="Things\BlinkingMonitors.cs" />
+    <Compile Include="Things\LightComponent.cs" />
+    <Compile Include="Security\TeslaCoil.cs" />
+    <Compile Include="Things\StartRoomLight.cs" />
     <Compile Include="Things\TripLaser.cs" />
     <Compile Include="Things\WideDoorway.cs" />
   </ItemGroup>

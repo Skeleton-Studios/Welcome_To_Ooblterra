@@ -8,6 +8,10 @@ using static LethalLib.Modules.Dungeon;
 using DunGen.Graph;
 using LethalLib.Extras;
 using GameNetcodeStuff;
+using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
+using System;
+using System.Collections.Generic;
+using UnityEngine.AI;
 
 namespace Welcome_To_Ooblterra.Patches;
 internal class FactoryPatch {
@@ -17,22 +21,17 @@ internal class FactoryPatch {
     private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
     private static NetworkManager networkManagerRef;
     private const string DungeonPath = "Assets/CustomDungeon/Data/";
+    private const string BehaviorPath = "Assets/CustomDungeon/Behaviors/";
+    private const string SecurityPath = "Assets/CustomDungeon/Security/";
+    private const string DoorPath = "Assets/CustomDungeon/Doors/";
+    public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
+
 
     //PATCHES 
     [HarmonyPatch (typeof(StartOfRound), "Awake")]
     [HarmonyPostfix]
     private static void GetNetworkManager(StartOfRound __instance) {
         networkManagerRef = __instance.NetworkManager;
-    }
-
-    [HarmonyPatch(typeof(RoundManager), "SpawnScrapInLevel")]
-    [HarmonyPrefix]
-    private static void ScrapValueAdjuster(RoundManager __instance) {
-        if(__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
-            __instance.scrapValueMultiplier = 0.4f;
-            return;
-        }
-        __instance.scrapValueMultiplier = 1f;
     }
 
     [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
@@ -66,7 +65,7 @@ internal class FactoryPatch {
         //Fire exits are rotated wrong on Ooblterra for some reason 
         FireEntrance.transform.Rotate(0, -90, 0);
         FireExit.transform.Rotate(0, -90, 0);
-        Object[] AllTeleports = Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
+        UnityEngine.Object[] AllTeleports = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
         foreach(EntranceTeleport Teleport in AllTeleports){ 
             Teleport.FindExitPoint();
             WTOBase.LogToConsole($"Entrance #{System.Array.IndexOf(AllTeleports, Teleport)} exitPoint: {Teleport.exitPoint}");
@@ -81,6 +80,48 @@ internal class FactoryPatch {
         DestroyExit(FireExit);
     }
 
+    //I have no actual fucking clue why this is the case, but I have to do this in order to get the frankenstein stuff to spawn properly
+    //This is pretty much a verbatim copy of the original function, just with some logs thrown in for sake of debugging
+    [HarmonyPatch(typeof(RoundManager), "SpawnSyncedProps")]
+    [HarmonyPrefix]
+    private static bool WTOSpawnSyncedProps(RoundManager __instance) {
+        
+
+        __instance.spawnedSyncedObjects.Clear();
+        SpawnSyncedObject[] array = UnityEngine.Object.FindObjectsOfType<SpawnSyncedObject>();
+        if (array == null) {
+            return true;
+        }
+        //WTOBase.LogToConsole("BEGIN CHECKING PROPS");
+        foreach (SpawnSyncedObject obj in array) {
+            //Debug.Log($"Synced object: {obj}");
+            //Debug.Log($"Synced object prefab: {obj.spawnPrefab}");
+        }
+        //WTOBase.LogToConsole("END CHECKING PROPS");
+
+        __instance.mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
+        //Debug.Log($"Found map props container?: {__instance.mapPropsContainer != null}");
+        
+        //Debug.Log($"Spawning synced props on server. Length: {array.Length}");
+        for (int i = 0; i < array.Length; i++) {
+            GameObject gameObject = null;
+            try { 
+                gameObject = UnityEngine.Object.Instantiate(array[i].spawnPrefab, array[i].transform.position, array[i].transform.rotation, __instance.mapPropsContainer.transform);
+            } catch {
+                //WTOBase.LogToConsole($"Instantiation of {array[i].spawnPrefab} failed!");
+            }
+            if (gameObject != null) {
+                try {
+                    gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+                    __instance.spawnedSyncedObjects.Add(gameObject);
+                } catch {
+                    //WTOBase.LogToConsole($"Instantiation of {array[i].spawnPrefab} passed, but does not have a network object!");
+                }
+            }
+        }
+        return false;
+    }
+    
     [HarmonyPatch(typeof(EntranceTeleport), "TeleportPlayer")]
     [HarmonyPrefix]
     private static void CheckTeleport(EntranceTeleport __instance) {
@@ -91,18 +132,84 @@ internal class FactoryPatch {
         WTOBase.LogToConsole("Player Location: " + GameNetworkManager.Instance.localPlayerController.transform.position);
         //WTOBase.LogToConsole("Exit Location: " + __instance.exitPoint.position);
         TimeOfDay.Instance.insideLighting = __instance.isEntranceToBuilding;
+        GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = !TimeOfDay.Instance.insideLighting;
+    }
+
+    [HarmonyPatch(typeof(RoundManager), "SpawnMapObjects")]
+    [HarmonyPrefix]
+    private static bool WTOSpawnMapObjects(RoundManager __instance) {
+        if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+            return true;
+        }
+        if (__instance.currentLevel.spawnableMapObjects.Length == 0) {
+            return true;
+        }
+        System.Random random = new System.Random(StartOfRound.Instance.randomMapSeed + 587);
+        __instance.mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
+        RandomMapObject[] array = UnityEngine.Object.FindObjectsOfType<RandomMapObject>();
+        /*
+        WTOBase.LogToConsole("BEGIN PRINT LIST OF RANDOM MAP OBJECTS");
+        foreach(RandomMapObject Object in array) {
+            Debug.Log(Object.name);
+        }
+        WTOBase.LogToConsole("END PRINT LIST OF RANDOM MAP OBJECTS");
+        */
+        for (int i = 0; i < __instance.currentLevel.spawnableMapObjects.Length; i++) {
+            List<RandomMapObject> list = new List<RandomMapObject>();
+            //WTOBase.LogToConsole($"CURRENT OBJECT BEING CONSIDERED: {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name}");
+            int num = (int)__instance.currentLevel.spawnableMapObjects[i].numberToSpawn.Evaluate((float)random.NextDouble());
+            if (__instance.increasedMapHazardSpawnRateIndex == i) {
+                num = Mathf.Min(num * 2, 150);
+            }
+            if (num <= 0) {
+                continue;
+            }
+            for (int j = 0; j < array.Length; j++) {
+                //WTOBase.LogToConsole($"DOES OBJECT {array[j].name} CONTAIN {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name} ? -> {array[j].spawnablePrefabs.Contains(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn)} ");
+                if (array[j].spawnablePrefabs.Contains(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn)) {
+                    list.Add(array[j]);
+                }
+            }
+            /*WTOBase.LogToConsole("BEGIN PRINT LIST OF VALID MAP OBJECTS");
+            foreach (RandomMapObject Object in list) {
+                Debug.Log(Object.name);
+            }
+            WTOBase.LogToConsole("END PRINT LIST OF VALID MAP OBJECTS");*/
+            for (int k = 0; k < num; k++) {
+                RandomMapObject randomMapObject = list[random.Next(0, list.Count)];
+                Vector3 position = randomMapObject.transform.position;
+                //WTOBase.LogToConsole($"SPAWNING {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name} AT {randomMapObject.name}");
+                GameObject gameObject = UnityEngine.Object.Instantiate(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn, position, randomMapObject.transform.rotation, __instance.mapPropsContainer.transform);
+                gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+                GameObject.Destroy(randomMapObject);
+            }
+        }
+        return false;
     }
 
     //METHODS
     public static void Start() {
         //Create the Dungeon and load it 
-        DungeonFlow OoblFacilityFlow = FactoryBundle.LoadAsset<DungeonFlow>(DungeonPath + "WTOFlow.asset");
-        DungeonDef OoblFacilityDungeon = ScriptableObject.CreateInstance<LethalLib.Extras.DungeonDef>();
+        DungeonDef OoblFacilityDungeon = FactoryBundle.LoadAsset<DungeonDef>(DungeonPath + "WTODungeonDef.asset");
         OoblFacilityDungeon.name = "Oobl Laboratory";
-        OoblFacilityDungeon.dungeonFlow = OoblFacilityFlow;
         OoblFacilityDungeon.rarity = 99999;
         AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
         Debug.Log("Dungeon Loaded: " + OoblFacilityDungeon.name);
+        
+        //Register the frankenstein point, will need to add the machine room here
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinPoint.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinWorkbench.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "BatteryRecepticle.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "ScrapShelf.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "DrainedBattery.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "ChargedBattery.prefab"));
+
+        //Register the door 
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(DoorPath + "OoblDoor.prefab"));
+
+        //Register the custom security
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "SpikeTrap.prefab"));
     }
     private static void DestroyExit(EntranceTeleport ExitToDestroy) {
         if (ExitToDestroy == null) {
@@ -160,4 +267,17 @@ internal class FactoryPatch {
         WTOBase.LogToConsole("Exit Spawn not found!!!!");
         return null;
     }
+
+    public static void SetSecurityObjects(SelectableLevel Moon) {
+        SpawnableMapObject[] SpawnableMapObjects = new SpawnableMapObject[SecurityList.Count];
+        Moon.spawnableMapObjects = SpawnableMapObjects;
+        for (int i = 0; i < SecurityList.Count; i++) {
+            Moon.spawnableMapObjects.SetValue(SecurityList[i], i);
+        }
+    }
+    public static void SetSecurityObjects(SelectableLevel Moon, SpawnableMapObject[] Objects) {
+        Moon.spawnableMapObjects = Objects;
+
+    }
+
 }

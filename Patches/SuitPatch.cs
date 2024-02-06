@@ -16,6 +16,8 @@ internal class SuitPatch {
     private const string SuitPath = "Assets/CustomSuits/";
     private const string PosterGameObject = "HangarShip/Plane.001";
 
+    public static Material GhostPlayerSuit; 
+
     static string[] SuitMaterialPaths = new string[] {
         SuitPath + "ProtSuit.mat",
         SuitPath + "MackSuit.mat"
@@ -26,6 +28,7 @@ internal class SuitPatch {
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
     [HarmonyPrefix]
     private static void StartPatch(ref StartOfRound __instance) {
+        GhostPlayerSuit = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath + "GhostPlayerSuit.mat");
         if (SuitsLoaded) {
             return; 
         }
@@ -44,12 +47,12 @@ internal class SuitPatch {
                 continue;
             }
             //Create new suits based on the materials
-            foreach (string SuitPath in SuitMaterialPaths) {
+            foreach (string PathToMaterial in SuitMaterialPaths) {
                 UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
                 UnlockableSuit newSuit = new UnlockableSuit();
-                newUnlockableItem.suitMaterial = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath);
+                newUnlockableItem.suitMaterial = WTOBase.ItemAssetBundle.LoadAsset<Material>(PathToMaterial);
                 //prepare and set name
-                String SuitName = SuitPath.Substring(19,8);
+                String SuitName = PathToMaterial.Substring(19,8);
                 newUnlockableItem.unlockableName = SuitName;
                 //add new item to the listing of tracked unlockable items
                 __instance.unlockablesList.unlockables.Add(newUnlockableItem);

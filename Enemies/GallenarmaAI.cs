@@ -193,7 +193,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
-            GallenarmaList[enemyIndex].agent.speed = 7f;
+            GallenarmaList[enemyIndex].agent.speed = 6f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 
@@ -303,7 +303,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 return false;
             }
 
-            if (Vector3.Distance(PotentialTargetPlayer.transform.position, GallenarmaList[enemyIndex].transform.position) < 7) {
+            if (Vector3.Distance(PotentialTargetPlayer.transform.position, GallenarmaList[enemyIndex].transform.position) < 4) {
                 GallenarmaList[enemyIndex].targetPlayer = PotentialTargetPlayer;
                 GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
                 return true;
@@ -390,7 +390,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             float playerDistanceFromLastNoise = Vector3.Distance(GallenarmaList[enemyIndex].LatestNoise.Location, GallenarmaList[enemyIndex].targetPlayer.transform.position);
             float DistanceToCheck = Math.Min(playerDistanceFromLastNoise, PlayerDistanceFromGallenarma);
                 
-            return DistanceToCheck > 10;
+            return DistanceToCheck > 5;
         }
         public override BehaviorState NextState() {
             return new Patrol();
