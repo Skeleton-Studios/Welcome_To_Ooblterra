@@ -1,4 +1,5 @@
 ﻿using GameNetcodeStuff;
+using LethalLib.Modules;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -19,6 +20,7 @@ internal class TeslaCoil : NetworkBehaviour {
     public AudioClip RingsOn;
     public AudioClip RingsOff;
     public AudioClip RingsActive;
+    public AudioClip WalkieTalkieDie;
 
     public MeshRenderer[] Emissives;
     public Animator TeslaCoilAnim;
@@ -28,6 +30,8 @@ internal class TeslaCoil : NetworkBehaviour {
     private bool AttemptedFireShotgun = false;
 
     private List<PlayerControllerB> PlayerInRangeList = new();
+
+    WalkieTalkie NowYoureOnWalkies;
 
     public void OnTriggerEnter(Collider other) {
         try {
@@ -61,6 +65,11 @@ internal class TeslaCoil : NetworkBehaviour {
         } catch { }
     }
 
+    private void Start() {
+        RecieveToggleTeslaCoil(false);
+        RecieveToggleTeslaCoil(true);
+    }
+
     private void Update() {
         if (!TeslaCoilOn) {
             return;
@@ -70,37 +79,48 @@ internal class TeslaCoil : NetworkBehaviour {
         if(PlayerInRangeList.Count <= 0) {
             return;
         }
-        WTOBase.LogToConsole($"Players in range: {PlayerInRangeList.Count}");
         foreach (PlayerControllerB Player in PlayerInRangeList) {
             if(Player.ItemSlots.Count() <= 0) {
                 continue;
             }
             foreach (GrabbableObject HeldObject in Player.ItemSlots) {
                 if(HeldObject is WalkieTalkie) {
-                    WalkieTalkie NowYoureOnWalkies = HeldObject.GetComponent<WalkieTalkie>();
-                    if(HeldObject.isBeingUsed == false) {
+                    NowYoureOnWalkies = HeldObject.GetComponent<WalkieTalkie>();
+                    if (HeldObject.isBeingUsed == false) {
                         continue;
                     }
+                    WTOBase.LogToConsole($"Client holding and talking into walkie: {NowYoureOnWalkies.clientIsHoldingAndSpeakingIntoThis}");
                     if (NowYoureOnWalkies.clientIsHoldingAndSpeakingIntoThis) {
-                        NowYoureOnWalkies.BroadcastSFXFromWalkieTalkie(NowYoureOnWalkies.playerDieOnWalkieTalkieSFX, (int)NowYoureOnWalkies.playerHeldBy.playerClientId);
+                        WTOBase.LogToConsole("Turning walkie off before broadcasting SFX");
+                        NowYoureOnWalkies.SwitchWalkieTalkieOn(false);
+                        WTOBase.LogToConsole($"Broadcasting death SFX! Player Client ID: {Player.playerClientId} ACTUAL CLIENT ID: {Player.actualClientId}");
+                        SendDeathSFXServerRpc((int)Player.actualClientId);
+                        continue;
                     }
+                    WTOBase.LogToConsole("Turning walkie off...");
                     NowYoureOnWalkies.SwitchWalkieTalkieOn(false);
+                    continue;
                 }
                 if(HeldObject is FlashlightItem) {
                     HeldObject.GetComponent<FlashlightItem>().SwitchFlashlight(false);
+                    continue;
                 }
                 if(HeldObject is BoomboxItem) {
                     HeldObject.GetComponent<BoomboxItem>().StartMusic(false);
+                    continue;
                 }
                 if(HeldObject is PatcherTool) {
                     HeldObject.GetComponent<PatcherTool>().DisablePatcherGun();
+                    continue;
                 }
                 if(HeldObject is RadarBoosterItem) {
                     HeldObject.GetComponent<RadarBoosterItem>().EnableRadarBooster(false);
+                    continue;
                 }
                 if(HeldObject is ShotgunItem && AttemptedFireShotgun == false) {
                     AttemptedFireShotgun = true;
                     HeldObject.GetComponent<ShotgunItem>().ItemActivate(true);
+                    continue;
                 }
             }
         }
@@ -149,5 +169,16 @@ internal class TeslaCoil : NetworkBehaviour {
         TeslaCoilOn = enabled;
         WTOBase.LogToConsole($"TESLA COIL STATE: {TeslaCoilOn}");
         ToggleRings(TeslaCoilOn);
+    }
+    [ServerRpc(RequireOwnership = false)]
+    public void SendDeathSFXServerRpc(int PlayerID) {
+        SendDeathSFXClientRpc(PlayerID);
+    }
+    [ClientRpc]
+    public void SendDeathSFXClientRpc(int PlayerID) {
+        SendDeathSFX(PlayerID);
+    }
+    private void SendDeathSFX(int PlayerID) {
+        NowYoureOnWalkies.BroadcastSFXFromWalkieTalkie(WalkieTalkieDie, PlayerID);
     }
 }
