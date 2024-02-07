@@ -51,9 +51,9 @@ internal class MoonPatch {
     [HarmonyPrefix]
     [HarmonyPriority(0)]
     private static void AddMoonToList(StartOfRound __instance) {
-        SetMoonVariables(MyNewMoon, __instance);
-        AddToMoons(MyNewMoon, __instance);
-        LevelStartHasBeenRun = false;
+        //SetMoonVariables(MyNewMoon, __instance);
+        //AddToMoons(MyNewMoon, __instance);
+        //LevelStartHasBeenRun = false;
     }
 
     //Destroy the necessary actors and set our scene

@@ -84,11 +84,10 @@ internal class FactoryPatch {
 
     //I have no actual fucking clue why this is the case, but I have to do this in order to get the frankenstein stuff to spawn properly
     //This is pretty much a verbatim copy of the original function, just with some logs thrown in for sake of debugging
+    /*
     [HarmonyPatch(typeof(RoundManager), "SpawnSyncedProps")]
     [HarmonyPrefix]
     private static bool WTOSpawnSyncedProps(RoundManager __instance) {
-        
-
         __instance.spawnedSyncedObjects.Clear();
         SpawnSyncedObject[] array = UnityEngine.Object.FindObjectsOfType<SpawnSyncedObject>();
         if (array == null) {
