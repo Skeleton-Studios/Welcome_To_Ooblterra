@@ -12,6 +12,7 @@ using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using System;
 using System.Collections.Generic;
 using UnityEngine.AI;
+using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Patches;
 internal class FactoryPatch {
@@ -19,6 +20,7 @@ internal class FactoryPatch {
     public static EntranceTeleport MainExit;
     public static EntranceTeleport FireExit;
     private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
+    private static readonly AssetBundle LLLBundle;
     private static NetworkManager networkManagerRef;
     private const string DungeonPath = "Assets/CustomDungeon/Data/";
     private const string BehaviorPath = "Assets/CustomDungeon/Behaviors/";
@@ -191,11 +193,19 @@ internal class FactoryPatch {
     //METHODS
     public static void Start() {
         //Create the Dungeon and load it 
+        /*
         DungeonDef OoblFacilityDungeon = FactoryBundle.LoadAsset<DungeonDef>(DungeonPath + "WTODungeonDef.asset");
         OoblFacilityDungeon.name = "Oobl Laboratory";
         OoblFacilityDungeon.rarity = 99999;
-        //AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
-        //Debug.Log("Dungeon Loaded: " + OoblFacilityDungeon.name);
+        AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
+        Debug.Log("Dungeon Loaded: " + OoblFacilityDungeon.name);
+        */
+        ExtendedDungeonFlow OoblDungeonFlow = FactoryBundle.LoadAsset<ExtendedDungeonFlow>(DungeonPath + "OoblLabExtendedDungeonFlow.asset");
+        OoblDungeonFlow.manualPlanetNameReferenceList.Clear();
+        OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
+        WTOBase.LogToConsole($"Is OoblLab EDF Null? {OoblDungeonFlow == null}");
+        PatchedContent.RegisterExtendedDungeonFlow(OoblDungeonFlow);
+
         /*
         //Register the frankenstein point, will need to add the machine room here
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinPoint.prefab"));
