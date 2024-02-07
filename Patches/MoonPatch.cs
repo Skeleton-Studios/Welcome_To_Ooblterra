@@ -76,14 +76,16 @@ internal class MoonPatch {
         WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
         //DestroyVowObjects();
         //Load our custom prefab
+        /*
         LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset(MoonPath + "customlevel.prefab"));
         LevelLoaded = true;
         WTOBase.LogToConsole("Loaded custom terrain object!");
-        
+        */
+
         //MoveDoors();
         ManageCustomSun();
         MoveNavNodesToNewPositions();
-        
+
         //HandleInsideNavigation();
         ManageFootsteps();
         
@@ -137,7 +139,7 @@ internal class MoonPatch {
         WTOBase.LogToConsole($"END PRINT POST BASE FUNCTION VALUES:");
     }
 
-        [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
+    [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
     [HarmonyPrefix]
     private static bool SkipTODMusic() {
         return false;
@@ -154,15 +156,26 @@ internal class MoonPatch {
         if (TimeOfDay.Instance.sunAnimator == OoblFogAnimator){
             return;
         }
-        TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
+    }
+    [HarmonyPatch(typeof(TimeOfDay), "SetInsideLightingDimness")]
+    [HarmonyPrefix]
+    private static void SpoofLightValues(TimeOfDay __instance) {
+        if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+            return;
+        }
+        Light Direct = GameObject.Find("ActualSun").GetComponent<Light>();
+        Light Indirect = GameObject.Find("ActualIndirect").GetComponent<Light>();
+        TimeOfDay timeOfDay = GameObject.FindObjectOfType<TimeOfDay>();
+        timeOfDay.sunIndirect = Indirect;
+        timeOfDay.sunDirect = Direct;
     }
 
     //METHODS
     public static void Start() {
         //Load our level asset object
-        MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>(MoonPath + "OoblterraLevel.asset");
-        MoonFriendlyName = MyNewMoon.PlanetName;
-        Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
+        //MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>(MoonPath + "OoblterraLevel.asset");
+        MoonFriendlyName = "523 Ooblterra";
+        //Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
     }
     private static void SetMoonVariables(SelectableLevel Moon, StartOfRound Instance) {
         //Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
@@ -236,14 +249,17 @@ internal class MoonPatch {
     }
     private static void ManageCustomSun() {
         //Ooblterra has no sun so we're getting rid of it
-        GameObject SunObject = GameObject.Find("SunWithShadows");
+        //GameObject SunObject = GameObject.Find("SunWithShadows");
         GameObject SunAnimObject = GameObject.Find("SunAnimContainer");
-        GameObject IndirectLight = GameObject.Find("Indirect");
-        SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
-        SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
-        GameObject.Destroy(SunObject);
-        GameObject.Destroy(IndirectLight);
+        //GameObject IndirectLight = GameObject.Find("Indirect");
+        //SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
+        //SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
+        //GameObject.Destroy(SunObject);
+        //GameObject.Destroy(IndirectLight);
+
         OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
+        TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
+
     }
     private static void ManageFootsteps() {
         const string FootstepPath = MoonPath + "Sound/Footsteps/";
