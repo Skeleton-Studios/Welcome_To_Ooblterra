@@ -74,17 +74,17 @@ internal class MoonPatch {
             return;
         }
         WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
-        DestroyVowObjects();
+        //DestroyVowObjects();
         //Load our custom prefab
         LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset(MoonPath + "customlevel.prefab"));
         LevelLoaded = true;
         WTOBase.LogToConsole("Loaded custom terrain object!");
         
-        MoveDoors();
+        //MoveDoors();
         ManageCustomSun();
         MoveNavNodesToNewPositions();
         
-        HandleInsideNavigation();
+        //HandleInsideNavigation();
         ManageFootsteps();
         
         LevelStartHasBeenRun = true;
@@ -92,6 +92,7 @@ internal class MoonPatch {
 
     [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
     [HarmonyPostfix]
+
     public static void DestroyLevel(StartOfRound __instance) {
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             DestroyOoblterraPrefab();

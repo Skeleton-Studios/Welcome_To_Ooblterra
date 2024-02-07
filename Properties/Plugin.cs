@@ -78,7 +78,7 @@ public class WTOBase : BaseUnityPlugin {
         WTOHarmony.PatchAll(typeof(MonsterPatch));
         WTOHarmony.PatchAll(typeof(MoonPatch));
         WTOHarmony.PatchAll(typeof(SuitPatch));
-        WTOHarmony.PatchAll(typeof(TerminalPatch));
+        //WTOHarmony.PatchAll(typeof(TerminalPatch));
             
         if (/* WTOConfig.WTOCustomSuits.Value*/ true) {
                 

@@ -34,6 +34,7 @@ internal class FactoryPatch {
         networkManagerRef = __instance.NetworkManager;
     }
 
+    /*
     [HarmonyPatch(typeof(RoundManager), "GenerateNewFloor")]
     [HarmonyPostfix]
     private static void CreateCorrespondingExits(RoundManager __instance) {
@@ -46,7 +47,7 @@ internal class FactoryPatch {
             * The best way to make this function work for March is probably to set id 0 as normal, but then set subsequent IDs to instantiate 
             * a new list item. Make the FireEntrance variable a list that can have either 1 thing added to it or 3, and then run the CreateExit
             * on a loop iterating over that list
-            */
+            
         EntranceTeleport MainEntrance = null;
         EntranceTeleport FireEntrance = null;
         EntranceTeleport[] ExistingEntranceArray = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
@@ -79,6 +80,7 @@ internal class FactoryPatch {
         DestroyExit(MainExit);
         DestroyExit(FireExit);
     }
+    */
 
     //I have no actual fucking clue why this is the case, but I have to do this in order to get the frankenstein stuff to spawn properly
     //This is pretty much a verbatim copy of the original function, just with some logs thrown in for sake of debugging
@@ -121,7 +123,7 @@ internal class FactoryPatch {
         }
         return false;
     }
-    
+    /*
     [HarmonyPatch(typeof(EntranceTeleport), "TeleportPlayer")]
     [HarmonyPrefix]
     private static void CheckTeleport(EntranceTeleport __instance) {
@@ -134,7 +136,7 @@ internal class FactoryPatch {
         TimeOfDay.Instance.insideLighting = __instance.isEntranceToBuilding;
         GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = !TimeOfDay.Instance.insideLighting;
     }
-
+    */
     [HarmonyPatch(typeof(RoundManager), "SpawnMapObjects")]
     [HarmonyPrefix]
     private static bool WTOSpawnMapObjects(RoundManager __instance) {
@@ -193,9 +195,9 @@ internal class FactoryPatch {
         DungeonDef OoblFacilityDungeon = FactoryBundle.LoadAsset<DungeonDef>(DungeonPath + "WTODungeonDef.asset");
         OoblFacilityDungeon.name = "Oobl Laboratory";
         OoblFacilityDungeon.rarity = 99999;
-        AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
-        Debug.Log("Dungeon Loaded: " + OoblFacilityDungeon.name);
-        
+        //AddDungeon(OoblFacilityDungeon, Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
+        //Debug.Log("Dungeon Loaded: " + OoblFacilityDungeon.name);
+        /*
         //Register the frankenstein point, will need to add the machine room here
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinPoint.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "FrankensteinWorkbench.prefab"));
@@ -210,6 +212,7 @@ internal class FactoryPatch {
         //Register the custom security
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "SpikeTrap.prefab"));
+        */
     }
     private static void DestroyExit(EntranceTeleport ExitToDestroy) {
         if (ExitToDestroy == null) {
