@@ -26,6 +26,13 @@ internal class ItemPatch {
     private const string ItemPath = "Assets/CustomItems/";
     private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
 
+    [HarmonyPatch(typeof(RoundManager), "SetLockedDoors")]
+    [HarmonyPrefix]
+    private static void ReplaceKeys(RoundManager __instance) {
+        GameObject KeyObject = GameObject.Instantiate(WTOBase.ItemAssetBundle.LoadAsset<GameObject>("Assets/CustomItems/OoblKey.prefab"), __instance.mapPropsContainer.transform);
+        __instance.keyPrefab = KeyObject;
+    }
+
     //This array stores all our custom items
     public static ItemData[] ItemList = new ItemData[] {
         new ItemData("AlienCrate.asset", 30),
@@ -63,6 +70,7 @@ internal class ItemPatch {
             //MoonScrap.Add(MoonScrapItem);
             Debug.Log("Item Loaded: " + MoonScrapItem.spawnableItem.name);
         }
+        NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ItemAssetBundle.LoadAsset<GameObject>(ItemPath + "OoblKey.prefab"));
     }       
     //public static void SetMoonItemList(SelectableLevel Moon) {
     //    Moon.spawnableScrap = MoonScrap;

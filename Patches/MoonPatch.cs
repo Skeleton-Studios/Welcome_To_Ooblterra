@@ -139,7 +139,7 @@ internal class MoonPatch {
         WTOBase.LogToConsole($"END PRINT POST BASE FUNCTION VALUES:");
     }
 
-    [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
+        [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
     [HarmonyPrefix]
     private static bool SkipTODMusic() {
         return false;
@@ -249,17 +249,14 @@ internal class MoonPatch {
     }
     private static void ManageCustomSun() {
         //Ooblterra has no sun so we're getting rid of it
-        //GameObject SunObject = GameObject.Find("SunWithShadows");
+        GameObject SunObject = GameObject.Find("SunWithShadows");
         GameObject SunAnimObject = GameObject.Find("SunAnimContainer");
-        //GameObject IndirectLight = GameObject.Find("Indirect");
-        //SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
-        //SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
-        //GameObject.Destroy(SunObject);
-        //GameObject.Destroy(IndirectLight);
-
+        GameObject IndirectLight = GameObject.Find("Indirect");
+        SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
+        SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
+        GameObject.Destroy(SunObject);
+        GameObject.Destroy(IndirectLight);
         OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
-        TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
-
     }
     private static void ManageFootsteps() {
         const string FootstepPath = MoonPath + "Sound/Footsteps/";
