@@ -190,6 +190,7 @@ internal class FactoryPatch {
         return false;
     }
 
+
     //METHODS
     public static void Start() {
         //Create the Dungeon and load it 
@@ -203,7 +204,6 @@ internal class FactoryPatch {
         ExtendedDungeonFlow OoblDungeonFlow = FactoryBundle.LoadAsset<ExtendedDungeonFlow>(DungeonPath + "OoblLabExtendedDungeonFlow.asset");
         OoblDungeonFlow.manualPlanetNameReferenceList.Clear();
         OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
-        WTOBase.LogToConsole($"Is OoblLab EDF Null? {OoblDungeonFlow == null}");
         PatchedContent.RegisterExtendedDungeonFlow(OoblDungeonFlow);
 
         /*
@@ -219,9 +219,11 @@ internal class FactoryPatch {
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(DoorPath + "OoblDoor.prefab"));
 
         //Register the custom security
+        */
+        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "ChargedBattery.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "SpikeTrap.prefab"));
-        */
+        
     }
     private static void DestroyExit(EntranceTeleport ExitToDestroy) {
         if (ExitToDestroy == null) {

@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using LethalLevelLoader;
 using System;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
@@ -25,6 +26,7 @@ internal class TerminalPatch {
     [HarmonyPatch(typeof(StartOfRound), "Awake")]
     [HarmonyPostfix]
     private static void ExpandTerminal(StartOfRound __instance) {
+        return;
         GrabActiveTerminal();
         AddMoonToList("Ooblterra");
         CreateRoute();
@@ -32,9 +34,18 @@ internal class TerminalPatch {
         AddToKeyword(InfoKeyword, MoonTerminalWord, LevelBundle.LoadAsset<TerminalNode>(TerminalPath + "OoblterraInfo.asset"));
             
     }
+    [HarmonyPatch(typeof(RoundManager), "Start")]
+    [HarmonyPostfix]
+    private static void SwitchNodes(RoundManager __instance) {
 
+    }
     //METHODS
     public static void Start() {
+        ExtendedLevel Ooblterra = LevelBundle.LoadAsset<ExtendedLevel>("Assets/CustomMoon/OoblterraExtendedLevel.asset");
+        Ooblterra.infoNode = LevelBundle.LoadAsset<TerminalNode>(TerminalPath + "OoblterraInfo.asset");
+        Ooblterra.routeNode = LevelBundle.LoadAsset<TerminalNode>(TerminalPath + "523route.asset");
+        Ooblterra.routeConfirmNode = LevelBundle.LoadAsset<TerminalNode>(TerminalPath + "523routeConfirm.asset");
+        PatchedContent.RegisterExtendedLevel(Ooblterra);
         //TODO: Should probably (on this and the suit path) make it so that all the assetbundle loading and assignment is done *here*, and
         //then any corresponding code is done when it needs to be done
     }
