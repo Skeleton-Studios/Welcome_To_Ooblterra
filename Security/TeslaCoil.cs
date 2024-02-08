@@ -145,26 +145,22 @@ internal class TeslaCoil : NetworkBehaviour {
     }
 
     public void RecieveToggleTeslaCoil(bool enabled) {
-        WTOBase.LogToConsole($"Called toggle tesla coil with state: {enabled}");
         ToggleTeslaCoilServerRpc(enabled);
         ToggleTeslaCoil(enabled);
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void ToggleTeslaCoilServerRpc(bool enabled) {
-        WTOBase.LogToConsole($"Toggling tesla coil to {enabled} serverRpc");
         ToggleTeslaCoilClientRpc(enabled);
     }
     [ClientRpc]
     public void ToggleTeslaCoilClientRpc(bool enabled) {
-        WTOBase.LogToConsole($"Toggling tesla coil to {enabled} clientRpc");
         if(TeslaCoilOn != enabled) { 
             ToggleTeslaCoil(enabled);
         }
     }
     private void ToggleTeslaCoil(bool enabled) {
         TeslaCoilOn = enabled;
-        WTOBase.LogToConsole($"TESLA COIL STATE: {TeslaCoilOn}");
         ToggleRings(TeslaCoilOn);
     }
 
