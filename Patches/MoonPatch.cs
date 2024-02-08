@@ -172,6 +172,7 @@ internal class MoonPatch {
     public static void Start() {
         //Load our level asset object
         MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>(MoonPath + "OoblterraLevel.asset");
+        MyNewMoon.sceneName = "Level3Vow";
         MoonFriendlyName = MyNewMoon.PlanetName;
         Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
     }
