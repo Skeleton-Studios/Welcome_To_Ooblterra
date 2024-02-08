@@ -76,7 +76,7 @@ internal class MoonPatch {
         WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
         DestroyVowObjects();
         //Load our custom prefab
-        /*
+        
         LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset(MoonPath + "customlevel.prefab"));
         LevelLoaded = true;
         WTOBase.LogToConsole("Loaded custom terrain object!");
