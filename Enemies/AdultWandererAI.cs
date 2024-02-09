@@ -1,5 +1,6 @@
 ﻿using GameNetcodeStuff;
 using System.Collections.Generic;
+using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
@@ -57,16 +58,15 @@ public class AdultWandererAI : WTOEnemy {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (Vector3.Distance(AWandList[enemyIndex].MainTarget.transform.position, AWandList[enemyIndex].transform.position) < AWandList[enemyIndex].AttackRange) {
                 if (AWandList[enemyIndex].AttackCooldownSeconds <= 0) {
-                    AWandList[enemyIndex].LogMessage("Attacking!");
                     AWandList[enemyIndex].AttackCooldownSeconds = 1.5f;
                     HasAttacked = false;
-                        
                     return;
                 }
                 if (AWandList[enemyIndex].AttackCooldownSeconds <= 1.2f) {
                     creatureAnimator.SetBool("Attacking", value: true);
                 }
                 if(AWandList[enemyIndex].AttackCooldownSeconds <= 0.76f && !HasAttacked) {
+                    AWandList[enemyIndex].LogMessage($"Attacking Player {AWandList[enemyIndex].MainTarget}");
                     AWandList[enemyIndex].MeleeAttackPlayer(AWandList[enemyIndex].MainTarget);
                     HasAttacked = true;
                 }
@@ -78,8 +78,8 @@ public class AdultWandererAI : WTOEnemy {
             creatureAnimator.SetBool("Attacking", value: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-            new EnemyLeftRange(),
-            new EnemyKilled()
+            new EnemyKilled(),
+            new EnemyLeftRange()
         };
     }
     private class Roam : BehaviorState {
@@ -93,6 +93,7 @@ public class AdultWandererAI : WTOEnemy {
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (investigating) {
+                creatureAnimator.SetBool("Moving", value: false);
                 investigateTimer++;
                 return;
             }
@@ -104,6 +105,7 @@ public class AdultWandererAI : WTOEnemy {
             if (!SearchInProgress) {
                 AWandList[base.enemyIndex].agent.speed = 7f;
                 AWandList[base.enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(AWandList[enemyIndex].allAINodes[enemyRandom.Next(AWandList[base.enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
+                creatureAnimator.SetBool("Moving", value: true);
                 SearchInProgress = true;
             }
         }
@@ -165,7 +167,6 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EvaluatePlayerLook : StateTransition {
         public override bool CanTransitionBeTaken() {
-            WTOBase.LogToConsole("Player sees Adult Wanderer: " + AWandList[enemyIndex].CheckForPlayerLOS().ToString());
             if (AWandList[enemyIndex].CheckForPlayerLOS()){
                 return true;
             }
@@ -186,7 +187,7 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EnemyInOverworld : StateTransition {
         public override bool CanTransitionBeTaken() {
-            if(AWandList[enemyIndex].targetPlayer == null) {
+            if(AWandList[enemyIndex].MainTarget == null) {
                 return false;
             }
             return AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].MainTarget);
@@ -197,8 +198,9 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EnemyLeftRange : StateTransition{
         public override bool CanTransitionBeTaken() {
-                
-            return (AWandList[enemyIndex].PlayerIsTargetable(AWandList[enemyIndex].MainTarget) && (Vector3.Distance(AWandList[enemyIndex].transform.position, AWandList[enemyIndex].MainTarget.transform.position) > AWandList[enemyIndex].AttackRange));
+            bool IsInAttackRange = (Vector3.Distance(AWandList[enemyIndex].transform.position, AWandList[enemyIndex].MainTarget.transform.position) > AWandList[enemyIndex].AttackRange);
+            bool IsNotNearShip = (Vector3.Distance(AWandList[enemyIndex].transform.position, StartOfRound.Instance.shipDoorNode.position) > 10);
+            return (AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].MainTarget) &&  IsInAttackRange && IsNotNearShip);
         }
         public override BehaviorState NextState() {
             return new Roam();
@@ -207,8 +209,10 @@ public class AdultWandererAI : WTOEnemy {
     private class EnemyKilled : StateTransition {
             
         public override bool CanTransitionBeTaken() {
-                
-            return (AWandList[enemyIndex].MainTarget.health < 0); 
+            if (AWandList[enemyIndex].MainTarget == null) {
+                return true;
+            }
+            return AWandList[enemyIndex].MainTarget.isPlayerDead; 
         }
         public override BehaviorState NextState() {
             AWandList[enemyIndex].MainTarget = null;
@@ -257,7 +261,7 @@ public class AdultWandererAI : WTOEnemy {
         InitialState = new Spawn();
         AWandID++;
         WTOEnemyID = AWandID;
-        //PrintDebugs = true;
+        PrintDebugs = true;
         LogMessage($"Adding Adult Wanderer {this} #{AWandID}");
         AWandList.Add(AWandID, this);
         MyValidState = PlayerState.Outside;
@@ -274,9 +278,19 @@ public class AdultWandererAI : WTOEnemy {
         Target.DamagePlayer(40, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
         Target.JumpToFearLevel(1f);
     }
-    public void SetMyTarget(PlayerControllerB player) {
-        targetPlayer = player;
-        MainTarget = player;
+    [ServerRpc]
+    public void SetTargetServerRpc(int PlayerID) {
+        SetTargetClientRpc(PlayerID);
+    }
+    [ClientRpc]
+    public void SetTargetClientRpc(int PlayerID) {
+        SetMyTarget(PlayerID);
+    }
+    
+
+    public void SetMyTarget(int PlayerID) {
+        targetPlayer = StartOfRound.Instance.allPlayerScripts[PlayerID];
+        MainTarget = StartOfRound.Instance.allPlayerScripts[PlayerID]; 
     }
     public bool CheckForPlayerLOS() {
         return MainTarget.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);

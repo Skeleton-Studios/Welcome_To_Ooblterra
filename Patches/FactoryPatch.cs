@@ -176,6 +176,10 @@ internal class FactoryPatch {
             }
             WTOBase.LogToConsole("END PRINT LIST OF VALID MAP OBJECTS");*/
             for (int k = 0; k < num; k++) {
+                //lol
+                if(list.Count <= 0) {
+                    continue;
+                }
                 RandomMapObject randomMapObject = list[random.Next(0, list.Count)];
                 Vector3 position = randomMapObject.transform.position;
                 //WTOBase.LogToConsole($"SPAWNING {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name} AT {randomMapObject.name}");

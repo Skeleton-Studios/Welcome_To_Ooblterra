@@ -16,7 +16,7 @@ internal class MonsterPatch {
 
     private const string EnemyPathRoot = "Assets/CustomEnemies/";
     private static bool EnemiesInList;
-    public const bool ShouldDebugEnemies = false;
+    public const bool ShouldDebugEnemies = true;
 
     [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
     [HarmonyPrefix]
@@ -73,7 +73,7 @@ internal class MonsterPatch {
         TerminalKeyword EnemyKeyword = null;
 
         EnemyType EnemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>(EnemyPathRoot + EnemyFolderName + EnemyName);
-        EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = ShouldDebugEnemies;
+        EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
 
         if (InfoName != null) {
             EnemyInfo = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>(EnemyPathRoot + EnemyFolderName + InfoName);

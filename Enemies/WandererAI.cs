@@ -166,7 +166,7 @@ public class WandererAI : WTOEnemy {
     public override void Start() {
         MyValidState = PlayerState.Outside;
         InitialState = new Investigate();
-        PrintDebugs = true;
+        PrintDebugs = false;
         WandererID++;
         WTOEnemyID = WandererID;
 
@@ -213,28 +213,44 @@ public class WandererAI : WTOEnemy {
     }
     public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
         base.HitEnemy(force, playerWhoHit, playHitSFX);
-        ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
+        //ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
         if (!RegisteredThreats.Contains(playerWhoHit)) RegisteredThreats.Add(playerWhoHit);
         creatureAnimator.SetTrigger("Hit");
         enemyHP -= force;
-        if (base.IsOwner && !isEnemyDead) {
-            if (enemyHP <= 0) {
-                creatureAnimator.SetTrigger("Death");
-                KillEnemyOnOwnerClient();
-                if (!CalledMom) { 
-                    ItemPatch.SpawnItem(transform.position + new Vector3(0, 5, 0), internalID: 5);
-                    Vector3 AdultSpawnPos = playerWhoHit.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), playerWhoHit.transform.forward * -1);
-                    Quaternion AdultSpawnRot = new Quaternion(0, Quaternion.LookRotation(playerWhoHit.transform.position - AdultSpawnPos).y, 0, 1);
-                    GameObject AdultWanderer = Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
-                    AdultWanderer.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
-                    AdultWanderer.gameObject.GetComponentInChildren<AdultWandererAI>().SetMyTarget(playerWhoHit);
-                    CalledMom = true;
-                }
-                LogMessage("Wanderer dying!");
-                //KillEnemyOnOwnerClient();
-                return;
-            }
+        WTOBase.LogToConsole($"NEW WANDERER HEALTH: {enemyHP}");
+        if (enemyHP <= 0 && !isEnemyDead && !CalledMom) {
+            int KillerID = (int)playerWhoHit.playerClientId;
+            AttemptKillServerRpc(KillerID);
+            CalledMom = true;
         }
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void AttemptKillServerRpc(int KillerID) {
+        AttemptKillClientRpc(KillerID);
+    }
+
+    [ClientRpc]
+    public void AttemptKillClientRpc(int KillerID) {
+        if (base.IsOwner) {
+            KillWandererAndSpawnParent(KillerID);
+        }
+        
+    }
+
+    public void KillWandererAndSpawnParent(int KillerID) {
+        WTOBase.LogToConsole($"Spawning Adult Wanderer targeting player ID {KillerID}");
+        PlayerControllerB Killer = StartOfRound.Instance.allPlayerScripts[KillerID];
+        ItemPatch.SpawnItem(transform.position + new Vector3(0, 5, 0), internalID: 5);
+        Vector3 AdultSpawnPos = Killer.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), Killer.transform.forward * -1);
+        Quaternion AdultSpawnRot = new Quaternion(0, Quaternion.LookRotation(Killer.transform.position - AdultSpawnPos).y, 0, 1);
+        GameObject AdultWanderer = Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
+        if (base.IsServer) { 
+            AdultWanderer.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
+            AdultWanderer.gameObject.GetComponentInChildren<AdultWandererAI>().SetTargetServerRpc(KillerID);
+        }
+        LogMessage("Wanderer dying!");
+        KillEnemyOnOwnerClient();
     }
 
     public override void ReachedNodeInSearch() {
