@@ -102,6 +102,27 @@ internal class MoonPatch {
         }
     }
 
+    [HarmonyPatch(typeof(StartOfRound), "ChangeLevel")]
+    [HarmonyPrefix]
+    public static bool ProtectChangeLevel(StartOfRound __instance, int levelID) {
+        if(levelID >= 0 && levelID < __instance.levels.Length) {
+            return true;
+        }
+        Debug.Log($"level id: {0} (OVERRIDEN)");
+        Debug.Log("Changing level");
+        __instance.currentLevel = __instance.levels[0];
+        __instance.currentLevelID = 0;
+        TimeOfDay.Instance.currentLevel = __instance.currentLevel;
+        RoundManager.Instance.currentLevel = __instance.levels[0];
+        SoundManager.Instance.ResetSoundType();
+        return false;
+    }
+
+    public static void CheckLevelList(StartOfRound __instance) {
+
+    }
+
+    /*
     [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
     [HarmonyPrefix]
     public static bool SettleTimeIssue(StartOfRound __instance) {
@@ -138,8 +159,8 @@ internal class MoonPatch {
         Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
         WTOBase.LogToConsole($"END PRINT POST BASE FUNCTION VALUES:");
     }
-
-        [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
+    */
+    [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
     [HarmonyPrefix]
     private static bool SkipTODMusic() {
         return false;
@@ -249,6 +270,7 @@ internal class MoonPatch {
     }
     private static void ManageCustomSun() {
         //Ooblterra has no sun so we're getting rid of it
+        /*
         GameObject SunObject = GameObject.Find("SunWithShadows");
         GameObject SunAnimObject = GameObject.Find("SunAnimContainer");
         GameObject IndirectLight = GameObject.Find("Indirect");
@@ -257,6 +279,7 @@ internal class MoonPatch {
         GameObject.Destroy(SunObject);
         GameObject.Destroy(IndirectLight);
         OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
+        */
     }
     private static void ManageFootsteps() {
         const string FootstepPath = MoonPath + "Sound/Footsteps/";

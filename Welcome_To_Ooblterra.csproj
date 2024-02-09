@@ -47,7 +47,7 @@
       <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="LethalLevelLoader">
-      <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLevelLoader\LethalLevelLoader.dll</HintPath>
+      <HintPath>..\..\Lethal Company\BepInEx\DISABLEDMODS\LethalLevelLoader\LethalLevelLoader.dll</HintPath>
     </Reference>
     <Reference Include="LethalLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
