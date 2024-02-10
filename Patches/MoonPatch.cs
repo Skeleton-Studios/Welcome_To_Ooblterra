@@ -181,8 +181,11 @@ internal class MoonPatch {
         OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
         WTOBase.LogToConsole($"Fog animator found : {OoblFogAnimator != null}");
         if (TimeOfDay.Instance.sunAnimator == OoblFogAnimator){
+            WTOBase.LogToConsole($"Sun Animator IS fog animator, supposedly");
             return;
         }
+        TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
+        WTOBase.LogToConsole($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
     }
     [HarmonyPatch(typeof(TimeOfDay), "SetInsideLightingDimness")]
     [HarmonyPrefix]
