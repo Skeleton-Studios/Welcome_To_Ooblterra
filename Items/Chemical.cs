@@ -59,7 +59,6 @@ public class Chemical : GrabbableObject {
     public override void ItemInteractLeftRight(bool right) {
         base.ItemInteractLeftRight(right);
         if (!right && ShakeCooldownSeconds <= 0 && IsFull) {
-            GetComponent<AudioSource>().PlayOneShot(ShakeSounds[MyRandom.Next(0, ShakeSounds.Count - 1)]);
             ShakeCooldownSeconds = 1.2f;
             playerHeldBy.playerBodyAnimator.SetTrigger("shakeItem");
             ChangeChemColorAndEffect();
@@ -80,7 +79,6 @@ public class Chemical : GrabbableObject {
     }
     public void EmptyBeaker() {
         SetColorAndEffectServerRpc(7, -1);
-        SetScrapValue(scrapValue / 3);
     }
     public ChemColor GetCurrentColor() {
         return CurrentColor;
@@ -164,12 +162,13 @@ public class Chemical : GrabbableObject {
         SetColorAndEffect(color, effect);
     }
     private void SetColorAndEffect(int color, int effect) {
+        GetComponent<AudioSource>().PlayOneShot(ShakeSounds[MyRandom.Next(0, ShakeSounds.Count - 1)]);
         CurrentColor = (ChemColor)Enum.GetValues(typeof(ChemColor)).GetValue(color);
         BeakerMesh.materials[1].SetColor("_BaseColor", GetColorFromEnum(CurrentColor));
         RandomEffectIndex = effect;
         if(color == 7) {
             IsFull = false;
-            scrapValue /= 2;
+            SetScrapValue(scrapValue / 3);
         }
     }
 }

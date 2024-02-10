@@ -233,7 +233,7 @@ public class EyeSecAI : WTOEnemy {
         public override BehaviorState NextState() {
             EyeSecList[enemyIndex].StopAttackVisuals();
             EyeSecList[enemyIndex].StopScanVisuals(EyeSecList[enemyIndex].ShutdownSFX, 0);
-            EyeSecList[enemyIndex].ShutdownTimerSeconds = 30f;
+            EyeSecList[enemyIndex].ShutdownTimerSeconds = 30f; //240f;
             EyeSecList[enemyIndex].targetPlayer = null;
             return new ShutDown();
         }
@@ -243,7 +243,8 @@ public class EyeSecAI : WTOEnemy {
             return EyeSecList[enemyIndex].stunNormalizedTimer <= 0f && EyeSecList[enemyIndex].ShutdownTimerSeconds <= 0f;
         }
         public override BehaviorState NextState() {
-            EyeSecList[enemyIndex].ScanCooldownSeconds = 0;
+            EyeSecList[enemyIndex].ScanCooldownSeconds = 2;
+            EyeSecList[enemyIndex].Head.transform.rotation = Quaternion.identity;
             return new Patrol();
         }
     }
@@ -341,7 +342,7 @@ public class EyeSecAI : WTOEnemy {
             ScanFinished = true;
             targetPlayer = Player;
             ChangeOwnershipOfEnemy(Player.actualClientId);
-            ScanCooldownSeconds = 5;
+            ScanCooldownSeconds = 10;
             IsScanning = false;
             return;
         }
@@ -379,7 +380,7 @@ public class EyeSecAI : WTOEnemy {
     }
     private void TryFlash() {
         if(FlashCooldownSeconds <= 0) {
-            postStunInvincibilityTimer = 0.05f;
+            postStunInvincibilityTimer = 0.02f;
             Flash();
             FlashCooldownSeconds = 10f;
         }

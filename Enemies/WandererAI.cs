@@ -241,7 +241,18 @@ public class WandererAI : WTOEnemy {
     public void KillWandererAndSpawnParent(int KillerID) {
         WTOBase.LogToConsole($"Spawning Adult Wanderer targeting player ID {KillerID}");
         PlayerControllerB Killer = StartOfRound.Instance.allPlayerScripts[KillerID];
-        ItemPatch.SpawnItem(transform.position + new Vector3(0, 5, 0), internalID: 5);
+        //Spawn Wanderer Corpse
+        Item WandererCorpse = ItemPatch.ItemList[5].GetItem();
+        GameObject SpawnedItem = Object.Instantiate(WandererCorpse.spawnPrefab, base.transform.position + new Vector3(0, 5, 0), Quaternion.identity);
+        GrabbableObject ItemGrabbableObject = SpawnedItem.GetComponent<GrabbableObject>();
+        NetworkObject ItemNetworkObject = SpawnedItem.GetComponent<NetworkObject>();
+        int WandererCorpseValue = (int)(RoundManager.Instance.AnomalyRandom.Next(WandererCorpse.minValue, WandererCorpse.maxValue) * RoundManager.Instance.scrapValueMultiplier);
+
+        if (base.IsServer) {
+            ItemNetworkObject.Spawn();
+        }
+        SetCorpseValueServerRpc(ItemNetworkObject, WandererCorpseValue);
+
         Vector3 AdultSpawnPos = Killer.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), Killer.transform.forward * -1);
         Quaternion AdultSpawnRot = new Quaternion(0, Quaternion.LookRotation(Killer.transform.position - AdultSpawnPos).y, 0, 1);
         GameObject AdultWanderer = Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
@@ -256,5 +267,19 @@ public class WandererAI : WTOEnemy {
     public override void ReachedNodeInSearch() {
         base.ReachedNodeInSearch();
         ReachedNextPoint = true;
+    }
+
+    [ServerRpc]
+    public void SetCorpseValueServerRpc(NetworkObjectReference Corpse, int CorpseValue) {
+        SetCorpseValueClientRpc(Corpse, CorpseValue);
+    }
+
+    [ClientRpc]
+    public void SetCorpseValueClientRpc(NetworkObjectReference Corpse, int CorpseValue) {
+        Corpse.TryGet(out var ScrapNetworkobject);
+        GrabbableObject LocalCorpseRef = ScrapNetworkobject.GetComponent<GrabbableObject>();
+        if (LocalCorpseRef != null) {
+            LocalCorpseRef.SetScrapValue(CorpseValue);
+        }
     }
 }

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches;
@@ -65,6 +66,16 @@ internal class MonsterPatch {
         Debug.Log("Added " + AdultWandererContainer[0].enemyType.name + "To debug list");
 
         EnemiesInList = true;
+    }
+
+    [HarmonyPatch(typeof(EnemyAI), "SetEnemyStunned")]
+    [HarmonyPostfix]
+    private static void SetOwnershipToStunningPlayer(EnemyAI __instance) { 
+        if(__instance is not WTOEnemy) {
+            return;
+        }
+        WTOBase.LogToConsole($"Enemy: {__instance.GetType()} STUNNED BY: {__instance.stunnedByPlayer}; Switching ownership...");
+        __instance.ChangeOwnershipOfEnemy(__instance.stunnedByPlayer.actualClientId);
     }
     public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity, LethalLib.Modules.Enemies.SpawnType SpawnType, string InfoName = null, string KeywordName = null) {
             
