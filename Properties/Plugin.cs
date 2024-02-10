@@ -29,24 +29,23 @@ public class WTOBase : BaseUnityPlugin {
     public static ConfigFile ConfigFile;
     private const string modGUID = "SkullCrusher.WTO";
     private const string modName = "Welcome To Ooblterra";
-    private const string modVersion = "0.8.0";
+    private const string modVersion = "0.7.15";
 
     private readonly Harmony WTOHarmony = new Harmony(modGUID);
     internal ManualLogSource WTOLogSource;
     public static WTOBase Instance;
-    public static bool LightsOn = true;
-    public static bool SwitchState;
 
     public static AssetBundle LevelAssetBundle;
     public static AssetBundle ItemAssetBundle;
     public static AssetBundle FactoryAssetBundle;
     public static AssetBundle MonsterAssetBundle;
-    public static GameObject LabPrefab;
-    public static FrankensteinTerminal LabTerminal;
 
-
-    public static bool DoInteractCheck = false;
-    public static int InteractNumber = 0;
+    //public static bool LightsOn = true;
+    //public static bool SwitchState;
+    //public static GameObject LabPrefab;
+    //public static FrankensteinTerminal LabTerminal;
+    //public static bool DoInteractCheck = false;
+    //public static int InteractNumber = 0;
     public static void LogToConsole(string text) {
         text = "=======" + text + "=======";
         Debug.Log (text);
