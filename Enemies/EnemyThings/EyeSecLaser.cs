@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
 public class EyeSecLaser : MonoBehaviour {
@@ -36,6 +37,8 @@ public class EyeSecLaser : MonoBehaviour {
             return;
         }
         timeElapsed = 0;
+        Laser.startColor = Color.red;
+        Laser.endColor = Color.red;
     }
     public void SetLaserEnabled(bool NewEnabled, float LaserSpeed) {
         Laser.enabled = NewEnabled;
@@ -44,7 +47,8 @@ public class EyeSecLaser : MonoBehaviour {
             Laser.endColor = Color.green;
             timeElapsed = 0;
         } else {
-            LerpDuration = LaserSpeed;
+            timeElapsed = 0;
+            LerpDuration = LaserSpeed + 1;
         }
     }
 }

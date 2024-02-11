@@ -71,7 +71,7 @@ internal class MonsterPatch {
     [HarmonyPatch(typeof(EnemyAI), "SetEnemyStunned")]
     [HarmonyPostfix]
     private static void SetOwnershipToStunningPlayer(EnemyAI __instance) { 
-        if(__instance is not WTOEnemy) {
+        if(__instance is not WTOEnemy || __instance.stunnedByPlayer == null) {
             return;
         }
         WTOBase.LogToConsole($"Enemy: {__instance.GetType()} STUNNED BY: {__instance.stunnedByPlayer}; Switching ownership...");

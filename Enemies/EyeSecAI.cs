@@ -1,12 +1,7 @@
-﻿using DunGen;
-using GameNetcodeStuff;
+﻿using GameNetcodeStuff;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Xml.Schema;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
@@ -16,8 +11,8 @@ namespace Welcome_To_Ooblterra.Enemies;
 public class EyeSecAI : WTOEnemy {
 
     private const float ScanCooldownTotal = 20f;
-    private const float EyeSecDefaultSpeed = 3f;
-    private const float EyeSecAttackSpeed = 6f;
+    private const float EyeSecDefaultSpeed = 4f;
+    private const float EyeSecAttackSpeed = 8f;
     private const float EyeSecLaserSpeed = 8f;
 
     //BEHAVIOR STATES
@@ -69,7 +64,9 @@ public class EyeSecAI : WTOEnemy {
             ScanTimerSeconds += Time.deltaTime;
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EyeSecList[enemyIndex].StopScanVisuals(EyeSecList[enemyIndex].EndScanSFX, MyRandomInt);
+            EyeSecList[enemyIndex].StopScanVisuals(EyeSecList[enemyIndex].EndScanSFX, 20);
+            EyeSecList[enemyIndex].ScanCooldownSeconds = ScanCooldownTotal;
+            EyeSecList[enemyIndex].IsScanning = false;
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new ReturnToPatrol(),
@@ -80,13 +77,16 @@ public class EyeSecAI : WTOEnemy {
         private float laserTimer = 0;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //creatureAnimator.SetBool("Attacking", value: true);
+            EyeSecList[enemyIndex].StopScanVisuals(null, 20);
             EyeSecList[enemyIndex].StartAttackVisuals();
             EyeSecList[enemyIndex].agent.speed = 0f;
+            laserTimer = 0f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //creatureAnimator.SetBool("Attacking", value: true);
             EyeSecList[enemyIndex].TryFlash();
             EyeSecList[enemyIndex].TrackPlayerWithHead();
+            EyeSecList[enemyIndex].PlayerTracker.transform.position = EyeSecList[enemyIndex].targetPlayer.transform.position;
             laserTimer += Time.deltaTime;
             if (laserTimer > EyeSecLaserSpeed) {
                 EyeSecList[enemyIndex].targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Blast);
@@ -112,6 +112,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].SetDestinationToPosition(EyeSecList[enemyIndex].ChooseClosestNodeToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, true).position);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            EyeSecList[enemyIndex].TrackPlayerWithHead();
             EyeSecList[enemyIndex].SetDestinationToPosition(EyeSecList[enemyIndex].ChooseClosestNodeToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position).position);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -337,9 +338,8 @@ public class EyeSecAI : WTOEnemy {
             return;
         }
         CheckPlayerWhenScanned(victim);
-        //grab a list of all the items he has and check if its in the grabbable objects list
-
     }
+
     private void CheckPlayerWhenScanned(PlayerControllerB Player) {
         if (grabbableObjectsInMap.Contains(Player.currentlyHeldObjectServer)) {
             //if it is...
@@ -348,9 +348,6 @@ public class EyeSecAI : WTOEnemy {
             ScanFinished = true;
             targetPlayer = Player;
             ChangeOwnershipOfEnemy(Player.actualClientId);
-            ScanCooldownSeconds = ScanCooldownTotal;
-            IsScanning = false;
-            return;
         }
     }
     private void CheckPlayerDeepScan(PlayerControllerB Player) {
@@ -362,9 +359,7 @@ public class EyeSecAI : WTOEnemy {
                 ScanFinished = true;
                 targetPlayer = Player;
                 ChangeOwnershipOfEnemy(Player.actualClientId);
-                ScanCooldownSeconds = ScanCooldownTotal;
-                IsScanning = false;
-                return;
+                break;
             }
         }
     }
@@ -386,7 +381,7 @@ public class EyeSecAI : WTOEnemy {
     }
     private void TryFlash() {
         if(FlashCooldownSeconds <= 0) {
-            postStunInvincibilityTimer = 0.02f;
+            postStunInvincibilityTimer = 0.07f;
             Flash();
             FlashCooldownSeconds = 10f;
         }
@@ -445,7 +440,7 @@ public class EyeSecAI : WTOEnemy {
         SetScannerBoolOnServerRpc("Scanning", false);
         ScannerCollider.enabled = false;
         IsScanning = false;
-        ScanCooldownSeconds = NextScanTime;
+        ScanCooldownSeconds = ScanCooldownTotal;
     }
     public void StartAttackVisuals() {
         MyLaser.SetLaserEnabled(true, EyeSecLaserSpeed);
