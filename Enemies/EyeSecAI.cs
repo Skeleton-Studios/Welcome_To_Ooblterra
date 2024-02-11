@@ -1,4 +1,5 @@
-﻿using GameNetcodeStuff;
+﻿using DunGen;
+using GameNetcodeStuff;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -14,13 +15,18 @@ using Welcome_To_Ooblterra.Things;
 namespace Welcome_To_Ooblterra.Enemies;
 public class EyeSecAI : WTOEnemy {
 
+    private const float ScanCooldownTotal = 20f;
+    private const float EyeSecDefaultSpeed = 3f;
+    private const float EyeSecAttackSpeed = 6f;
+    private const float EyeSecLaserSpeed = 8f;
+
     //BEHAVIOR STATES
     private class Patrol : BehaviorState {
         public bool SearchInProgress;
         private int PatrolPointAttempts;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: true);
-            EyeSecList[enemyIndex].agent.speed = 9f; 
+            EyeSecList[enemyIndex].agent.speed = EyeSecDefaultSpeed; 
             EyeSecList[enemyIndex].StartSearch(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].SearchLab);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -82,7 +88,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].TryFlash();
             EyeSecList[enemyIndex].TrackPlayerWithHead();
             laserTimer += Time.deltaTime;
-            if (laserTimer > 2) {
+            if (laserTimer > EyeSecLaserSpeed) {
                 EyeSecList[enemyIndex].targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Blast);
                 EyeSecList[enemyIndex].creatureVoice.PlayOneShot(EyeSecList[enemyIndex].BurnSFX);
             }
@@ -100,7 +106,7 @@ public class EyeSecAI : WTOEnemy {
     }
     private class MoveToAttackPosition : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EyeSecList[enemyIndex].agent.speed = 9f;
+            EyeSecList[enemyIndex].agent.speed = EyeSecAttackSpeed;
             EyeSecList[enemyIndex].StopAttackVisuals();
             EyeSecList[enemyIndex].PlayerTracker.transform.position = EyeSecList[enemyIndex].transform.position;
             EyeSecList[enemyIndex].SetDestinationToPosition(EyeSecList[enemyIndex].ChooseClosestNodeToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, true).position);
@@ -233,7 +239,7 @@ public class EyeSecAI : WTOEnemy {
         public override BehaviorState NextState() {
             EyeSecList[enemyIndex].StopAttackVisuals();
             EyeSecList[enemyIndex].StopScanVisuals(EyeSecList[enemyIndex].ShutdownSFX, 0);
-            EyeSecList[enemyIndex].ShutdownTimerSeconds = 30f; //240f;
+            EyeSecList[enemyIndex].ShutdownTimerSeconds = 240f;
             EyeSecList[enemyIndex].targetPlayer = null;
             return new ShutDown();
         }
@@ -243,7 +249,7 @@ public class EyeSecAI : WTOEnemy {
             return EyeSecList[enemyIndex].stunNormalizedTimer <= 0f && EyeSecList[enemyIndex].ShutdownTimerSeconds <= 0f;
         }
         public override BehaviorState NextState() {
-            EyeSecList[enemyIndex].ScanCooldownSeconds = 2;
+            EyeSecList[enemyIndex].ScanCooldownSeconds = ScanCooldownTotal;
             EyeSecList[enemyIndex].Head.transform.rotation = Quaternion.identity;
             return new Patrol();
         }
@@ -342,7 +348,7 @@ public class EyeSecAI : WTOEnemy {
             ScanFinished = true;
             targetPlayer = Player;
             ChangeOwnershipOfEnemy(Player.actualClientId);
-            ScanCooldownSeconds = 10;
+            ScanCooldownSeconds = ScanCooldownTotal;
             IsScanning = false;
             return;
         }
@@ -356,7 +362,7 @@ public class EyeSecAI : WTOEnemy {
                 ScanFinished = true;
                 targetPlayer = Player;
                 ChangeOwnershipOfEnemy(Player.actualClientId);
-                ScanCooldownSeconds = 5;
+                ScanCooldownSeconds = ScanCooldownTotal;
                 IsScanning = false;
                 return;
             }
@@ -365,7 +371,7 @@ public class EyeSecAI : WTOEnemy {
     private void SpinWheel() {
         //Wheel.transform.forward = agent.transform.forward;
         if(agent.speed > 0) {
-            Wheel.transform.Rotate(-160 * Time.deltaTime, 0, 0);
+            Wheel.transform.Rotate(-40 * Time.deltaTime, 0, 0);
             if (!PlayingMoveSound) {
                 creatureSFX.clip = MoveSFX;
                 creatureSFX.Play();
@@ -442,13 +448,13 @@ public class EyeSecAI : WTOEnemy {
         ScanCooldownSeconds = NextScanTime;
     }
     public void StartAttackVisuals() {
-        MyLaser.SetLaserEnabled(true);
+        MyLaser.SetLaserEnabled(true, EyeSecLaserSpeed);
         creatureVoice.PlayOneShot(AttackSFX);
         PlayerTracker.transform.position = targetPlayer.transform.position;
 
     }
     public void StopAttackVisuals() {
-        MyLaser.SetLaserEnabled(false);
+        MyLaser.SetLaserEnabled(false, -1);
     }
     public void TrackPlayerWithHead() {
         Quaternion LookRot = new Quaternion();
