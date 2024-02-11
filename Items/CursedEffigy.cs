@@ -46,7 +46,7 @@ internal class CursedEffigy : GrabbableObject {
         if (MyOwner.isPlayerDead) {
             if (!MimicSpawned) {
                 MyOwner = StartOfRound.Instance.allPlayerScripts[OwnerID];
-                CreateMimicServerRpc(MyOwner.isInsideFactory, MyOwner.transform.position);
+                CreateMimicServerRpc(MyOwner.isInsideFactory, MyOwner.transform.position, OwnerID);
                 MimicSpawned = true;
                 WTOBase.LogToConsole($"Effigy knows that owning player {MyOwner} is dead!");
             }
@@ -55,12 +55,12 @@ internal class CursedEffigy : GrabbableObject {
     }
 
     [ServerRpc]
-    public void CreateMimicServerRpc(bool inFactory, Vector3 playerPositionAtDeath) {
-        if (OwnerID == -1) {
+    public void CreateMimicServerRpc(bool inFactory, Vector3 playerPositionAtDeath, int OwnerClientID) {
+        if (OwnerClientID == -1) {
             Debug.LogError("Effigy does not have owner!");
             return;
         }
-        MyOwner = StartOfRound.Instance.allPlayerScripts[OwnerID];
+        MyOwner = StartOfRound.Instance.allPlayerScripts[OwnerClientID];
         Debug.Log("Server creating mimic from Effigy");
         Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(playerPositionAtDeath, default, 10f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
@@ -77,7 +77,6 @@ internal class CursedEffigy : GrabbableObject {
         if (netObjectRef.TryGet(out var networkObject)) {
             Debug.Log("Got network object for WTOMimic");
             MaskedPlayerEnemy component = networkObject.GetComponent<MaskedPlayerEnemy>();
-            component.SetSuit(MyOwner.currentSuitID);
             component.mimickingPlayer = MyOwner;
             component.SetEnemyOutside(!inFactory);
             component.SetVisibilityOfMaskedEnemy();
@@ -90,11 +89,12 @@ internal class CursedEffigy : GrabbableObject {
             MyOwner.redirectToEnemy = component;
             OwnerBody.DeactivateBody(setActive: false);
         }
-        CreateMimicClientRpc(netObjectRef, inFactory);
+        CreateMimicClientRpc(netObjectRef, inFactory, OwnerClientID);
     }
 
     [ClientRpc]
-    public void CreateMimicClientRpc(NetworkObjectReference netObjectRef, bool inFactory) {
+    public void CreateMimicClientRpc(NetworkObjectReference netObjectRef, bool inFactory, int OwnerClientID) {
+        MyOwner = StartOfRound.Instance.allPlayerScripts[OwnerID];
         StartCoroutine(waitForMimicEnemySpawn(netObjectRef, inFactory));
     }
 
