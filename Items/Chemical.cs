@@ -42,7 +42,7 @@ public class Chemical : GrabbableObject {
         int StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
         StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
         SetScrapValue(StartingScrapValue);
-        ChangeChemColorAndEffect();
+        ChangeChemColorAndEffect(false);
 
     }
     public override void Update() {
@@ -64,11 +64,11 @@ public class Chemical : GrabbableObject {
             ChangeChemColorAndEffect();
         }
     }
-    private void ChangeChemColorAndEffect() {
+    private void ChangeChemColorAndEffect(bool PlayShakeSound = true) {
         int NextColor = GetNextRandomInt();
         int NextRandomEffect = MyRandom.Next(0, 7);
         WTOBase.LogToConsole($"Next Color Value: {(ChemColor)NextColor}");
-        SetColorAndEffectServerRpc(NextColor, NextRandomEffect);
+        SetColorAndEffectServerRpc(NextColor, NextRandomEffect, PlayShakeSound);
     }
     private int GetNextRandomInt() {
         int NextInt = MyRandom.Next(0, 7);
@@ -153,16 +153,18 @@ public class Chemical : GrabbableObject {
     }
 
     [ServerRpc]
-    private void SetColorAndEffectServerRpc(int color, int effect) {
-        SetColorAndEffectClientRpc(color, effect);
+    private void SetColorAndEffectServerRpc(int color, int effect, bool PlayShakeSound = true) {
+        SetColorAndEffectClientRpc(color, effect, PlayShakeSound);
     }
 
     [ClientRpc]
-    private void SetColorAndEffectClientRpc(int color, int effect) {
-        SetColorAndEffect(color, effect);
+    private void SetColorAndEffectClientRpc(int color, int effect, bool PlayShakeSound = true) {
+        SetColorAndEffect(color, effect, PlayShakeSound);
     }
-    private void SetColorAndEffect(int color, int effect) {
-        GetComponent<AudioSource>().PlayOneShot(ShakeSounds[MyRandom.Next(0, ShakeSounds.Count - 1)]);
+    private void SetColorAndEffect(int color, int effect, bool PlayShakeSound = true) {
+        if (PlayShakeSound) { 
+            GetComponent<AudioSource>().PlayOneShot(ShakeSounds[MyRandom.Next(0, ShakeSounds.Count - 1)]);
+        }
         CurrentColor = (ChemColor)Enum.GetValues(typeof(ChemColor)).GetValue(color);
         BeakerMesh.materials[1].SetColor("_BaseColor", GetColorFromEnum(CurrentColor));
         RandomEffectIndex = effect;

@@ -29,6 +29,9 @@ internal class ItemPatch {
     [HarmonyPatch(typeof(RoundManager), "SetLockedDoors")]
     [HarmonyPrefix]
     private static void ReplaceKeys(RoundManager __instance) {
+        if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+            return;
+        }
         GameObject KeyObject = GameObject.Instantiate(WTOBase.ItemAssetBundle.LoadAsset<GameObject>("Assets/CustomItems/OoblKey.prefab"), __instance.mapPropsContainer.transform);
         __instance.keyPrefab = KeyObject;
     }

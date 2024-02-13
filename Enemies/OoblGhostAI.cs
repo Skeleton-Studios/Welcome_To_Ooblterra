@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
 internal class OoblGhostAI : WTOEnemy {
@@ -13,7 +14,7 @@ internal class OoblGhostAI : WTOEnemy {
     //STATES
     private class WaitForNextAttack : BehaviorState {
         public WaitForNextAttack() {
-            RandomRange = new Vector2(27, 45);
+            RandomRange = new Vector2(3, 5);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
@@ -43,6 +44,7 @@ internal class OoblGhostAI : WTOEnemy {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //Check and make sure the chosen player's height stays the same for about 3 seconds, with 1 second of acceptable variation time
             if (TargetPlayerYAxisValue == GhostList[enemyIndex].PlayerToAttack.transform.position.y) {
+                GhostList[enemyIndex].TrackPlayerMovementSeconds -= Time.deltaTime;
                 return;
             }
             if(TargetPlayerYAxisValue != GhostList[enemyIndex].PlayerToAttack.transform.position.y && SecondsSincePlayerWasOffPosition < 1f) {
@@ -68,16 +70,20 @@ internal class OoblGhostAI : WTOEnemy {
         public GoTowardPlayer() {
             RandomRange = new Vector2(-3000, 3000);
         }
-        Vector2 DirectionVector;
-        Vector3 TargetGhostPos;
+        Vector3 DirectionVector;
+        Vector3 TargetGhostPosition;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
             GhostList[enemyIndex].creatureVoice.Play();
-            GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].YAxisLockedTo, MyRandomInt);
+            //GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].YAxisLockedTo, MyRandomInt);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            DirectionVector = (GhostList[enemyIndex].TargetPlayerPosition - GhostList[enemyIndex].SelfPosition).normalized;
-            if (GhostList[enemyIndex].SelfPosition != GhostList[enemyIndex].TargetPlayerPosition) {
-                GhostList[enemyIndex].transform.position += new Vector3(GhostList[enemyIndex].SelfPosition.x += DirectionVector.x * 7 * Time.deltaTime, GhostList[enemyIndex].YAxisLockedTo, GhostList[enemyIndex].SelfPosition.y += DirectionVector.y * 7 * Time.deltaTime);
+            DirectionVector = (GhostList[enemyIndex].PlayerToAttack.transform.position - GhostList[enemyIndex].transform.position).normalized;
+            WTOBase.LogToConsole($"DIRECTION: {DirectionVector}");
+            if (GhostList[enemyIndex].transform.position != GhostList[enemyIndex].PlayerToAttack.transform.position) {
+                GhostList[enemyIndex].transform.position += DirectionVector * 3 * Time.deltaTime;
+                //GhostList[enemyIndex].transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up);
+                //GhostList[enemyIndex].transform.position = new Vector3(GhostList[enemyIndex].transform.position.x, GhostList[enemyIndex].YAxisLockedTo, GhostList[enemyIndex].transform.position.z);
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -135,27 +141,24 @@ internal class OoblGhostAI : WTOEnemy {
     private float SecondsUntilGhostWillAttack;
     private float TrackPlayerMovementSeconds = 3f;
     private float YAxisLockedTo;
+    public AudioClip StartupSound;
 
     public override void Start() {
-        MyValidState = PlayerState.Outside;
+        MyValidState = PlayerState.Inside;
         InitialState = new WaitForNextAttack();
-        PrintDebugs = false;
+        PrintDebugs = true;
         GhostID++;
         WTOEnemyID = GhostID;
-        transform.position = new Vector3(0, -300, 0);
-
+        //transform.position = new Vector3(0, -300, 0);
         LogMessage($"Adding Oobl Ghost {this} #{GhostID}");
         GhostList.Add(GhostID, this);
         base.Start();
     }
 
     public override void Update() {
+        //WTOBase.LogToConsole($"{SecondsUntilGhostWillAttack}");
         LowerTimerValue(ref SecondsUntilGhostWillAttack);
         base.Update();
-        SelfPosition = new Vector2(transform.position.x, transform.position.z);
-        if (PlayerToAttack != null) {
-            TargetPlayerPosition = new Vector2(PlayerToAttack.transform.position.x, PlayerToAttack.transform.position.z);
-        }
     }
 
     public PlayerControllerB FindMostHauntedPlayer(System.Random EnemyRandom, List<PlayerControllerB> PlayersToCheck) {
@@ -206,6 +209,7 @@ internal class OoblGhostAI : WTOEnemy {
                 }
             }
         }
+        WTOBase.LogToConsole($"GHOST HAUNTING {ResultingPlayer}");
         return ResultingPlayer;
     }
 }

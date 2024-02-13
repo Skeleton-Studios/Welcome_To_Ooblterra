@@ -39,7 +39,7 @@ public class WTOBattery : GrabbableObject {
             WTOBase.LogToConsole("Setting Battery State to Charged");
             ScanNode.headerText = "Charged Battery";
             mainObjectRenderer.SetMaterials(new List<Material>() { ChargedMaterial });
-            StartingScrapValue = ScrapValueRandom.Next(750, 950);
+            StartingScrapValue = ScrapValueRandom.Next(450, 550);
         }
         SetScrapValue(StartingScrapValue);
     }
