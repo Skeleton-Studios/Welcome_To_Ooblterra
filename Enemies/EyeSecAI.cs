@@ -10,8 +10,8 @@ using Welcome_To_Ooblterra.Things;
 namespace Welcome_To_Ooblterra.Enemies;
 public class EyeSecAI : WTOEnemy {
 
-    private const float ScanCooldownTotal = 20f;
-    private const float EyeSecDefaultSpeed = 4f;
+    private const float ScanCooldownTotal = 30f;
+    private const float EyeSecDefaultSpeed = 5f;
     private const float EyeSecAttackSpeed = 8f;
     private const float EyeSecLaserSpeed = 8f;
 
@@ -146,7 +146,7 @@ public class EyeSecAI : WTOEnemy {
         public override bool CanTransitionBeTaken() {
             //Grab a list of every player in range
             bool CanInvestigate = EyeSecList[enemyIndex].enemyRandom.Next(0, 50) > 35;
-            PlayerControllerB[] players = EyeSecList[enemyIndex].GetAllPlayersInLineOfSight(180, 3);
+            PlayerControllerB[] players = EyeSecList[enemyIndex].GetAllPlayersInLineOfSight(180, 5);
 
             if (players == null || EyeSecList[enemyIndex].ScanCooldownSeconds > 0) {
                 return false;

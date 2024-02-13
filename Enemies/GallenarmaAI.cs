@@ -306,6 +306,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     }
     private class FoundEnemy : StateTransition {
         public override bool CanTransitionBeTaken() {
+            /*
             PlayerControllerB PotentialTargetPlayer = GallenarmaList[enemyIndex].CheckLineOfSightForClosestPlayer(180f, 7);
             if (PotentialTargetPlayer == null) {
                 return false;
@@ -313,6 +314,25 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].targetPlayer = PotentialTargetPlayer;
             GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
             return true;
+            */
+            PlayerControllerB PlayerClosestToGallenama = GallenarmaList[enemyIndex].GetClosestPlayerToPosition(GallenarmaList[enemyIndex].transform.position);
+            if (Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToGallenama.transform.position) < 3) {
+                GallenarmaList[enemyIndex].targetPlayer = PlayerClosestToGallenama;
+                GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
+                return true;
+            }
+            if (GallenarmaList[enemyIndex].LatestNoise.Loudness == -1) {
+                return false;
+            } else {
+                PlayerControllerB PlayerClosestToLastNoise = GallenarmaList[enemyIndex].GetClosestPlayerToPosition(GallenarmaList[enemyIndex].transform.position);
+                
+                if (PlayerClosestToLastNoise == null || Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToLastNoise.transform.position) > 7) {
+                    return false;
+                }
+                GallenarmaList[enemyIndex].targetPlayer = PlayerClosestToLastNoise;
+                GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
+                return true;
+            }
         }
         public override BehaviorState NextState() {
                 return new Enraged();
@@ -444,7 +464,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     }
 
     public float TotalInvestigateSeconds;
-    public float RandomAwakeTimerSeconds = 5f;
+    public float RandomAwakeTimerSeconds = 60f;
     private bool asleep = true;
     private bool Awakening = false;
     private float SecondsUntilChainsBroken;
@@ -462,7 +482,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     public static int GallenarmaID;
     private AISearchRoutine RoamLab = new AISearchRoutine();
     private bool HasBeenEnragedThisCycle;
-
+    public BoxCollider GallenarmaHitbox;
     public AudioClip Growl;
     public AudioClip GallenarmaScream;
     public AudioClip GallenarmaBeatChest;
@@ -516,6 +536,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         SetAnimTriggerOnServerRpc("Hit");
         if (enemyHP <= 0) {
             SetAnimTriggerOnServerRpc("Killed");
+            GallenarmaHitbox.enabled = false;
             isEnemyDead = true;
             creatureVoice.Stop();
             if (base.IsOwner) {
@@ -528,7 +549,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         //If we're attacked by a player, they need to be immediately set to our target player
         targetPlayer = playerWhoHit;
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
-        OverrideState(new Investigate());
+        if (!(ActiveState is Attack || ActiveState is Chase) || ActiveState is Enraged) {
+            OverrideState(new Enraged());
+        }
     }
     public override void DetectNoise(Vector3 noisePosition, float noiseLoudness, int timesNoisePlayedInOneSpot = 0, int noiseID = 0) {
         base.DetectNoise(noisePosition, noiseLoudness, timesNoisePlayedInOneSpot, noiseID);
@@ -538,7 +561,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         } else if (stunNormalizedTimer > 0f || noiseID == 7 || noiseID == 546 || hearNoiseCooldown > 0f || timesNoisePlayedInOneSpot > 15 || isEnemyDead) {
             return;
         }
-
+        if (TotalInvestigateSeconds > 0) {
+            noiseLoudness *= 3f;
+        }
         if (Awakening) {
             float randomTimeReduction = (float)(SecondsUntilChainsBroken - (0.01 * enemyRandom.Next(50, 250)));
             SecondsUntilChainsBroken = Math.Max(randomTimeReduction, 0.8f);
@@ -552,10 +577,10 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             num2 /= 2f;
         }
 
-        if (noiseLoudness < 0.025f) {
+        if (noiseLoudness < 0.1f) {
             return;
         }
-        if (!(ActiveState is Attack || ActiveState is Chase)) { 
+        if (!(ActiveState is Attack || ActiveState is Chase )) { 
             ChangeOwnershipOfEnemy(NetworkManager.Singleton.LocalClientId);
         }
         LatestNoise = new NoiseInfo(noisePosition, noiseLoudness);
@@ -579,11 +604,26 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         if (RandomAwakeTimerSeconds > 0f) {
             return;
         }
-        /*
-        if(enemyRandom.Next(0, 100) < 2) {
-            LatestNoise = new NoiseInfo(Instance.transform.position, 2);
+       
+        if(enemyRandom.Next(0, 100) < 50) {
+            LatestNoise = new NoiseInfo(transform.position, 2);
         }
-        RandomAwakeTimerSeconds = 5f;
-        */
+        RandomAwakeTimerSeconds = 60f;
+    }
+    public PlayerControllerB GetClosestPlayerToPosition(Vector3 position) {
+        if(position == new Vector3(-1, -1, -1)) {
+            return null;
+        }
+        PlayerControllerB NearestPlayer = null;
+        float CurrentNearestPlayerDistance = 20000;
+        float NextPlayerDistance;
+        foreach(PlayerControllerB NextPlayer in StartOfRound.Instance.allPlayerScripts) {
+            NextPlayerDistance = Vector3.Distance(position, NextPlayer.transform.position);
+            if (NextPlayerDistance < CurrentNearestPlayerDistance) {
+                NearestPlayer = NextPlayer;
+                CurrentNearestPlayerDistance = NextPlayerDistance;
+            }
+        }
+        return NearestPlayer;
     }
 }
