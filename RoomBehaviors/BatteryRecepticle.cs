@@ -113,6 +113,8 @@ public class BatteryRecepticle : NetworkBehaviour {
         InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
         RecepticleHasBattery = true;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
+        WTOBattery PoweredBattery = FindObjectsOfType<WTOBattery>().First(x => x.HasCharge);
+        PoweredBattery.transform.rotation = BatteryTransform.rotation;
         InsertBatteryServerRpc();
         Debug.Log("discard held object called from placeobject");
         if(InsertedBattery.HasCharge) {
