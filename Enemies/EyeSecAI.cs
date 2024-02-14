@@ -1,5 +1,6 @@
 ﻿using DunGen;
 using GameNetcodeStuff;
+using LethalLib.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -26,6 +27,9 @@ public class EyeSecAI : WTOEnemy {
             creatureAnimator.SetBool("Moving", value: true);
             EyeSecList[enemyIndex].agent.speed = EyeSecDefaultSpeed; 
             EyeSecList[enemyIndex].StartSearch(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].SearchLab);
+            EyeSecList[enemyIndex].FoundPlayerHoldingScrap = false;
+            EyeSecList[enemyIndex].targetPlayer = null;
+            EyeSecList[enemyIndex].ResetEyesecHeadPos();
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (!EyeSecList[enemyIndex].SearchLab.inProgress) {
@@ -45,7 +49,7 @@ public class EyeSecAI : WTOEnemy {
         public float ScanTimerSeconds = 0;
         private int SecondsToScan = 4;
         public ScanEnemies() {
-            RandomRange = new Vector2(25, 45);
+            RandomRange = new Vector2(7, 35);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EyeSecList[enemyIndex].creatureAnimator.enabled = false;
@@ -117,8 +121,8 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].SetDestinationToPosition(EyeSecList[enemyIndex].ChooseClosestNodeToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, true).position);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EyeSecList[enemyIndex].TrackPlayerWithHead();
-            EyeSecList[enemyIndex].SetDestinationToPosition(EyeSecList[enemyIndex].ChooseClosestNodeToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position).position);
+            //EyeSecList[enemyIndex].TrackPlayerWithHead();
+            EyeSecList[enemyIndex].SetMovingTowardsTargetPlayer(EyeSecList[enemyIndex].targetPlayer);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -199,8 +203,7 @@ public class EyeSecAI : WTOEnemy {
             return false;
         }
         public override BehaviorState NextState() {
-            EyeSecList[enemyIndex].FoundPlayerHoldingScrap = false;
-            EyeSecList[enemyIndex].targetPlayer = null;
+
             return new Patrol();
         }
 
@@ -210,24 +213,15 @@ public class EyeSecAI : WTOEnemy {
             return !EyeSecList[enemyIndex].HasLineOfSightToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f, 15);
         }
         public override BehaviorState NextState() {
-            if (!EyeSecList[enemyIndex].PlayerIsTargetable(EyeSecList[enemyIndex].targetPlayer)) { 
-                return new Patrol();
-            }
             return new MoveToAttackPosition();
         }
 
     }
     private class InRangeOfPlayer : StateTransition {
         public override bool CanTransitionBeTaken() {
-            if (!EyeSecList[enemyIndex].PlayerIsTargetable(EyeSecList[enemyIndex].targetPlayer)) {
-                return true;
-            }
             return EyeSecList[enemyIndex].HasLineOfSightToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f);
         }
         public override BehaviorState NextState() {
-            if (!EyeSecList[enemyIndex].PlayerIsTargetable(EyeSecList[enemyIndex].targetPlayer)) {
-                return new Patrol();
-            }
             return new Attack();
         }
     }
@@ -236,8 +230,6 @@ public class EyeSecAI : WTOEnemy {
             return !EyeSecList[enemyIndex].PlayerCanBeTargeted(EyeSecList[enemyIndex].targetPlayer);
         }
         public override BehaviorState NextState() {
-            EyeSecList[enemyIndex].targetPlayer = null;
-            EyeSecList[enemyIndex].FoundPlayerHoldingScrap = false;
             return new Patrol();
         }
     }
@@ -258,7 +250,7 @@ public class EyeSecAI : WTOEnemy {
             return EyeSecList[enemyIndex].stunNormalizedTimer <= 0f && EyeSecList[enemyIndex].ShutdownTimerSeconds <= 0f;
         }
         public override BehaviorState NextState() {
-            EyeSecList[enemyIndex].ScanCooldownSeconds = ScanCooldownTotal / 5;
+            EyeSecList[enemyIndex].ScanCooldownSeconds = 0;
             EyeSecList[enemyIndex].creatureVoice.PlayOneShot(EyeSecList[enemyIndex].StartupSFX);
             return new Patrol();
         }
@@ -364,6 +356,7 @@ public class EyeSecAI : WTOEnemy {
             return;
         }
         LogMessage("Player found, trying to scan him...");
+        ChangeOwnershipOfEnemy(victim.actualClientId);
         if (IsDeepScan) {
             CheckPlayerDeepScan(victim);
             return;
@@ -378,7 +371,7 @@ public class EyeSecAI : WTOEnemy {
             FoundPlayerHoldingScrap = true;
             ScanFinished = true;
             targetPlayer = Player;
-            ChangeOwnershipOfEnemy(Player.actualClientId);
+
         }
     }
     private void CheckPlayerDeepScan(PlayerControllerB Player) {
@@ -389,7 +382,6 @@ public class EyeSecAI : WTOEnemy {
                 FoundPlayerHoldingScrap = true;
                 ScanFinished = true;
                 targetPlayer = Player;
-                ChangeOwnershipOfEnemy(Player.actualClientId);
                 break;
             }
         }
@@ -456,9 +448,9 @@ public class EyeSecAI : WTOEnemy {
         ScanFinished = false;
         IsScanning = true;
         if (IsDeepScan) {
-            ScannerMesh.materials[0].SetColor("_BaseColor", new Color(1, 0, 0));
+            ScannerMesh.materials[0].SetColor("_EmissiveColor", new Color(1, 0, 0));
         } else {
-            ScannerMesh.materials[0].SetColor("_BaseColor", new Color(0, 1, 1));
+            ScannerMesh.materials[0].SetColor("_EmissiveColor", new Color(0, 1, 1));
         }
         SetScannerBoolOnServerRpc("Scanning", true);
     }
@@ -486,6 +478,10 @@ public class EyeSecAI : WTOEnemy {
         Quaternion LookRot = new Quaternion();
         LookRot.SetLookRotation((targetPlayer.transform.position - transform.position) * -1);
         Head.transform.rotation = LookRot;
+    }
+
+    private void ResetEyesecHeadPos() {
+        Head.transform.rotation = Quaternion.identity;
     }
 
 }
