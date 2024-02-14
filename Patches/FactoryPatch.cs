@@ -147,48 +147,33 @@ internal class FactoryPatch {
         if (__instance.currentLevel.spawnableMapObjects.Length == 0) {
             return true;
         }
-        System.Random random = new System.Random(StartOfRound.Instance.randomMapSeed + 587);
+        System.Random MapHazardRandom = new System.Random(StartOfRound.Instance.randomMapSeed + 587);
         __instance.mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
-        RandomMapObject[] array = UnityEngine.Object.FindObjectsOfType<RandomMapObject>();
-        /*
-        WTOBase.LogToConsole("BEGIN PRINT LIST OF RANDOM MAP OBJECTS");
-        foreach(RandomMapObject Object in array) {
-            Debug.Log(Object.name);
-        }
-        WTOBase.LogToConsole("END PRINT LIST OF RANDOM MAP OBJECTS");
-        */
-        for (int i = 0; i < __instance.currentLevel.spawnableMapObjects.Length; i++) {
-            List<RandomMapObject> list = new List<RandomMapObject>();
-            //WTOBase.LogToConsole($"CURRENT OBJECT BEING CONSIDERED: {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name}");
-            int num = (int)__instance.currentLevel.spawnableMapObjects[i].numberToSpawn.Evaluate((float)random.NextDouble());
-            if (__instance.increasedMapHazardSpawnRateIndex == i) {
-                num = Mathf.Min(num * 2, 150);
+        RandomMapObject[] AllRandomSpawnList = UnityEngine.Object.FindObjectsOfType<RandomMapObject>();
+        for (int MapObjectIndex = 0; MapObjectIndex < __instance.currentLevel.spawnableMapObjects.Length; MapObjectIndex++) {
+            List<RandomMapObject> ValidRandomSpawnList = new List<RandomMapObject>();
+            int MapObjectsToSpawn = (int)__instance.currentLevel.spawnableMapObjects[MapObjectIndex].numberToSpawn.Evaluate((float)MapHazardRandom.NextDouble());
+            if (__instance.increasedMapHazardSpawnRateIndex == MapObjectIndex) {
+                MapObjectsToSpawn = Mathf.Min(MapObjectsToSpawn * 2, 150);
             }
-            if (num <= 0) {
+            if (MapObjectsToSpawn <= 0) {
                 continue;
             }
-            for (int j = 0; j < array.Length; j++) {
-                //WTOBase.LogToConsole($"DOES OBJECT {array[j].name} CONTAIN {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name} ? -> {array[j].spawnablePrefabs.Contains(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn)} ");
-                if (array[j].spawnablePrefabs.Contains(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn)) {
-                    list.Add(array[j]);
+            for (int NextSpawnIndex = 0; NextSpawnIndex < AllRandomSpawnList.Length; NextSpawnIndex++) {
+                if (AllRandomSpawnList[NextSpawnIndex].spawnablePrefabs.Contains(__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn)) {
+                    ValidRandomSpawnList.Add(AllRandomSpawnList[NextSpawnIndex]);
                 }
             }
-            /*WTOBase.LogToConsole("BEGIN PRINT LIST OF VALID MAP OBJECTS");
-            foreach (RandomMapObject Object in list) {
-                Debug.Log(Object.name);
-            }
-            WTOBase.LogToConsole("END PRINT LIST OF VALID MAP OBJECTS");*/
-            for (int k = 0; k < num; k++) {
+            for (int i = 0; i < MapObjectsToSpawn; i++) {
                 //lol
-                if(list.Count <= 0) {
+                if(ValidRandomSpawnList.Count <= 0) {
                     continue;
                 }
-                RandomMapObject randomMapObject = list[random.Next(0, list.Count)];
-                Vector3 position = randomMapObject.transform.position;
-                //WTOBase.LogToConsole($"SPAWNING {__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn.name} AT {randomMapObject.name}");
-                GameObject gameObject = UnityEngine.Object.Instantiate(__instance.currentLevel.spawnableMapObjects[i].prefabToSpawn, position, randomMapObject.transform.rotation, __instance.mapPropsContainer.transform);
-                gameObject.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
-                GameObject.Destroy(randomMapObject);
+                RandomMapObject RandomSpawn = ValidRandomSpawnList[MapHazardRandom.Next(0, ValidRandomSpawnList.Count)];
+                Vector3 SpawnPos = RandomSpawn.transform.position;
+                GameObject NewHazard = UnityEngine.Object.Instantiate(__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn, SpawnPos, RandomSpawn.transform.rotation, __instance.mapPropsContainer.transform);
+                NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+                ValidRandomSpawnList.Remove(RandomSpawn);
             }
         }
         return false;
