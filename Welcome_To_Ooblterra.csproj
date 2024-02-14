@@ -199,7 +199,6 @@
     <Compile Include="Things\LightComponent.cs" />
     <Compile Include="Security\TeslaCoil.cs" />
     <Compile Include="Things\StartRoomLight.cs" />
-    <Compile Include="Things\TripLaser.cs" />
     <Compile Include="Things\WideDoorway.cs" />
   </ItemGroup>
   <ItemGroup>
