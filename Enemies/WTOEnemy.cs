@@ -166,13 +166,13 @@ public class WTOEnemy : EnemyAI {
         return enemyRandom.Next((int)Range.x, (int)Range.y);
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     internal void SetAnimTriggerOnServerRpc(string name) {
         if (IsServer) {
             creatureAnimator.SetTrigger(name);
         }
     }      
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     internal void SetAnimBoolOnServerRpc(string name, bool state) {
         if (IsServer) {
             creatureAnimator.SetBool(name, state);
