@@ -36,8 +36,11 @@ internal class TerminalPatch {
     }
     [HarmonyPatch(typeof(RoundManager), "Start")]
     [HarmonyPostfix]
+    [HarmonyPriority(500)]
     private static void SwitchNodes(RoundManager __instance) {
-
+        ExtendedLevel OoblterraRef = LevelBundle.LoadAsset<ExtendedLevel>("Assets/CustomMoon/OoblterraExtendedLevel.asset");
+        ExtendedLevel Ooblterra = PatchedContent.ExtendedLevels.Find(x => x.selectableLevel == OoblterraRef.selectableLevel);
+        Ooblterra.routeConfirmNode.displayText = "Routing autopilot to 523-Ooblterra.\r\nYour new balance is [playerCredits].\r\n\r\nRouting to external planets may take a while.\r\nPlease enjoy your flight.\r\n\r\n";
     }
     //METHODS
     public static void Start() {
