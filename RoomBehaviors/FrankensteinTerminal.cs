@@ -289,15 +289,15 @@ public class FrankensteinTerminal : NetworkBehaviour {
         if (PlayerToRevive.isPlayerDead) {
             PlayerToRevive.isPlayerDead = false;
             PlayerToRevive.isPlayerControlled = true;
-            PlayerToRevive.isInElevator = true;
-            PlayerToRevive.isInHangarShipRoom = true;
-            PlayerToRevive.isInsideFactory = false;
+            PlayerToRevive.isInElevator = false;
+            PlayerToRevive.isInHangarShipRoom = false;
+            PlayerToRevive.isInsideFactory = true;
             PlayerToRevive.wasInElevatorLastFrame = false;
             StartOfRound.Instance.SetPlayerObjectExtrapolate(enable: false);
             PlayerToRevive.TeleportPlayer(SpawnLoc);
             PlayerToRevive.setPositionOfDeadPlayer = false;
             PlayerToRevive.DisablePlayerModel(StartOfRound.Instance.allPlayerObjects[ID], enable: true, disableLocalArms: true);
-            PlayerToRevive.helmetLight.enabled = false;
+            PlayerToRevive.helmetLight.enabled = true;
             Debug.Log("Reviving players C");
             PlayerToRevive.Crouch(crouch: false);
             PlayerToRevive.criticallyInjured = false;
