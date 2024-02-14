@@ -101,7 +101,7 @@ internal class MoonPatch {
             LevelStartHasBeenRun = false;
         }
     }
-
+    /*
     [HarmonyPatch(typeof(StartOfRound), "ChangeLevel")]
     [HarmonyPrefix]
     public static bool ProtectChangeLevel(StartOfRound __instance, int levelID) {
@@ -117,7 +117,7 @@ internal class MoonPatch {
         SoundManager.Instance.ResetSoundType();
         return false;
     }
-
+    */
     public static void CheckLevelList(StartOfRound __instance) {
 
     }
