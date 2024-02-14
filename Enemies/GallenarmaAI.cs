@@ -105,7 +105,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 CurrentNoise = GallenarmaList[enemyIndex].LatestNoise;
                 RangeOfTargetNoise = GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(CurrentNoise.Location);
                 OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RangeOfTargetNoise.position, true);
-                GallenarmaList[enemyIndex].agent.speed = 6f;
+                GallenarmaList[enemyIndex].agent.speed = 7.5f;
             }
             if (!OnRouteToNextPoint) {
                 GallenarmaList[enemyIndex].LogMessage("Noise was unreachable!");
@@ -194,7 +194,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
-            GallenarmaList[enemyIndex].agent.speed = 6f;
+            GallenarmaList[enemyIndex].agent.speed = 7f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 
