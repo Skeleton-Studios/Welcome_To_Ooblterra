@@ -192,8 +192,10 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EnemyInShipOrFacility : StateTransition {
         public override bool CanTransitionBeTaken() {
-                
-            return !AWandList[base.enemyIndex].PlayerIsTargetable(AWandList[base.enemyIndex].MainTarget);
+            if (AWandList[base.enemyIndex].MainTarget == null) {
+                return false;
+            }
+            return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].MainTarget);
         }
         public override BehaviorState NextState() {
                 return new Roam();
@@ -201,8 +203,10 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EnemyLeftShipOrFacility : StateTransition {
         public override bool CanTransitionBeTaken() {
-            bool IsNotNearShip = (Vector3.Distance(AWandList[enemyIndex].transform.position, StartOfRound.Instance.shipDoorNode.position) > 10);
-            return AWandList[base.enemyIndex].PlayerIsTargetable(AWandList[base.enemyIndex].MainTarget) && IsNotNearShip;
+            if(AWandList[base.enemyIndex].MainTarget == null) {
+                return false;
+            }
+            return AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].MainTarget);
         }
         public override BehaviorState NextState() {
             return new Chase();
@@ -211,8 +215,7 @@ public class AdultWandererAI : WTOEnemy {
     private class EnemyLeftRange : StateTransition{
         public override bool CanTransitionBeTaken() {
             bool IsInAttackRange = (Vector3.Distance(AWandList[enemyIndex].transform.position, AWandList[enemyIndex].MainTarget.transform.position) > AWandList[enemyIndex].AttackRange);
-            bool IsNotNearShip = (Vector3.Distance(AWandList[enemyIndex].transform.position, StartOfRound.Instance.shipDoorNode.position) > 10);
-            return (AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].MainTarget) && IsInAttackRange && IsNotNearShip);
+            return (AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].MainTarget) && IsInAttackRange);
         }
         public override BehaviorState NextState() {
             return new Chase();

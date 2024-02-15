@@ -28,7 +28,8 @@ public class WTOEnemy : EnemyAI {
     public enum PlayerState {
         Dead,
         Outside,
-        Inside
+        Inside,
+        Ship
     }
     internal BehaviorState InitialState { get; set; }
     internal BehaviorState ActiveState = null;
@@ -115,6 +116,9 @@ public class WTOEnemy : EnemyAI {
         }
         if (myPlayer.isInsideFactory) {
             return PlayerState.Inside;
+        }
+        if (myPlayer.isInHangarShipRoom) {
+            return PlayerState.Ship;
         }
         return PlayerState.Outside;
     }
