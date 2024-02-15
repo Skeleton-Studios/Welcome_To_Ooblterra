@@ -11,7 +11,7 @@ using Welcome_To_Ooblterra.Things;
 
 namespace Welcome_To_Ooblterra.Enemies;
 public class LurkerAI : WTOEnemy {
-        
+    /*
     //BEHAVIOR STATES
     private class Roam : BehaviorState {
         private bool MovingToPosition;
@@ -30,7 +30,7 @@ public class LurkerAI : WTOEnemy {
             }
             if(Vector3.Distance(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].destination) < 2) {
                 MovingToPosition = false;
-            }*/
+            }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             LurkerList[enemyIndex].StopSearch(LurkerList[enemyIndex].CrawlAroundLab, clear: false);
@@ -156,7 +156,7 @@ public class LurkerAI : WTOEnemy {
                 return false;
             }
             foreach (PlayerControllerB possiblePlayer in LurkerList[enemyIndex].GetAllPlayersInLineOfSight(90f)) { 
-                if(!possiblePlayer.HasLineOfSightToPosition(LurkerList[enemyIndex].transform.position /*+ Vector3.up * 1.6f*/)){
+                if(!possiblePlayer.HasLineOfSightToPosition(LurkerList[enemyIndex].transform.position /*+ Vector3.up * 1.6f)){
                     LurkerList[enemyIndex].targetPlayer = possiblePlayer;
                     return true;
                 }
@@ -294,4 +294,5 @@ public class LurkerAI : WTOEnemy {
             LurkerPoints.Add(LurkerPoint);
         }
     }
+    */
 }

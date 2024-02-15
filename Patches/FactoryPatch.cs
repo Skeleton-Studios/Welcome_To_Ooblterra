@@ -138,6 +138,7 @@ internal class FactoryPatch {
         GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = !TimeOfDay.Instance.insideLighting;
     }
     */
+
     [HarmonyPatch(typeof(RoundManager), "SpawnMapObjects")]
     [HarmonyPrefix]
     private static bool WTOSpawnMapObjects(RoundManager __instance) {
@@ -178,7 +179,6 @@ internal class FactoryPatch {
         }
         return false;
     }
-
 
     //METHODS
     public static void Start() {
@@ -270,17 +270,4 @@ internal class FactoryPatch {
         WTOBase.LogToConsole("Exit Spawn not found!!!!");
         return null;
     }
-
-    public static void SetSecurityObjects(SelectableLevel Moon) {
-        SpawnableMapObject[] SpawnableMapObjects = new SpawnableMapObject[SecurityList.Count];
-        Moon.spawnableMapObjects = SpawnableMapObjects;
-        for (int i = 0; i < SecurityList.Count; i++) {
-            Moon.spawnableMapObjects.SetValue(SecurityList[i], i);
-        }
-    }
-    public static void SetSecurityObjects(SelectableLevel Moon, SpawnableMapObject[] Objects) {
-        Moon.spawnableMapObjects = Objects;
-
-    }
-
 }

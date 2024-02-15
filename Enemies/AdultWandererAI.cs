@@ -292,7 +292,6 @@ public class AdultWandererAI : WTOEnemy {
     private bool ReachedNextPoint = false;
     private AISearchRoutine RoamPlanet = new();
 
-
     public override void Start() {
         InitialState = new Spawn();
         AWandID++;

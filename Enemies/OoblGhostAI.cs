@@ -131,10 +131,8 @@ internal class OoblGhostAI : WTOEnemy {
         }
     }
 
-
     public static Dictionary<int, OoblGhostAI> GhostList = new();
     private static int GhostID;
-
     private PlayerControllerB PlayerToAttack;
     private Vector2 TargetPlayerPosition;
     private Vector2 SelfPosition;
@@ -142,6 +140,7 @@ internal class OoblGhostAI : WTOEnemy {
     private float TrackPlayerMovementSeconds = 3f;
     private float YAxisLockedTo;
     public AudioClip StartupSound;
+
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -154,7 +153,6 @@ internal class OoblGhostAI : WTOEnemy {
         GhostList.Add(GhostID, this);
         base.Start();
     }
-
     public override void Update() {
         //WTOBase.LogToConsole($"{SecondsUntilGhostWillAttack}");
         LowerTimerValue(ref SecondsUntilGhostWillAttack);

@@ -19,7 +19,6 @@ public class WTOBattery : GrabbableObject {
     public Material EmptyMaterial;
     public ScanNodeProperties ScanNode;
 
-
     public override void Start() {
         base.Start();
         int StartingScrapValue;
@@ -43,5 +42,4 @@ public class WTOBattery : GrabbableObject {
         }
         SetScrapValue(StartingScrapValue);
     }
-
 }

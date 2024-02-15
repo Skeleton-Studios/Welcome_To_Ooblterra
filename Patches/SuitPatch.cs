@@ -15,9 +15,6 @@ internal class SuitPatch {
 
     private const string SuitPath = "Assets/CustomSuits/";
     private const string PosterGameObject = "HangarShip/Plane.001";
-
-    public static Material GhostPlayerSuit;
-
     static string[] SuitMaterialPaths = new string[] {
         SuitPath + "RedSuit.mat",
         SuitPath + "ProtSuit.mat",
@@ -27,8 +24,9 @@ internal class SuitPatch {
         SuitPath + "IndigoSuit.mat",
         SuitPath + "MackSuit.mat"
     };
+    private static bool SuitsLoaded = false;
 
-    public static bool SuitsLoaded = false;
+    public static Material GhostPlayerSuit;
 
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
     [HarmonyPrefix]
@@ -76,9 +74,5 @@ internal class SuitPatch {
         Material[] materials = ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials;
         materials[1] = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath + "Poster.mat");
         ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials = materials;
-    }
-
-    public static void Start() {
-
     }
 }

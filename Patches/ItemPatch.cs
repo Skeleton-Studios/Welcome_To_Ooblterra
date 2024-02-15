@@ -24,17 +24,6 @@ internal class ItemPatch {
     }
 
     private const string ItemPath = "Assets/CustomItems/";
-    private static List<SpawnableItemWithRarity> MoonScrap = new List<SpawnableItemWithRarity>();
-
-    [HarmonyPatch(typeof(RoundManager), "SetLockedDoors")]
-    [HarmonyPrefix]
-    private static void ReplaceKeys(RoundManager __instance) {
-        if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
-            return;
-        }
-        GameObject KeyObject = GameObject.Instantiate(WTOBase.ItemAssetBundle.LoadAsset<GameObject>("Assets/CustomItems/OoblKey.prefab"), __instance.mapPropsContainer.transform);
-        __instance.keyPrefab = KeyObject;
-    }
 
     //This array stores all our custom items
     public static ItemData[] ItemList = new ItemData[] {
@@ -51,49 +40,32 @@ internal class ItemPatch {
         new ItemData("Battery.asset", 0)
     };
 
-    //Add our custom items
+    //PATCHES
+    [HarmonyPatch(typeof(RoundManager), "SetLockedDoors")]
+    [HarmonyPrefix]
+    private static void ReplaceKeys(RoundManager __instance) {
+        if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+            return;
+        }
+        GameObject KeyObject = GameObject.Instantiate(WTOBase.ItemAssetBundle.LoadAsset<GameObject>("Assets/CustomItems/OoblKey.prefab"), __instance.mapPropsContainer.transform);
+        __instance.keyPrefab = KeyObject;
+    }
+
+    //METHODS
     public static void Start() {
         //Create our custom items
         Item NextItemToProcess;
-        SpawnableItemWithRarity MoonScrapItem;
         foreach(ItemData MyCustomScrap in ItemList){
             //Load item based on its path 
             NextItemToProcess = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());
             //Register it with LethalLib
             NetworkPrefabs.RegisterNetworkPrefab(NextItemToProcess.spawnPrefab);
+            //if it aint broke... (but technically I should get rid of the reference to ooblterra because I dont want to have all the scrap listed twice)
             LethalLib.Modules.Items.RegisterScrap(NextItemToProcess, MyCustomScrap.GetRarity(), Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
             //Set the item reference in the ItemData class
             MyCustomScrap.SetItem(NextItemToProcess);
-
-            //Add item to internal moonscrap list 
-            MoonScrapItem = new SpawnableItemWithRarity {
-                spawnableItem = NextItemToProcess,
-                rarity = MyCustomScrap.GetRarity()
-            };
-            //MoonScrap.Add(MoonScrapItem);
-            Debug.Log("Item Loaded: " + MoonScrapItem.spawnableItem.name);
+            Debug.Log("Item Loaded: " + NextItemToProcess.name);
         }
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ItemAssetBundle.LoadAsset<GameObject>(ItemPath + "OoblKey.prefab"));
     }       
-    //public static void SetMoonItemList(SelectableLevel Moon) {
-    //    Moon.spawnableScrap = MoonScrap;
-    //}
-    public static void SetMoonItemList(SelectableLevel Moon, List<SpawnableItemWithRarity> ItemList) {
-            Moon.spawnableScrap = ItemList;
-    }
-    public static void SpawnItem(Vector3 location, int internalID) {
-        NetworkManager Network = GameObject.FindObjectOfType<NetworkManager>();
-        GameObject SpawnedItem = Object.Instantiate(ItemList[internalID].GetItem().spawnPrefab, location, Quaternion.identity);
-        GrabbableObject ItemGrabbableObject = SpawnedItem.GetComponent<GrabbableObject>();
-        NetworkObject ItemNetworkObject = SpawnedItem.GetComponent<NetworkObject>();
-
-        //this needs to be synced with local clients
-        ItemGrabbableObject.SetScrapValue((int)(RoundManager.Instance.AnomalyRandom.Next(ItemList[internalID].GetItem().minValue, ItemList[internalID].GetItem().maxValue) * RoundManager.Instance.scrapValueMultiplier));
-
-        if (Network.IsHost) {
-            ItemNetworkObject.Spawn();
-        }
-            
-        WTOBase.LogToConsole("Custom item spawned...");
-    }
 }

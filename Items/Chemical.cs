@@ -29,6 +29,7 @@ public class Chemical : GrabbableObject {
         Purple,
         Clear
     }
+
     private ChemColor CurrentColor;
     private System.Random MyRandom;
     private int RandomEffectIndex;
@@ -51,11 +52,11 @@ public class Chemical : GrabbableObject {
             ShakeCooldownSeconds -= Time.deltaTime;
         }
     }
+
     public override void EquipItem() {
         base.EquipItem();
         playerHeldBy.equippedUsableItemQE = true;
     }
-
     public override void ItemInteractLeftRight(bool right) {
         base.ItemInteractLeftRight(right);
         if (!right && ShakeCooldownSeconds <= 0 && IsFull) {
@@ -64,6 +65,7 @@ public class Chemical : GrabbableObject {
             ChangeChemColorAndEffect();
         }
     }
+
     private void ChangeChemColorAndEffect(bool PlayShakeSound = true) {
         int NextColor = GetNextRandomInt();
         int NextRandomEffect = MyRandom.Next(0, 7);
@@ -111,6 +113,16 @@ public class Chemical : GrabbableObject {
                 return new Color(1, 1, 1);
         }
     }
+
+
+    [ServerRpc]
+    private void RandomChemEffectServerRpc(int RandomIndex) {
+        RandomChemEffectClientRpc(RandomIndex);
+    }
+    [ClientRpc]
+    private void RandomChemEffectClientRpc(int RandomIndex) {
+        RandomChemEffect(RandomIndex);
+    }
     private void RandomChemEffect(int RandomIndex) {
         IsFull = false;
         switch (RandomIndex) {
@@ -143,20 +155,9 @@ public class Chemical : GrabbableObject {
     }
 
     [ServerRpc]
-    private void RandomChemEffectServerRpc(int RandomIndex) {
-        RandomChemEffectClientRpc(RandomIndex);
-    }
-
-    [ClientRpc]
-    private void RandomChemEffectClientRpc(int RandomIndex) {
-        RandomChemEffect(RandomIndex);
-    }
-
-    [ServerRpc]
     private void SetColorAndEffectServerRpc(int color, int effect, bool PlayShakeSound = true) {
         SetColorAndEffectClientRpc(color, effect, PlayShakeSound);
     }
-
     [ClientRpc]
     private void SetColorAndEffectClientRpc(int color, int effect, bool PlayShakeSound = true) {
         SetColorAndEffect(color, effect, PlayShakeSound);

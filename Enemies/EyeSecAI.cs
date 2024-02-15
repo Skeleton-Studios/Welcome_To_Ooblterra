@@ -340,7 +340,6 @@ public class EyeSecAI : WTOEnemy {
             }
         }
     }
-
     private void ScanRoom(int ScanTimeSeconds) {
         Head.transform.Rotate(0, 360/ScanTimeSeconds * Time.deltaTime, 0);
     }
@@ -363,7 +362,6 @@ public class EyeSecAI : WTOEnemy {
         }
         CheckPlayerWhenScanned(victim);
     }
-
     private void CheckPlayerWhenScanned(PlayerControllerB Player) {
         if (grabbableObjectsInMap.Contains(Player.currentlyHeldObjectServer)) {
             //if it is...
@@ -479,9 +477,7 @@ public class EyeSecAI : WTOEnemy {
         LookRot.SetLookRotation((targetPlayer.transform.position - transform.position) * -1);
         Head.transform.rotation = LookRot;
     }
-
     private void ResetEyesecHeadPos() {
         Head.transform.rotation = Quaternion.identity;
     }
-
 }

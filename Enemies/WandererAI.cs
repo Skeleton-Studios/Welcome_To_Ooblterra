@@ -183,7 +183,6 @@ public class WandererAI : WTOEnemy {
     public override void Update() {
         base.Update();
     }
-
     public void LateUpdate() {
         Quaternion lookRotation = Quaternion.Euler(-0.094f, 0.009f, -7.474f);
         if (shouldLookAtPlayer) {
@@ -196,6 +195,7 @@ public class WandererAI : WTOEnemy {
             HeadTurnTime += Time.deltaTime;
         }
     }
+
     private PlayerControllerB NearestPlayer(List<PlayerControllerB> List) {
         float distance = 100000;
         PlayerControllerB nearestPlayer = null;
@@ -229,7 +229,6 @@ public class WandererAI : WTOEnemy {
     public void AttemptKillServerRpc(int KillerID) {
         AttemptKillClientRpc(KillerID);
     }
-
     [ClientRpc]
     public void AttemptKillClientRpc(int KillerID) {
         if (base.IsOwner) {
@@ -237,7 +236,6 @@ public class WandererAI : WTOEnemy {
         }
         
     }
-
     public void KillWandererAndSpawnParent(int KillerID) {
         WTOBase.LogToConsole($"Spawning Adult Wanderer targeting player ID {KillerID}");
         PlayerControllerB Killer = StartOfRound.Instance.allPlayerScripts[KillerID];
@@ -273,7 +271,6 @@ public class WandererAI : WTOEnemy {
     public void SetCorpseValueServerRpc(NetworkObjectReference Corpse, int CorpseValue) {
         SetCorpseValueClientRpc(Corpse, CorpseValue);
     }
-
     [ClientRpc]
     public void SetCorpseValueClientRpc(NetworkObjectReference Corpse, int CorpseValue) {
         Corpse.TryGet(out var ScrapNetworkobject);

@@ -182,6 +182,7 @@ public class WTOEnemy : EnemyAI {
             creatureAnimator.SetBool(name, state);
         }
     }
+
     [ServerRpc]
     internal void TransitionStateServerRpc(string StateName, int RandomInt) {
         TransitionStateClientRpc(StateName, RandomInt);

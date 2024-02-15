@@ -126,12 +126,10 @@ public class BatteryRecepticle : NetworkBehaviour {
     public void InsertBatteryServerRpc() {
         InsertBatteryClientRpc();
     }
-
     [ClientRpc]
     public void InsertBatteryClientRpc() {
         InsertBattery();
     }
-
     public void InsertBattery() {
         //This technically won't work if there's more than 1 charged battery in the level, like say, if the player leaves with one and lands again
         WTOBattery PoweredBattery = FindObjectsOfType<WTOBattery>().First(x => x.HasCharge);
@@ -142,7 +140,6 @@ public class BatteryRecepticle : NetworkBehaviour {
     public void TurnOnPowerServerRpc() {
         TurnOnPowerClientRpc();
     }
-
     [ClientRpc]
     public void TurnOnPowerClientRpc() {
         TurnOnPower();

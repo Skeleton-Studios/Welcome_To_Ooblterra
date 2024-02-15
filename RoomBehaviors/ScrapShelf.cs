@@ -44,12 +44,10 @@ public class ScrapShelf : NetworkBehaviour {
         ShelfSFX.Play();
     }
 
-
     [ServerRpc]
     public void SetScrapValueServerRpc(NetworkObjectReference ScrapToSet, int ScrapValue) {
         SetScrapValueClientRpc(ScrapToSet,ScrapValue);
     }
-
     [ClientRpc]
     public void SetScrapValueClientRpc(NetworkObjectReference ScrapToSet, int ScrapValue) {
         ScrapToSet.TryGet(out var ScrapNetworkobject);

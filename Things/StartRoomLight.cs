@@ -10,7 +10,7 @@ public class StartRoomLight : MonoBehaviour {
 
     public Light[] CentralLights;
     public MeshRenderer CentralPillar;
-
+    
     public void SetCentralRoomWhite() {
         Material[] PillarMatArray = CentralPillar.materials;
         PillarMatArray[6].SetColor("_EmissiveColor", Color.white);
