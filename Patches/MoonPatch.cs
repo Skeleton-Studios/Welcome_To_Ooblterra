@@ -52,7 +52,7 @@ internal class MoonPatch {
     private static void AddMoonToList(StartOfRound __instance) {
         //SetMoonVariables(MyNewMoon, __instance);
         //AddToMoons(MyNewMoon, __instance);
-        //LevelStartHasBeenRun = false;
+        LevelStartHasBeenRun = false;
     }
 
     //Destroy the necessary actors and set our scene
@@ -82,7 +82,7 @@ internal class MoonPatch {
         */
 
         //MoveDoors();
-        ManageCustomSun();
+        //ManageCustomSun();
         MoveNavNodesToNewPositions();
 
         //HandleInsideNavigation();
@@ -117,11 +117,21 @@ internal class MoonPatch {
         return false;
     }
     */
-    
+
+    [HarmonyPatch(typeof(TimeOfDay), "MoveGlobalTime")]
+    [HarmonyPrefix]
+    public static void ChangeGlobalTimeMultiplier(TimeOfDay __instance) {
+        if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
+            __instance.globalTimeSpeedMultiplier = 0.7f;
+            return;
+        }
+        __instance.globalTimeSpeedMultiplier = 1f;
+    }
+
     [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
     [HarmonyPrefix]
     public static bool SettleTimeIssue(StartOfRound __instance) {
-        /*
+        
         WTOBase.LogToConsole($"BEGIN PRINT PRE BASE FUNCTION VALUES:");
         Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
         Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
@@ -129,13 +139,9 @@ internal class MoonPatch {
         Debug.Log($"TIME UNTIL DEADLINE: {TimeOfDay.Instance.timeUntilDeadline}");
         Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
         WTOBase.LogToConsole($"END PRINT PRE BASE FUNCTION VALUES:");
-        */
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
             TimeOfDay.Instance.globalTime *= 0;
-            /*
-            Debug.Log("We are on Ooblterra...");
-
             WTOBase.LogToConsole($"BEGIN PRINT POST MODIFICATION VALUES:");
             Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
             Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
@@ -144,11 +150,10 @@ internal class MoonPatch {
             Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
             WTOBase.LogToConsole($"END PRINT POST MODIFICATION VALUES:");
             return true;
-            */
         }
         return true;
     }
-    /*
+
     [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
     [HarmonyPostfix]
     public static void SettleTimeIssue2(StartOfRound __instance) {
@@ -160,7 +165,8 @@ internal class MoonPatch {
         Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
         WTOBase.LogToConsole($"END PRINT POST BASE FUNCTION VALUES:");
     }
-    */
+
+
     [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
     [HarmonyPrefix]
     private static bool SkipTODMusic() {
