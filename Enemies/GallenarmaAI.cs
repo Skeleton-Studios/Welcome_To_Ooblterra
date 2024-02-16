@@ -45,7 +45,6 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         private bool canMakeNextPoint;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].Awakening = false;
-            GallenarmaList[enemyIndex].creatureSFX.maxDistance = 15;
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
