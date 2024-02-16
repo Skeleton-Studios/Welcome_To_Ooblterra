@@ -288,7 +288,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.TeleportPlayer(SpawnLoc);
             PlayerToRevive.setPositionOfDeadPlayer = false;
             PlayerToRevive.DisablePlayerModel(StartOfRound.Instance.allPlayerObjects[ID], enable: true, disableLocalArms: true);
-            PlayerToRevive.helmetLight.enabled = true;
+            PlayerToRevive.helmetLight.enabled = false;
+            PlayerToRevive.SetNightVisionEnabled(PlayerToRevive == StartOfRound.Instance.localPlayerController);
             Debug.Log("Reviving players C");
             PlayerToRevive.Crouch(crouch: false);
             PlayerToRevive.criticallyInjured = false;
