@@ -45,12 +45,12 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         private bool canMakeNextPoint;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].Awakening = false;
-            GallenarmaList[enemyIndex].creatureSFX.maxDistance = 15;
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             GallenarmaList[enemyIndex].agent.speed = 5f;
             GallenarmaList[enemyIndex].StartSearch(GallenarmaList[enemyIndex].transform.position, GallenarmaList[enemyIndex].RoamLab);
+            GallenarmaList[enemyIndex].HasBeenEnragedThisCycle = false;
             /*
             if (GallenarmaList[enemyIndex].IsOwner) { 
                 canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
@@ -91,9 +91,12 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             //pass the latest noise to our gallenarma and tell it to go there
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             if (GallenarmaList[enemyIndex].LatestNoise.Loudness != -1) {
-                TargetNoisePosition = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].LatestNoise.Location, 5);
+
                 CurrentNoise = GallenarmaList[enemyIndex].LatestNoise;
-                OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(TargetNoisePosition, true);
+                if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                    TargetNoisePosition = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].LatestNoise.Location, 5);
+                    OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(TargetNoisePosition, true);
+                }
                 GallenarmaList[enemyIndex].agent.speed = 7f;
                 return;
             }
@@ -102,11 +105,14 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (GallenarmaList[enemyIndex].LatestNoise.Location != CurrentNoise.Location) {
                 CurrentNoise = GallenarmaList[enemyIndex].LatestNoise;
-                RangeOfTargetNoise = GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(CurrentNoise.Location);
-                OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RangeOfTargetNoise.position, true);
-                GallenarmaList[enemyIndex].agent.speed = 6f;
+
+                if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                    RangeOfTargetNoise = GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(CurrentNoise.Location);
+                    OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RangeOfTargetNoise.position, true);
+                }
+                GallenarmaList[enemyIndex].agent.speed = 7.5f;
             }
-            if (!OnRouteToNextPoint) {
+            if (!OnRouteToNextPoint && GallenarmaList[enemyIndex].agent.isOnNavMesh) {
                 GallenarmaList[enemyIndex].LogMessage("Noise was unreachable!");
                 if (GallenarmaList[enemyIndex].LatestNoise.Loudness != -1) {
                     NextPoint = GallenarmaList[enemyIndex].LatestNoise.Location;
@@ -114,7 +120,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                     NextPoint = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[MyRandomInt].transform.position, 15);
                     WTOBase.LogToConsole("Gallenarma off to random point!");
                 }
-                OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(NextPoint).position);
+                if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                    OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(NextPoint).position);
+                }
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -166,7 +174,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", true);
             GallenarmaList[enemyIndex].HasAttackedThisCycle = false;
             GallenarmaList[enemyIndex].AttackTimerSeconds = 1.667f;
-            GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
+            if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
+            }
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
@@ -192,8 +202,10 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
 
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
-            GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
-            GallenarmaList[enemyIndex].agent.speed = 6f;
+            if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
+            }
+            GallenarmaList[enemyIndex].agent.speed = 7f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 
@@ -204,7 +216,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-            new FoundEnemy(),
+            new ReachedChasedEnemy(),
             new LostTrackOfPlayer()
         };
     }
@@ -212,7 +224,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         private bool MovingToBoombox;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].SecondsUntilBored = 150;
-            GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].myBoomboxPos);
+            if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].myBoomboxPos);
+            }
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             GallenarmaList[enemyIndex].agent.speed = 5f;
         }
@@ -225,7 +239,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 return;
             }
             //if we're not near our boombox, move to it
-            if (!MovingToBoombox) {
+            if (!MovingToBoombox && GallenarmaList[enemyIndex].agent.isOnNavMesh) {
                 GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].myBoomboxPos);
                 MovingToBoombox = true;
             }
@@ -242,10 +256,18 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
 
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].SetAnimTriggerOnServerRpc("Stunned");
+            GallenarmaList[enemyIndex].agent.speed = 0f;
             //GallenarmaList[enemyIndex].targetPlayer = GallenarmaList[enemyIndex].stunnedByPlayer;
             GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
             //GallenarmaList[enemyIndex].LatestNoise = new NoiseInfo(GallenarmaList[enemyIndex].stunnedByPlayer.transform.position, 5);
             GallenarmaList[enemyIndex].StunTimeSeconds = 3.15f;
+            GallenarmaList[enemyIndex].HasBeenEnragedThisCycle = true;
+            GallenarmaList[enemyIndex].creatureVoice.clip = GallenarmaList[enemyIndex].Growl;
+            GallenarmaList[enemyIndex].creatureVoice.Play();
+            GallenarmaList[enemyIndex].creatureVoice.loop = true;
+            GallenarmaList[enemyIndex].creatureSFX.clip = GallenarmaList[enemyIndex].GallenarmaBeatChest;
+            GallenarmaList[enemyIndex].creatureSFX.Play();
+            GallenarmaList[enemyIndex].targetPlayer.JumpToFearLevel(1f);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].LowerTimerValue(ref GallenarmaList[enemyIndex].StunTimeSeconds);
@@ -297,6 +319,40 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
     }
     private class FoundEnemy : StateTransition {
+        public override bool CanTransitionBeTaken() {
+            /*
+            PlayerControllerB PotentialTargetPlayer = GallenarmaList[enemyIndex].CheckLineOfSightForClosestPlayer(180f, 7);
+            if (PotentialTargetPlayer == null) {
+                return false;
+            }
+            GallenarmaList[enemyIndex].targetPlayer = PotentialTargetPlayer;
+            GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
+            return true;
+            */
+            PlayerControllerB PlayerClosestToGallenama = GallenarmaList[enemyIndex].GetClosestPlayerToPosition(GallenarmaList[enemyIndex].transform.position);
+            if (Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToGallenama.transform.position) < 3) {
+                GallenarmaList[enemyIndex].targetPlayer = PlayerClosestToGallenama;
+                GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
+                return true;
+            }
+            if (GallenarmaList[enemyIndex].LatestNoise.Loudness == -1) {
+                return false;
+            } else {
+                PlayerControllerB PlayerClosestToLastNoise = GallenarmaList[enemyIndex].GetClosestPlayerToPosition(GallenarmaList[enemyIndex].transform.position);
+                
+                if (PlayerClosestToLastNoise == null || Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToLastNoise.transform.position) > 7) {
+                    return false;
+                }
+                GallenarmaList[enemyIndex].targetPlayer = PlayerClosestToLastNoise;
+                GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
+                return true;
+            }
+        }
+        public override BehaviorState NextState() {
+                return new Enraged();
+        }
+    }
+    private class ReachedChasedEnemy : StateTransition {
         public override bool CanTransitionBeTaken() {
             PlayerControllerB PotentialTargetPlayer = GallenarmaList[enemyIndex].CheckLineOfSightForClosestPlayer(180f, 7);
             if(PotentialTargetPlayer == null) {
@@ -390,7 +446,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             float playerDistanceFromLastNoise = Vector3.Distance(GallenarmaList[enemyIndex].LatestNoise.Location, GallenarmaList[enemyIndex].targetPlayer.transform.position);
             float DistanceToCheck = Math.Min(playerDistanceFromLastNoise, PlayerDistanceFromGallenarma);
                 
-            return DistanceToCheck > 5;
+            return DistanceToCheck > 15;
         }
         public override BehaviorState NextState() {
             return new Patrol();
@@ -417,12 +473,12 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             return GallenarmaList[enemyIndex].stunNormalizedTimer > 0 && !(GallenarmaList[enemyIndex].ActiveState is Chase);
         }
         public override BehaviorState NextState() {
-            return new Chase();
+            return new Enraged();
         }
     }
 
     public float TotalInvestigateSeconds;
-    public float RandomAwakeTimerSeconds = 5f;
+    public float RandomAwakeTimerSeconds = 60f;
     private bool asleep = true;
     private bool Awakening = false;
     private float SecondsUntilChainsBroken;
@@ -439,8 +495,11 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     public static Dictionary<int, GallenarmaAI> GallenarmaList = new Dictionary<int, GallenarmaAI>();
     public static int GallenarmaID;
     private AISearchRoutine RoamLab = new AISearchRoutine();
-
+    private bool HasBeenEnragedThisCycle;
+    public BoxCollider GallenarmaHitbox;
     public AudioClip Growl;
+    public AudioClip GallenarmaScream;
+    public AudioClip GallenarmaBeatChest;
     public List<AudioClip> Search = new List<AudioClip>();
 
     private struct NoiseInfo {
@@ -491,6 +550,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         SetAnimTriggerOnServerRpc("Hit");
         if (enemyHP <= 0) {
             SetAnimTriggerOnServerRpc("Killed");
+            GallenarmaHitbox.enabled = false;
             isEnemyDead = true;
             creatureVoice.Stop();
             if (base.IsOwner) {
@@ -503,7 +563,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         //If we're attacked by a player, they need to be immediately set to our target player
         targetPlayer = playerWhoHit;
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
-        OverrideState(new Investigate());
+        if (!(ActiveState is Attack || ActiveState is Chase) || ActiveState is Enraged) {
+            OverrideState(new Enraged());
+        }
     }
     public override void DetectNoise(Vector3 noisePosition, float noiseLoudness, int timesNoisePlayedInOneSpot = 0, int noiseID = 0) {
         base.DetectNoise(noisePosition, noiseLoudness, timesNoisePlayedInOneSpot, noiseID);
@@ -513,7 +575,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         } else if (stunNormalizedTimer > 0f || noiseID == 7 || noiseID == 546 || hearNoiseCooldown > 0f || timesNoisePlayedInOneSpot > 15 || isEnemyDead) {
             return;
         }
-
+        if (TotalInvestigateSeconds > 0) {
+            noiseLoudness *= 3f;
+        }
         if (Awakening) {
             float randomTimeReduction = (float)(SecondsUntilChainsBroken - (0.01 * enemyRandom.Next(50, 250)));
             SecondsUntilChainsBroken = Math.Max(randomTimeReduction, 0.8f);
@@ -527,10 +591,10 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             num2 /= 2f;
         }
 
-        if (noiseLoudness < 0.025f) {
+        if (noiseLoudness < 0.1f) {
             return;
         }
-        if (!(ActiveState is Attack || ActiveState is Chase)) { 
+        if (!(ActiveState is Attack || ActiveState is Chase )) { 
             ChangeOwnershipOfEnemy(NetworkManager.Singleton.LocalClientId);
         }
         LatestNoise = new NoiseInfo(noisePosition, noiseLoudness);
@@ -554,11 +618,26 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         if (RandomAwakeTimerSeconds > 0f) {
             return;
         }
-        /*
-        if(enemyRandom.Next(0, 100) < 2) {
-            LatestNoise = new NoiseInfo(Instance.transform.position, 2);
+       
+        if(enemyRandom.Next(0, 100) < 50) {
+            LatestNoise = new NoiseInfo(transform.position, 2);
         }
-        RandomAwakeTimerSeconds = 5f;
-        */
+        RandomAwakeTimerSeconds = 60f;
+    }
+    public PlayerControllerB GetClosestPlayerToPosition(Vector3 position) {
+        if(position == new Vector3(-1, -1, -1)) {
+            return null;
+        }
+        PlayerControllerB NearestPlayer = null;
+        float CurrentNearestPlayerDistance = 20000;
+        float NextPlayerDistance;
+        foreach(PlayerControllerB NextPlayer in StartOfRound.Instance.allPlayerScripts) {
+            NextPlayerDistance = Vector3.Distance(position, NextPlayer.transform.position);
+            if (NextPlayerDistance < CurrentNearestPlayerDistance) {
+                NearestPlayer = NextPlayer;
+                CurrentNearestPlayerDistance = NextPlayerDistance;
+            }
+        }
+        return NearestPlayer;
     }
 }

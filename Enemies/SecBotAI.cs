@@ -10,9 +10,9 @@ using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
 namespace Welcome_To_Ooblterra.Enemies;
 //Trimming this for now, will add it back later if I have enough time
 
-/*
-public class SecBotAI : EnemyAI {
 
+public class SecBotAI : EnemyAI {
+    /*
     private class Move : BehaviorState {
         public bool MovingToNextPoint;
         private Ray newRaycast;
@@ -220,4 +220,5 @@ public class SecBotAI : EnemyAI {
             ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
         }
     }
-}*/
+    */
+}

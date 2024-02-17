@@ -55,7 +55,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Visuals = FindObjectOfType<FrankensteinVisuals>();
         SetColorList();
     }
-
     private void Update() {
         if (BodyPoint == null) {
             BodyPoint = FindObjectOfType<FrankensteinBodyPoint>();
@@ -89,13 +88,11 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Target.interactable = CheckAllChemPoints(false);
         Target.disabledHoverTip = $"[{PopulatedChemPoints}/{NumberOfPoints} Chemicals Placed!]";
     }
-
     public void SetVariables(Vector3 Target, int ID) {
         SpawnTarget = Target;
         PlayerID = ID;
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[PlayerID];
     }
-
     public void GuessIfChemsAreCorrect(PlayerControllerB TriggeringPlayer) {
         if (IsUsedUp) {
             return;
@@ -111,7 +108,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Correctness[] LightSetter = CheckCorrectness();
         SetLightsServerRpc(LightSetter);
     }
-
     public void TryRevive() {
         if (IsUsedUp) {
             return;
@@ -130,7 +126,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
         }
         IsUsedUp = true;
     }
-
     private Correctness[] CheckCorrectness() {
         Correctness[] TotalCorrect = { Correctness.Wrong, Correctness.Wrong, Correctness.Wrong, Correctness.Wrong };
         WTOBase.LogToConsole("BEGIN PRINT CORRECT COLORS");
@@ -159,7 +154,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
         }
         return TotalCorrect;
     }
-
     private int CalculateCorrectnessPercentage() {
         int TotalScore = 0;
         foreach (Correctness CorrectnessValue in CheckCorrectness()) { 
@@ -175,7 +169,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
         WTOBase.LogToConsole($"CORRECTNESS SCORE IS {TotalScore}");
         return TotalScore;
     }
-
     private void SetColorList() {
         List<ChemColor> AllColors = new List<ChemColor>((ChemColor[])Enum.GetValues(typeof(ChemColor)));
         ChemColor NextColor;
@@ -186,7 +179,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
             WTOBase.LogToConsole($"COLOR NUMBER {i} IS {CorrectColors[i]}");
         }
     }
-
     private bool CheckAllChemPoints(bool AssignColors) {
         PopulatedChemPoints = 0;
         for (int i = 0; i < NumberOfPoints; i++) {
@@ -205,7 +197,6 @@ public class FrankensteinTerminal : NetworkBehaviour {
         }
         return PopulatedChemPoints == NumberOfPoints;
     }
-
 
     [ServerRpc(RequireOwnership = false)]
     public void StartSceneServerRpc(int Correctness) {
@@ -289,15 +280,16 @@ public class FrankensteinTerminal : NetworkBehaviour {
         if (PlayerToRevive.isPlayerDead) {
             PlayerToRevive.isPlayerDead = false;
             PlayerToRevive.isPlayerControlled = true;
-            PlayerToRevive.isInElevator = true;
-            PlayerToRevive.isInHangarShipRoom = true;
-            PlayerToRevive.isInsideFactory = false;
+            PlayerToRevive.isInElevator = false;
+            PlayerToRevive.isInHangarShipRoom = false;
+            PlayerToRevive.isInsideFactory = true;
             PlayerToRevive.wasInElevatorLastFrame = false;
             StartOfRound.Instance.SetPlayerObjectExtrapolate(enable: false);
             PlayerToRevive.TeleportPlayer(SpawnLoc);
             PlayerToRevive.setPositionOfDeadPlayer = false;
             PlayerToRevive.DisablePlayerModel(StartOfRound.Instance.allPlayerObjects[ID], enable: true, disableLocalArms: true);
             PlayerToRevive.helmetLight.enabled = false;
+            PlayerToRevive.SetNightVisionEnabled(PlayerToRevive == StartOfRound.Instance.localPlayerController);
             Debug.Log("Reviving players C");
             PlayerToRevive.Crouch(crouch: false);
             PlayerToRevive.criticallyInjured = false;

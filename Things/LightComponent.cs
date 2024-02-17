@@ -24,7 +24,6 @@ public class LightComponent : MonoBehaviour {
         SetLightColor(InitLightColor);
         SetLightBrightness(LightBrightness);
     }
-
     private void Update() {
         if (!Application.IsPlaying(this)) {
             SetLightColor(InitLightColor);
@@ -41,7 +40,6 @@ public class LightComponent : MonoBehaviour {
         ObjectWithMatToChange.sharedMaterial = tempMaterial;
         TargetLight.color = new Color(1, 1, 1);
     }
-
     private void SetLightColor(Chemical.ChemColor NextColor) {
         var tempMaterial = new Material(StartMat);
         tempMaterial.SetColor("_EmissiveColor", Chemical.GetColorFromEnum(NextColor));
@@ -49,7 +47,6 @@ public class LightComponent : MonoBehaviour {
 
         TargetLight.color = Chemical.GetColorFromEnum(NextColor);
     }
-
     public void SetLightBrightness(int Brightness) {
         TargetLight.intensity = Brightness;
     }

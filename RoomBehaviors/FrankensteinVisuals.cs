@@ -27,7 +27,6 @@ public class FrankensteinVisuals : MonoBehaviour {
     private void Start() {
         MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
     }
-
     private void Update() {
         if (ShouldAnimate){
             StartCoroutine(VisualsHandler());
@@ -39,20 +38,17 @@ public class FrankensteinVisuals : MonoBehaviour {
         ShouldAnimate = true;
     }
     IEnumerator VisualsHandler() {
-        WTOBase.LogToConsole("Visuals coroutine firing...");
         if (!AnimStarted) {
             ReviveSoundPlayer.clip = ReviveSound;
             ReviveSoundPlayer.Play();
             CoilAnim.SetTrigger("HeatCoils");
             foreach (ParticleSystem LightningBolt in LightningParticles) {
-                WTOBase.LogToConsole($"Starting Lightning {LightningBolt} bolt...");
                 LightningBolt.Play();
             }
             AnimStarted = true;
         }
         if (!AnimStopped) { 
             foreach (LightComponent Light in Lights) {
-                WTOBase.LogToConsole($"Flickering Light {Light}...");
                 Light.SetLightBrightness((MyRandom.Next(0, 10) % 2 == 0) ? 200 : 0);
             }
         }

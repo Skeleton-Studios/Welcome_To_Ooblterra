@@ -28,7 +28,8 @@ public class WTOEnemy : EnemyAI {
     public enum PlayerState {
         Dead,
         Outside,
-        Inside
+        Inside,
+        Ship
     }
     internal BehaviorState InitialState { get; set; }
     internal BehaviorState ActiveState = null;
@@ -88,7 +89,7 @@ public class WTOEnemy : EnemyAI {
 
         foreach (StateTransition TransitionToCheck in AllTransitions) {
             TransitionToCheck.enemyIndex = WTOEnemyID;
-            if (TransitionToCheck.CanTransitionBeTaken()) {
+            if (TransitionToCheck.CanTransitionBeTaken() && base.IsOwner) {
                 RunUpdate = false;
                 nextTransition = TransitionToCheck;
                 TransitionStateServerRpc(nextTransition.ToString(), GenerateNextRandomInt(nextTransition.NextState().RandomRange));
@@ -116,30 +117,12 @@ public class WTOEnemy : EnemyAI {
         if (myPlayer.isInsideFactory) {
             return PlayerState.Inside;
         }
+        if (myPlayer.isInHangarShipRoom) {
+            return PlayerState.Ship;
+        }
         return PlayerState.Outside;
     }
-    internal void TransitionState(string StateName, int RandomInt) {
-        //Jesus fuck I can't believe I have to do this
-        Type type = Type.GetType(StateName);
-        StateTransition LocalNextTransition = (StateTransition)Activator.CreateInstance(type);
-        LocalNextTransition.enemyIndex = WTOEnemyID;
-        if (LocalNextTransition.NextState().GetType() == ActiveState.GetType()) {
-            return;
-        }
-        //LogMessage(StateName);
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Exiting:  {ActiveState}");
-        ActiveState.OnStateExit(WTOEnemyID, enemyRandom, creatureAnimator);
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Transitioning via:  {LocalNextTransition}");
-        ActiveState = LocalNextTransition.NextState();
-        ActiveState.MyRandomInt = RandomInt;
-        ActiveState.enemyIndex = WTOEnemyID;
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Entering:  {ActiveState}");
-        ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
 
-        //Debug Prints 
-        StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
-        LogMessage($"CREATURE: {enemyType.name} #{WTOEnemyID} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
-    }
     internal void LowerTimerValue(ref float Timer) {
         if (Timer <= 0) {
             return;
@@ -166,18 +149,19 @@ public class WTOEnemy : EnemyAI {
         return enemyRandom.Next((int)Range.x, (int)Range.y);
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     internal void SetAnimTriggerOnServerRpc(string name) {
         if (IsServer) {
             creatureAnimator.SetTrigger(name);
         }
     }      
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     internal void SetAnimBoolOnServerRpc(string name, bool state) {
         if (IsServer) {
             creatureAnimator.SetBool(name, state);
         }
     }
+
     [ServerRpc]
     internal void TransitionStateServerRpc(string StateName, int RandomInt) {
         TransitionStateClientRpc(StateName, RandomInt);
@@ -185,5 +169,27 @@ public class WTOEnemy : EnemyAI {
     [ClientRpc]
     internal void TransitionStateClientRpc(string StateName, int RandomInt) {
         TransitionState(StateName, RandomInt);
+    }
+    internal void TransitionState(string StateName, int RandomInt) {
+        //Jesus fuck I can't believe I have to do this
+        Type type = Type.GetType(StateName);
+        StateTransition LocalNextTransition = (StateTransition)Activator.CreateInstance(type);
+        LocalNextTransition.enemyIndex = WTOEnemyID;
+        if (LocalNextTransition.NextState().GetType() == ActiveState.GetType()) {
+            return;
+        }
+        //LogMessage(StateName);
+        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Exiting:  {ActiveState}");
+        ActiveState.OnStateExit(WTOEnemyID, enemyRandom, creatureAnimator);
+        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Transitioning via:  {LocalNextTransition}");
+        ActiveState = LocalNextTransition.NextState();
+        ActiveState.MyRandomInt = RandomInt;
+        ActiveState.enemyIndex = WTOEnemyID;
+        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Entering:  {ActiveState}");
+        ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
+
+        //Debug Prints 
+        StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
+        LogMessage($"CREATURE: {enemyType.name} #{WTOEnemyID} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
     }
 }

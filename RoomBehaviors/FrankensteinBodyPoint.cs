@@ -25,9 +25,6 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
     public Transform RespawnPos;
     public bool HasBody;
 
-    //Figure out how to create an interaction point
-
-
     private void Update() {
         if (NetworkManager.Singleton == null) {
             return;
@@ -42,7 +39,6 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         }
     }
 
-    //when interacted, attach the body to the point
     public void AttachBody(PlayerControllerB player) {
         if (TableBodyContainer.GetComponentsInChildren<GrabbableObject>().Length > 0 || GameNetworkManager.Instance == null || player != GameNetworkManager.Instance.localPlayerController) {
             return;
@@ -68,6 +64,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         HasBody = true;
         Debug.Log("Body placed on frankenstein point");
     }
+
     [ServerRpc]
     public void PutObjectOnTableServerRpc(NetworkObjectReference grabbableObjectNetObject) {
         if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {
@@ -76,7 +73,6 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
             Debug.LogError("ServerRpc: Could not find networkobject in the object that was placed on table.");
         }
     }
-
     [ClientRpc]
     public void PutObjectOnTableClientRpc(NetworkObjectReference grabbableObjectNetObject) {
         if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {

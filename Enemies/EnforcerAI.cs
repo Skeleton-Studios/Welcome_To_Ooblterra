@@ -9,7 +9,7 @@ using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.Things;
 
 namespace Welcome_To_Ooblterra.Enemies;
-public class EnforcerAI : EnemyAI {
+public class EnforcerAI : WTOEnemy {
     /*
     public DeadBodyInfo bodyBeingCarried;
     private RoundManager roundManager;

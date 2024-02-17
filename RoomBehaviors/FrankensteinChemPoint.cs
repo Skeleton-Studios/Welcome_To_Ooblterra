@@ -15,14 +15,6 @@ public class FrankensteinChemPoint : NetworkBehaviour {
     private int HeldChemicalColorIndex;
     private Chemical HeldChemical;
 
-    public Chemical.ChemColor GetCurrentChemicalColor() {
-        return (Chemical.ChemColor)HeldChemicalColorIndex;
-    }
-
-    public void ClearChemical() {
-        HeldChemical.EmptyBeaker();
-    }
-
     private void Update() {
         if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
             return;
@@ -42,6 +34,12 @@ public class FrankensteinChemPoint : NetworkBehaviour {
 
     }
 
+    public Chemical.ChemColor GetCurrentChemicalColor() {
+        return (Chemical.ChemColor)HeldChemicalColorIndex;
+    }
+    public void ClearChemical() {
+        HeldChemical.EmptyBeaker();
+    }
     public void PlaceObject(PlayerControllerB playerWhoTriggered) {
         if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
             return;
@@ -59,7 +57,6 @@ public class FrankensteinChemPoint : NetworkBehaviour {
         Debug.Log("discard held object called from placeobject");
         SetChemStateServerRpc(true, (int)HeldChemical.GetCurrentColor());
     }
-
     private Vector3 itemPlacementPosition(Transform gameplayCamera, GrabbableObject heldObject) {
         if (!Physics.Raycast(gameplayCamera.position, gameplayCamera.forward, out var hitInfo, 7f, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
             return Vector3.zero;
@@ -70,13 +67,6 @@ public class FrankensteinChemPoint : NetworkBehaviour {
         return placeableBounds.ClosestPoint(hitInfo.point);
     }
 
-    public override void __initializeVariables() {
-        base.__initializeVariables();
-    }
-
-    public override string __getTypeName() {
-        return "PlaceableObjectsSurface";
-    }
     [ServerRpc(RequireOwnership = false)]
     private void SetChemStateServerRpc(bool NewState, int NextChemIndex) { 
         SetChemStateClientRpc(NewState, NextChemIndex);

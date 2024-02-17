@@ -33,10 +33,9 @@ internal class MoonPatch {
         };
     private static bool LevelLoaded;
     private static bool LevelStartHasBeenRun = false;
-
     private const string MoonPath = "Assets/CustomMoon/";
-    //PATCHES
 
+    //PATCHES
     [HarmonyPatch(typeof(StartOfRound), "Awake")]
     [HarmonyPrefix]
     [HarmonyPriority(0)]
@@ -51,8 +50,8 @@ internal class MoonPatch {
     [HarmonyPrefix]
     [HarmonyPriority(0)]
     private static void AddMoonToList(StartOfRound __instance) {
-        SetMoonVariables(MyNewMoon, __instance);
-        AddToMoons(MyNewMoon, __instance);
+        //SetMoonVariables(MyNewMoon, __instance);
+        //AddToMoons(MyNewMoon, __instance);
         LevelStartHasBeenRun = false;
     }
 
@@ -74,18 +73,19 @@ internal class MoonPatch {
             return;
         }
         WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
-        DestroyVowObjects();
+        //DestroyVowObjects();
         //Load our custom prefab
-        
+        /*
         LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset(MoonPath + "customlevel.prefab"));
         LevelLoaded = true;
         WTOBase.LogToConsole("Loaded custom terrain object!");
-        
-        MoveDoors();
-        ManageCustomSun();
+        */
+
+        //MoveDoors();
+        //ManageCustomSun();
         MoveNavNodesToNewPositions();
-        
-        HandleInsideNavigation();
+
+        //HandleInsideNavigation();
         ManageFootsteps();
         
         LevelStartHasBeenRun = true;
@@ -100,9 +100,38 @@ internal class MoonPatch {
         }
     }
 
+    /*
+    [HarmonyPatch(typeof(StartOfRound), "ChangeLevel")]
+    [HarmonyPrefix]
+    public static bool ProtectChangeLevel(StartOfRound __instance, int levelID) {
+        if(levelID >= 0 && levelID < __instance.levels.Length) {
+            return true;
+        }
+        Debug.Log($"level id: {0} (OVERRIDEN)");
+        Debug.Log("Changing level");
+        __instance.currentLevel = __instance.levels[0];
+        __instance.currentLevelID = 0;
+        TimeOfDay.Instance.currentLevel = __instance.currentLevel;
+        RoundManager.Instance.currentLevel = __instance.levels[0];
+        SoundManager.Instance.ResetSoundType();
+        return false;
+    }
+    */
+
+    [HarmonyPatch(typeof(TimeOfDay), "MoveGlobalTime")]
+    [HarmonyPrefix]
+    public static void ChangeGlobalTimeMultiplier(TimeOfDay __instance) {
+        if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
+            __instance.globalTimeSpeedMultiplier = 0.7f;
+            return;
+        }
+        __instance.globalTimeSpeedMultiplier = 1f;
+    }
+
     [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
     [HarmonyPrefix]
     public static bool SettleTimeIssue(StartOfRound __instance) {
+        
         WTOBase.LogToConsole($"BEGIN PRINT PRE BASE FUNCTION VALUES:");
         Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
         Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
@@ -111,7 +140,6 @@ internal class MoonPatch {
         Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
         WTOBase.LogToConsole($"END PRINT PRE BASE FUNCTION VALUES:");
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
-            Debug.Log("We are on Ooblterra...");
             TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
             TimeOfDay.Instance.globalTime *= 0;
             WTOBase.LogToConsole($"BEGIN PRINT POST MODIFICATION VALUES:");
@@ -125,6 +153,7 @@ internal class MoonPatch {
         }
         return true;
     }
+
     [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
     [HarmonyPostfix]
     public static void SettleTimeIssue2(StartOfRound __instance) {
@@ -136,6 +165,7 @@ internal class MoonPatch {
         Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
         WTOBase.LogToConsole($"END PRINT POST BASE FUNCTION VALUES:");
     }
+
 
     [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
     [HarmonyPrefix]
@@ -152,9 +182,13 @@ internal class MoonPatch {
         OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
         WTOBase.LogToConsole($"Fog animator found : {OoblFogAnimator != null}");
         if (TimeOfDay.Instance.sunAnimator == OoblFogAnimator){
+            WTOBase.LogToConsole($"Sun Animator IS fog animator, supposedly");
             return;
         }
+        TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
+        WTOBase.LogToConsole($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
     }
+
     [HarmonyPatch(typeof(TimeOfDay), "SetInsideLightingDimness")]
     [HarmonyPrefix]
     private static void SpoofLightValues(TimeOfDay __instance) {
@@ -171,10 +205,9 @@ internal class MoonPatch {
     //METHODS
     public static void Start() {
         //Load our level asset object
-        MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>(MoonPath + "OoblterraLevel.asset");
-        MyNewMoon.sceneName = "Level3Vow";
-        MoonFriendlyName = MyNewMoon.PlanetName;
-        Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
+        //MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>(MoonPath + "OoblterraLevel.asset");
+        MoonFriendlyName = "523 Ooblterra";
+        //Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
     }
     private static void SetMoonVariables(SelectableLevel Moon, StartOfRound Instance) {
         //Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
@@ -245,20 +278,6 @@ internal class MoonPatch {
                 GameObject.Destroy(NavNodes[i]);
             }
         }
-    }
-    private static void ManageCustomSun() {
-        //Ooblterra has no sun so we're getting rid of it
-        GameObject SunObject = GameObject.Find("SunWithShadows");
-        GameObject SunAnimObject = GameObject.Find("SunAnimContainer");
-        GameObject IndirectLight = GameObject.Find("Indirect");
-        SunAnimObject.GetComponent<animatedSun>().directLight = GameObject.Find("OoblSun").GetComponent<Light>();
-        SunAnimObject.GetComponent<animatedSun>().indirectLight = GameObject.Find("OoblIndirect").GetComponent<Light>();
-        GameObject.Destroy(SunObject);
-        GameObject.Destroy(IndirectLight);
-
-        OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
-        TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
-
     }
     private static void ManageFootsteps() {
         const string FootstepPath = MoonPath + "Sound/Footsteps/";

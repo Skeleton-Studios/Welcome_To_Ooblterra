@@ -1,4 +1,5 @@
 ﻿using HarmonyLib;
+using LethalLevelLoader;
 using System;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
@@ -12,19 +13,16 @@ internal class TerminalPatch {
     private static TerminalKeyword RouteKeyword;
     private static TerminalKeyword CancelKeyword;
     private static TerminalKeyword ConfirmKeyword;
-
-
     public static TerminalKeyword InfoKeyword { get; private set; }
     private static TerminalKeyword MoonTerminalWord;
-
+    private const string TerminalPath = "Assets/CustomTerminal/";
     private static bool DontRun = false;
 
-    private const string TerminalPath = "Assets/CustomTerminal/";
     //PATCHES
-
     [HarmonyPatch(typeof(StartOfRound), "Awake")]
     [HarmonyPostfix]
     private static void ExpandTerminal(StartOfRound __instance) {
+        return;
         GrabActiveTerminal();
         AddMoonToList("Ooblterra");
         CreateRoute();
@@ -33,8 +31,22 @@ internal class TerminalPatch {
             
     }
 
+    [HarmonyPatch(typeof(RoundManager), "Start")]
+    [HarmonyPostfix]
+    [HarmonyPriority(500)]
+    private static void SwitchNodes(RoundManager __instance) {
+        ExtendedLevel OoblterraRef = LevelBundle.LoadAsset<ExtendedLevel>("Assets/CustomMoon/OoblterraExtendedLevel.asset");
+        ExtendedLevel Ooblterra = PatchedContent.ExtendedLevels.Find(x => x.selectableLevel == OoblterraRef.selectableLevel);
+        Ooblterra.routeConfirmNode.displayText = "Routing autopilot to 523-Ooblterra.\r\nYour new balance is [playerCredits].\r\n\r\nRouting to external planets may take a while.\r\nPlease enjoy your flight.\r\n\r\n";
+    }
+
     //METHODS
     public static void Start() {
+        ExtendedLevel Ooblterra = LevelBundle.LoadAsset<ExtendedLevel>("Assets/CustomMoon/OoblterraExtendedLevel.asset");
+        Ooblterra.infoNode = LevelBundle.LoadAsset<TerminalNode>(TerminalPath + "OoblterraInfo.asset");
+        Ooblterra.routeNode = LevelBundle.LoadAsset<TerminalNode>(TerminalPath + "523route.asset");
+        Ooblterra.routeConfirmNode = LevelBundle.LoadAsset<TerminalNode>(TerminalPath + "523routeConfirm.asset");
+        PatchedContent.RegisterExtendedLevel(Ooblterra);
         //TODO: Should probably (on this and the suit path) make it so that all the assetbundle loading and assignment is done *here*, and
         //then any corresponding code is done when it needs to be done
     }
@@ -83,5 +95,4 @@ internal class TerminalPatch {
         //Resize our RouteKeyword array and put our new route confirmation into it
         AddToKeyword(RouteKeyword, MoonTerminalWord, RouteNode);
     }
-
 }

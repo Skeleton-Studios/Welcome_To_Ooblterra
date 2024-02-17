@@ -5,8 +5,8 @@ using UnityEngine.AI;
 using UnityEngine.Assertions.Must;
 
 namespace Welcome_To_Ooblterra.Enemies;
-/*public class BabyLurkerAI : WTOEnemy {
-
+public class BabyLurkerAI : WTOEnemy {
+    /*
     //BEHAVIOR STATES
     private class Spawn : BehaviorState {
 
@@ -208,3 +208,4 @@ namespace Welcome_To_Ooblterra.Enemies;
         return nearestPlayer != null;
     }
 }*/
+}

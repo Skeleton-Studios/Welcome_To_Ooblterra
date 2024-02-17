@@ -13,7 +13,7 @@ public class EnforcerWeapon : GrabbableObject {
     public bool isLaunchingRocket;
 
     public void TargetLaser(UnityEngine.Object target) { 
-                
+        
     }
     public void LaunchRocket(UnityEngine.Object target) { 
         

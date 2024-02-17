@@ -15,18 +15,31 @@ namespace Welcome_To_Ooblterra.Items;
 public class WTOBattery : GrabbableObject {
 
     public bool HasCharge;
+    public Material ChargedMaterial;
+    public Material EmptyMaterial;
+    public ScanNodeProperties ScanNode;
 
     public override void Start() {
         base.Start();
+        int StartingScrapValue;
         System.Random ScrapValueRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-        int StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
+        if(ScanNode == null) {
+            ScanNode = base.gameObject.GetComponentInChildren<ScanNodeProperties>();
+        }
         if (!HasCharge) {
+            WTOBase.LogToConsole("Setting Battery State to Drained");
+            ScanNode.headerText = "Drained Battery";
+            StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
+            mainObjectRenderer.SetMaterials(new List<Material>() { EmptyMaterial });
             StartingScrapValue /= 5;
             StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
+            insertedBattery.charge = 100;
         } else {
-            StartingScrapValue = ScrapValueRandom.Next(750, 950);
+            WTOBase.LogToConsole("Setting Battery State to Charged");
+            ScanNode.headerText = "Charged Battery";
+            mainObjectRenderer.SetMaterials(new List<Material>() { ChargedMaterial });
+            StartingScrapValue = ScrapValueRandom.Next(450, 550);
         }
         SetScrapValue(StartingScrapValue);
     }
-
 }

@@ -64,12 +64,10 @@ internal class TeslaCoil : NetworkBehaviour {
             }
         } catch { }
     }
-
     private void Start() {
         RecieveToggleTeslaCoil(false);
         RecieveToggleTeslaCoil(true);
     }
-
     private void Update() {
         if (!TeslaCoilOn) {
             return;
@@ -143,7 +141,6 @@ internal class TeslaCoil : NetworkBehaviour {
             RingNoiseMaker.Play();
         }
     }
-
     public void RecieveToggleTeslaCoil(bool enabled) {
         ToggleTeslaCoilServerRpc(enabled);
         ToggleTeslaCoil(enabled);

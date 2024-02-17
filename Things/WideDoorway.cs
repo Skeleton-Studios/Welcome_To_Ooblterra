@@ -53,7 +53,6 @@ internal class WideDoorway : NetworkBehaviour {
         
         CloseSoundSource.Play();
     }
-
     private void OnTriggerEnter(Collider other) {
         if (CurrentColliderList.Contains(other) || !other.gameObject.CompareTag("Player")) {
             return;

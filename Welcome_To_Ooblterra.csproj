@@ -46,6 +46,9 @@
     <Reference Include="BepInEx">
       <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
+    <Reference Include="LethalLevelLoader">
+      <HintPath>..\..\Lethal Company\BepInEx\DISABLEDMODS\LethalLevelLoader\LethalLevelLoader.dll</HintPath>
+    </Reference>
     <Reference Include="LethalLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLib\LethalLib.dll</HintPath>
@@ -154,6 +157,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enemies\AdultWandererAI.cs" />
+    <Compile Include="Enemies\OoblGhostAI.cs" />
     <Compile Include="Enemies\SecBotAI.cs" />
     <Compile Include="Enemies\EyeSecAI.cs" />
     <Compile Include="Enemies\WTOEnemy.cs" />
@@ -195,7 +199,6 @@
     <Compile Include="Things\LightComponent.cs" />
     <Compile Include="Security\TeslaCoil.cs" />
     <Compile Include="Things\StartRoomLight.cs" />
-    <Compile Include="Things\TripLaser.cs" />
     <Compile Include="Things\WideDoorway.cs" />
   </ItemGroup>
   <ItemGroup>

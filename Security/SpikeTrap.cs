@@ -55,7 +55,6 @@ internal class SpikeTrap : NetworkBehaviour {
             SecondsUntilCanDamagePlayer = 0.75f;
         }
     }
-
     public void Update() {
         if(SecondsUntilCanDamagePlayer > 0) {
             SecondsUntilCanDamagePlayer -= Time.deltaTime;
@@ -80,6 +79,7 @@ internal class SpikeTrap : NetworkBehaviour {
         }
 
     }
+
     IEnumerator RaiseSpikes() {
         TimeElapsed += Time.deltaTime;
         SpikeMesh.transform.localPosition = Vector3.Lerp(SpikeFallPos, SpikeRaisePos, TimeElapsed / MoveTime);

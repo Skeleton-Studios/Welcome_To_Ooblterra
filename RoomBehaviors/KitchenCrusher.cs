@@ -46,7 +46,6 @@ internal class KitchenCrusher : MonoBehaviour {
             victim = null;
         }
     }
-
     private void Start() {
         CrusherRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         CrusherStartPos = Crusher.transform.position;
@@ -71,9 +70,5 @@ internal class KitchenCrusher : MonoBehaviour {
             timeElapsed += Time.deltaTime;
             return;
         }
-    }
-
-    IEnumerator StartCrusher() {
-        yield return null;
     }
 }

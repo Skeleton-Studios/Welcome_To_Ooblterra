@@ -32,6 +32,7 @@ public class BatteryRecepticle : NetworkBehaviour {
     public Color LightColor;
     public Light CenterLight;
     private ScrapShelf scrapShelf;
+    public GameObject BatteryPrefab;
 
     public Material FrontConsoleMaterial;
     public Material SideConsoleMaterial;
@@ -46,6 +47,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         foreach(MeshRenderer WallLight in WallLights) {
             WallLight.sharedMaterial = WallLightMat;
         }
+        SpawnBatteryAtFurthestPoint();
     }
     private void Update() {
         if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
@@ -96,6 +98,26 @@ public class BatteryRecepticle : NetworkBehaviour {
 
     }
 
+    private void SpawnBatteryAtFurthestPoint() {
+        if (!base.IsServer) {
+            return;
+        }
+        List<RandomMapObject> AllRandomSpawnList = new();
+        AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
+        float FurthestPointDistance = 0f;
+        RandomMapObject FurthestPoint = null;
+        foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab))) {
+            float SpawnPointDistance = Vector3.Distance(this.transform.position, BatterySpawn.transform.position);
+            if (SpawnPointDistance > FurthestPointDistance) {
+                FurthestPoint = BatterySpawn;
+                FurthestPointDistance = SpawnPointDistance;
+            }
+        }
+        Vector3 SpawnPos = FurthestPoint.transform.position;
+        GameObject NewHazard = Instantiate(BatteryPrefab, SpawnPos, FurthestPoint.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
+        NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+    }
+
     public void TryInsertOrRemoveBattery(PlayerControllerB playerWhoTriggered) {
         if (RecepticleHasBattery && !InsertedBattery.HasCharge) {
             playerWhoTriggered.GrabObjectServerRpc(InsertedBattery.NetworkObject);
@@ -113,19 +135,33 @@ public class BatteryRecepticle : NetworkBehaviour {
         InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
         RecepticleHasBattery = true;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
-        InsertedBattery.transform.rotation = BatteryTransform.rotation;
+        WTOBattery PoweredBattery = FindObjectsOfType<WTOBattery>().First(x => x.HasCharge);
+        PoweredBattery.transform.rotation = BatteryTransform.rotation;
+        InsertBatteryServerRpc();
         Debug.Log("discard held object called from placeobject");
         if(InsertedBattery.HasCharge) {
             InsertedBattery.grabbable = false;
             TurnOnPowerServerRpc();
         }
     }
+    [ServerRpc(RequireOwnership = false)]
+    public void InsertBatteryServerRpc() {
+        InsertBatteryClientRpc();
+    }
+    [ClientRpc]
+    public void InsertBatteryClientRpc() {
+        InsertBattery();
+    }
+    public void InsertBattery() {
+        //This technically won't work if there's more than 1 charged battery in the level, like say, if the player leaves with one and lands again
+        WTOBattery PoweredBattery = FindObjectsOfType<WTOBattery>().First(x => x.HasCharge);
+        PoweredBattery.transform.rotation = BatteryTransform.rotation;
+    }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void TurnOnPowerServerRpc() {
         TurnOnPowerClientRpc();
     }
-
     [ClientRpc]
     public void TurnOnPowerClientRpc() {
         TurnOnPower();
@@ -147,5 +183,10 @@ public class BatteryRecepticle : NetworkBehaviour {
         MachineAnimator.SetTrigger("PowerOn");
         StartRoomLight StartRoomLights = FindObjectOfType<StartRoomLight>();
         StartRoomLights.SetCentralRoomWhite();
+        //This technically won't work if there's more than 1 charged battery in the level, like say, if the player leaves with one and lands again
+        WTOBattery PoweredBattery = FindObjectsOfType<WTOBattery>().First(x => x.HasCharge);
+        PoweredBattery.grabbable = false;
     }
+
+
 }

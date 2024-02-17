@@ -1,16 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Unity.Netcode;
-using GameNetcodeStuff;
+﻿using GameNetcodeStuff;
+using System;
 using System.Collections;
-using UnityEngine.AI;
-using Welcome_To_Ooblterra.Properties;
-using LethalLib.Modules;
+using System.Collections.Generic;
+using Unity.Netcode;
+using UnityEngine;
 using Welcome_To_Ooblterra.Patches;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Items;
 internal class CursedEffigy : GrabbableObject {
@@ -20,99 +15,105 @@ internal class CursedEffigy : GrabbableObject {
     public EnemyType TheMimic;
 
     private bool MimicSpawned;
-    private PlayerControllerB MyOwner;
-    private int OwnerID;
-    private DeadBodyInfo OwnerBody;
+    private PlayerControllerB previousPlayerHeldBy;
 
-    public override void GrabItem() {
-        base.GrabItem();
-        MyOwner = playerHeldBy;
-        OwnerBody = playerHeldBy.deadBody;
-        OwnerID = Array.IndexOf(StartOfRound.Instance.allPlayerScripts, MyOwner);
-        ChangeOwnershipOfProp(playerHeldBy.actualClientId);
-    }
-    public override void DiscardItem() {
-        base.DiscardItem();
-        if (!MyOwner.isPlayerDead) { 
-            MyOwner = null;
-            OwnerID = -1;
-        }
-    }
     public override void Update() {
         base.Update();
-        if (MyOwner == null) {
+        if (previousPlayerHeldBy == null) {
             return;
         }
-        if (MyOwner.isPlayerDead) {
-            if (!MimicSpawned) {
-                MyOwner = StartOfRound.Instance.allPlayerScripts[OwnerID];
-                CreateMimicServerRpc(MyOwner.isInsideFactory, MyOwner.transform.position);
+        if (previousPlayerHeldBy.isPlayerDead) {
+            if (!MimicSpawned && IsOwner) {
+                WTOBase.LogToConsole($"Effigy knows that {previousPlayerHeldBy} is dead!");
+                CreateMimicServerRpc(previousPlayerHeldBy.isInsideFactory, previousPlayerHeldBy.transform.position);
                 MimicSpawned = true;
-                WTOBase.LogToConsole($"Effigy knows that owning player {MyOwner} is dead!");
             }
             //Destroy(this);
         }
     }
 
+    public override void GrabItem() {
+        base.GrabItem();
+        SetOwningPlayerServerRpc(Array.IndexOf(StartOfRound.Instance.allPlayerScripts, playerHeldBy));
+    }
+    public override void DiscardItem() {
+        base.DiscardItem();
+        if (!previousPlayerHeldBy.isPlayerDead) {
+            SetOwningPlayerServerRpc(-1);
+        }
+    }
+
     [ServerRpc]
-    public void CreateMimicServerRpc(bool inFactory, Vector3 playerPositionAtDeath) {
+    public void SetOwningPlayerServerRpc(int OwnerID) {
+        SetOwningPlayerClientRpc(OwnerID);
+    }
+    [ClientRpc]
+    public void SetOwningPlayerClientRpc(int OwnerID) {
         if (OwnerID == -1) {
-            Debug.LogError("Effigy does not have owner!");
+            previousPlayerHeldBy = null;
             return;
         }
-        MyOwner = StartOfRound.Instance.allPlayerScripts[OwnerID];
-        Debug.Log("Server creating mimic from Effigy");
-        Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(playerPositionAtDeath, default, 10f);
+        previousPlayerHeldBy = StartOfRound.Instance.allPlayerScripts[OwnerID];
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void CreateMimicServerRpc(bool inFactory, Vector3 playerPositionAtDeath) {
+        if (previousPlayerHeldBy == null) {
+            WTOBase.LogToConsole("Previousplayerheldby is null so the Ghost Player could not be spawned");
+            return;
+        }
+        WTOBase.LogToConsole($"Server creating Ghost Player from Effigy. Previous Player: {previousPlayerHeldBy}");
+        Vector3 MimicSpawnPos = RoundManager.Instance.GetNavMeshPosition(playerPositionAtDeath, default, 10f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
-            Debug.Log("No nav mesh found; no WTOMimic could be created");
+            WTOBase.LogToConsole("No nav mesh found; no Ghost Player could be created");
             return;
         }
         const int MimicIndex = 12;
         TheMimic = StartOfRound.Instance.levels[8].Enemies[MimicIndex].enemyType;
-        Debug.Log($"Mimic Found: {TheMimic != null}");
-        
+        WTOBase.LogToConsole($"Masked Enemy Type Found: {TheMimic != null}");
 
-        NetworkObjectReference netObjectRef = RoundManager.Instance.SpawnEnemyGameObject(navMeshPosition, 0, -1, TheMimic);
+        NetworkObjectReference MimicNetObject = RoundManager.Instance.SpawnEnemyGameObject(MimicSpawnPos, 0, -1, TheMimic);
 
-        if (netObjectRef.TryGet(out var networkObject)) {
-            Debug.Log("Got network object for WTOMimic");
-            MaskedPlayerEnemy component = networkObject.GetComponent<MaskedPlayerEnemy>();
-            component.SetSuit(MyOwner.currentSuitID);
-            component.mimickingPlayer = MyOwner;
-            component.SetEnemyOutside(!inFactory);
-            component.SetVisibilityOfMaskedEnemy();
+        if (MimicNetObject.TryGet(out var networkObject)) {
+            Debug.Log("Got network object for Ghost Player");
+            MaskedPlayerEnemy MimicScript = networkObject.GetComponent<MaskedPlayerEnemy>();
+            MimicScript.mimickingPlayer = previousPlayerHeldBy;
+            Material suitMaterial = SuitPatch.GhostPlayerSuit;
+            MimicScript.rendererLOD0.material = suitMaterial;
+            MimicScript.rendererLOD1.material = suitMaterial;
+            MimicScript.rendererLOD2.material = suitMaterial;
+            MimicScript.SetEnemyOutside(!inFactory);
+            MimicScript.SetVisibilityOfMaskedEnemy();
 
             //This makes it such that the mimic has no visible mask :)
-            component.maskTypes[0].SetActive(value: false);
-            component.maskTypes[1].SetActive(value: false);
-            component.maskTypeIndex = 0;
+            MimicScript.maskTypes[0].SetActive(value: false);
+            MimicScript.maskTypes[1].SetActive(value: false);
+            MimicScript.maskTypeIndex = 0;
 
-            MyOwner.redirectToEnemy = component;
-            OwnerBody.DeactivateBody(setActive: false);
+            previousPlayerHeldBy.redirectToEnemy = MimicScript;
+            previousPlayerHeldBy.deadBody.DeactivateBody(setActive: false);
         }
-        CreateMimicClientRpc(netObjectRef, inFactory);
+        CreateMimicClientRpc(MimicNetObject, inFactory);
     }
-
     [ClientRpc]
     public void CreateMimicClientRpc(NetworkObjectReference netObjectRef, bool inFactory) {
         StartCoroutine(waitForMimicEnemySpawn(netObjectRef, inFactory));
     }
-
     private IEnumerator waitForMimicEnemySpawn(NetworkObjectReference netObjectRef, bool inFactory) {
         NetworkObject netObject = null;
         float startTime = Time.realtimeSinceStartup;
         yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || netObjectRef.TryGet(out netObject));
-        if (MyOwner.deadBody == null) {
+        if (previousPlayerHeldBy.deadBody == null) {
             startTime = Time.realtimeSinceStartup;
-            yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || MyOwner.deadBody != null);
+            yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || previousPlayerHeldBy.deadBody != null);
         }
-        OwnerBody.DeactivateBody(setActive: false);
+        previousPlayerHeldBy.deadBody.DeactivateBody(setActive: false);
         if (netObject == null) {
             yield break;
         }
-        Debug.Log("Got network object for WTOMimic enemy client");
+        Debug.Log("Got network object for Ghost Player enemy client");
         MaskedPlayerEnemy MimicReference = netObject.GetComponent<MaskedPlayerEnemy>();
-        MimicReference.mimickingPlayer = MyOwner;
+        MimicReference.mimickingPlayer = previousPlayerHeldBy;
         Material suitMaterial = SuitPatch.GhostPlayerSuit;
         MimicReference.rendererLOD0.material = suitMaterial;
         MimicReference.rendererLOD1.material = suitMaterial;
@@ -125,6 +126,6 @@ internal class CursedEffigy : GrabbableObject {
         MimicReference.maskTypes[1].SetActive(value: false);
         MimicReference.maskTypeIndex = 0;
 
-        MyOwner.redirectToEnemy = MimicReference;
+        previousPlayerHeldBy.redirectToEnemy = MimicReference;
     }
 }

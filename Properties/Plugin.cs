@@ -29,33 +29,91 @@ public class WTOBase : BaseUnityPlugin {
     public static ConfigFile ConfigFile;
     private const string modGUID = "SkullCrusher.WTO";
     private const string modName = "Welcome To Ooblterra";
-    private const string modVersion = "0.8.0";
+    private const string modVersion = "0.8";
 
     private readonly Harmony WTOHarmony = new Harmony(modGUID);
     internal ManualLogSource WTOLogSource;
     public static WTOBase Instance;
-    public static bool LightsOn = true;
-    public static bool SwitchState;
 
     public static AssetBundle LevelAssetBundle;
     public static AssetBundle ItemAssetBundle;
     public static AssetBundle FactoryAssetBundle;
     public static AssetBundle MonsterAssetBundle;
-    public static GameObject LabPrefab;
-    public static FrankensteinTerminal LabTerminal;
+
+    //public static bool LightsOn = true;
+    //public static bool SwitchState;
+    //public static GameObject LabPrefab;
+    //public static FrankensteinTerminal LabTerminal;
+    //public static bool DoInteractCheck = false;
+    //public static int InteractNumber = 0;
+
+    [HarmonyPatch(typeof(StartOfRound), "Update")]
+    [HarmonyPostfix]
+    public static void DebugHelper(StartOfRound __instance) {
+        if (Keyboard.current.f8Key.wasPressedThisFrame) {
+            BatteryRecepticle Machine = FindObjectOfType<BatteryRecepticle>();
+            Machine.TurnOnPower();
 
 
-    public static bool DoInteractCheck = false;
-    public static int InteractNumber = 0;
-    public static void LogToConsole(string text) {
-        text = "=======" + text + "=======";
-        Debug.Log (text);
-    }
+            /*
+            SpikeTrap[] TeslaCoils = FindObjectsOfType<SpikeTrap>();
+            foreach(SpikeTrap coil in TeslaCoils) {
+                coil.RecieveToggleSpikes(SwitchState);
+            }
+            SwitchState = !SwitchState;
+            
+            ("Hotkey override triggered to start visuals...");
+            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
+            LabTerminal.StartSceneServerRpc(100);
 
-    public enum AllowedState { 
-        Off = 0,
-        CustomLevelOnly = 1,
-        AllLevels = 2
+            
+            SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
+            foreach (SprayPaintItem sprayPaint in SprayPaints) {
+                sprayPaint.debugSprayPaint = true;
+            }
+
+            
+            LightsOn = !LightsOn;
+            WTOBase.LogToConsole($"SETTING OUTDOOR LIGHTS TO: {(LightsOn ? "ON" : "OFF")}");
+            //GameObject.Find("ActualSun").GetComponent<Light>().enabled = LightsOn;
+            GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = LightsOn;
+            
+            
+            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
+            WTOBase.LogToConsole($"REVIVING PLAYER at {LabTerminal}");
+            LabTerminal.ReviveDeadPlayerServerRpc();
+            
+            DoInteractCheck = !DoInteractCheck;
+            LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");
+                
+            UnityEngine.Object[] NumberOfEntrances = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
+            LogToConsole($"Number of entrances on map: {NumberOfEntrances.Length}");
+            for (int i = 0; i < NumberOfEntrances.Length; i++) {
+                ((EntranceTeleport)NumberOfEntrances[i]).FindExitPoint();
+                LogToConsole($"Entrance #{i} exitPoint: {((EntranceTeleport)NumberOfEntrances[i]).exitPoint}");
+            }
+                
+            bool flag = TimeOfDay.Instance.sunAnimator == MoonPatch.OoblFogAnimator;
+            WTOBase.LogToConsole($"Is fog animator correct? {flag}");
+            if (!flag) {
+                TimeOfDay.Instance.sunAnimator = MoonPatch.OoblFogAnimator;
+            }
+                
+
+
+                
+            WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");
+            EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: true);
+            foreach (EntranceTeleport entrance in array) {
+                Debug.Log(entrance);
+            }
+            WTOBase.LogToConsole("END PRINTING LIST OF ENTRANCES");
+                
+            var Monster = UnityEngine.Object.Instantiate(InsideEnemies[2].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
+            Monster.GetComponent<NetworkObject>().Spawn();
+            WTOBase.LogToConsole("EyeSec spawned...");
+            */
+        }
     }
 
     void Awake() {
@@ -117,7 +175,6 @@ public class WTOBase : BaseUnityPlugin {
         ItemPatch.Start();
         MonsterPatch.Start();
         MoonPatch.Start();
-        SuitPatch.Start();
         TerminalPatch.Start();
             
 
@@ -133,74 +190,15 @@ public class WTOBase : BaseUnityPlugin {
             }
         }
     }
-
-    [HarmonyPatch(typeof(StartOfRound), "Update")]
-    [HarmonyPostfix]
-    public static void DebugHelper(StartOfRound __instance) {
-        if (Keyboard.current.f8Key.wasPressedThisFrame) {
-            BatteryRecepticle Machine = FindObjectOfType<BatteryRecepticle>();
-            Machine.TurnOnPower();
-            
-            
-            /*
-            SpikeTrap[] TeslaCoils = FindObjectsOfType<SpikeTrap>();
-            foreach(SpikeTrap coil in TeslaCoils) {
-                coil.RecieveToggleSpikes(SwitchState);
-            }
-            SwitchState = !SwitchState;
-            
-            ("Hotkey override triggered to start visuals...");
-            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
-            LabTerminal.StartSceneServerRpc(100);
-
-            
-            SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
-            foreach (SprayPaintItem sprayPaint in SprayPaints) {
-                sprayPaint.debugSprayPaint = true;
-            }
-
-            
-            LightsOn = !LightsOn;
-            WTOBase.LogToConsole($"SETTING OUTDOOR LIGHTS TO: {(LightsOn ? "ON" : "OFF")}");
-            //GameObject.Find("ActualSun").GetComponent<Light>().enabled = LightsOn;
-            GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = LightsOn;
-            
-            
-            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
-            WTOBase.LogToConsole($"REVIVING PLAYER at {LabTerminal}");
-            LabTerminal.ReviveDeadPlayerServerRpc();
-            
-            DoInteractCheck = !DoInteractCheck;
-            LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");
-                
-            UnityEngine.Object[] NumberOfEntrances = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
-            LogToConsole($"Number of entrances on map: {NumberOfEntrances.Length}");
-            for (int i = 0; i < NumberOfEntrances.Length; i++) {
-                ((EntranceTeleport)NumberOfEntrances[i]).FindExitPoint();
-                LogToConsole($"Entrance #{i} exitPoint: {((EntranceTeleport)NumberOfEntrances[i]).exitPoint}");
-            }
-                
-            bool flag = TimeOfDay.Instance.sunAnimator == MoonPatch.OoblFogAnimator;
-            WTOBase.LogToConsole($"Is fog animator correct? {flag}");
-            if (!flag) {
-                TimeOfDay.Instance.sunAnimator = MoonPatch.OoblFogAnimator;
-            }
-                
-
-
-                
-            WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");
-            EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: true);
-            foreach (EntranceTeleport entrance in array) {
-                Debug.Log(entrance);
-            }
-            WTOBase.LogToConsole("END PRINTING LIST OF ENTRANCES");
-                
-            var Monster = UnityEngine.Object.Instantiate(InsideEnemies[2].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
-            Monster.GetComponent<NetworkObject>().Spawn();
-            WTOBase.LogToConsole("EyeSec spawned...");
-            */
-        }
+    public static void LogToConsole(string text) {
+        text = "=======" + text + "=======";
+        Debug.Log(text);
     }
+    public enum AllowedState {
+        Off = 0,
+        CustomLevelOnly = 1,
+        AllLevels = 2
+    }
+
 }
 

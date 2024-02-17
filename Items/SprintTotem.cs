@@ -30,10 +30,6 @@ internal class SprintTotem : GrabbableObject {
         StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
         SetScrapValue(StartingScrapValue);
     }
-    public override void DiscardItem() {
-        base.DiscardItem();
-        SyncSecondsServerRpc(TotemSecondsRemaining);
-    }
     public override void Update() {
         base.Update();
         //WTOBase.LogToConsole("SPRINT TOTEM STATS:");
@@ -58,6 +54,12 @@ internal class SprintTotem : GrabbableObject {
             DoOnce = false;
         }
     }
+
+    public override void DiscardItem() {
+        base.DiscardItem();
+        SyncSecondsServerRpc(TotemSecondsRemaining);
+    }
+
     private void SetPlayerSpeedAndStamina() {
         if(playerHeldBy == null) {
             return;
@@ -116,7 +118,6 @@ internal class SprintTotem : GrabbableObject {
     private void SyncSeconds(float NewSeconds) {
         TotemSecondsRemaining = NewSeconds;
     }
-
 
     [ServerRpc]
     private void DestroyTotemServerRpc() {
