@@ -59,6 +59,9 @@ public class EyeSecAI : WTOEnemy {
             SecondsToScan = EyeSecList[enemyIndex].BuffedByTeslaCoil ? EyeSecScanSpeed : (IsEven ? EyeSecScanSpeed * 2 : EyeSecScanSpeed);
             EyeSecList[enemyIndex].StartScanVisuals();
             EyeSecList[enemyIndex].agent.speed = 0f;
+            if (EyeSecList[enemyIndex].IsDeepScan) {
+                //EyeSecList[enemyIndex].targetPlayer.JumpToFearLevel(0.5f);
+            }
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (AnimWaiterSeconds < 0.25) {
@@ -90,6 +93,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].StopScanVisuals(null, 20);
             EyeSecList[enemyIndex].StartAttackVisuals();
             EyeSecList[enemyIndex].agent.speed = 0f;
+            EyeSecList[enemyIndex].targetPlayer.JumpToFearLevel(1f);
             laserTimer = 0f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
