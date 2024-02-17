@@ -6,11 +6,11 @@ Gasparatus - Music
 
 StrangerFolk - Sound Design
 
-Jonas "Lazarus" Bocash - Visual Design (textures, models)
+Jonas "Lazarus" Bocash, ComfyCookie404, Supared - Visual Design (Textures, Models)
 
 EchoSem - Animation
 
-IAmBreeze, Hanori, ComfyCookie404, Supared, Wasomute - Playtesting
+IAmBreeze, Hanori, Wasomute - Playtesting
 
 Evaisa - Programming (API for custom items and interior)
 
