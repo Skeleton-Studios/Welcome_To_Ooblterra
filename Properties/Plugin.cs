@@ -29,7 +29,7 @@ public class WTOBase : BaseUnityPlugin {
     public static ConfigFile ConfigFile;
     private const string modGUID = "SkullCrusher.WTO";
     private const string modName = "Welcome To Ooblterra";
-    private const string modVersion = "0.7.21";
+    private const string modVersion = "0.8";
 
     private readonly Harmony WTOHarmony = new Harmony(modGUID);
     internal ManualLogSource WTOLogSource;
