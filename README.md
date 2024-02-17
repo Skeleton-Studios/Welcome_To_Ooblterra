@@ -10,7 +10,7 @@ Jonas "Lazarus" Bocash - Visual Design (textures, models)
 
 EchoSem - Animation
 
-IAmBreeze, Hanori, Comfycookie404, Supared, Wasomute - Playtesting
+IAmBreeze, Hanori, ComfyCookie404, Supared, Wasomute - Playtesting
 
 Evaisa - Programming (API for custom items and interior)
 
