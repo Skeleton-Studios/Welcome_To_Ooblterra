@@ -6,7 +6,7 @@ Gasparatus - Music
 
 StrangerFolk - Sound Design
 
-Jonas "Lazarus" Bocash, ComfyCookie404, Supared - Visual Design (Textures, Models)
+Jonas "Lazarus" Bocash, comfycookie404, Supared - Visual Design (Textures, Models)
 
 EchoSem - Animation
 
