@@ -14,12 +14,12 @@ IAmBreeze, Hanori, ComfyCookie404, Supared, Wasomute - Playtesting
 
 Evaisa - Programming (API for custom items and interior)
 
-IAmBatby - Programming (API for custom moon adapted from old Ooblterra code, thank you!)
+IAmBatby - Programming (created API for custom moon adapted from old Ooblterra code, thank you!)
 
-HeyImNoop - Programming (API for custom monsters adapted from old Ooblterra code, thank you!)
+HeyImNoop - Programming (created API for custom monsters adapted from old Ooblterra code, thank you!)
 
 Badhamknibbs - Programming (Custom interior assistance) 
 
-AlexCodesGames - Programming (suits)
+AlexCodesGames - Programming (Code for custom suits has been lightly adapted from AdditionalSuits)
 
-Bizzlemip - Programming (custom moon code heavily adapted from MoonAPI)
+Bizzlemip - Programming (custom moon code has been heavily adapted from MoonAPI)
