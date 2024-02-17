@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.Things;
 
@@ -118,7 +119,9 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].agent.speed = EyeSecAttackSpeed;
             EyeSecList[enemyIndex].StopAttackVisuals();
             EyeSecList[enemyIndex].PlayerTracker.transform.position = EyeSecList[enemyIndex].transform.position;
-            EyeSecList[enemyIndex].SetDestinationToPosition(EyeSecList[enemyIndex].ChooseClosestNodeToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, true).position);
+            if (EyeSecList[enemyIndex].agent.isOnNavMesh) { 
+                EyeSecList[enemyIndex].SetDestinationToPosition(EyeSecList[enemyIndex].ChooseClosestNodeToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, true).position);
+            }
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //EyeSecList[enemyIndex].TrackPlayerWithHead();
@@ -423,7 +426,7 @@ public class EyeSecAI : WTOEnemy {
         targetPlayer = playerWhoHit;
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
         LogMessage("Player hit us!");
-        if(ActiveState is ShutDown) {
+        if(ActiveState is ShutDown || ActiveState is Attack || ActiveState is MoveToAttackPosition) {
             return;
         }
         OverrideState(new Attack());

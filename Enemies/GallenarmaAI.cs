@@ -91,9 +91,12 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             //pass the latest noise to our gallenarma and tell it to go there
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             if (GallenarmaList[enemyIndex].LatestNoise.Loudness != -1) {
-                TargetNoisePosition = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].LatestNoise.Location, 5);
+
                 CurrentNoise = GallenarmaList[enemyIndex].LatestNoise;
-                OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(TargetNoisePosition, true);
+                if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                    TargetNoisePosition = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].LatestNoise.Location, 5);
+                    OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(TargetNoisePosition, true);
+                }
                 GallenarmaList[enemyIndex].agent.speed = 7f;
                 return;
             }
@@ -102,11 +105,14 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (GallenarmaList[enemyIndex].LatestNoise.Location != CurrentNoise.Location) {
                 CurrentNoise = GallenarmaList[enemyIndex].LatestNoise;
-                RangeOfTargetNoise = GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(CurrentNoise.Location);
-                OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RangeOfTargetNoise.position, true);
+
+                if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                    RangeOfTargetNoise = GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(CurrentNoise.Location);
+                    OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RangeOfTargetNoise.position, true);
+                }
                 GallenarmaList[enemyIndex].agent.speed = 7.5f;
             }
-            if (!OnRouteToNextPoint) {
+            if (!OnRouteToNextPoint && GallenarmaList[enemyIndex].agent.isOnNavMesh) {
                 GallenarmaList[enemyIndex].LogMessage("Noise was unreachable!");
                 if (GallenarmaList[enemyIndex].LatestNoise.Loudness != -1) {
                     NextPoint = GallenarmaList[enemyIndex].LatestNoise.Location;
@@ -114,7 +120,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                     NextPoint = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[MyRandomInt].transform.position, 15);
                     WTOBase.LogToConsole("Gallenarma off to random point!");
                 }
-                OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(NextPoint).position);
+                if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                    OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(NextPoint).position);
+                }
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -166,7 +174,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", true);
             GallenarmaList[enemyIndex].HasAttackedThisCycle = false;
             GallenarmaList[enemyIndex].AttackTimerSeconds = 1.667f;
-            GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
+            if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
+            }
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
@@ -192,7 +202,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
 
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
-            GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
+            if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
+            }
             GallenarmaList[enemyIndex].agent.speed = 7f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -212,7 +224,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         private bool MovingToBoombox;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].SecondsUntilBored = 150;
-            GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].myBoomboxPos);
+            if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
+                GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].myBoomboxPos);
+            }
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             GallenarmaList[enemyIndex].agent.speed = 5f;
         }
@@ -225,7 +239,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 return;
             }
             //if we're not near our boombox, move to it
-            if (!MovingToBoombox) {
+            if (!MovingToBoombox && GallenarmaList[enemyIndex].agent.isOnNavMesh) {
                 GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].myBoomboxPos);
                 MovingToBoombox = true;
             }
