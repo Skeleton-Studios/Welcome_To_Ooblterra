@@ -27,6 +27,7 @@ namespace Welcome_To_Ooblterra.Properties;
 public class WTOBase : BaseUnityPlugin {
 
     public static ConfigFile ConfigFile;
+    static Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
     private const string modGUID = "SkullCrusher.WTO";
     private const string modName = "Welcome To Ooblterra";
     private const string modVersion = "0.8";
@@ -41,7 +42,7 @@ public class WTOBase : BaseUnityPlugin {
     public static AssetBundle MonsterAssetBundle;
 
     //public static bool LightsOn = true;
-    //public static bool SwitchState;
+    //public static bool SwitchState = true;
     //public static GameObject LabPrefab;
     //public static FrankensteinTerminal LabTerminal;
     //public static bool DoInteractCheck = false;
@@ -51,10 +52,6 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
-            BatteryRecepticle Machine = FindObjectOfType<BatteryRecepticle>();
-            Machine.TurnOnPower();
-
-
             /*
             SpikeTrap[] TeslaCoils = FindObjectsOfType<SpikeTrap>();
             foreach(SpikeTrap coil in TeslaCoils) {
@@ -114,6 +111,9 @@ public class WTOBase : BaseUnityPlugin {
             WTOBase.LogToConsole("EyeSec spawned...");
             */
         }
+        if (Keyboard.current.f9Key.wasPressedThisFrame) {
+            StartOfRound.Instance.ChangeLevelServerRpc(9, 60);
+        }
     }
 
     void Awake() {
@@ -126,8 +126,7 @@ public class WTOBase : BaseUnityPlugin {
         //ConfigFile = Instance.Config ;
         //ConfigFile.Save();
         WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
-        const string appendix = "";
-        WTOLogSource.LogInfo("Welcome to Ooblterra! " + appendix);
+        WTOLogSource.LogInfo($"Welcome to Ooblterra! VERSION {version}");
 
         WTOHarmony.PatchAll(typeof(WTOBase));
         //WTOHarmony.PatchAll(typeof(WTOConfig));
