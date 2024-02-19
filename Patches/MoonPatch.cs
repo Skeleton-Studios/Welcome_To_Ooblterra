@@ -121,6 +121,7 @@ internal class MoonPatch {
     [HarmonyPatch(typeof(TimeOfDay), "MoveGlobalTime")]
     [HarmonyPrefix]
     public static void ChangeGlobalTimeMultiplier(TimeOfDay __instance) {
+        //Steal the time speed from the scriptablelevel asset, assign it here, and set it to 1 there
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             __instance.globalTimeSpeedMultiplier = 0.7f;
             return;
