@@ -22,10 +22,10 @@ internal class FactoryPatch {
     private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
     private static readonly AssetBundle LLLBundle;
     private static NetworkManager networkManagerRef;
-    private const string DungeonPath = "Assets/CustomDungeon/Data/";
-    private const string BehaviorPath = "Assets/CustomDungeon/Behaviors/";
-    private const string SecurityPath = "Assets/CustomDungeon/Security/";
-    private const string DoorPath = "Assets/CustomDungeon/Doors/";
+    private const string DungeonPath = "Assets/WelcomeToOoblterra/CustomDungeon/Data/";
+    private const string BehaviorPath = "Assets/WelcomeToOoblterra/CustomDungeon/Behaviors/";
+    private const string SecurityPath = "Assets/WelcomeToOoblterra/CustomDungeon/Security/";
+    private const string DoorPath = "Assets/WelcomeToOoblterra/CustomDungeon/Doors/";
     public static List<SpawnableMapObject> SecurityList = new List<SpawnableMapObject>();
 
 

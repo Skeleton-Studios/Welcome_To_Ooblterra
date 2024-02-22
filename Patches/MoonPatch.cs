@@ -33,7 +33,7 @@ internal class MoonPatch {
         };
     private static bool LevelLoaded;
     private static bool LevelStartHasBeenRun = false;
-    private const string MoonPath = "Assets/CustomMoon/";
+    private const string MoonPath = "Assets/WelcomeToOoblterra/CustomMoon/";
 
     //PATCHES
     [HarmonyPatch(typeof(StartOfRound), "Awake")]
@@ -133,16 +133,19 @@ internal class MoonPatch {
     [HarmonyPrefix]
     public static bool SettleTimeIssue(StartOfRound __instance) {
         
-        WTOBase.LogToConsole($"BEGIN PRINT PRE BASE FUNCTION VALUES:");
+        /* 
+         * WTOBase.LogToConsole($"BEGIN PRINT PRE BASE FUNCTION VALUES:");
         Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
         Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
         Debug.Log($"TOTAL TIME: {TimeOfDay.Instance.totalTime}");
         Debug.Log($"TIME UNTIL DEADLINE: {TimeOfDay.Instance.timeUntilDeadline}");
         Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
         WTOBase.LogToConsole($"END PRINT PRE BASE FUNCTION VALUES:");
+        */
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
             TimeOfDay.Instance.globalTime *= 0;
+            /*
             WTOBase.LogToConsole($"BEGIN PRINT POST MODIFICATION VALUES:");
             Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
             Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
@@ -150,6 +153,7 @@ internal class MoonPatch {
             Debug.Log($"TIME UNTIL DEADLINE: {TimeOfDay.Instance.timeUntilDeadline}");
             Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
             WTOBase.LogToConsole($"END PRINT POST MODIFICATION VALUES:");
+            */
             return true;
         }
         return true;

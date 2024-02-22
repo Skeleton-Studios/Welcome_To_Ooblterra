@@ -13,7 +13,7 @@ namespace Welcome_To_Ooblterra.Patches;
     */
 internal class SuitPatch {
 
-    private const string SuitPath = "Assets/CustomSuits/";
+    private const string SuitPath = "Assets/WelcomeToOoblterra/CustomSuits/";
     private const string PosterGameObject = "HangarShip/Plane.001";
     static string[] SuitMaterialPaths = new string[] {
         SuitPath + "RedSuit.mat",
@@ -56,7 +56,7 @@ internal class SuitPatch {
                 newUnlockableItem.suitMaterial = WTOBase.ItemAssetBundle.LoadAsset<Material>(PathToMaterial);
                 //prepare and set name
                 String SuitName = PathToMaterial.Substring(0, PathToMaterial.Length - 4);
-                SuitName = SuitName.Substring(19);
+                SuitName = SuitName.Substring(38);
                 newUnlockableItem.unlockableName = SuitName;
                 //add new item to the listing of tracked unlockable items
                 __instance.unlockablesList.unlockables.Add(newUnlockableItem);
