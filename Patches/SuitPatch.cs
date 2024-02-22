@@ -14,6 +14,8 @@ namespace Welcome_To_Ooblterra.Patches;
 internal class SuitPatch {
 
     private const string SuitPath = WTOBase.RootPath + "CustomSuits/";
+    private static readonly AssetBundle SuitBundle = WTOBase.ItemAssetBundle;
+
     private const string PosterGameObject = "HangarShip/Plane.001";
     static string[] SuitMaterialPaths = new string[] {
         SuitPath + "RedSuit.mat",
@@ -31,7 +33,7 @@ internal class SuitPatch {
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
     [HarmonyPrefix]
     private static void StartPatch(ref StartOfRound __instance) {
-        GhostPlayerSuit = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath + "GhostPlayerSuit.mat");
+        GhostPlayerSuit = WTOBase.ContextualLoadAsset<Material>(SuitBundle, SuitPath + "GhostPlayerSuit.mat");
         if (SuitsLoaded) {
             return; 
         }
@@ -53,7 +55,7 @@ internal class SuitPatch {
             foreach (string PathToMaterial in SuitMaterialPaths) {
                 UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
                 UnlockableSuit newSuit = new UnlockableSuit();
-                newUnlockableItem.suitMaterial = WTOBase.ItemAssetBundle.LoadAsset<Material>(PathToMaterial);
+                newUnlockableItem.suitMaterial = WTOBase.ContextualLoadAsset<Material>(SuitBundle, PathToMaterial);
                 //prepare and set name
                 String SuitName = PathToMaterial.Substring(0, PathToMaterial.Length - 4);
                 SuitName = SuitName.Substring(SuitPath.Length);
@@ -72,7 +74,7 @@ internal class SuitPatch {
     [HarmonyPriority(0)]
     private static void PatchPosters(StartOfRound __instance) {
         Material[] materials = ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials;
-        materials[1] = WTOBase.ItemAssetBundle.LoadAsset<Material>(SuitPath + "Poster.mat");
+        materials[1] = WTOBase.ContextualLoadAsset<Material>(SuitBundle, SuitPath + "Poster.mat");
         ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials = materials;
     }
 }

@@ -72,14 +72,14 @@ internal class FactoryPatch {
     //METHODS
     public static void Start() {
 
-        ExtendedDungeonFlow OoblDungeonFlow = WTOBase.LoadAsset<ExtendedDungeonFlow>(FactoryBundle, DungeonPath + "OoblLabExtendedDungeonFlow.asset");
+        ExtendedDungeonFlow OoblDungeonFlow = WTOBase.ContextualLoadAsset<ExtendedDungeonFlow>(FactoryBundle, DungeonPath + "OoblLabExtendedDungeonFlow.asset");
         OoblDungeonFlow.manualPlanetNameReferenceList.Clear();
         OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
         PatchedContent.RegisterExtendedDungeonFlow(OoblDungeonFlow);
 
-        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(BehaviorPath + "ChargedBattery.prefab"));
-        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
-        NetworkPrefabs.RegisterNetworkPrefab(FactoryBundle.LoadAsset<GameObject>(SecurityPath + "SpikeTrap.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, BehaviorPath + "ChargedBattery.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "TeslaCoil.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "SpikeTrap.prefab"));
         
     }
 }

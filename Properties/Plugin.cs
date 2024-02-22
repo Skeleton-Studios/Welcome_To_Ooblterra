@@ -163,7 +163,7 @@ public class WTOBase : BaseUnityPlugin {
             }
         }
     }
-    public static T LoadAsset<T>(AssetBundle Bundle, string PathToAsset) where T : UnityEngine.Object {
+    public static T ContextualLoadAsset<T>(AssetBundle Bundle, string PathToAsset) where T : UnityEngine.Object {
         if (Application.platform == RuntimePlatform.WindowsEditor) {
             string PathMinusFileType = PathToAsset.Substring(17);
             PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));

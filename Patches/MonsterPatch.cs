@@ -15,7 +15,8 @@ internal class MonsterPatch {
     public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
     public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
 
-    private const string EnemyPathRoot = "Assets/Resources/WelcomeToOoblterra/CustomEnemies/";
+    private static readonly AssetBundle EnemyBundle = WTOBase.MonsterAssetBundle;
+    private const string EnemyPath = WTOBase.RootPath + "CustomEnemies/";
     private static bool EnemiesInList;
     public const bool ShouldDebugEnemies = true;
 
@@ -95,14 +96,14 @@ internal class MonsterPatch {
         TerminalNode EnemyInfo = null;
         TerminalKeyword EnemyKeyword = null;
 
-        EnemyType EnemyType = WTOBase.MonsterAssetBundle.LoadAsset<EnemyType>(EnemyPathRoot + EnemyFolderName + EnemyName);
+        EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyBundle, EnemyPath + EnemyFolderName + EnemyName);
         EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
 
         if (InfoName != null) {
-            EnemyInfo = WTOBase.MonsterAssetBundle.LoadAsset<TerminalNode>(EnemyPathRoot + EnemyFolderName + InfoName);
+            EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyBundle, EnemyPath + EnemyFolderName + InfoName);
         }
         if (KeywordName != null) {
-            EnemyKeyword = WTOBase.MonsterAssetBundle.LoadAsset<TerminalKeyword>(EnemyPathRoot + EnemyFolderName + KeywordName);
+            EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyBundle, EnemyPath + EnemyFolderName + KeywordName);
             //EnemyKeyword.defaultVerb = TerminalPatch.InfoKeyword;
         }
 

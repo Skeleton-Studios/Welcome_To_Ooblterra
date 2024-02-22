@@ -211,7 +211,7 @@ internal class MoonPatch {
 
     //METHODS
     public static void Start() {
-        ExtendedLevel Ooblterra = WTOBase.LoadAsset<ExtendedLevel>(LevelBundle, MoonPatch.MoonPath + "OoblterraExtendedLevel.asset");
+        ExtendedLevel Ooblterra = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPatch.MoonPath + "OoblterraExtendedLevel.asset");
         MoonFriendlyName = Ooblterra.selectableLevel.PlanetName;
         Debug.Log($"Ooblterra Found: {Ooblterra != null}");
         PatchedContent.RegisterExtendedLevel(Ooblterra);
@@ -291,13 +291,13 @@ internal class MoonPatch {
         foreach (FootstepSurface surfaces in StartOfRound.Instance.footstepSurfaces) {
             if (surfaces.surfaceTag == "Grass") {
                 surfaces.clips = new AudioClip[] {
-                    LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP01.wav"),
-                    LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP02.wav"),
-                    LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP03.wav"),
-                    LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP04.wav"),
-                    LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP05.wav")
+                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP01.wav"),
+                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP02.wav"),
+                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP03.wav"),
+                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP04.wav"),
+                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
                 };
-                surfaces.hitSurfaceSFX = LevelBundle.LoadAsset<AudioClip>(FootstepPath + "TENTACLE_Fall.wav");
+                surfaces.hitSurfaceSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
             }
         }
     }

@@ -22,8 +22,8 @@ internal class ItemPatch {
         public Item GetItem() { return Itemref; }
 
     }
-
-    private const string ItemPath = "Assets/Resources/WelcomeToOoblterra/CustomItems/";
+    private static readonly AssetBundle ItemBundle = WTOBase.ItemAssetBundle;
+    private const string ItemPath = WTOBase.RootPath + "CustomItems/";
 
     //This array stores all our custom items
     public static ItemData[] ItemList = new ItemData[] {
@@ -48,7 +48,7 @@ internal class ItemPatch {
             return;
         }
 
-        GameObject KeyObject = GameObject.Instantiate(WTOBase.ItemAssetBundle.LoadAsset<GameObject>("Assets/Resources/WelcomeToOoblterra/CustomItems/OoblKey.prefab"), __instance.mapPropsContainer.transform);
+        GameObject KeyObject = GameObject.Instantiate(WTOBase.ContextualLoadAsset<GameObject>(ItemBundle, ItemPath + "OoblKey.prefab"), __instance.mapPropsContainer.transform);
         __instance.keyPrefab = KeyObject;
     }
 
@@ -58,15 +58,15 @@ internal class ItemPatch {
         Item NextItemToProcess;
         foreach(ItemData MyCustomScrap in ItemList){
             //Load item based on its path 
-            NextItemToProcess = WTOBase.ItemAssetBundle.LoadAsset<Item>(MyCustomScrap.GetItemPath());
+            NextItemToProcess = WTOBase.ContextualLoadAsset<Item>(ItemBundle, MyCustomScrap.GetItemPath());
             //Register it with LethalLib
             NetworkPrefabs.RegisterNetworkPrefab(NextItemToProcess.spawnPrefab);
             //if it aint broke... (but technically I should get rid of the reference to ooblterra because I dont want to have all the scrap listed twice)
-            LethalLib.Modules.Items.RegisterScrap(NextItemToProcess, MyCustomScrap.GetRarity(), Levels.LevelTypes.None, new string[] { "OoblterraLevel" });
+            LethalLib.Modules.Items.RegisterScrap(NextItemToProcess, MyCustomScrap.GetRarity(), Levels.LevelTypes.None);
             //Set the item reference in the ItemData class
             MyCustomScrap.SetItem(NextItemToProcess);
-            Debug.Log("Item Loaded: " + NextItemToProcess.name);
+            //Debug.Log("Item Loaded: " + NextItemToProcess.name);
         }
-        NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ItemAssetBundle.LoadAsset<GameObject>(ItemPath + "OoblKey.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(ItemBundle, ItemPath + "OoblKey.prefab"));
     }       
 }
