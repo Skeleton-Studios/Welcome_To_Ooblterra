@@ -103,7 +103,7 @@ internal class MonsterPatch {
         }
         if (KeywordName != null) {
             EnemyKeyword = WTOBase.MonsterAssetBundle.LoadAsset<TerminalKeyword>(EnemyPathRoot + EnemyFolderName + KeywordName);
-            EnemyKeyword.defaultVerb = TerminalPatch.InfoKeyword;
+            //EnemyKeyword.defaultVerb = TerminalPatch.InfoKeyword;
         }
 
         LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);

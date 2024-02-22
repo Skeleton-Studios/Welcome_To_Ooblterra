@@ -16,6 +16,7 @@ using UnityEngine.InputSystem;
 using GameNetcodeStuff;
 using Welcome_To_Ooblterra.Things;
 using Welcome_To_Ooblterra.Security;
+using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Properties;
 
@@ -40,6 +41,7 @@ public class WTOBase : BaseUnityPlugin {
     public static AssetBundle ItemAssetBundle;
     public static AssetBundle FactoryAssetBundle;
     public static AssetBundle MonsterAssetBundle;
+    public const string RootPath = "Assets/Resources/WelcomeToOoblterra/";
 
     //public static bool LightsOn = true;
     //public static bool SwitchState = true;
@@ -123,13 +125,10 @@ public class WTOBase : BaseUnityPlugin {
             Instance = this;
         }
 
-        //ConfigFile = Instance.Config ;
-        //ConfigFile.Save();
         WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
         WTOLogSource.LogInfo($"Welcome to Ooblterra! VERSION {version}");
 
         WTOHarmony.PatchAll(typeof(WTOBase));
-        //WTOHarmony.PatchAll(typeof(WTOConfig));
         WTOHarmony.PatchAll(typeof(FactoryPatch));
         WTOHarmony.PatchAll(typeof(ItemPatch));
         WTOHarmony.PatchAll(typeof(MonsterPatch));
@@ -137,36 +136,13 @@ public class WTOBase : BaseUnityPlugin {
         WTOHarmony.PatchAll(typeof(SuitPatch));
         WTOHarmony.PatchAll(typeof(TerminalPatch));
             
-        if (/* WTOConfig.WTOCustomSuits.Value*/ true) {
-                
-        }
         LogToConsole("BEGIN PRINTING LOADED ASSETS");
-        //AllowedState.TryParse(WTOConfig.CustomInteriorEnabled.ToString(), out AllowedState InteriorState);
-        if (/*InteriorState != AllowedState.Off*/ true) {
-            string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
-            FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-        }
-
-        //AllowedState.TryParse(WTOConfig.SpawnScrapStatus.ToString(), out AllowedState ItemState);
-        if (/*ItemState != AllowedState.Off*/ true) {
-            string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
-            ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
-        }
-
-        if (/* WTOConfig.OoblterraEnabled.Value*/ true) {
-            string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
-            LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
-        }
-
-        /*
-        AllowedState.TryParse(WTOConfig.SpawnOutdoorEnemyStatus.ToString(), out AllowedState OutdoorMonsterState);
-        AllowedState.TryParse(WTOConfig.SpawnIndoorEnemyStatus.ToString(), out AllowedState IndoorMonsterState);
-        AllowedState.TryParse(WTOConfig.SpawnAmbientEnemyStatus.ToString(), out AllowedState DaytimeMonsterState);
-        AllowedState.TryParse(WTOConfig.SpawnSecurityStatus.ToString(), out AllowedState SecurityState);
-        if (OutdoorMonsterState != AllowedState.Off || IndoorMonsterState != AllowedState.Off
-            || DaytimeMonsterState != AllowedState.Off || SecurityState != AllowedState.Off
-        true) {
-        */
+        string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
+        FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
+        string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
+        ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
+        string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
+        LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
         string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
         MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
 
@@ -174,8 +150,6 @@ public class WTOBase : BaseUnityPlugin {
         ItemPatch.Start();
         MonsterPatch.Start();
         MoonPatch.Start();
-        TerminalPatch.Start();
-            
 
         //NetcodeWeaver stuff
         var types = Assembly.GetExecutingAssembly().GetTypes();
@@ -189,6 +163,17 @@ public class WTOBase : BaseUnityPlugin {
             }
         }
     }
+    public static T LoadAsset<T>(AssetBundle Bundle, string PathToAsset) where T : UnityEngine.Object {
+        if (Application.platform == RuntimePlatform.WindowsEditor) {
+            string PathMinusFileType = PathToAsset.Substring(17);
+            PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
+            Debug.Log($"Loading {PathMinusFileType} from resources folder...");
+            return Resources.Load<T>(PathMinusFileType);
+        } else {
+            Debug.Log($"Loading {PathToAsset} from {Bundle}...");
+            return Bundle.LoadAsset<T>(PathToAsset);
+        }
+    }
     public static void LogToConsole(string text) {
         text = "=======" + text + "=======";
         Debug.Log(text);
@@ -198,6 +183,5 @@ public class WTOBase : BaseUnityPlugin {
         CustomLevelOnly = 1,
         AllLevels = 2
     }
-
 }
 

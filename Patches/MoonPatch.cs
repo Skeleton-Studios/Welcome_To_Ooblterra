@@ -8,6 +8,7 @@ using Unity.Netcode;
 using System.Runtime.CompilerServices;
 using DunGen.Adapters;
 using System.Runtime.InteropServices.WindowsRuntime;
+using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Patches;
 
@@ -210,10 +211,10 @@ internal class MoonPatch {
 
     //METHODS
     public static void Start() {
-        //Load our level asset object
-        //MyNewMoon = LevelBundle.LoadAsset<SelectableLevel>(MoonPath + "OoblterraLevel.asset");
-        MoonFriendlyName = "523 Ooblterra";
-        //Debug.Log(MoonFriendlyName + " Level Object found: " + (MyNewMoon != null).ToString());
+        ExtendedLevel Ooblterra = WTOBase.LoadAsset<ExtendedLevel>(LevelBundle, MoonPatch.MoonPath + "OoblterraExtendedLevel.asset");
+        MoonFriendlyName = Ooblterra.selectableLevel.PlanetName;
+        Debug.Log($"Ooblterra Found: {Ooblterra != null}");
+        PatchedContent.RegisterExtendedLevel(Ooblterra);
     }
     private static void SetMoonVariables(SelectableLevel Moon, StartOfRound Instance) {
         //Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
