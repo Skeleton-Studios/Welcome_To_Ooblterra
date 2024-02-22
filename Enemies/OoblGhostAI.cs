@@ -9,21 +9,21 @@ using UnityEngine.Rendering;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
-internal class OoblGhostAI : WTOEnemy {
+internal class OoblGhostAI : WTOEnemy<OoblGhostAI> {
 
     //STATES
     private class WaitForNextAttack : BehaviorState {
         public WaitForNextAttack() {
             RandomRange = new Vector2(3, 5);
         }
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
-            GhostList[enemyIndex].creatureVoice.Stop();
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
+            ThisEnemy.SecondsUntilGhostWillAttack = MyRandomInt;
+            ThisEnemy.creatureVoice.Stop();
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
 
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
 
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -35,32 +35,32 @@ internal class OoblGhostAI : WTOEnemy {
         private float TargetPlayerYAxisValue;
         List<PlayerControllerB> AllPlayersArray;
         private float SecondsSincePlayerWasOffPosition;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             //get the player with the highest insanity
             AllPlayersArray = StartOfRound.Instance.allPlayerScripts.ToList();
-            GhostList[enemyIndex].PlayerToAttack = GhostList[enemyIndex].FindMostHauntedPlayer(enemyRandom, AllPlayersArray);
-            TargetPlayerYAxisValue = GhostList[enemyIndex].PlayerToAttack.transform.position.y;
+            ThisEnemy.PlayerToAttack = ThisEnemy.FindMostHauntedPlayer(ThisEnemy.enemyRandom, AllPlayersArray);
+            TargetPlayerYAxisValue = ThisEnemy.PlayerToAttack.transform.position.y;
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
             //Check and make sure the chosen player's height stays the same for about 3 seconds, with 1 second of acceptable variation time
-            if (TargetPlayerYAxisValue == GhostList[enemyIndex].PlayerToAttack.transform.position.y) {
-                GhostList[enemyIndex].TrackPlayerMovementSeconds -= Time.deltaTime;
+            if (TargetPlayerYAxisValue == ThisEnemy.PlayerToAttack.transform.position.y) {
+                ThisEnemy.TrackPlayerMovementSeconds -= Time.deltaTime;
                 return;
             }
-            if(TargetPlayerYAxisValue != GhostList[enemyIndex].PlayerToAttack.transform.position.y && SecondsSincePlayerWasOffPosition < 1f) {
+            if(TargetPlayerYAxisValue != ThisEnemy.PlayerToAttack.transform.position.y && SecondsSincePlayerWasOffPosition < 1f) {
                 SecondsSincePlayerWasOffPosition += Time.deltaTime;
                 return;
             } else {
-                GhostList[enemyIndex].TrackPlayerMovementSeconds = 3f;
-                AllPlayersArray.Remove(GhostList[enemyIndex].PlayerToAttack);
-                GhostList[enemyIndex].PlayerToAttack = GhostList[enemyIndex].FindMostHauntedPlayer(enemyRandom, AllPlayersArray);
-                TargetPlayerYAxisValue = GhostList[enemyIndex].PlayerToAttack.transform.position.y;
+                ThisEnemy.TrackPlayerMovementSeconds = 3f;
+                AllPlayersArray.Remove(ThisEnemy.PlayerToAttack);
+                ThisEnemy.PlayerToAttack = ThisEnemy.FindMostHauntedPlayer(ThisEnemy.enemyRandom, AllPlayersArray);
+                TargetPlayerYAxisValue = ThisEnemy.PlayerToAttack.transform.position.y;
                 SecondsSincePlayerWasOffPosition = 0f;
                 return;
             }
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            GhostList[enemyIndex].YAxisLockedTo = TargetPlayerYAxisValue;
+        public override void OnStateExit(WTOEnemy enemyInstance) {
+            ThisEnemy.YAxisLockedTo = TargetPlayerYAxisValue;
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new TargetChosen()
@@ -72,24 +72,24 @@ internal class OoblGhostAI : WTOEnemy {
         }
         Vector3 DirectionVector;
         Vector3 TargetGhostPosition;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
-            GhostList[enemyIndex].creatureVoice.Play();
-            //GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].YAxisLockedTo, MyRandomInt);
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
+            ThisEnemy.PlayerToAttack.statusEffectAudio.PlayOneShot(ThisEnemy.StartupSound);
+            ThisEnemy.creatureVoice.Play();
+            //ThisEnemy.transform.position = new Vector3(MyRandomInt, ThisEnemy.YAxisLockedTo, MyRandomInt);
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            DirectionVector = (GhostList[enemyIndex].PlayerToAttack.transform.position - GhostList[enemyIndex].transform.position).normalized;
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
+            DirectionVector = (ThisEnemy.PlayerToAttack.transform.position - ThisEnemy.transform.position).normalized;
             WTOBase.LogToConsole($"DIRECTION: {DirectionVector}");
-            if (GhostList[enemyIndex].transform.position != GhostList[enemyIndex].PlayerToAttack.transform.position) {
-                GhostList[enemyIndex].transform.position += DirectionVector * 3 * Time.deltaTime;
-                //GhostList[enemyIndex].transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up);
-                //GhostList[enemyIndex].transform.position = new Vector3(GhostList[enemyIndex].transform.position.x, GhostList[enemyIndex].YAxisLockedTo, GhostList[enemyIndex].transform.position.z);
+            if (ThisEnemy.transform.position != ThisEnemy.PlayerToAttack.transform.position) {
+                ThisEnemy.transform.position += DirectionVector * 3 * Time.deltaTime;
+                //ThisEnemy.transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up);
+                //ThisEnemy.transform.position = new Vector3(ThisEnemy.transform.position.x, ThisEnemy.YAxisLockedTo, ThisEnemy.transform.position.z);
             }
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            GhostList[enemyIndex].PlayerToAttack = null;
-            GhostList[enemyIndex].SelfPosition = new Vector2(-1, -1);
-            GhostList[enemyIndex].TargetPlayerPosition = new Vector2(-1, -1);
+        public override void OnStateExit(WTOEnemy enemyInstance) {
+            ThisEnemy.PlayerToAttack = null;
+            ThisEnemy.SelfPosition = new Vector2(-1, -1);
+            ThisEnemy.TargetPlayerPosition = new Vector2(-1, -1);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new KilledPlayer(),
@@ -100,7 +100,7 @@ internal class OoblGhostAI : WTOEnemy {
     //TRANSITIONS
     private class AttackTimerDone : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return GhostList[enemyIndex].SecondsUntilGhostWillAttack <= 0f;
+            return ThisEnemy.SecondsUntilGhostWillAttack <= 0f;
         }
         public override BehaviorState NextState() {
             return new ChooseTarget();
@@ -108,7 +108,7 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private class TargetChosen : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return GhostList[enemyIndex].TrackPlayerMovementSeconds <= 0f;
+            return ThisEnemy.TrackPlayerMovementSeconds <= 0f;
         }
         public override BehaviorState NextState() {
             return new GoTowardPlayer();
@@ -116,7 +116,7 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private class KilledPlayer : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return GhostList[enemyIndex].PlayerToAttack.isPlayerDead;
+            return ThisEnemy.PlayerToAttack.isPlayerDead;
         }
         public override BehaviorState NextState() {
             return new WaitForNextAttack();
@@ -124,7 +124,7 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private class PlayerIsOutOfAttackRange : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return GhostList[enemyIndex].SelfPosition != GhostList[enemyIndex].TargetPlayerPosition && GhostList[enemyIndex].PlayerToAttack.transform.position.y != GhostList[enemyIndex].YAxisLockedTo;
+            return ThisEnemy.SelfPosition != ThisEnemy.TargetPlayerPosition && ThisEnemy.PlayerToAttack.transform.position.y != ThisEnemy.YAxisLockedTo;
         }
         public override BehaviorState NextState() {
             return new WaitForNextAttack();
@@ -147,7 +147,7 @@ internal class OoblGhostAI : WTOEnemy {
         InitialState = new WaitForNextAttack();
         PrintDebugs = true;
         GhostID++;
-        WTOEnemyID = GhostID;
+        //WTOEnemyID = GhostID;
         //transform.position = new Vector3(0, -300, 0);
         LogMessage($"Adding Oobl Ghost {this} #{GhostID}");
         GhostList.Add(GhostID, this);

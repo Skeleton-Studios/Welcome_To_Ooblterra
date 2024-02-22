@@ -17,10 +17,10 @@ public class SecBotAI : EnemyAI {
         public bool MovingToNextPoint;
         private Ray newRaycast;
         private RaycastHit raycastHit;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             creatureAnimator.SetBool("Moving", value: true);
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
             if (!MovingToNextPoint) {
                 newRaycast.origin = self.transform.position;
                 newRaycast.direction = self.transform.forward;
@@ -29,7 +29,7 @@ public class SecBotAI : EnemyAI {
                 MovingToNextPoint = true;
             }
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
             creatureAnimator.SetBool("Moving", value: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -40,13 +40,13 @@ public class SecBotAI : EnemyAI {
         public bool SearchInProgress;
         public bool investigate;
         public int investigateTimer;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             creatureAnimator.SetBool("Moving", value: true);
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
 
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
             creatureAnimator.SetBool("Moving", value: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -57,13 +57,13 @@ public class SecBotAI : EnemyAI {
         public bool SearchInProgress;
         public bool investigate;
         public int investigateTimer;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             creatureAnimator.SetBool("Moving", value: true);
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
 
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
             creatureAnimator.SetBool("Moving", value: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -74,13 +74,13 @@ public class SecBotAI : EnemyAI {
         public bool SearchInProgress;
         public bool investigate;
         public int investigateTimer;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             creatureAnimator.SetBool("Moving", value: true);
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
 
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
             creatureAnimator.SetBool("Moving", value: false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {

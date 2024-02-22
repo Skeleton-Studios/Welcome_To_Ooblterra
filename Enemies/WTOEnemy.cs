@@ -10,16 +10,16 @@ namespace Welcome_To_Ooblterra.Enemies;
 
 public abstract class WTOEnemy<T> : WTOEnemy where T : WTOEnemy<T>
 {
-    public static T instance { get; private set; }
+    public static T ThisEnemy { get; private set; }
 
     public WTOEnemy()
     {
-        if(instance != null)
+        if(ThisEnemy != null)
         {
             LogMessage("Singleton Instantiated twice! Skipping");
             return;
         }
-        instance = this as T;
+        ThisEnemy = this as T;
     }
 }
 
@@ -28,9 +28,9 @@ public abstract class WTOEnemy : EnemyAI {
         public Vector2 RandomRange = new Vector2(0, 0);
         public int MyRandomInt = 0;
         
-        public abstract void OnStateEntered(WTOEnemy enemyInstance, System.Random enemyRandom, Animator creatureAnimator);
-        public abstract void UpdateBehavior(WTOEnemy enemyInstance, System.Random enemyRandom, Animator creatureAnimator);
-        public abstract void OnStateExit(WTOEnemy enemyInstance, System.Random enemyRandom, Animator creatureAnimator);
+        public abstract void OnStateEntered(WTOEnemy enemyInstance);
+        public abstract void UpdateBehavior(WTOEnemy enemyInstance);
+        public abstract void OnStateExit(WTOEnemy enemyInstance);
 
         public virtual List<StateTransition> transitions { get; set; }
     }
@@ -84,7 +84,7 @@ public abstract class WTOEnemy : EnemyAI {
         //Fix for the animator sometimes deciding to just not work
             creatureAnimator.Rebind();
        
-        ActiveState.OnStateEntered(_WTOEnemyInstance, enemyRandom, creatureAnimator);
+        ActiveState.OnStateEntered(_WTOEnemyInstance);
 
     }
     public override void Update() {
@@ -103,7 +103,7 @@ public abstract class WTOEnemy : EnemyAI {
 
         foreach (StateTransition TransitionToCheck in AllTransitions) {
             
-            if (TransitionToCheck.CanTransitionBeTaken()) {
+            if (TransitionToCheck.CanTransitionBeTaken() && IsOwner) {
                 RunUpdate = false;
                 nextTransition = TransitionToCheck;
                 TransitionStateServerRpc(nextTransition.ToString(), GenerateNextRandomInt(nextTransition.NextState().RandomRange));
@@ -112,7 +112,7 @@ public abstract class WTOEnemy : EnemyAI {
         }
 
         if (RunUpdate) {
-            ActiveState.UpdateBehavior(_WTOEnemyInstance, enemyRandom, creatureAnimator);
+            ActiveState.UpdateBehavior(_WTOEnemyInstance);
         }
     }
 
@@ -143,13 +143,13 @@ public abstract class WTOEnemy : EnemyAI {
         }
         //LogMessage(StateName);
         LogMessage($"{__getTypeName()} #{_WTOEnemyInstance} is Exiting:  {ActiveState}");
-        ActiveState.OnStateExit(_WTOEnemyInstance, enemyRandom, creatureAnimator);
+        ActiveState.OnStateExit(_WTOEnemyInstance);
         LogMessage($"{__getTypeName()} #{_WTOEnemyInstance} is Transitioning via:  {LocalNextTransition}");
         ActiveState = LocalNextTransition.NextState();
         ActiveState.MyRandomInt = RandomInt;
         
         LogMessage($"{__getTypeName()} #{_WTOEnemyInstance} is Entering:  {ActiveState}");
-        ActiveState.OnStateEntered(_WTOEnemyInstance, enemyRandom, creatureAnimator);
+        ActiveState.OnStateEntered(_WTOEnemyInstance);
 
         //Debug Prints 
         StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
@@ -163,7 +163,7 @@ public abstract class WTOEnemy : EnemyAI {
     }
     internal void OverrideState(BehaviorState state) {
         ActiveState = state;
-        ActiveState.OnStateEntered(_WTOEnemyInstance, enemyRandom, creatureAnimator);
+        ActiveState.OnStateEntered(_WTOEnemyInstance);
         return;
     }
     internal float DistanceFromPlayer(PlayerControllerB player) {

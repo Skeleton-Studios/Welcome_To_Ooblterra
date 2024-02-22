@@ -15,13 +15,13 @@ public class LurkerAI : WTOEnemy {
     //BEHAVIOR STATES
     private class Roam : BehaviorState {
         private bool MovingToPosition;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {  
+        public override void OnStateEntered(WTOEnemy enemyInstance) {  
             LurkerList[enemyIndex].SetAnimBoolOnServerRpc("Grabbing", false);
             LurkerList[enemyIndex].agent.speed = 5f;
             LurkerList[enemyIndex].StartSearch(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].CrawlAroundLab);
             //MovingToPosition = LurkerList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(LurkerList[enemyIndex].allAINodes[enemyRandom.Next(LurkerList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
             if (!LurkerList[enemyIndex].CrawlAroundLab.inProgress) {
                 LurkerList[enemyIndex].StartSearch(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].CrawlAroundLab);
             }
@@ -32,7 +32,7 @@ public class LurkerAI : WTOEnemy {
                 MovingToPosition = false;
             }
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
             LurkerList[enemyIndex].StopSearch(LurkerList[enemyIndex].CrawlAroundLab, clear: false);
             LurkerList[enemyIndex].creatureAnimator.SetBool("Moving", false);
         }
@@ -43,7 +43,7 @@ public class LurkerAI : WTOEnemy {
     private class Stalk : BehaviorState {
         //Find a spot behind the player and go to it
         Vector3 StalkPos;
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             LurkerList[enemyIndex].SetAnimBoolOnServerRpc("Grabbing", false);
             if (LurkerList[enemyIndex].PlayerIsTargetable(LurkerList[enemyIndex].targetPlayer)) {
                 float MaxRange = (0.6f) * -1;
@@ -52,10 +52,10 @@ public class LurkerAI : WTOEnemy {
                 LurkerList[enemyIndex].agent.speed = 5f;
             }
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
 
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
                 
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -69,19 +69,19 @@ public class LurkerAI : WTOEnemy {
         }
         //Cling to the ceiling and wait to be looked at
         //If the player moves out of range, go back to stalking
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             SwitchClingingToCeilingState(true);
             LurkerList[enemyIndex].agent.speed = 0;
             LurkerList[enemyIndex].MoveCooldownSeconds = MyRandomInt;
             LurkerList[enemyIndex].creatureVoice.Play();
             LurkerList[enemyIndex].finishPlayerDrag = false;
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
             if (!LurkerList[enemyIndex].WaitingForGrab) {
                 LurkerList[enemyIndex].WaitingForGrab = true;
             }
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
             LurkerList[enemyIndex].creatureVoice.Stop();
             LurkerList[enemyIndex].SetAnimBoolOnServerRpc("Grabbing", false);
         }
@@ -98,7 +98,7 @@ public class LurkerAI : WTOEnemy {
         }
     }
     private class Drag : BehaviorState {
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             LurkerList[enemyIndex].SetAnimBoolOnServerRpc("GrabDrag", true);
             if(LurkerPoints != null && LurkerPoints.Count > 0) { 
                 LurkerList[enemyIndex].SetDestinationToPosition(LurkerList[enemyIndex].ChooseClosestNodeToPosition(LurkerPoints[0].transform.position).position);
@@ -107,7 +107,7 @@ public class LurkerAI : WTOEnemy {
             }
             LurkerList[enemyIndex].agent.speed = 4f;
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
             LurkerList[enemyIndex].targetPlayer.transform.position = LurkerList[enemyIndex].transform.position;
             if(Vector3.Distance(LurkerList[enemyIndex].transform.position, LurkerList[enemyIndex].destination) < 1) {
                 LurkerList[enemyIndex].SetAnimTriggerOnServerRpc("Drop");
@@ -119,7 +119,7 @@ public class LurkerAI : WTOEnemy {
                     
             }
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
             LurkerList[enemyIndex].SetAnimTriggerOnServerRpc("Drop");
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
@@ -127,7 +127,7 @@ public class LurkerAI : WTOEnemy {
         };
     }
     private class Flee : BehaviorState {
-        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateEntered(WTOEnemy enemyInstance) {
             LurkerList[enemyIndex].SetAnimBoolOnServerRpc("Grabbing", false);
             LurkerList[enemyIndex].WaitingForGrab = false;
             //if (LurkerList[enemyIndex].finishPlayerDrag) {
@@ -137,10 +137,10 @@ public class LurkerAI : WTOEnemy {
             //LurkerList[enemyIndex].SetDestinationToPosition(LurkerList[enemyIndex].ChooseClosestNodeToPosition(LurkerList[enemyIndex].transform.position).position, true);
             LurkerList[enemyIndex].agent.speed = 15f;
         }
-        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void UpdateBehavior(WTOEnemy enemyInstance) {
 
         }
-        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+        public override void OnStateExit(WTOEnemy enemyInstance) {
             LurkerList[enemyIndex].creatureAnimator.SetBool("Moving", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
