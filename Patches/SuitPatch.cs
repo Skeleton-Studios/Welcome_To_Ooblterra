@@ -13,7 +13,7 @@ namespace Welcome_To_Ooblterra.Patches;
     */
 internal class SuitPatch {
 
-    private const string SuitPath = "Assets/WelcomeToOoblterra/CustomSuits/";
+    private const string SuitPath = "Assets/Resources/WelcomeToOoblterra/CustomSuits/";
     private const string PosterGameObject = "HangarShip/Plane.001";
     static string[] SuitMaterialPaths = new string[] {
         SuitPath + "RedSuit.mat",

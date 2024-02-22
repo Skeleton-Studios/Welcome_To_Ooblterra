@@ -23,7 +23,7 @@ internal class ItemPatch {
 
     }
 
-    private const string ItemPath = "Assets/WelcomeToOoblterra/CustomItems/";
+    private const string ItemPath = "Assets/Resources/WelcomeToOoblterra/CustomItems/";
 
     //This array stores all our custom items
     public static ItemData[] ItemList = new ItemData[] {
@@ -47,7 +47,8 @@ internal class ItemPatch {
         if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
             return;
         }
-        GameObject KeyObject = GameObject.Instantiate(WTOBase.ItemAssetBundle.LoadAsset<GameObject>("Assets/WelcomeToOoblterra/CustomItems/OoblKey.prefab"), __instance.mapPropsContainer.transform);
+
+        GameObject KeyObject = GameObject.Instantiate(WTOBase.ItemAssetBundle.LoadAsset<GameObject>("Assets/Resources/WelcomeToOoblterra/CustomItems/OoblKey.prefab"), __instance.mapPropsContainer.transform);
         __instance.keyPrefab = KeyObject;
     }
 

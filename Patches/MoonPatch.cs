@@ -33,7 +33,7 @@ internal class MoonPatch {
         };
     private static bool LevelLoaded;
     private static bool LevelStartHasBeenRun = false;
-    private const string MoonPath = "Assets/WelcomeToOoblterra/CustomMoon/";
+    private const string MoonPath = "Assets/Resources/WelcomeToOoblterra/CustomMoon/";
 
     //PATCHES
     [HarmonyPatch(typeof(StartOfRound), "Awake")]
@@ -123,7 +123,8 @@ internal class MoonPatch {
     public static void ChangeGlobalTimeMultiplier(TimeOfDay __instance) {
         //Steal the time speed from the scriptablelevel asset, assign it here, and set it to 1 there
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
-            __instance.globalTimeSpeedMultiplier = 0.7f;
+            __instance.globalTimeSpeedMultiplier = __instance.currentLevel.DaySpeedMultiplier;
+            __instance.currentLevel.DaySpeedMultiplier = 1f;
             return;
         }
         __instance.globalTimeSpeedMultiplier = 1f;
@@ -143,8 +144,8 @@ internal class MoonPatch {
         WTOBase.LogToConsole($"END PRINT PRE BASE FUNCTION VALUES:");
         */
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
-            TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
-            TimeOfDay.Instance.globalTime *= 0;
+            //TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
+            //TimeOfDay.Instance.globalTime *= 0;
             /*
             WTOBase.LogToConsole($"BEGIN PRINT POST MODIFICATION VALUES:");
             Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");

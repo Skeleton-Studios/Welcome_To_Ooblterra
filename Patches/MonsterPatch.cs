@@ -15,7 +15,7 @@ internal class MonsterPatch {
     public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
     public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
 
-    private const string EnemyPathRoot = "Assets/WelcomeToOoblterra/CustomEnemies/";
+    private const string EnemyPathRoot = "Assets/Resources/WelcomeToOoblterra/CustomEnemies/";
     private static bool EnemiesInList;
     public const bool ShouldDebugEnemies = true;
 
