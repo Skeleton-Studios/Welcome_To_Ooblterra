@@ -27,14 +27,15 @@ internal class MoonPatch {
             "Tree",
             "Rock",
             "StaticLightingSky",
-            //"ForestAmbience",
             "Sky and Fog Global Volume",
             "Local Volumetric Fog",
             "SunTexture"
         };
     private static bool LevelLoaded;
     private static bool LevelStartHasBeenRun = false;
-    private const string MoonPath = "Assets/Resources/WelcomeToOoblterra/CustomMoon/";
+    private const string MoonPath = WTOBase.RootPath + "CustomMoon/";
+
+    private static FootstepSurface CachedGrassSurface = null;
 
     //PATCHES
     [HarmonyPatch(typeof(StartOfRound), "Awake")]
@@ -51,8 +52,6 @@ internal class MoonPatch {
     [HarmonyPrefix]
     [HarmonyPriority(0)]
     private static void AddMoonToList(StartOfRound __instance) {
-        //SetMoonVariables(MyNewMoon, __instance);
-        //AddToMoons(MyNewMoon, __instance);
         LevelStartHasBeenRun = false;
     }
 
@@ -74,19 +73,7 @@ internal class MoonPatch {
             return;
         }
         WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
-        //DestroyVowObjects();
-        //Load our custom prefab
-        /*
-        LevelPrefab = GameObject.Instantiate(WTOBase.LevelAssetBundle.LoadAsset(MoonPath + "customlevel.prefab"));
-        LevelLoaded = true;
-        WTOBase.LogToConsole("Loaded custom terrain object!");
-        */
-
-        //MoveDoors();
-        //ManageCustomSun();
         MoveNavNodesToNewPositions();
-
-        //HandleInsideNavigation();
         ManageFootsteps();
         
         LevelStartHasBeenRun = true;
@@ -95,34 +82,18 @@ internal class MoonPatch {
     [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
     [HarmonyPostfix]
     public static void DestroyLevel(StartOfRound __instance) {
+        StartOfRound.Instance.footstepSurfaces[4].clips = CachedGrassSurface?.clips;
+        StartOfRound.Instance.footstepSurfaces[4].hitSurfaceSFX = CachedGrassSurface?.hitSurfaceSFX;
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             DestroyOoblterraPrefab();
             LevelStartHasBeenRun = false;
         }
     }
 
-    /*
-    [HarmonyPatch(typeof(StartOfRound), "ChangeLevel")]
-    [HarmonyPrefix]
-    public static bool ProtectChangeLevel(StartOfRound __instance, int levelID) {
-        if(levelID >= 0 && levelID < __instance.levels.Length) {
-            return true;
-        }
-        Debug.Log($"level id: {0} (OVERRIDEN)");
-        Debug.Log("Changing level");
-        __instance.currentLevel = __instance.levels[0];
-        __instance.currentLevelID = 0;
-        TimeOfDay.Instance.currentLevel = __instance.currentLevel;
-        RoundManager.Instance.currentLevel = __instance.levels[0];
-        SoundManager.Instance.ResetSoundType();
-        return false;
-    }
-    */
-
     [HarmonyPatch(typeof(TimeOfDay), "MoveGlobalTime")]
     [HarmonyPrefix]
     public static void ChangeGlobalTimeMultiplier(TimeOfDay __instance) {
-        //Steal the time speed from the scriptablelevel asset, assign it here, and set it to 1 there
+        //It makes no sense that this is working but it is. lol?
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             __instance.globalTimeSpeedMultiplier = __instance.currentLevel.DaySpeedMultiplier;
             __instance.currentLevel.DaySpeedMultiplier = 1f;
@@ -135,19 +106,19 @@ internal class MoonPatch {
     [HarmonyPrefix]
     public static bool SettleTimeIssue(StartOfRound __instance) {
         
-        /* 
-         * WTOBase.LogToConsole($"BEGIN PRINT PRE BASE FUNCTION VALUES:");
+        
+        WTOBase.LogToConsole($"BEGIN PRINT PRE BASE FUNCTION VALUES:");
         Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
         Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
         Debug.Log($"TOTAL TIME: {TimeOfDay.Instance.totalTime}");
         Debug.Log($"TIME UNTIL DEADLINE: {TimeOfDay.Instance.timeUntilDeadline}");
         Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
         WTOBase.LogToConsole($"END PRINT PRE BASE FUNCTION VALUES:");
-        */
+        
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             //TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
             //TimeOfDay.Instance.globalTime *= 0;
-            /*
+            
             WTOBase.LogToConsole($"BEGIN PRINT POST MODIFICATION VALUES:");
             Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
             Debug.Log($"GLOBAL TIME: {TimeOfDay.Instance.globalTime}");
@@ -155,7 +126,7 @@ internal class MoonPatch {
             Debug.Log($"TIME UNTIL DEADLINE: {TimeOfDay.Instance.timeUntilDeadline}");
             Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
             WTOBase.LogToConsole($"END PRINT POST MODIFICATION VALUES:");
-            */
+            
             return true;
         }
         return true;
@@ -172,7 +143,6 @@ internal class MoonPatch {
         Debug.Log($"DAYS: {(int)Mathf.Floor(TimeOfDay.Instance.timeUntilDeadline / TimeOfDay.Instance.totalTime)}");
         WTOBase.LogToConsole($"END PRINT POST BASE FUNCTION VALUES:");
     }
-
 
     [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
     [HarmonyPrefix]
@@ -216,54 +186,11 @@ internal class MoonPatch {
         Debug.Log($"Ooblterra Found: {Ooblterra != null}");
         PatchedContent.RegisterExtendedLevel(Ooblterra);
     }
-    private static void SetMoonVariables(SelectableLevel Moon, StartOfRound Instance) {
-        //Moon.spawnableOutsideObjects = new SpawnableOutsideObjectWithRarity[0];
-        //Moon.levelAmbienceClips = Instance.levels[2].levelAmbienceClips;
-
-        //FactoryPatch.SetSecurityObjects(Moon, Instance.levels[5].spawnableMapObjects);
-        //ItemPatch.SetMoonItemList(Moon);
-        //MonsterPatch.SetInsideMonsters(MyNewMoon);
-        //MonsterPatch.SetOutsideMonsters(MyNewMoon, new List<SpawnableEnemyWithRarity>() {} );
-        //MonsterPatch.SetDaytimeMonsters(MyNewMoon);
-
-    }
-    //Following two methods taken from MoonAPI, thanks Bizzlemip
-    public static T[] ResizeArray<T>(T[] oldArray, int newSize) {
-        T[] array = new T[newSize];
-        oldArray.CopyTo(array, 0);
-        return array;
-    }
-    private static int AddToMoons(SelectableLevel Moon, StartOfRound Instance) {
-        Instance.levels = ResizeArray(Instance.levels, Instance.levels.Length + 1);
-        int num = -1;
-        for (int i = 0; i < Instance.levels.Length; i++) {
-            if (Instance.levels[i] == null) {
-                num = i;
-                break;
-            }
-        }
-        if (num == -1) {
-            throw new NullReferenceException("No null value found in StartOfRound.levels");
-        }
-        Instance.levels[num] = Moon;
-        foreach (SelectableLevel level in Instance.levels) {
-            WTOBase.LogToConsole(level.name);
-        }
-        return num;
-    }
     private static void DestroyOoblterraPrefab() {
         if (LevelLoaded) { 
             GameObject.Destroy(LevelPrefab);
         }
         LevelLoaded = false;
-    }
-    private static void HandleInsideNavigation() {
-        UnityNavMeshAdapter NavMeshAdapter = GameObject.FindObjectOfType<UnityNavMeshAdapter>();
-        if (NavMeshAdapter != null) {
-            WTOBase.LogToConsole("Found Navmesh adapter! Setting bake mode to FullDungeonBake...");
-        }
-        NavMeshAdapter.BakeMode = UnityNavMeshAdapter.RuntimeNavMeshBakeMode.FullDungeonBake;
-        NavMeshAdapter.AddNavMeshLinksBetweenRooms = true;
     }
     private static void MoveNavNodesToNewPositions() {
         //Get a list of all outside navigation nodes
@@ -288,57 +215,23 @@ internal class MoonPatch {
     }
     private static void ManageFootsteps() {
         const string FootstepPath = MoonPath + "Sound/Footsteps/";
-        foreach (FootstepSurface surfaces in StartOfRound.Instance.footstepSurfaces) {
-            if (surfaces.surfaceTag == "Grass") {
-                surfaces.clips = new AudioClip[] {
+        if (CachedGrassSurface == null) {
+            CachedGrassSurface = StartOfRound.Instance.footstepSurfaces[4];
+        }
+        for (int i = 0; i < StartOfRound.Instance.footstepSurfaces.Length; i++) {
+            FootstepSurface NextSurface = StartOfRound.Instance.footstepSurfaces[i];
+            if (NextSurface.surfaceTag == "Grass") {
+                WTOBase.LogToConsole($"Grass surface index: {i}");
+                NextSurface.clips = new AudioClip[] {
                     WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP01.wav"),
                     WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP02.wav"),
                     WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP03.wav"),
                     WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP04.wav"),
                     WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
                 };
-                surfaces.hitSurfaceSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
+                NextSurface.hitSurfaceSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
             }
         }
-    }
-    private static void DestroyVowObjects() {
-        //I have no fucking clue why this works for the foliage too but fuck it I guess
-        IEnumerable<GameObject> allObjects = GameObject.FindObjectsOfType<GameObject>().Where(obj => ObjectNamesToDestroy.Any(obj.name.Contains));
-        foreach (GameObject ObjToDestroy in allObjects) {
-            GameObject.Destroy(ObjToDestroy);
-            continue;
-        }
-        GameObject Factory = GameObject.Find("Models2VowFactory");
-        Factory.SetActive(false);
-        /*
-        foreach (GameObject ObjToDestroy in allObjects) {
-            if (ObjToDestroy.name.Contains("Models2VowFactory")) {
-                ObjToDestroy.SetActive(false);
-                WTOBase.LogToConsole("Vow factory adjusted.");
-            }
-                
-            //If the object's named Plane and its parent is Foliage, it's also gotta go. This gets rid of the grass
-            if (ObjToDestroy.name.Contains("Plane") && (ObjToDestroy.transform.parent.gameObject.name.Contains("Foliage") || ObjToDestroy.transform.parent.gameObject.name.Contains("Mounds"))) {
-                GameObject.Destroy(ObjToDestroy);
-            }
-            foreach (string UnwantedObjString in ObjectNamesToDestroy) {
-                    
-                if (ObjToDestroy.name.Contains(UnwantedObjString)) {
-                    GameObject.Destroy(ObjToDestroy);
-                    continue;
-                }
-            }
-        }
-        */
-    }
-    private static void MoveDoors() {
-        //The prefab contains an object called TeleportSnapLocation that we move the primary door to
-        GameObject Entrance = GameObject.Find("EntranceTeleportA");
-        GameObject SnapLoc = GameObject.Find("TeleportSnapLocation");
-        Entrance.transform.position = SnapLoc.transform.position;
-        GameObject FireExit = GameObject.Find("EntranceTeleportB");
-        GameObject FireExitSnapLoc = GameObject.Find("FireExitSnapLocation");
-        FireExit.transform.position = FireExitSnapLoc.transform.position;
     }
 }
 
