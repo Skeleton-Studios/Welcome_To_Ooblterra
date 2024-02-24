@@ -17,7 +17,7 @@ public class EyeSecAI : WTOEnemy {
     private const float ScanCooldownTotal = 30f;
     private const float EyeSecDefaultSpeed = 9f;
     private const float EyeSecAttackSpeed = 9f;
-    private const float EyeSecLaserSpeed = 6f;
+    private const float EyeSecLaserSpeed = 3f;
     private const int EyeSecScanSpeed = 2;
 
     //BEHAVIOR STATES
@@ -31,6 +31,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].FoundPlayerHoldingScrap = false;
             EyeSecList[enemyIndex].targetPlayer = null;
             EyeSecList[enemyIndex].ResetEyesecHeadPos();
+            EyeSecList[enemyIndex].DoFearEffect = true;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (!EyeSecList[enemyIndex].SearchLab.inProgress) {
@@ -93,7 +94,10 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].StopScanVisuals(null, 20);
             EyeSecList[enemyIndex].StartAttackVisuals();
             EyeSecList[enemyIndex].agent.speed = 0f;
-            EyeSecList[enemyIndex].targetPlayer.JumpToFearLevel(1f);
+            if (EyeSecList[enemyIndex].DoFearEffect) { 
+                EyeSecList[enemyIndex].targetPlayer.JumpToFearLevel(1f);
+                EyeSecList[enemyIndex].DoFearEffect = false;
+            }
             laserTimer = 0f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -316,6 +320,7 @@ public class EyeSecAI : WTOEnemy {
     private Quaternion TargetHeadAngles;
     private const float HeadMoveTime = 1f;
     private bool DoHeadMove;
+    private bool DoFearEffect = true;
 
     public bool BuffedByTeslaCoil;
 
