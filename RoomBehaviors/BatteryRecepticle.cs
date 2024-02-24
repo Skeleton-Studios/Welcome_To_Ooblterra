@@ -15,6 +15,7 @@ public class BatteryRecepticle : NetworkBehaviour {
 
     [InspectorName("Defaults")]
     public NetworkObject parentTo;
+    public NetworkObject Battery;
     public InteractTrigger triggerScript;
     public Transform BatteryTransform;
     public BoxCollider BatteryHitbox;
@@ -38,6 +39,8 @@ public class BatteryRecepticle : NetworkBehaviour {
     public Material SideConsoleMaterial;
     public MeshRenderer MachineMesh;
 
+
+
     public void Start() {
         scrapShelf = FindFirstObjectByType<ScrapShelf>();
         WTOBattery[] BatteryList = FindObjectsOfType<WTOBattery>();
@@ -48,6 +51,9 @@ public class BatteryRecepticle : NetworkBehaviour {
             WallLight.sharedMaterial = WallLightMat;
         }
         SpawnBatteryAtFurthestPoint();
+        foreach (LightComponent NextLight in GameObject.FindObjectsOfType<LightComponent>().Where(x => x.SetColorByDistance == true)) {
+            NextLight.SetColorRelative(this.transform.position);
+        }
     }
     private void Update() {
         if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
@@ -135,9 +141,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
         RecepticleHasBattery = true;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
-        WTOBattery PoweredBattery = FindObjectsOfType<WTOBattery>().First(x => x.HasCharge);
-        PoweredBattery.transform.rotation = BatteryTransform.rotation;
-        InsertBatteryServerRpc();
+        InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
         Debug.Log("discard held object called from placeobject");
         if(InsertedBattery.HasCharge) {
             InsertedBattery.grabbable = false;
@@ -145,17 +149,20 @@ public class BatteryRecepticle : NetworkBehaviour {
         }
     }
     [ServerRpc(RequireOwnership = false)]
-    public void InsertBatteryServerRpc() {
-        InsertBatteryClientRpc();
+    public void InsertBatteryServerRpc(NetworkObjectReference grabbableObjectNetObject) {
+        InsertBatteryClientRpc(grabbableObjectNetObject);
     }
     [ClientRpc]
-    public void InsertBatteryClientRpc() {
-        InsertBattery();
+    public void InsertBatteryClientRpc(NetworkObjectReference grabbableObjectNetObject) {
+        InsertBattery(grabbableObjectNetObject);
     }
-    public void InsertBattery() {
-        //This technically won't work if there's more than 1 charged battery in the level, like say, if the player leaves with one and lands again
-        WTOBattery PoweredBattery = FindObjectsOfType<WTOBattery>().First(x => x.HasCharge);
-        PoweredBattery.transform.rotation = BatteryTransform.rotation;
+    public void InsertBattery(NetworkObjectReference grabbableObjectNetObject) {
+        if (grabbableObjectNetObject.TryGet(out Battery)) {
+            Battery.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
+        } else {
+            Debug.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
+        }
+        Battery.transform.rotation = BatteryTransform.rotation;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -183,9 +190,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         MachineAnimator.SetTrigger("PowerOn");
         StartRoomLight StartRoomLights = FindObjectOfType<StartRoomLight>();
         StartRoomLights.SetCentralRoomWhite();
-        //This technically won't work if there's more than 1 charged battery in the level, like say, if the player leaves with one and lands again
-        WTOBattery PoweredBattery = FindObjectsOfType<WTOBattery>().First(x => x.HasCharge);
-        PoweredBattery.grabbable = false;
+        Battery.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
     }
 
 
