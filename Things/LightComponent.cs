@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TMPro;
 using UnityEngine;
 using Welcome_To_Ooblterra.Items;
 
@@ -19,6 +20,10 @@ public class LightComponent : MonoBehaviour {
     public Material StartMat;
     public int LightMatIndex = 0;
     public bool CannotBeWhite;
+    public bool SetColorByDistance;
+    public Color CloseColor = Color.green;
+    public Color FarColor = Color.red;
+    public float MaxDistance = 300;
 
     private void Start() {
         SetLightColor(InitLightColor);
@@ -47,8 +52,25 @@ public class LightComponent : MonoBehaviour {
 
         TargetLight.color = Chemical.GetColorFromEnum(NextColor);
     }
+    private void SetLightColor(Color NextColor) {
+        var tempMaterial = new Material(StartMat);
+        tempMaterial.SetColor("_EmissiveColor", NextColor);
+        ObjectWithMatToChange.sharedMaterial = tempMaterial;
+
+        TargetLight.color = NextColor;
+    }
     public void SetLightBrightness(int Brightness) {
         TargetLight.intensity = Brightness;
+    }
+
+    public void SetColorRelative(Vector3 MachineLocation) {
+        //if (!SetColorByDistance) {
+            return;
+        //}
+        float DistanceToMachine = Vector3.Distance(MachineLocation, this.transform.position);
+        float NormalizedDistance = DistanceToMachine/ MaxDistance;
+        NormalizedDistance = Mathf.Clamp(NormalizedDistance, 0, 1);
+        SetLightColor(Color.Lerp(CloseColor, FarColor, NormalizedDistance)); 
     }
 }
 
