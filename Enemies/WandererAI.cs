@@ -23,7 +23,7 @@ public class WandererAI : WTOEnemy {
             WandererList[enemyIndex].creatureAnimator.SetBool("Investigating", true);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            WandererList[enemyIndex].LowerTimerValue(ref WandererList[enemyIndex].TotalInvestigationSeconds);
+            WandererList[enemyIndex].MoveTimerValue(ref WandererList[enemyIndex].TotalInvestigationSeconds);
             if(WandererList[enemyIndex].TotalInvestigationSeconds < 0.2) {
                 WandererList[enemyIndex].creatureAnimator.SetBool("Investigating", false);
             }

@@ -32,7 +32,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SecondsUntilChainsBroken = MyRandomInt;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            GallenarmaList[enemyIndex].LowerTimerValue(ref GallenarmaList[enemyIndex].SecondsUntilChainsBroken);
+            GallenarmaList[enemyIndex].MoveTimerValue(ref GallenarmaList[enemyIndex].SecondsUntilChainsBroken);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -150,7 +150,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             }
 
             if (GallenarmaList[enemyIndex].TotalInvestigateSeconds > 0) {
-                GallenarmaList[enemyIndex].LowerTimerValue(ref GallenarmaList[enemyIndex].TotalInvestigateSeconds);
+                GallenarmaList[enemyIndex].MoveTimerValue(ref GallenarmaList[enemyIndex].TotalInvestigateSeconds);
                 return;
             }
         }
@@ -235,7 +235,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Dancing", true);
                 GallenarmaList[enemyIndex].agent.speed = 0f;
                 GallenarmaList[enemyIndex].IsDancing = true;
-                GallenarmaList[enemyIndex].LowerTimerValue(ref GallenarmaList[enemyIndex].SecondsUntilBored);
+                GallenarmaList[enemyIndex].MoveTimerValue(ref GallenarmaList[enemyIndex].SecondsUntilBored);
                 return;
             }
             //if we're not near our boombox, move to it
@@ -270,7 +270,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].targetPlayer.JumpToFearLevel(1f);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            GallenarmaList[enemyIndex].LowerTimerValue(ref GallenarmaList[enemyIndex].StunTimeSeconds);
+            GallenarmaList[enemyIndex].MoveTimerValue(ref GallenarmaList[enemyIndex].StunTimeSeconds);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
         }
@@ -532,13 +532,13 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
     }
     public override void Update() {
-        LowerTimerValue(ref AttackTimerSeconds);
-        LowerTimerValue(ref TameTimerSeconds);
+        MoveTimerValue(ref AttackTimerSeconds);
+        MoveTimerValue(ref TameTimerSeconds);
         if(TameTimerSeconds <= 0) {
             IsDancing = false;
         }
-        LowerTimerValue(ref hearNoiseCooldown);
-        LowerTimerValue(ref RandomAwakeTimerSeconds);
+        MoveTimerValue(ref hearNoiseCooldown);
+        MoveTimerValue(ref RandomAwakeTimerSeconds);
         base.Update();
     }
 

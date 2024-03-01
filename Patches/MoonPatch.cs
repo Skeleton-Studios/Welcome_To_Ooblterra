@@ -32,28 +32,16 @@ internal class MoonPatch {
             "SunTexture"
         };
     private static bool LevelLoaded;
-    private static bool LevelStartHasBeenRun = false;
+    private static bool OoblterraHasBeenInitialized = false;
     private const string MoonPath = WTOBase.RootPath + "CustomMoon/";
 
-    private static FootstepSurface CachedGrassSurface = null;
+    private static FootstepSurface GrassSurfaceRef;
+    private static AudioClip[] OoblFootstepClips;
+    private static AudioClip OoblHitSFX;
+    private static AudioClip[] GrassFootstepClips;
+    private static AudioClip GrassHitSFX;
 
     //PATCHES
-    [HarmonyPatch(typeof(StartOfRound), "Awake")]
-    [HarmonyPrefix]
-    [HarmonyPriority(0)]
-    private static void FuckThePlanet(StartOfRound __instance) {
-        if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
-            DestroyOoblterraPrefab();
-        }
-    }
-
-    //Defining the custom moon for the API
-    [HarmonyPatch(typeof(StartOfRound), "Awake")]
-    [HarmonyPrefix]
-    [HarmonyPriority(0)]
-    private static void AddMoonToList(StartOfRound __instance) {
-        LevelStartHasBeenRun = false;
-    }
 
     //Destroy the necessary actors and set our scene
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
@@ -64,42 +52,38 @@ internal class MoonPatch {
             return;
         }
         if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
-            DestroyOoblterraPrefab();
-            LevelStartHasBeenRun = false;
+            OoblterraHasBeenInitialized = false;
             return;
         }
-        WTOBase.LogToConsole("Has level start been run? " + LevelStartHasBeenRun);
-        if (LevelStartHasBeenRun) {
+        WTOBase.LogToConsole("Has level start been run? " + OoblterraHasBeenInitialized);
+        if (OoblterraHasBeenInitialized) {
             return;
         }
         WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
         MoveNavNodesToNewPositions();
-        ManageFootsteps();
-        
-        LevelStartHasBeenRun = true;
+        GrassSurfaceRef.clips = OoblFootstepClips;
+        GrassSurfaceRef.hitSurfaceSFX = OoblHitSFX;
+        OoblterraHasBeenInitialized = true;
     }
 
     [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
     [HarmonyPostfix]
     public static void DestroyLevel(StartOfRound __instance) {
-        StartOfRound.Instance.footstepSurfaces[4].clips = CachedGrassSurface?.clips;
-        StartOfRound.Instance.footstepSurfaces[4].hitSurfaceSFX = CachedGrassSurface?.hitSurfaceSFX;
-        if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
-            DestroyOoblterraPrefab();
-            LevelStartHasBeenRun = false;
-        }
+        GrassSurfaceRef.clips = GrassFootstepClips;
+        GrassSurfaceRef.hitSurfaceSFX = GrassHitSFX;
     }
 
-    [HarmonyPatch(typeof(TimeOfDay), "MoveGlobalTime")]
+    [HarmonyPatch(typeof(TimeOfDay), "Start")]
     [HarmonyPrefix]
     public static void ChangeGlobalTimeMultiplier(TimeOfDay __instance) {
-        //It makes no sense that this is working but it is. lol?
+        
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             __instance.globalTimeSpeedMultiplier = __instance.currentLevel.DaySpeedMultiplier;
             __instance.currentLevel.DaySpeedMultiplier = 1f;
             return;
         }
         __instance.globalTimeSpeedMultiplier = 1f;
+        
     }
 
     [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
@@ -116,8 +100,8 @@ internal class MoonPatch {
         WTOBase.LogToConsole($"END PRINT PRE BASE FUNCTION VALUES:");
         
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
-            //TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
-            //TimeOfDay.Instance.globalTime *= 0;
+            TimeOfDay.Instance.globalTimeAtEndOfDay *= 0;
+            TimeOfDay.Instance.globalTime *= 0;
             
             WTOBase.LogToConsole($"BEGIN PRINT POST MODIFICATION VALUES:");
             Debug.Log($"GLOBAL TIME AT END OF DAY: {TimeOfDay.Instance.globalTimeAtEndOfDay}");
@@ -179,18 +163,31 @@ internal class MoonPatch {
         timeOfDay.sunDirect = Direct;
     }
 
+    [HarmonyPatch(typeof(StartOfRound), "Start")]
+    [HarmonyPostfix]
+    private static void SetFootstepSounds(StartOfRound __instance) {
+        const string FootstepPath = MoonPath + "Sound/Footsteps/";
+        GrassSurfaceRef = StartOfRound.Instance.footstepSurfaces[4];
+
+        GrassFootstepClips = StartOfRound.Instance.footstepSurfaces[4].clips;
+        GrassHitSFX = StartOfRound.Instance.footstepSurfaces[4].hitSurfaceSFX;
+        
+        OoblFootstepClips = new AudioClip[] {
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP01.wav"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP02.wav"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP03.wav"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP04.wav"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
+        };
+        OoblHitSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
+    }
+
     //METHODS
     public static void Start() {
         ExtendedLevel Ooblterra = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPatch.MoonPath + "OoblterraExtendedLevel.asset");
         MoonFriendlyName = Ooblterra.selectableLevel.PlanetName;
         Debug.Log($"Ooblterra Found: {Ooblterra != null}");
         PatchedContent.RegisterExtendedLevel(Ooblterra);
-    }
-    private static void DestroyOoblterraPrefab() {
-        if (LevelLoaded) { 
-            GameObject.Destroy(LevelPrefab);
-        }
-        LevelLoaded = false;
     }
     private static void MoveNavNodesToNewPositions() {
         //Get a list of all outside navigation nodes
@@ -210,26 +207,6 @@ internal class MoonPatch {
                 NavNodes[i].transform.position = CustomNodes[i].transform.position;
             } else {
                 GameObject.Destroy(NavNodes[i]);
-            }
-        }
-    }
-    private static void ManageFootsteps() {
-        const string FootstepPath = MoonPath + "Sound/Footsteps/";
-        if (CachedGrassSurface == null) {
-            CachedGrassSurface = StartOfRound.Instance.footstepSurfaces[4];
-        }
-        for (int i = 0; i < StartOfRound.Instance.footstepSurfaces.Length; i++) {
-            FootstepSurface NextSurface = StartOfRound.Instance.footstepSurfaces[i];
-            if (NextSurface.surfaceTag == "Grass") {
-                WTOBase.LogToConsole($"Grass surface index: {i}");
-                NextSurface.clips = new AudioClip[] {
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP01.wav"),
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP02.wav"),
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP03.wav"),
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP04.wav"),
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
-                };
-                NextSurface.hitSurfaceSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
             }
         }
     }

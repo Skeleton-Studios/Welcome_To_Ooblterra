@@ -123,12 +123,17 @@ public class WTOEnemy : EnemyAI {
         return PlayerState.Outside;
     }
 
-    internal void LowerTimerValue(ref float Timer) {
+    internal void MoveTimerValue(ref float Timer, bool ShouldRaise = false) {
+        if (ShouldRaise) {
+            Timer += Time.deltaTime;
+            return;
+        }
         if (Timer <= 0) {
             return;
         }
         Timer -= Time.deltaTime;
     }
+
     internal void OverrideState(BehaviorState state) {
         ActiveState = state;
         ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);

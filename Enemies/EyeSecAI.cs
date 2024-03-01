@@ -337,9 +337,9 @@ public class EyeSecAI : WTOEnemy {
 
     }
     public override void Update() {
-        LowerTimerValue(ref ScanCooldownSeconds);
-        LowerTimerValue(ref FlashCooldownSeconds);
-        LowerTimerValue(ref ShutdownTimerSeconds);
+        MoveTimerValue(ref ScanCooldownSeconds);
+        MoveTimerValue(ref FlashCooldownSeconds);
+        MoveTimerValue(ref ShutdownTimerSeconds);
         SpinWheel();
         base.Update();
     }

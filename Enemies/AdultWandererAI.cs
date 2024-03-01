@@ -119,7 +119,7 @@ public class AdultWandererAI : WTOEnemy {
             AWandList[enemyIndex].creatureAnimator.SetBool("Moving", false);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            AWandList[enemyIndex].LowerTimerValue(ref AWandList[enemyIndex].TotalInvestigationSeconds);
+            AWandList[enemyIndex].MoveTimerValue(ref AWandList[enemyIndex].TotalInvestigationSeconds);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             AWandList[enemyIndex].ReachedNextPoint = false;
@@ -305,7 +305,7 @@ public class AdultWandererAI : WTOEnemy {
         base.Start();
     }
     public override void Update() {
-        LowerTimerValue(ref AttackCooldownSeconds);
+        MoveTimerValue(ref AttackCooldownSeconds);
         base.Update();
     }
     private void MeleeAttackPlayer(PlayerControllerB Target) {
@@ -313,6 +313,7 @@ public class AdultWandererAI : WTOEnemy {
         Target.DamagePlayer(40, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
         Target.JumpToFearLevel(1f);
     }
+    
     [ServerRpc]
     public void SetTargetServerRpc(int PlayerID) {
         SetTargetClientRpc(PlayerID);
@@ -321,15 +322,18 @@ public class AdultWandererAI : WTOEnemy {
     public void SetTargetClientRpc(int PlayerID) {
         SetMyTarget(PlayerID);
     }
+    public void SetMyTarget(int PlayerID) {
+        targetPlayer = StartOfRound.Instance.allPlayerScripts[PlayerID];
+        MainTarget = StartOfRound.Instance.allPlayerScripts[PlayerID];
+    }
+
+
 
     public override void ReachedNodeInSearch() {
         base.ReachedNodeInSearch();
         ReachedNextPoint = true;
     }
-    public void SetMyTarget(int PlayerID) {
-        targetPlayer = StartOfRound.Instance.allPlayerScripts[PlayerID];
-        MainTarget = StartOfRound.Instance.allPlayerScripts[PlayerID]; 
-    }
+
     public bool CheckForPlayerLOS() {
         return MainTarget.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);
     }
