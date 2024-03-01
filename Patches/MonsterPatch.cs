@@ -80,8 +80,17 @@ internal class MonsterPatch {
         __instance.ChangeOwnershipOfEnemy(__instance.stunnedByPlayer.actualClientId);
     }
 
-    //METHODS 
-    public static void Start() {
+    [HarmonyPatch(typeof(HUDManager), "UseSignalTranslatorClientRpc")]
+    [HarmonyPostfix]
+    private static void TellAllGhostsOfSignalTransmission() {
+        OoblGhostAI[] Ghosts = GameObject.FindObjectsOfType<OoblGhostAI>();
+        foreach(OoblGhostAI Ghost in Ghosts) {
+            Ghost.EvalulateSignalTranslatorUse();
+        }
+    }
+
+//METHODS 
+public static void Start() {
         CreateEnemy("Wanderer.asset", DaytimeEnemies, 50, LethalLib.Modules.Enemies.SpawnType.Daytime, "WandererTerminal.asset", "WandererKeyword.asset");
         CreateEnemy("AdultWanderer.asset", AdultWandererContainer, 0, LethalLib.Modules.Enemies.SpawnType.Outside, "AdultWandererTerminal.asset", "AdultWandererKeyword.asset");
         CreateEnemy("Gallenarma.asset", InsideEnemies, 30, LethalLib.Modules.Enemies.SpawnType.Default, "GallenTerminal.asset", "GallenKeyword.asset");

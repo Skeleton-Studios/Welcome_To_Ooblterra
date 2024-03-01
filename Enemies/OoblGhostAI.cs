@@ -1,5 +1,6 @@
 ﻿using GameNetcodeStuff;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -12,6 +13,9 @@ using static UnityEngine.Rendering.DebugUI;
 
 namespace Welcome_To_Ooblterra.Enemies;
 internal class OoblGhostAI : WTOEnemy {
+
+    private const float GhostInterferenceRange = 30f;
+
     //STATES
     private class WaitForNextAttack : BehaviorState {
         public WaitForNextAttack() {
@@ -64,35 +68,27 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private class GoTowardPlayer : BehaviorState {
         public GoTowardPlayer() {
-            RandomRange = new Vector2(-800, 800);
+            RandomRange = new Vector2(-300, 300);
         }
         Vector3 DirectionVector;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
             GhostList[enemyIndex].creatureVoice.Play();   
-            GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].YAxisLockedTo, MyRandomInt);
+            GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].PlayerToAttack.transform.position.y, MyRandomInt);
+            GhostList[enemyIndex].GhostPickedUpInterference = false;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            DirectionVector = (GhostList[enemyIndex].PlayerToAttack.transform.position - GhostList[enemyIndex].transform.position).normalized;
-            if (Vector3.Distance(GhostList[enemyIndex].transform.position, GhostList[enemyIndex].PlayerToAttack.transform.position) > 50) {
-                GhostList[enemyIndex].YAxisLockedTo = GhostList[enemyIndex].PlayerToAttack.transform.position.y;
-                GhostList[enemyIndex].transform.position = new Vector3(GhostList[enemyIndex].transform.position.x, GhostList[enemyIndex].YAxisLockedTo, GhostList[enemyIndex].transform.position.z);
-            }
-            //WTOBase.LogToConsole($"DIRECTION: {DirectionVector}");
-            DirectionVector.y = 0;
-            if (GhostList[enemyIndex].transform.position != GhostList[enemyIndex].PlayerToAttack.transform.position) {
-                GhostList[enemyIndex].transform.position += DirectionVector * GhostList[enemyIndex].OoblGhostSpeed * Time.deltaTime;
-                GhostList[enemyIndex].transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up);
+            GhostList[enemyIndex].MoveGhostTowardPlayer();
+            if (Vector3.Distance(GhostList[enemyIndex].transform.position, GhostList[enemyIndex].PlayerToAttack.transform.position) < GhostInterferenceRange) {
+                GhostList[enemyIndex].EvaluateRadioInterference();
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].PlayerToAttack = null;
-            GhostList[enemyIndex].SelfPosition = new Vector2(-1, -1);
-            GhostList[enemyIndex].TargetPlayerPosition = new Vector2(-1, -1);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new KilledPlayer(),
-            new PlayerIsOutOfAttackRange()
+            new PlayerHasFoughtBack()
         };
     }
 
@@ -121,26 +117,26 @@ internal class OoblGhostAI : WTOEnemy {
             return new WaitForNextAttack();
         }
     }
-    private class PlayerIsOutOfAttackRange : StateTransition {
+    private class PlayerHasFoughtBack : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return GhostList[enemyIndex].SecondsSincePlayerBrokeYAxis > 5f;
+            return GhostList[enemyIndex].GhostPickedUpInterference;
         }
         public override BehaviorState NextState() {
+            GhostList[enemyIndex].ShouldFlickerLights = false;
             return new WaitForNextAttack();
         }
     }
+
+
     public float OoblGhostSpeed = 25f;
     public static Dictionary<int, OoblGhostAI> GhostList = new();
     private static int GhostID;
     private PlayerControllerB PlayerToAttack;
-    private Vector2 TargetPlayerPosition;
-    private Vector2 SelfPosition;
     private float SecondsUntilGhostWillAttack;
-    private float TrackPlayerMovementSeconds = 3f;
-    private float YAxisLockedTo;
-    private float SecondsSincePlayerBrokeYAxis;
     public AudioClip StartupSound;
-
+    public bool GhostPickedUpInterference = false;
+    private bool ShouldFlickerLights;
+    private bool ShouldFlickerShipLights;
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -154,19 +150,16 @@ internal class OoblGhostAI : WTOEnemy {
         base.Start();
     }
     public override void Update() {
-        //WTOBase.LogToConsole($"{SecondsUntilGhostWillAttack}");
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
-        SelfPosition = new Vector2(transform.position.x, transform.position.z);
-        if(PlayerToAttack != null) {
-            TargetPlayerPosition = new Vector2(PlayerToAttack.transform.position.x, PlayerToAttack.transform.position.z);
-        }
-        if (ActiveState is GoTowardPlayer && GhostInDissipateRange()) {
-            MoveTimerValue(ref SecondsSincePlayerBrokeYAxis, true);
-        } else {
-            SecondsSincePlayerBrokeYAxis = 0f;
-        }
-        //WTOBase.LogToConsole($"{SecondsSincePlayerBrokeYAxis}");
         base.Update();
+        if (!ShouldFlickerLights) {
+            return;
+        }
+        if (ShouldFlickerShipLights) {
+            StartCoroutine(FlickerShipLights());
+        } else {
+            StartCoroutine(FlickerNearbyLights());
+        }
     }
 
     public PlayerControllerB FindMostHauntedPlayer(System.Random EnemyRandom, List<PlayerControllerB> PlayersToCheck) {
@@ -213,6 +206,34 @@ internal class OoblGhostAI : WTOEnemy {
         return ResultingPlayer;
     }
 
+    private void MoveGhostTowardPlayer() {
+        Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
+        if (transform.position != PlayerToAttack.transform.position) {
+            transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
+            transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up);
+        }
+    }
+
+    //Called every frame
+    private void EvaluateRadioInterference() {
+        if (PlayerToAttack.PlayerIsHearingOthersThroughWalkieTalkie()) {
+            GhostPickedUpInterference = true;
+            return;
+        }
+    }
+
+    //called when translator used
+    public void EvalulateSignalTranslatorUse() {
+        WTOBase.LogToConsole("Ghost Recieved Signal Translator use!");
+        if (PlayerToAttack == null || ActiveState is not GoTowardPlayer) {
+            return;
+        }
+        if (Vector3.Distance(transform.position, PlayerToAttack.transform.position) > GhostInterferenceRange) {
+            return;
+        }
+        GhostPickedUpInterference = true;
+    }
+
     [ServerRpc]
     public void SetGhostTargetServerRpc(int TargetClientID) {
         SetGhostTargetClientRpc(TargetClientID);
@@ -221,12 +242,28 @@ internal class OoblGhostAI : WTOEnemy {
     [ClientRpc]
     public void SetGhostTargetClientRpc(int TargetClientID) {
         PlayerToAttack = StartOfRound.Instance.allPlayerScripts[TargetClientID];
-        YAxisLockedTo = PlayerToAttack.transform.position.y;
         WTOBase.LogToConsole($"GHOST #{WTOEnemyID}: HAUNTING {PlayerToAttack.playerUsername}");
     }
 
-
-    private bool GhostInDissipateRange() {
-        return (Mathf.Abs(PlayerToAttack.transform.position.x - transform.position.x) <= 5 && Mathf.Abs(PlayerToAttack.transform.position.z - transform.position.z) <= 5 && PlayerToAttack.transform.position.y != YAxisLockedTo);
+    [ServerRpc]
+    public void FlickerNearbyLightsServerRpc(bool ShipLights) {
+        FlickerNearbyLightsClientRpc(ShipLights);
     }
+
+    [ClientRpc]
+    public void FlickerNearbyLightsClientRpc(bool ShipLights) {
+        ShouldFlickerLights = true;
+        this.ShouldFlickerShipLights = ShipLights;
+    }
+
+    //TODO: Impliment
+    IEnumerator FlickerShipLights() {
+        yield return null;
+    }
+
+    IEnumerator FlickerNearbyLights() {
+        yield return null;
+    }
+
+
 }
