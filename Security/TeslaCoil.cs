@@ -1,5 +1,7 @@
-﻿using GameNetcodeStuff;
+﻿using DigitalRuby.ThunderAndLightning;
+using GameNetcodeStuff;
 using LethalLib.Modules;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -10,13 +12,17 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 internal class TeslaCoil : NetworkBehaviour {
 
+    [InspectorName("Balance Constants")]
+    public float SecondsUntilShock = 4f;
+    public int ChanceObjectWillBeShocked = 25;
+
     public BoxCollider RangeBox;
     public GameObject SmallRing;
     public GameObject MediumRing;
     public GameObject LargeRing;
     public AudioSource StaticNoiseMaker;
     public AudioSource RingNoiseMaker;
-
+    
     public AudioClip RingsOn;
     public AudioClip RingsOff;
     public AudioClip RingsActive;
@@ -25,13 +31,21 @@ internal class TeslaCoil : NetworkBehaviour {
     public MeshRenderer[] Emissives;
     public Animator TeslaCoilAnim;
 
+    public bool isShocking;
+    private GrabbableObject ObjectToShock;
+    private ParticleSystem ShockParticle;
+    private ParticleSystem LightningBolt;
+    private AudioClip ShockClip;
+    private GrabbableObject[] GrabbableObjectList;
+    private System.Random TeslaRandom;
+
     [HideInInspector]
     private bool TeslaCoilOn = true;
     private bool AttemptedFireShotgun = false;
-
     private List<PlayerControllerB> PlayerInRangeList = new();
 
     WalkieTalkie NowYoureOnWalkies;
+  
 
     public void OnTriggerEnter(Collider other) {
         try {
@@ -42,7 +56,7 @@ internal class TeslaCoil : NetworkBehaviour {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             
             if (!PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null){
-                WTOBase.LogToConsole($"Adding Player {PlayerInRange} to player in range list...");
+                //WTOBase.LogToConsole($"Adding Player {PlayerInRange} to player in range list...");
                 PlayerInRangeList.Add(PlayerInRange);
             }
         } catch {}
@@ -58,8 +72,13 @@ internal class TeslaCoil : NetworkBehaviour {
         } catch { }
         try {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
+            if(ObjectToShock.playerHeldBy == PlayerInRange) {
+                ObjectToShock = null;
+                StopCoroutine(ShockCoroutine());
+                isShocking = false;
+            }
             if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
-                WTOBase.LogToConsole($"Removing Player {PlayerInRange} from player in range list...");
+                //WTOBase.LogToConsole($"Removing Player {PlayerInRange} from player in range list...");
                 PlayerInRangeList.Remove(PlayerInRange);
             }
         } catch { }
@@ -67,6 +86,7 @@ internal class TeslaCoil : NetworkBehaviour {
     private void Start() {
         RecieveToggleTeslaCoil(false);
         RecieveToggleTeslaCoil(true);
+        GrabbableObjectList = FindObjectsOfType<GrabbableObject>();
     }
     private void Update() {
         if (!TeslaCoilOn) {
@@ -116,6 +136,25 @@ internal class TeslaCoil : NetworkBehaviour {
                     AttemptedFireShotgun = true;
                     continue;
                 }
+            }
+        }
+        if (isShocking) {
+            ShockParticle.transform.position = ObjectToShock.transform.position;
+            StartCoroutine(ShockCoroutine());
+        } else {
+            //get all grabbableobjects in range. I LOVE ITERATING OVER LOOPS IN THE UPDATE
+            foreach(GrabbableObject Object in GrabbableObjectList.Where(x => Vector3.Distance(x.transform.position, this.transform.position) < 15)){
+                if (!Object.itemProperties.isConductiveMetal) {
+                    return;
+                }
+                //if the item is conductive, we want a 1 in x chance to shock it
+                if (!(TeslaRandom.Next(0, 100) < ChanceObjectWillBeShocked)){
+                    continue;
+                }
+                ObjectToShock = Object;
+                ManageShockParticle();
+                isShocking = true;
+                break;
             }
         }
     }
@@ -171,5 +210,26 @@ internal class TeslaCoil : NetworkBehaviour {
     }
     private void SendDeathSFX(int PlayerID) {
         NowYoureOnWalkies.BroadcastSFXFromWalkieTalkie(WalkieTalkieDie, PlayerID);
+    }
+
+    private void ManageShockParticle(bool ShouldDestroy = false) {
+        if (ShouldDestroy) {
+            ShockParticle.Stop();
+            ShockParticle.GetComponent<AudioSource>().Stop();
+        }
+        ShockParticle = GameObject.FindObjectOfType<StormyWeather>().staticElectricityParticle;
+    }
+
+    IEnumerator ShockCoroutine() {
+
+        yield return new WaitForSeconds(SecondsUntilShock);
+        LightningBolt.Play();
+        RingNoiseMaker.PlayOneShot(ShockClip);
+        yield return new WaitForSeconds(0.3f);
+        LightningBolt.Stop();
+        if(ObjectToShock.playerHeldBy != null) {
+            ObjectToShock.playerHeldBy.DamagePlayer(150, false, true, CauseOfDeath.Blast);
+            ManageShockParticle(true);
+        }
     }
 }
