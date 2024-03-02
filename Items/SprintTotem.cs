@@ -32,11 +32,6 @@ internal class SprintTotem : GrabbableObject {
     }
     public override void Update() {
         base.Update();
-        //WTOBase.LogToConsole("SPRINT TOTEM STATS:");
-        //Debug.Log($"POCKETED: {isPocketed}");
-        //Debug.Log($"IS HELD BY PLAYER: {isHeld}");
-        //Debug.Log($"PLAYER HELD BY: {playerHeldBy}");
-        //Debug.Log($"HELD PLAYER SPRINTING: {playerHeldBy.isSprinting}");
         if (!isPocketed && isHeld && playerHeldBy.isSprinting) {
             SetPlayerSpeedAndStamina();
             ReduceTotemPercentage();
