@@ -15,6 +15,7 @@ internal class TeslaCoil : NetworkBehaviour {
     [InspectorName("Balance Constants")]
     public float SecondsUntilShock = 4f;
     public int ChanceObjectWillBeShocked = 25;
+    public float ShockCooldown = 5f;
 
     public BoxCollider RangeBox;
     public GameObject SmallRing;
@@ -32,10 +33,11 @@ internal class TeslaCoil : NetworkBehaviour {
     public Animator TeslaCoilAnim;
 
     public bool isShocking;
-    private GrabbableObject ObjectToShock;
-    private ParticleSystem ShockParticle;
-    private ParticleSystem LightningBolt;
-    private AudioClip ShockClip;
+    public bool HasShocked = true;
+    public GrabbableObject ObjectToShock;
+    public ParticleSystem StaticParticle;
+    public ParticleSystem LightningBolt;
+    public AudioClip ShockClip;
     private GrabbableObject[] GrabbableObjectList;
     private System.Random TeslaRandom;
 
@@ -87,6 +89,7 @@ internal class TeslaCoil : NetworkBehaviour {
         RecieveToggleTeslaCoil(false);
         RecieveToggleTeslaCoil(true);
         GrabbableObjectList = FindObjectsOfType<GrabbableObject>();
+        TeslaRandom = new System.Random();
     }
     private void Update() {
         if (!TeslaCoilOn) {
@@ -139,11 +142,19 @@ internal class TeslaCoil : NetworkBehaviour {
             }
         }
         if (isShocking) {
-            ShockParticle.transform.position = ObjectToShock.transform.position;
+            StaticParticle.transform.position = ObjectToShock.transform.position;
             StartCoroutine(ShockCoroutine());
         } else {
+            StopCoroutine(ShockCoroutine());
+            if (ShockCooldown > 0f) {
+                ShockCooldown -= Time.deltaTime;
+                return;
+            }
+            if(ObjectToShock != null) {
+                return;
+            }
             //get all grabbableobjects in range. I LOVE ITERATING OVER LOOPS IN THE UPDATE
-            foreach(GrabbableObject Object in GrabbableObjectList.Where(x => Vector3.Distance(x.transform.position, this.transform.position) < 15)){
+            foreach(GrabbableObject Object in GrabbableObjectList.Where(x => Vector3.Distance(x.transform.position, this.transform.position) < 16)){
                 if (!Object.itemProperties.isConductiveMetal) {
                     return;
                 }
@@ -152,7 +163,8 @@ internal class TeslaCoil : NetworkBehaviour {
                     continue;
                 }
                 ObjectToShock = Object;
-                ManageShockParticle();
+                ManageStaticParticle();
+                HasShocked = false;
                 isShocking = true;
                 break;
             }
@@ -212,24 +224,34 @@ internal class TeslaCoil : NetworkBehaviour {
         NowYoureOnWalkies.BroadcastSFXFromWalkieTalkie(WalkieTalkieDie, PlayerID);
     }
 
-    private void ManageShockParticle(bool ShouldDestroy = false) {
+    private void ManageStaticParticle(bool ShouldDestroy = false) {
         if (ShouldDestroy) {
-            ShockParticle.Stop();
-            ShockParticle.GetComponent<AudioSource>().Stop();
+            StaticParticle.Stop();
+            StaticParticle.GetComponent<AudioSource>().Stop();
         }
-        ShockParticle = GameObject.FindObjectOfType<StormyWeather>().staticElectricityParticle;
+        StaticParticle.GetComponent<AudioSource>().Play();
+        StaticParticle.Play();
     }
 
     IEnumerator ShockCoroutine() {
 
         yield return new WaitForSeconds(SecondsUntilShock);
-        LightningBolt.Play();
-        RingNoiseMaker.PlayOneShot(ShockClip);
-        yield return new WaitForSeconds(0.3f);
-        LightningBolt.Stop();
-        if(ObjectToShock.playerHeldBy != null) {
-            ObjectToShock.playerHeldBy.DamagePlayer(150, false, true, CauseOfDeath.Blast);
-            ManageShockParticle(true);
+        if (!HasShocked) {
+            HasShocked = true;
+            LightningBolt.Play();
+            WTOBase.LogToConsole("Starting lightning bolt!");
+            LightningBolt.transform.rotation = Quaternion.LookRotation(ObjectToShock.transform.position, Vector3.up);
+            RingNoiseMaker.PlayOneShot(ShockClip);
+            if (ObjectToShock.playerHeldBy != null) {
+                ObjectToShock.playerHeldBy.DamagePlayer(10, false, true, CauseOfDeath.Blast);
+                ManageStaticParticle(true);
+            }
+            ObjectToShock = null;
         }
+        yield return new WaitForSeconds(0.3f);
+        WTOBase.LogToConsole("Stopping lightning bolt!");
+        isShocking = false;
+        ShockCooldown = 5f;
+        LightningBolt.Stop();
     }
 }
