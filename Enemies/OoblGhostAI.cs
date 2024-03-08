@@ -156,8 +156,10 @@ internal class OoblGhostAI : WTOEnemy {
         //transform.position = new Vector3(0, -300, 0);
         LogMessage($"Adding Oobl Ghost {this} #{GhostID}");
         GhostList.Add(GhostID, this);
+
         //GetComponent<AcidWater>().DamageAmount = (int)GhostDamagePerTick;
         base.Start();
+        transform.position = new Vector3(0, -1000, 0);
     }
     public override void Update() {
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
