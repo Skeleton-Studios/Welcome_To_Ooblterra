@@ -93,7 +93,7 @@ internal class TeslaCoil : NetworkBehaviour {
         RecieveToggleTeslaCoil(false);
         RecieveToggleTeslaCoil(true);
         GrabbableObjectList = FindObjectsOfType<GrabbableObject>();
-        TeslaRandom = new System.Random();
+        TeslaRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
     }
     private void Update() {
         if (!TeslaCoilOn) {
@@ -200,6 +200,11 @@ internal class TeslaCoil : NetworkBehaviour {
             StaticNoiseMaker.Stop();
             RingNoiseMaker.clip = RingsOff;
             RingNoiseMaker.Play();
+            if (ObjectToShock != null) {
+                ObjectToShock = null;
+                StopCoroutine(Shock);
+                isShocking = false;
+            }
         } else {
             StaticNoiseMaker.Play();
             RingNoiseMaker.clip = RingsOn;
