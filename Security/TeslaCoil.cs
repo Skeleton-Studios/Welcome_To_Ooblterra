@@ -13,9 +13,10 @@ namespace Welcome_To_Ooblterra.Things;
 internal class TeslaCoil : NetworkBehaviour {
 
     [InspectorName("Balance Constants")]
-    public float SecondsUntilShock = 4f;
-    public int ChanceObjectWillBeShocked = 25;
+    public float SecondsUntilShock = 10f;
+    public int ChanceObjectWillBeShocked = 45;
     public float ShockCooldown = 5f;
+    public int Damage = 150;
 
     [InspectorName("Defaults")]
     public BoxCollider RangeBox;
@@ -42,7 +43,7 @@ internal class TeslaCoil : NetworkBehaviour {
     private GrabbableObject[] GrabbableObjectList;
     private System.Random TeslaRandom;
     Coroutine Shock;
-    public float RotationOffset = 90f;
+    public Vector3 RotationOffset = new Vector3(0, 90f, 0);
 
     [HideInInspector]
     private bool TeslaCoilOn = true;
@@ -60,7 +61,7 @@ internal class TeslaCoil : NetworkBehaviour {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             
             if (!PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null){
-                //WTOBase.LogToConsole($"Adding Player {PlayerInRange} to player in range list...");
+                WTOBase.LogToConsole($"Adding Player {PlayerInRange} to player in range list...");
                 PlayerInRangeList.Add(PlayerInRange);
             }
         } catch {}
@@ -76,15 +77,16 @@ internal class TeslaCoil : NetworkBehaviour {
         } catch { }
         try {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
-            if(ObjectToShock.playerHeldBy == PlayerInRange) {
+            if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
+                WTOBase.LogToConsole($"Removing Player {PlayerInRange} from player in range list...");
+                PlayerInRangeList.Remove(PlayerInRange);
+            }
+            if (ObjectToShock.playerHeldBy == PlayerInRange) {
                 ObjectToShock = null;
                 StopCoroutine(Shock);
                 isShocking = false;
             }
-            if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
-                //WTOBase.LogToConsole($"Removing Player {PlayerInRange} from player in range list...");
-                PlayerInRangeList.Remove(PlayerInRange);
-            }
+
         } catch { }
     }
     private void Start() {
@@ -98,21 +100,31 @@ internal class TeslaCoil : NetworkBehaviour {
             return;
         }
         SpinRings();
+        DisableAllNearbyElectronics();
+        CalculateShock();
+    }
+
+    private void SpinRings() {
+        SmallRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
+        MediumRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
+        LargeRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
+    }
+    private void DisableAllNearbyElectronics() {
         //Wow this code sucks cock
-        if(PlayerInRangeList.Count <= 0) {
+        if (PlayerInRangeList.Count <= 0) {
             return;
         }
         foreach (PlayerControllerB Player in PlayerInRangeList) {
-            if(Player.ItemSlots.Count() <= 0) {
+            if (Player.ItemSlots.Count() <= 0) {
                 continue;
             }
             foreach (GrabbableObject HeldObject in Player.ItemSlots) {
-                if(HeldObject is WalkieTalkie) {
+                if (HeldObject is WalkieTalkie) {
                     NowYoureOnWalkies = HeldObject.GetComponent<WalkieTalkie>();
                     if (HeldObject.isBeingUsed == false) {
                         continue;
                     }
-                    if (NowYoureOnWalkies.clientIsHoldingAndSpeakingIntoThis) {                    
+                    if (NowYoureOnWalkies.clientIsHoldingAndSpeakingIntoThis) {
                         NowYoureOnWalkies.SwitchWalkieTalkieOn(false);
                         SendDeathSFXServerRpc((int)Player.actualClientId);
                         continue;
@@ -120,47 +132,51 @@ internal class TeslaCoil : NetworkBehaviour {
                     NowYoureOnWalkies.SwitchWalkieTalkieOn(false);
                     continue;
                 }
-                if(HeldObject is FlashlightItem) {
+                if (HeldObject is FlashlightItem) {
                     HeldObject.GetComponent<FlashlightItem>().SwitchFlashlight(false);
                     continue;
                 }
-                if(HeldObject is BoomboxItem) {
+                if (HeldObject is BoomboxItem) {
                     HeldObject.GetComponent<BoomboxItem>().StartMusic(false);
                     continue;
                 }
-                if(HeldObject is PatcherTool) {
+                if (HeldObject is PatcherTool) {
                     HeldObject.GetComponent<PatcherTool>().DisablePatcherGun();
                     continue;
                 }
-                if(HeldObject is RadarBoosterItem) {
+                if (HeldObject is RadarBoosterItem) {
                     HeldObject.GetComponent<RadarBoosterItem>().EnableRadarBooster(false);
                     continue;
                 }
-                if(HeldObject is ShotgunItem && AttemptedFireShotgun == false) {
+                if (HeldObject is ShotgunItem && AttemptedFireShotgun == false) {
                     HeldObject.GetComponent<ShotgunItem>().ItemActivate(true);
                     AttemptedFireShotgun = true;
                     continue;
                 }
             }
         }
+    }
+    private void CalculateShock() {
         if (isShocking) {
             StaticParticle.transform.position = ObjectToShock.transform.position;
-            LightningBolt.transform.rotation = Quaternion.LookRotation(ObjectToShock.transform.position, Vector3.up) * new Quaternion(RotationOffset, 1, 1, 1);
+            LightningBolt.transform.rotation = Quaternion.LookRotation(ObjectToShock.transform.position - LightningBolt.transform.position, Vector3.up) * Quaternion.Euler(RotationOffset.x, RotationOffset.y, RotationOffset.z);
         } else {
+            StaticParticle.transform.position = new Vector3(0, -1000, 0);
             if (ShockCooldown > 0f) {
                 ShockCooldown -= Time.deltaTime;
                 return;
             }
-            if(ObjectToShock != null) {
+            if (ObjectToShock != null) {
                 return;
             }
-            //get all grabbableobjects in range. I LOVE ITERATING OVER LOOPS IN THE UPDATE
-            foreach(GrabbableObject Object in GrabbableObjectList.Where(x => Vector3.Distance(x.transform.position, this.transform.position) < 16)){
+            //get all grabbableobjects in range. I LOVE ITERATING OVER LOOPS IN THE UPDATE!
+            foreach (GrabbableObject Object in GrabbableObjectList.Where(x => Vector3.Distance(x.transform.position, this.transform.position) < 16)) {
                 if (!Object.itemProperties.isConductiveMetal) {
                     return;
                 }
                 //if the item is conductive, we want a 1 in x chance to shock it
-                if (!(TeslaRandom.Next(0, 100) < ChanceObjectWillBeShocked)){
+                if ((TeslaRandom.Next(0, 100) > ChanceObjectWillBeShocked)) {
+                    ShockCooldown = 3f;
                     continue;
                 }
                 ObjectToShock = Object;
@@ -172,11 +188,7 @@ internal class TeslaCoil : NetworkBehaviour {
             }
         }
     }
-    private void SpinRings() {
-        SmallRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
-        MediumRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
-        LargeRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
-    }
+    
     private void ToggleRings(bool State) {
         TeslaCoilAnim.SetBool("Powered", State);
         foreach (MeshRenderer Mesh in Emissives) {
@@ -243,10 +255,8 @@ internal class TeslaCoil : NetworkBehaviour {
             LightningBolt.Play();
             WTOBase.LogToConsole("Starting lightning bolt!");
             RingNoiseMaker.PlayOneShot(ShockClip);
-            if (ObjectToShock.playerHeldBy != null) {
-                ObjectToShock.playerHeldBy.DamagePlayer(10, false, true, CauseOfDeath.Blast);
-                ManageStaticParticle(true);
-            }
+            ObjectToShock.playerHeldBy?.DamagePlayer(Damage, false, true, CauseOfDeath.Blast);            
+            ManageStaticParticle(true);
             ObjectToShock = null;
         }
         yield return new WaitForSeconds(0.3f);
