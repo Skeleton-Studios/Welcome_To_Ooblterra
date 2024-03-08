@@ -606,7 +606,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
         if (AttackTimerSeconds <= 0.8f && Vector3.Distance(targetPlayer.transform.position, transform.position) < AttackRange && !HasAttackedThisCycle) {
             LogMessage("Attacking!");
-            targetPlayer.DamagePlayer(damage, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
+            targetPlayer.DamagePlayer(damage, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0, force: (this.transform.position - targetPlayer.transform.position) * 2);
             HasAttackedThisCycle = true;
         }
         if(AttackTimerSeconds <= 0f) {
