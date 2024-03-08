@@ -17,6 +17,7 @@ internal class TeslaCoil : NetworkBehaviour {
     public int ChanceObjectWillBeShocked = 25;
     public float ShockCooldown = 5f;
 
+    [InspectorName("Defaults")]
     public BoxCollider RangeBox;
     public GameObject SmallRing;
     public GameObject MediumRing;
@@ -40,6 +41,8 @@ internal class TeslaCoil : NetworkBehaviour {
     public AudioClip ShockClip;
     private GrabbableObject[] GrabbableObjectList;
     private System.Random TeslaRandom;
+    Coroutine Shock;
+    public float RotationOffset = 90f;
 
     [HideInInspector]
     private bool TeslaCoilOn = true;
@@ -47,7 +50,6 @@ internal class TeslaCoil : NetworkBehaviour {
     private List<PlayerControllerB> PlayerInRangeList = new();
 
     WalkieTalkie NowYoureOnWalkies;
-  
 
     public void OnTriggerEnter(Collider other) {
         try {
@@ -76,7 +78,7 @@ internal class TeslaCoil : NetworkBehaviour {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             if(ObjectToShock.playerHeldBy == PlayerInRange) {
                 ObjectToShock = null;
-                StopCoroutine(ShockCoroutine());
+                StopCoroutine(Shock);
                 isShocking = false;
             }
             if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
@@ -143,9 +145,8 @@ internal class TeslaCoil : NetworkBehaviour {
         }
         if (isShocking) {
             StaticParticle.transform.position = ObjectToShock.transform.position;
-            StartCoroutine(ShockCoroutine());
+            LightningBolt.transform.rotation = Quaternion.LookRotation(ObjectToShock.transform.position, Vector3.up) * new Quaternion(RotationOffset, 1, 1, 1);
         } else {
-            StopCoroutine(ShockCoroutine());
             if (ShockCooldown > 0f) {
                 ShockCooldown -= Time.deltaTime;
                 return;
@@ -166,6 +167,7 @@ internal class TeslaCoil : NetworkBehaviour {
                 ManageStaticParticle();
                 HasShocked = false;
                 isShocking = true;
+                Shock = StartCoroutine(ShockCoroutine());
                 break;
             }
         }
@@ -240,7 +242,6 @@ internal class TeslaCoil : NetworkBehaviour {
             HasShocked = true;
             LightningBolt.Play();
             WTOBase.LogToConsole("Starting lightning bolt!");
-            LightningBolt.transform.rotation = Quaternion.LookRotation(ObjectToShock.transform.position, Vector3.up);
             RingNoiseMaker.PlayOneShot(ShockClip);
             if (ObjectToShock.playerHeldBy != null) {
                 ObjectToShock.playerHeldBy.DamagePlayer(10, false, true, CauseOfDeath.Blast);
@@ -253,5 +254,6 @@ internal class TeslaCoil : NetworkBehaviour {
         isShocking = false;
         ShockCooldown = 5f;
         LightningBolt.Stop();
+        StopCoroutine(Shock);
     }
 }
