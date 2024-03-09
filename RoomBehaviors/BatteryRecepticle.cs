@@ -15,7 +15,7 @@ public class BatteryRecepticle : NetworkBehaviour {
 
     [InspectorName("Defaults")]
     public NetworkObject parentTo;
-    public NetworkObject Battery;
+    public NetworkObject BatteryNetObj;
     public InteractTrigger triggerScript;
     public Transform BatteryTransform;
     public BoxCollider BatteryHitbox;
@@ -89,7 +89,7 @@ public class BatteryRecepticle : NetworkBehaviour {
             triggerScript.hoverTip = "Take Battery";
             return;
             */
-        } else {
+        } else { 
             BatteryHitbox.enabled = true;
             triggerScript.enabled = true;
             if (GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is WTOBattery) {
@@ -100,8 +100,6 @@ public class BatteryRecepticle : NetworkBehaviour {
             triggerScript.interactable = false;
             triggerScript.disabledHoverTip = "[Requires Battery]";
         }
-
-
     }
 
     private void SpawnBatteryAtFurthestPoint() {
@@ -143,9 +141,11 @@ public class BatteryRecepticle : NetworkBehaviour {
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
         InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
         Debug.Log("discard held object called from placeobject");
-        if(InsertedBattery.HasCharge) {
+        if (InsertedBattery.HasCharge) {
             InsertedBattery.grabbable = false;
             TurnOnPowerServerRpc();
+        } else {
+            InsertedBattery.grabbable = true;
         }
     }
     [ServerRpc(RequireOwnership = false)]
@@ -157,12 +157,12 @@ public class BatteryRecepticle : NetworkBehaviour {
         InsertBattery(grabbableObjectNetObject);
     }
     public void InsertBattery(NetworkObjectReference grabbableObjectNetObject) {
-        if (grabbableObjectNetObject.TryGet(out Battery)) {
-            Battery.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
+        if (grabbableObjectNetObject.TryGet(out BatteryNetObj)) {
+            BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
         } else {
             Debug.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
         }
-        Battery.transform.rotation = BatteryTransform.rotation;
+        BatteryNetObj.transform.rotation = BatteryTransform.rotation;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -190,7 +190,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         MachineAnimator.SetTrigger("PowerOn");
         StartRoomLight StartRoomLights = FindObjectOfType<StartRoomLight>();
         StartRoomLights.SetCentralRoomWhite();
-        Battery.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
+        BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
     }
 
 

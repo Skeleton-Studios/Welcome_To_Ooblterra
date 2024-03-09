@@ -76,14 +76,14 @@ internal class MoonPatch {
     [HarmonyPatch(typeof(TimeOfDay), "Start")]
     [HarmonyPrefix]
     public static void ChangeGlobalTimeMultiplier(TimeOfDay __instance) {
-        
+        /*
         if (__instance.currentLevel.PlanetName == MoonFriendlyName) {
             __instance.globalTimeSpeedMultiplier = __instance.currentLevel.DaySpeedMultiplier;
             __instance.currentLevel.DaySpeedMultiplier = 1f;
-            return;
+            return; 
         }
         __instance.globalTimeSpeedMultiplier = 1f;
-        
+        */
     }
 
     [HarmonyPatch(typeof(StartOfRound), "PassTimeToNextDay")]
