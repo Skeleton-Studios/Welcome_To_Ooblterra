@@ -177,7 +177,7 @@ internal class TeslaCoil : NetworkBehaviour {
                 if (!Object.itemProperties.isConductiveMetal) {
                     return;
                 }
-                //if the item is conductive, we want a 1 in x chance to shock it
+                //if the item is conductive, we want a 1 in x chance to shock it 
                 if ((TeslaRandom.Next(0, 100) > ChanceObjectWillBeShocked)) {
                     ShockCooldown = 3f;
                     continue;
@@ -273,7 +273,7 @@ internal class TeslaCoil : NetworkBehaviour {
         isShocking = true;
         Shock = StartCoroutine(ShockCoroutine());
     }
-
+     
     private void ManageStaticParticle(bool ShouldDestroy = false) {
         if (ShouldDestroy) {
             StaticParticle.Stop();
