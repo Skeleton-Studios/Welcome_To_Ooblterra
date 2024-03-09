@@ -82,7 +82,7 @@ internal class TeslaCoil : NetworkBehaviour {
                 PlayerInRangeList.Remove(PlayerInRange);
             }
             if (ObjectToShock.playerHeldBy == PlayerInRange) {
-                ObjectToShock = null;
+                SetTargetZapObjectServerRpc(ObjectToShock.gameObject, true);
                 StopCoroutine(Shock);
                 isShocking = false;
             }
@@ -179,7 +179,7 @@ internal class TeslaCoil : NetworkBehaviour {
                     ShockCooldown = 3f;
                     continue;
                 }
-                ObjectToShock = Object;
+                SetTargetZapObjectServerRpc(Object.gameObject.GetComponent<NetworkObject>());
                 ManageStaticParticle();
                 HasShocked = false;
                 isShocking = true;
@@ -201,7 +201,7 @@ internal class TeslaCoil : NetworkBehaviour {
             RingNoiseMaker.clip = RingsOff;
             RingNoiseMaker.Play();
             if (ObjectToShock != null) {
-                ObjectToShock = null;
+                SetTargetZapObjectServerRpc(ObjectToShock.gameObject, true);
                 StopCoroutine(Shock);
                 isShocking = false;
             }
@@ -243,6 +243,25 @@ internal class TeslaCoil : NetworkBehaviour {
         NowYoureOnWalkies.BroadcastSFXFromWalkieTalkie(WalkieTalkieDie, PlayerID);
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void SetTargetZapObjectServerRpc(NetworkObjectReference grabbableObjectNetObject, bool SetNull = false) {
+        SetTargetZapObjectClientRpc(grabbableObjectNetObject, SetNull);
+    }
+    [ClientRpc]
+    public void SetTargetZapObjectClientRpc(NetworkObjectReference grabbableObjectNetObject, bool SetNull = false) {
+        if(SetNull) {
+            ObjectToShock = null;
+            return;
+        }
+        if (grabbableObjectNetObject.TryGet(out NetworkObject ItemNetObj)) {
+            ObjectToShock = ItemNetObj.gameObject.GetComponentInChildren<GrabbableObject>();
+        } else {
+            WTOBase.LogToConsole("No networkobject found; assuming null for ObjectToShock");
+            ObjectToShock = null;
+        }
+        
+    }
+
     private void ManageStaticParticle(bool ShouldDestroy = false) {
         if (ShouldDestroy) {
             StaticParticle.Stop();
@@ -251,7 +270,6 @@ internal class TeslaCoil : NetworkBehaviour {
         StaticParticle.GetComponent<AudioSource>().Play();
         StaticParticle.Play();
     }
-
     IEnumerator ShockCoroutine() {
 
         yield return new WaitForSeconds(SecondsUntilShock);
@@ -262,7 +280,7 @@ internal class TeslaCoil : NetworkBehaviour {
             RingNoiseMaker.PlayOneShot(ShockClip);
             ObjectToShock.playerHeldBy?.DamagePlayer(Damage, false, true, CauseOfDeath.Blast);            
             ManageStaticParticle(true);
-            ObjectToShock = null;
+            SetTargetZapObjectServerRpc(ObjectToShock.gameObject, true);
         }
         yield return new WaitForSeconds(0.3f);
         WTOBase.LogToConsole("Stopping lightning bolt!");
