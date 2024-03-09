@@ -15,7 +15,7 @@ public class BatteryRecepticle : NetworkBehaviour {
 
     [InspectorName("Defaults")]
     public NetworkObject parentTo;
-    public NetworkObject Battery;
+    public NetworkObject BatteryNetObj;
     public InteractTrigger triggerScript;
     public Transform BatteryTransform;
     public BoxCollider BatteryHitbox;
@@ -157,12 +157,12 @@ public class BatteryRecepticle : NetworkBehaviour {
         InsertBattery(grabbableObjectNetObject);
     }
     public void InsertBattery(NetworkObjectReference grabbableObjectNetObject) {
-        if (grabbableObjectNetObject.TryGet(out Battery)) {
-            Battery.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
+        if (grabbableObjectNetObject.TryGet(out BatteryNetObj)) {
+            BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
         } else {
             Debug.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
         }
-        Battery.transform.rotation = BatteryTransform.rotation;
+        BatteryNetObj.transform.rotation = BatteryTransform.rotation;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -190,7 +190,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         MachineAnimator.SetTrigger("PowerOn");
         StartRoomLight StartRoomLights = FindObjectOfType<StartRoomLight>();
         StartRoomLights.SetCentralRoomWhite();
-        Battery.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
+        BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
     }
 
 
