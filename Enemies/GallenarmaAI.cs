@@ -45,6 +45,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         private bool canMakeNextPoint;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].Awakening = false;
+            GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Breaking", true);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
@@ -599,8 +600,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
         LatestNoise = new NoiseInfo(noisePosition, noiseLoudness);
     }
-    public void TryMeleeAttackPlayer(int damage) {
-            
+    public void TryMeleeAttackPlayer(int damage) {            
         if(targetPlayer == null) {
             return;
         }
