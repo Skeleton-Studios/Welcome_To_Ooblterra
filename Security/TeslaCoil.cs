@@ -14,7 +14,7 @@ internal class TeslaCoil : NetworkBehaviour {
 
     [InspectorName("Balance Constants")]
     public float SecondsUntilShock = 10f;
-    public int ChanceObjectWillBeShocked = 45;
+    public int ChanceObjectWillBeShocked = 100;
     public float ShockCooldown = 5f;
     public int Damage = 150;
 
@@ -89,11 +89,14 @@ internal class TeslaCoil : NetworkBehaviour {
 
         } catch { }
     }
+
     private void Start() {
         RecieveToggleTeslaCoil(false);
         RecieveToggleTeslaCoil(true);
         GrabbableObjectList = FindObjectsOfType<GrabbableObject>();
         TeslaRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        ParticleSystem.MainModule main = StaticParticle.main;
+        main.duration = SecondsUntilShock;
     }
     private void Update() {
         if (!TeslaCoilOn) {
@@ -180,15 +183,12 @@ internal class TeslaCoil : NetworkBehaviour {
                     continue;
                 }
                 SetTargetZapObjectServerRpc(Object.gameObject.GetComponent<NetworkObject>());
-                ManageStaticParticle();
-                HasShocked = false;
-                isShocking = true;
-                Shock = StartCoroutine(ShockCoroutine());
+                SetShockServerRpc(true);
                 break;
             }
         }
     }
-    
+
     private void ToggleRings(bool State) {
         TeslaCoilAnim.SetBool("Powered", State);
         foreach (MeshRenderer Mesh in Emissives) {
@@ -260,6 +260,18 @@ internal class TeslaCoil : NetworkBehaviour {
             ObjectToShock = null;
         }
         
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SetShockServerRpc(bool StartShock) {
+        SetShockClientRpc(StartShock);
+    }
+    [ClientRpc]
+    public void SetShockClientRpc(bool StartShock) {
+        ManageStaticParticle();
+        HasShocked = false;
+        isShocking = true;
+        Shock = StartCoroutine(ShockCoroutine());
     }
 
     private void ManageStaticParticle(bool ShouldDestroy = false) {
