@@ -18,9 +18,9 @@ internal class OoblGhostAI : WTOEnemy {
 
     [InspectorName("BalanceConstants")]
     public static float GhostInterferenceRange = 5f;
-    public static float OoblGhostSpeed = 8f;
+    public static float OoblGhostSpeed = 6f;
     private float GhostDamagePerTick = 10f;
-    private float GhostInterferenceTime = 4f;
+    private float GhostInterferenceTime = 3.5f;
 
     //STATES
     private class WaitForNextAttack : BehaviorState {
@@ -243,7 +243,7 @@ internal class OoblGhostAI : WTOEnemy {
         Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
         Quaternion CurrentRot = transform.rotation;
         Quaternion TargetRot = Quaternion.LookRotation(DirectionVector, Vector3.up);
-        transform.rotation = Quaternion.RotateTowards(CurrentRot, TargetRot, 30 * Time.deltaTime);
+        transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up); //Quaternion.RotateTowards(CurrentRot, TargetRot, 30 * Time.deltaTime);
     }
 
     //Called every frame

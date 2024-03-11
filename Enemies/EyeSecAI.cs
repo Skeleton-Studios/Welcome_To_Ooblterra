@@ -95,7 +95,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].StartAttackVisuals();
             EyeSecList[enemyIndex].agent.speed = 0f;
             if (EyeSecList[enemyIndex].DoFearEffect) {
-                WTOBase.LogToConsole($"Eyesec: Setting fear effect on Player {EyeSecList[enemyIndex].targetPlayer}!");
+                WTOBase.LogToConsole($"Eyesec: Setting fear effect on Player {EyeSecList[enemyIndex].targetPlayer.playerUsername}!");
                 EyeSecList[enemyIndex].targetPlayer.JumpToFearLevel(1f);
                 EyeSecList[enemyIndex].DoFearEffect = false;
             }

@@ -146,6 +146,7 @@ public class BatteryRecepticle : NetworkBehaviour {
             TurnOnPowerServerRpc();
         } else {
             InsertedBattery.grabbable = true;
+            InsertedBattery.GetComponent<BoxCollider>().enabled = true;
         }
     }
     [ServerRpc(RequireOwnership = false)]
