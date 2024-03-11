@@ -40,6 +40,7 @@ internal class MoonPatch {
     private static AudioClip OoblHitSFX;
     private static AudioClip[] GrassFootstepClips;
     private static AudioClip GrassHitSFX;
+    private static AudioClip[] CachedTODMusic;
 
     //PATCHES
 
@@ -128,10 +129,21 @@ internal class MoonPatch {
         WTOBase.LogToConsole($"END PRINT POST BASE FUNCTION VALUES:");
     }
 
-    [HarmonyPatch(typeof(TimeOfDay), "PlayTimeMusicDelayed")]
+    [HarmonyPatch(typeof(TimeOfDay), "Start")]
     [HarmonyPrefix]
-    private static bool SkipTODMusic() {
-        return false;
+    private static void ManageTODMusic(TimeOfDay __instance) {
+        if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+            if(CachedTODMusic != null) {
+                __instance.timeOfDayCues = CachedTODMusic;
+            }
+            return;
+        }
+        __instance.timeOfDayCues = new AudioClip[4]{
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_StartOfDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_MidDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_LateDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_Night.ogg")
+        };
     }
 
     [HarmonyPatch(typeof(StartOfRound), "OnShipLandedMiscEvents")]
