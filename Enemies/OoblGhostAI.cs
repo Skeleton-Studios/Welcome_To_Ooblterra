@@ -235,9 +235,25 @@ internal class OoblGhostAI : WTOEnemy {
         Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
         if (transform.position != PlayerToAttack.transform.position) {
             transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
-            transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up);
+            CalculateGhostRotation();
         }
     }
+
+    private void CalculateGhostRotation() {
+        Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
+        Quaternion CurrentRot = transform.rotation;
+        Quaternion TargetRot = Quaternion.LookRotation(DirectionVector, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(CurrentRot, TargetRot, 30 * Time.deltaTime);
+    }
+
+    //Called every frame
+    private void EvaluateRadioInterference() {
+        if (PlayerToAttack.PlayerIsHearingOthersThroughWalkieTalkie()) {
+            GhostPickedUpInterference = true;
+            return;
+        }
+    }
+
     //called when translator used
     public void EvalulateSignalTranslatorUse() {
         WTOBase.LogToConsole("Ghost Recieved Signal Translator use!");
