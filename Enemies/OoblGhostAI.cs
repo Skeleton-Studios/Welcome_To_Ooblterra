@@ -16,13 +16,17 @@ using static UnityEngine.Rendering.DebugUI;
 namespace Welcome_To_Ooblterra.Enemies;
 internal class OoblGhostAI : WTOEnemy {
 
-    private const float GhostInterferenceRange = 30f;
+    [InspectorName("BalanceConstants")]
+    public static float GhostInterferenceRange = 5f;
+    public static float OoblGhostSpeed = 8f;
+    private float GhostDamagePerTick = 10f;
+    private float GhostInterferenceTime = 4f;
 
     //STATES
     private class WaitForNextAttack : BehaviorState {
         public WaitForNextAttack() {
             
-            RandomRange = new Vector2(/*80, 125*/20, 45);
+            RandomRange = new Vector2(90, 135);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
@@ -82,7 +86,9 @@ internal class OoblGhostAI : WTOEnemy {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].MoveGhostTowardPlayer();
             if (Vector3.Distance(GhostList[enemyIndex].transform.position, GhostList[enemyIndex].PlayerToAttack.transform.position) < GhostInterferenceRange) {
-                GhostList[enemyIndex].EvaluateRadioInterference();
+                GhostList[enemyIndex].ShouldListenForWalkie = true;
+            } else {
+                GhostList[enemyIndex].ShouldListenForWalkie = false;
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -129,8 +135,6 @@ internal class OoblGhostAI : WTOEnemy {
         }
     }
 
-
-    public float OoblGhostSpeed = 25f;
     public static Dictionary<int, OoblGhostAI> GhostList = new();
     private static int GhostID;
     private PlayerControllerB PlayerToAttack;
@@ -139,6 +143,9 @@ internal class OoblGhostAI : WTOEnemy {
     public bool GhostPickedUpInterference = false;
     private bool ShouldFlickerLights;
     private bool ShouldFlickerShipLights;
+    private bool ShouldListenForWalkie;
+
+    private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -149,18 +156,27 @@ internal class OoblGhostAI : WTOEnemy {
         //transform.position = new Vector3(0, -300, 0);
         LogMessage($"Adding Oobl Ghost {this} #{GhostID}");
         GhostList.Add(GhostID, this);
+
+        //GetComponent<AcidWater>().DamageAmount = (int)GhostDamagePerTick;
         base.Start();
+        transform.position = new Vector3(0, -1000, 0);
     }
     public override void Update() {
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
         base.Update();
-        if (!ShouldFlickerLights) {
+        if (PlayerToAttack == null || ActiveState is not GoTowardPlayer) {
             return;
         }
         if (ShouldFlickerShipLights) {
             StartCoroutine(FlickerShipLights());
         } else {
             StartCoroutine(FlickerNearbyLights());
+        }
+        if (ShouldListenForWalkie) {
+            if (PlayerToAttack.PlayerIsHearingOthersThroughWalkieTalkie()) {
+                StartCoroutine(ListenForWalkie());
+            }
+            StopCoroutine(ListenForWalkie());
         }
     }
 
@@ -201,6 +217,13 @@ internal class OoblGhostAI : WTOEnemy {
             if (StartOfRound.Instance.allPlayerScripts[NextPlayerIndex].currentlyHeldObjectServer != null && StartOfRound.Instance.allPlayerScripts[NextPlayerIndex].currentlyHeldObjectServer.scrapValue > 150) {
                 PlayerInsanityLevelList[NextPlayerIndex] += 30;
             }
+            if (!StartOfRound.Instance.allPlayerScripts[NextPlayerIndex].isInsideFactory) {
+                PlayerInsanityLevelList[NextPlayerIndex] += 70;
+            }
+            if (PlayersTimesHaunted.ContainsKey(StartOfRound.Instance.allPlayerScripts[NextPlayerIndex])) {
+                PlayerInsanityLevelList[NextPlayerIndex] -= (50 * PlayersTimesHaunted[StartOfRound.Instance.allPlayerScripts[NextPlayerIndex]]);
+            }
+            Mathf.Clamp(PlayerInsanityLevelList[NextPlayerIndex], 0, 10000);
         }
         PlayerControllerB ResultingPlayer = PlayersToCheck[RoundManager.Instance.GetRandomWeightedIndex(PlayerInsanityLevelList, EnemyRandom)];
 
@@ -212,8 +235,15 @@ internal class OoblGhostAI : WTOEnemy {
         Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
         if (transform.position != PlayerToAttack.transform.position) {
             transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
-            transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up);
+            CalculateGhostRotation();
         }
+    }
+
+    private void CalculateGhostRotation() {
+        Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
+        Quaternion CurrentRot = transform.rotation;
+        Quaternion TargetRot = Quaternion.LookRotation(DirectionVector, Vector3.up);
+        transform.rotation = Quaternion.RotateTowards(CurrentRot, TargetRot, 30 * Time.deltaTime);
     }
 
     //Called every frame
@@ -236,7 +266,7 @@ internal class OoblGhostAI : WTOEnemy {
         GhostPickedUpInterference = true;
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void SetGhostTargetServerRpc(int TargetClientID) {
         SetGhostTargetClientRpc(TargetClientID);
     }
@@ -245,6 +275,11 @@ internal class OoblGhostAI : WTOEnemy {
     public void SetGhostTargetClientRpc(int TargetClientID) {
         PlayerToAttack = StartOfRound.Instance.allPlayerScripts[TargetClientID];
         WTOBase.LogToConsole($"GHOST #{WTOEnemyID}: HAUNTING {PlayerToAttack.playerUsername}");
+        if (PlayersTimesHaunted.ContainsKey(PlayerToAttack)) {
+            PlayersTimesHaunted[PlayerToAttack]++;
+        } else {
+            PlayersTimesHaunted.Add(PlayerToAttack, 1);
+        }
     }
 
     [ServerRpc]
@@ -267,5 +302,8 @@ internal class OoblGhostAI : WTOEnemy {
         yield return null;
     }
 
-
+    IEnumerator ListenForWalkie() {
+        yield return new WaitForSeconds(GhostInterferenceTime);
+        GhostPickedUpInterference = true;
+    }
 }
