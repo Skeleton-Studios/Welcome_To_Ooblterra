@@ -16,11 +16,17 @@ using static UnityEngine.Rendering.DebugUI;
 namespace Welcome_To_Ooblterra.Enemies;
 internal class OoblGhostAI : WTOEnemy {
 
-    [InspectorName("BalanceConstants")]
-    public static float GhostInterferenceRange = 5f;
-    public static float OoblGhostSpeed = 6f;
-    private float GhostDamagePerTick = 10f;
-    private float GhostInterferenceTime = 3.5f;
+    [Header("Balance Constants")]
+    public float GhostInterferenceRange = 5f;
+    public float OoblGhostSpeed = 6f;
+    public float GhostDamagePerTick = 10f;
+    public float GhostInterferenceSeconds = 3f;
+
+    [Header("Defaults")]
+    public Material GhostMat;
+    public Material GhostTeethMat;
+    public SkinnedMeshRenderer GhostRenderer;
+    public SkinnedMeshRenderer GhostArmsRenderer;
 
     //STATES
     private class WaitForNextAttack : BehaviorState {
@@ -29,12 +35,18 @@ internal class OoblGhostAI : WTOEnemy {
             RandomRange = new Vector2(90, 135);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            if (GhostList[enemyIndex].ShouldFadeGhost) {
+                GhostList[enemyIndex].timeElapsed = 0f;
+                GhostList[enemyIndex].FadeCoroutine = GhostList[enemyIndex].StartCoroutine(GhostList[enemyIndex].FadeGhostCoroutine());
+                GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
+                return;
+            } 
             GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
             GhostList[enemyIndex].creatureVoice.Stop();
             GhostList[enemyIndex].transform.position = new Vector3(0, -1000, 0);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-
+            
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -78,6 +90,7 @@ internal class OoblGhostAI : WTOEnemy {
         }
         Vector3 DirectionVector;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            HUDManager.Instance.AttemptScanNewCreature(2525812);
             GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
             GhostList[enemyIndex].creatureVoice.Play();   
             GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].PlayerToAttack.transform.position.y, MyRandomInt);
@@ -85,7 +98,7 @@ internal class OoblGhostAI : WTOEnemy {
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].MoveGhostTowardPlayer();
-            if (Vector3.Distance(GhostList[enemyIndex].transform.position, GhostList[enemyIndex].PlayerToAttack.transform.position) < GhostInterferenceRange) {
+            if (Vector3.Distance(GhostList[enemyIndex].transform.position, GhostList[enemyIndex].PlayerToAttack.transform.position) < GhostList[enemyIndex].GhostInterferenceRange) {
                 GhostList[enemyIndex].ShouldListenForWalkie = true;
             } else {
                 GhostList[enemyIndex].ShouldListenForWalkie = false;
@@ -131,6 +144,7 @@ internal class OoblGhostAI : WTOEnemy {
         }
         public override BehaviorState NextState() {
             GhostList[enemyIndex].ShouldFlickerLights = false;
+            GhostList[enemyIndex].ShouldFadeGhost = true;
             return new WaitForNextAttack();
         }
     }
@@ -141,9 +155,14 @@ internal class OoblGhostAI : WTOEnemy {
     private float SecondsUntilGhostWillAttack;
     public AudioClip StartupSound;
     public bool GhostPickedUpInterference = false;
+    private bool ShouldFadeGhost;
     private bool ShouldFlickerLights;
     private bool ShouldFlickerShipLights;
     private bool ShouldListenForWalkie;
+    private const float FadeTimeSeconds = 1f;
+    private float TargetFade;
+    private float timeElapsed;
+    private Coroutine FadeCoroutine;
 
     private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
 
@@ -160,6 +179,9 @@ internal class OoblGhostAI : WTOEnemy {
         //GetComponent<AcidWater>().DamageAmount = (int)GhostDamagePerTick;
         base.Start();
         transform.position = new Vector3(0, -1000, 0);
+
+        GhostRenderer.materials = new Material[3] { GhostMat, GhostMat, GhostTeethMat };
+        GhostArmsRenderer.materials = new Material[1] { GhostMat };
     }
     public override void Update() {
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
@@ -230,7 +252,6 @@ internal class OoblGhostAI : WTOEnemy {
         ChangeOwnershipOfEnemy(ResultingPlayer.actualClientId);
         return ResultingPlayer;
     }
-
     private void MoveGhostTowardPlayer() {
         Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
         if (transform.position != PlayerToAttack.transform.position) {
@@ -238,7 +259,6 @@ internal class OoblGhostAI : WTOEnemy {
             CalculateGhostRotation();
         }
     }
-
     private void CalculateGhostRotation() {
         Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
         Quaternion CurrentRot = transform.rotation;
@@ -303,7 +323,19 @@ internal class OoblGhostAI : WTOEnemy {
     }
 
     IEnumerator ListenForWalkie() {
-        yield return new WaitForSeconds(GhostInterferenceTime);
+        yield return new WaitForSeconds(GhostInterferenceSeconds);
         GhostPickedUpInterference = true;
+    }
+
+    IEnumerator FadeGhostCoroutine() {
+        timeElapsed += Time.deltaTime;
+        TargetFade = Mathf.Lerp(0.6f, 0, FadeTimeSeconds / timeElapsed);
+        if(timeElapsed > FadeTimeSeconds) {
+            StopCoroutine(FadeCoroutine);
+            yield return null;
+        }
+        GhostMat.SetFloat("_AlphaRemapMax", TargetFade);
+        GhostTeethMat.SetFloat("_AlphaRemapMax", TargetFade);
+        yield return null;
     }
 }

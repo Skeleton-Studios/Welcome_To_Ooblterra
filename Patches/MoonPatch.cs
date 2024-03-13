@@ -58,12 +58,14 @@ internal class MoonPatch {
             return;
         }
         WTOBase.LogToConsole("Loading into level " + MoonFriendlyName);
-
         GrassSurfaceRef.clips = OoblFootstepClips;
         GrassSurfaceRef.hitSurfaceSFX = OoblHitSFX;
+        if(OoblTODMusic != null) {
+            TimeOfDay.Instance.timeOfDayCues = OoblTODMusic;
+        }
     }
 
-    [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
+        [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
     [HarmonyPostfix]
     private static void ManageNav(StartOfRound __instance) {
         MoveNavNodesToNewPositions();
@@ -188,6 +190,8 @@ internal class MoonPatch {
             WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
         };
         OoblHitSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
+        GrassSurfaceRef.clips = OoblFootstepClips;
+        GrassSurfaceRef.hitSurfaceSFX = OoblHitSFX;
     }
 
     //METHODS
