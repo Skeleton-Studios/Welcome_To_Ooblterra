@@ -182,7 +182,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
-            if (GallenarmaList[enemyIndex].DistanceFromPlayer(GallenarmaList[enemyIndex].targetPlayer) > GallenarmaList[enemyIndex].AttackRange) {
+            if (!GallenarmaList[enemyIndex].PlayerWithinRange(GallenarmaList[enemyIndex].AttackRange)) {
                 GallenarmaList[enemyIndex].agent.speed = 7f;
             } else {
                 GallenarmaList[enemyIndex].agent.speed = 2f;
@@ -258,9 +258,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].SetAnimTriggerOnServerRpc("Stunned");
             GallenarmaList[enemyIndex].agent.speed = 0f;
-            //GallenarmaList[enemyIndex].targetPlayer = GallenarmaList[enemyIndex].stunnedByPlayer;
             GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
-            //GallenarmaList[enemyIndex].LatestNoise = new NoiseInfo(GallenarmaList[enemyIndex].stunnedByPlayer.transform.position, 5);
             GallenarmaList[enemyIndex].StunTimeSeconds = 3.15f;
             GallenarmaList[enemyIndex].HasBeenEnragedThisCycle = true;
             GallenarmaList[enemyIndex].creatureVoice.clip = GallenarmaList[enemyIndex].Growl;
@@ -322,18 +320,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     }
     private class FoundEnemy : StateTransition {
         public override bool CanTransitionBeTaken() {
-            /*
-            PlayerControllerB PotentialTargetPlayer = GallenarmaList[enemyIndex].CheckLineOfSightForClosestPlayer(180f, 7);
-            if (PotentialTargetPlayer == null) {
-                return false;
-            }
-            GallenarmaList[enemyIndex].targetPlayer = PotentialTargetPlayer;
-            GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
-            return true;
-            */
             PlayerControllerB PlayerClosestToGallenama = GallenarmaList[enemyIndex].GetClosestPlayerToPosition(GallenarmaList[enemyIndex].transform.position);
             if (Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToGallenama.transform.position) < 3) {
-                GallenarmaList[enemyIndex].targetPlayer = PlayerClosestToGallenama;
+                GallenarmaList[enemyIndex].SetTargetServerRpc((int)PlayerClosestToGallenama.playerClientId);
                 GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
                 return true;
             }
@@ -345,7 +334,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 if (PlayerClosestToLastNoise == null || Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToLastNoise.transform.position) > 7) {
                     return false;
                 }
-                GallenarmaList[enemyIndex].targetPlayer = PlayerClosestToLastNoise;
+                GallenarmaList[enemyIndex].SetTargetServerRpc((int)PlayerClosestToLastNoise.playerClientId);
                 GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
                 return true;
             }
@@ -362,7 +351,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             }
 
             if (Vector3.Distance(PotentialTargetPlayer.transform.position, GallenarmaList[enemyIndex].transform.position) < 4) {
-                GallenarmaList[enemyIndex].targetPlayer = PotentialTargetPlayer;
+                GallenarmaList[enemyIndex].SetTargetServerRpc((int)PotentialTargetPlayer.actualClientId);
                 GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
                 return true;
             }
@@ -380,7 +369,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             }
 
             if (Vector3.Distance(PotentialTargetPlayer.transform.position, GallenarmaList[enemyIndex].transform.position) < 7) {
-                GallenarmaList[enemyIndex].targetPlayer = PotentialTargetPlayer;
+                GallenarmaList[enemyIndex].SetTargetServerRpc((int)PotentialTargetPlayer.actualClientId);
                 GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
                 return true;
             }
@@ -400,7 +389,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         public override BehaviorState NextState() {
             GallenarmaList[enemyIndex].creatureVoice.Stop();
             GallenarmaList[enemyIndex].creatureVoice.loop = false;
-            GallenarmaList[enemyIndex].targetPlayer = null;
+            GallenarmaList[enemyIndex].SetTargetServerRpc(-1);
             return new Patrol();
         }
     }
@@ -441,7 +430,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     private class LostTrackOfPlayer : StateTransition {
         public override bool CanTransitionBeTaken() {
             if (GallenarmaList[enemyIndex].targetPlayer == null || !GallenarmaList[enemyIndex].PlayerCanBeTargeted(GallenarmaList[enemyIndex].targetPlayer)){
-                GallenarmaList[enemyIndex].targetPlayer = null;
+                GallenarmaList[enemyIndex].SetTargetServerRpc(-1);
                 return true;
             }
             float PlayerDistanceFromGallenarma = Vector3.Distance(GallenarmaList[enemyIndex].transform.position, GallenarmaList[enemyIndex].targetPlayer.transform.position);
@@ -563,7 +552,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
 
         //If we're attacked by a player, they need to be immediately set to our target player
-        targetPlayer = playerWhoHit;
+        SetTargetServerRpc((int)playerWhoHit.playerClientId);
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
         if (!(ActiveState is Attack || ActiveState is Chase) || ActiveState is Enraged) {
             OverrideState(new Enraged());

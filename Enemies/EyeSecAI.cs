@@ -29,7 +29,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].agent.speed = EyeSecDefaultSpeed; 
             EyeSecList[enemyIndex].StartSearch(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].SearchLab);
             EyeSecList[enemyIndex].FoundPlayerHoldingScrap = false;
-            EyeSecList[enemyIndex].targetPlayer = null;
+            EyeSecList[enemyIndex].SetTargetServerRpc(-1);
             EyeSecList[enemyIndex].ResetEyesecHeadPos();
             EyeSecList[enemyIndex].DoFearEffect = true;
         }
@@ -253,7 +253,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].StopAttackVisuals();
             EyeSecList[enemyIndex].StopScanVisuals(EyeSecList[enemyIndex].ShutdownSFX, 0);
             EyeSecList[enemyIndex].ShutdownTimerSeconds = 240f;
-            EyeSecList[enemyIndex].targetPlayer = null;
+            EyeSecList[enemyIndex].SetTargetServerRpc(-1);
             return new ShutDown();
         }
     }
@@ -279,7 +279,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].StopAttackVisuals();
             EyeSecList[enemyIndex].StopScanVisuals(EyeSecList[enemyIndex].ShutdownSFX, 0);
 
-            EyeSecList[enemyIndex].targetPlayer = null;
+            EyeSecList[enemyIndex].SetTargetServerRpc(-1);
             return new ShutDown();
         }
     }
@@ -381,8 +381,7 @@ public class EyeSecAI : WTOEnemy {
             LogMessage("Player is guilty!");
             FoundPlayerHoldingScrap = true;
             ScanFinished = true;
-            targetPlayer = Player;
-
+            SetTargetServerRpc((int)Player.playerClientId);
         }
     }
     private void CheckPlayerDeepScan(PlayerControllerB Player) {
@@ -392,7 +391,7 @@ public class EyeSecAI : WTOEnemy {
                 LogMessage("Player is guilty!");
                 FoundPlayerHoldingScrap = true;
                 ScanFinished = true;
-                targetPlayer = Player;
+                SetTargetServerRpc((int)Player.playerClientId);
                 break;
             }
         }
@@ -433,7 +432,7 @@ public class EyeSecAI : WTOEnemy {
     public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
 
         base.HitEnemy(force, playerWhoHit, playHitSFX);
-        targetPlayer = playerWhoHit;
+        SetTargetServerRpc((int)playerWhoHit.playerClientId);
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
         LogMessage("Player hit us!");
         if(ActiveState is ShutDown || ActiveState is Attack || ActiveState is MoveToAttackPosition) {

@@ -1,4 +1,5 @@
 ﻿using GameNetcodeStuff;
+using LethalLib.Modules;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
@@ -139,7 +140,18 @@ public class WTOEnemy : EnemyAI {
         ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
         return;
     }
-    internal float DistanceFromPlayer(PlayerControllerB player) {
+
+    internal float DistanceFromTargetPlayer() {
+        if(targetPlayer == null) {
+            LogMessage($"{this} attempted DistanceFromTargetPlayer with null target; returning -1!");
+            return -1f;
+        }
+        return Vector3.Distance(targetPlayer.transform.position, this.transform.position);
+    }
+    internal bool PlayerWithinRange(float Range) {
+        return DistanceFromTargetPlayer() <= Range;
+    }
+    internal float DistanceFromTargetPlayer(PlayerControllerB player) {
         return Vector3.Distance(player.transform.position, this.transform.position);
     }
     internal bool AnimationIsFinished(string AnimName) {
@@ -196,5 +208,19 @@ public class WTOEnemy : EnemyAI {
         //Debug Prints 
         StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
         LogMessage($"CREATURE: {enemyType.name} #{WTOEnemyID} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
+    }
+
+    [ServerRpc]
+    internal void SetTargetServerRpc(int PlayerID) {
+        SetTargetClientRpc(PlayerID);
+    }
+    [ClientRpc]
+    internal void SetTargetClientRpc(int PlayerID) {
+        if(PlayerID == -1) {
+            targetPlayer = null;
+            LogMessage($"Clearing target on {this}");
+        }
+        targetPlayer = StartOfRound.Instance.allPlayerScripts[PlayerID];
+        LogMessage($"{this} setting target to: {targetPlayer.playerUsername}");
     }
 }
