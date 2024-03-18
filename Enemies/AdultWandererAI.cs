@@ -289,6 +289,8 @@ public class AdultWandererAI : WTOEnemy {
     private float TotalInvestigationSeconds;
     private bool ReachedNextPoint = false;
     private AISearchRoutine RoamPlanet = new();
+    public BoxCollider AdultBox;
+    public CapsuleCollider AdultCapsule;
 
     public override void Start() {
         InitialState = new Spawn();
@@ -331,14 +333,16 @@ public class AdultWandererAI : WTOEnemy {
         enemyHP -= force;
         LogMessage("Adult Wanderer HP remaining: " + enemyHP);
         creatureAnimator.SetTrigger("Hit");
-        if (IsOwner) {
-            if (enemyHP <= 0) {
-                isEnemyDead = true;
-                creatureAnimator.SetTrigger("Killed");
-                creatureVoice.Stop();
+        if (enemyHP <= 0) {   
+            isEnemyDead = true;
+            creatureAnimator.SetTrigger("Killed");
+            creatureVoice.Stop();
+            GameObject.Destroy(AdultBox);
+            GameObject.Destroy(AdultCapsule);
+            if (IsOwner) {
                 KillEnemyOnOwnerClient();
-                return;
             }
+            return;
         }
         //If we're attacked by a player, they need to be immediately set to our target player
         SetTargetServerRpc((int)playerWhoHit.playerClientId);

@@ -491,6 +491,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     private AISearchRoutine RoamLab = new AISearchRoutine();
     private bool HasBeenEnragedThisCycle;
     public BoxCollider GallenarmaHitbox;
+    public CapsuleCollider GallenarmaCapsule;
     public AudioClip Growl;
     public AudioClip GallenarmaScream;
     public AudioClip GallenarmaBeatChest;
@@ -545,6 +546,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         if (enemyHP <= 0) {
             SetAnimTriggerOnServerRpc("Killed");
             GameObject.Destroy(GallenarmaHitbox);
+            GameObject.Destroy(GallenarmaCapsule);
             isEnemyDead = true;
             creatureVoice.Stop();
             if (base.IsOwner) {
