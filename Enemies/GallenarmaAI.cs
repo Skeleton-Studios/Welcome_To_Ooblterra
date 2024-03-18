@@ -267,7 +267,10 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].creatureSFX.clip = GallenarmaList[enemyIndex].GallenarmaBeatChest;
             GallenarmaList[enemyIndex].creatureSFX.Play();
             WTOBase.LogToConsole($"Gallenarma: Setting fear effect on Player {GallenarmaList[enemyIndex].targetPlayer.playerUsername}!");
-            GallenarmaList[enemyIndex].targetPlayer.JumpToFearLevel(1f);
+            if (GallenarmaList[enemyIndex].targetPlayer == GameNetworkManager.Instance.localPlayerController) {
+                GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(1f);
+            }
+            
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].MoveTimerValue(ref GallenarmaList[enemyIndex].StunTimeSeconds);
@@ -541,7 +544,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         SetAnimTriggerOnServerRpc("Hit");
         if (enemyHP <= 0) {
             SetAnimTriggerOnServerRpc("Killed");
-            GallenarmaHitbox.enabled = false;
+            GameObject.Destroy(GallenarmaHitbox);
             isEnemyDead = true;
             creatureVoice.Stop();
             if (base.IsOwner) {
@@ -554,7 +557,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         //If we're attacked by a player, they need to be immediately set to our target player
         SetTargetServerRpc((int)playerWhoHit.playerClientId);
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
-        if (!(ActiveState is Attack || ActiveState is Chase) || ActiveState is Enraged) {
+        if (!(ActiveState is Attack || ActiveState is Chase || ActiveState is Enraged)) {
             OverrideState(new Enraged());
         }
     }

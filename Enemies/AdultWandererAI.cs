@@ -309,7 +309,9 @@ public class AdultWandererAI : WTOEnemy {
     private void MeleeAttackPlayer(PlayerControllerB Target) {
         LogMessage("Attacking player!");
         Target.DamagePlayer(40, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
-        Target.JumpToFearLevel(1f);
+        if (Target == GameNetworkManager.Instance.localPlayerController) {
+            GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(1f);
+        }
     }
     
 

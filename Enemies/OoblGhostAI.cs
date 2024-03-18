@@ -3,15 +3,11 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Rendering;
+using UnityEngine.Rendering.HighDefinition;
 using Welcome_To_Ooblterra.Properties;
-using Welcome_To_Ooblterra.Things;
-using static UnityEngine.Rendering.DebugUI;
+using static LethalLib.Modules.Enemies;
 
 namespace Welcome_To_Ooblterra.Enemies;
 internal class OoblGhostAI : WTOEnemy {
@@ -31,17 +27,18 @@ internal class OoblGhostAI : WTOEnemy {
     //STATES
     private class WaitForNextAttack : BehaviorState {
         public WaitForNextAttack() {
-            
+
             RandomRange = new Vector2(90, 135);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (GhostList[enemyIndex].ShouldFadeGhost) {
                 GhostList[enemyIndex].timeElapsed = 0f;
                 GhostList[enemyIndex].FadeCoroutine = GhostList[enemyIndex].StartCoroutine(GhostList[enemyIndex].FadeGhostCoroutine());
+                GhostList[enemyIndex].creatureVoice.Stop();
                 GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
+                GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
                 return;
             } 
-            GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
             GhostList[enemyIndex].creatureVoice.Stop();
             GhostList[enemyIndex].transform.position = new Vector3(0, -1000, 0);
         }
@@ -90,16 +87,22 @@ internal class OoblGhostAI : WTOEnemy {
         }
         Vector3 DirectionVector;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            HUDManager.Instance.AttemptScanNewCreature(2525812);
+            GhostList[enemyIndex].StopGhostFade();
+            HUDManager.Instance.AttemptScanNewCreature(spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Oobl Ghost").terminalNode.creatureFileID);
             GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
-            GhostList[enemyIndex].creatureVoice.Play();   
+            GhostList[enemyIndex].creatureVoice.Play();
             GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].PlayerToAttack.transform.position.y, MyRandomInt);
             GhostList[enemyIndex].GhostPickedUpInterference = false;
+            GhostList[enemyIndex].ShouldFadeGhost = true;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].MoveGhostTowardPlayer();
             if (Vector3.Distance(GhostList[enemyIndex].transform.position, GhostList[enemyIndex].PlayerToAttack.transform.position) < GhostList[enemyIndex].GhostInterferenceRange) {
                 GhostList[enemyIndex].ShouldListenForWalkie = true;
+                if(StartOfRound.Instance.connectedPlayersAmount <= 0) {
+                    GhostList[enemyIndex].LogMessage("Ghost detected player in SP; listening for walkie");
+                    GhostList[enemyIndex].SinglePlayerEvaluateWalkie();
+                }
             } else {
                 GhostList[enemyIndex].ShouldListenForWalkie = false;
             }
@@ -140,11 +143,11 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private class PlayerHasFoughtBack : StateTransition {
         public override bool CanTransitionBeTaken() {
+            GhostList[enemyIndex].ShouldFlickerLights = false;
             return GhostList[enemyIndex].GhostPickedUpInterference;
         }
         public override BehaviorState NextState() {
-            GhostList[enemyIndex].ShouldFlickerLights = false;
-            GhostList[enemyIndex].ShouldFadeGhost = true;
+
             return new WaitForNextAttack();
         }
     }
@@ -159,7 +162,7 @@ internal class OoblGhostAI : WTOEnemy {
     private bool ShouldFlickerLights;
     private bool ShouldFlickerShipLights;
     private bool ShouldListenForWalkie;
-    private const float FadeTimeSeconds = 1f;
+    private const float FadeTimeSeconds = 2f;
     private float TargetFade;
     private float timeElapsed;
     private Coroutine FadeCoroutine;
@@ -186,9 +189,15 @@ internal class OoblGhostAI : WTOEnemy {
     public override void Update() {
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
         base.Update();
+        if (FadeCoroutine != null) {
+            HDMaterial.SetAlphaClipping(GhostMat, true);
+            HDMaterial.SetAlphaClipping(GhostTeethMat, true);
+            StartCoroutine(FadeGhostCoroutine());
+        }
         if (PlayerToAttack == null || ActiveState is not GoTowardPlayer) {
             return;
         }
+
         if (ShouldFlickerShipLights) {
             StartCoroutine(FlickerShipLights());
         } else {
@@ -267,8 +276,8 @@ internal class OoblGhostAI : WTOEnemy {
     }
 
     //Called every frame
-    private void EvaluateRadioInterference() {
-        if (PlayerToAttack.PlayerIsHearingOthersThroughWalkieTalkie()) {
+    private void SinglePlayerEvaluateWalkie() {
+        if (PlayerToAttack.speakingToWalkieTalkie ) {
             GhostPickedUpInterference = true;
             return;
         }
@@ -280,10 +289,9 @@ internal class OoblGhostAI : WTOEnemy {
         if (PlayerToAttack == null || ActiveState is not GoTowardPlayer) {
             return;
         }
-        if (Vector3.Distance(transform.position, PlayerToAttack.transform.position) > GhostInterferenceRange) {
-            return;
+        if (Vector3.Distance(transform.position, PlayerToAttack.transform.position) < (GhostInterferenceRange + 10)) {
+            GhostPickedUpInterference = true;
         }
-        GhostPickedUpInterference = true;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -329,13 +337,29 @@ internal class OoblGhostAI : WTOEnemy {
 
     IEnumerator FadeGhostCoroutine() {
         timeElapsed += Time.deltaTime;
-        TargetFade = Mathf.Lerp(0.6f, 0, FadeTimeSeconds / timeElapsed);
-        if(timeElapsed > FadeTimeSeconds) {
-            StopCoroutine(FadeCoroutine);
+        WTOBase.LogToConsole($"Ghost Lerp Position: {timeElapsed / FadeTimeSeconds}");
+        TargetFade = Mathf.Lerp(0.6f, 0, timeElapsed / FadeTimeSeconds);
+
+        if(timeElapsed / FadeTimeSeconds >= 1) {
+            WTOBase.LogToConsole("fortnite");
+            ShouldFadeGhost = false;
+            StopCoroutine(FadeGhostCoroutine());
+            FadeCoroutine = null;
+            transform.position = new Vector3(0, -1000, 0);
             yield return null;
         }
         GhostMat.SetFloat("_AlphaRemapMax", TargetFade);
+        GhostMat.SetFloat("_AlphaRemapMin", TargetFade);
         GhostTeethMat.SetFloat("_AlphaRemapMax", TargetFade);
+        GhostTeethMat.SetFloat("_AlphaRemapMin", TargetFade);
         yield return null;
+    }
+
+    private void StopGhostFade() {
+        ShouldFadeGhost = false;
+        HDMaterial.SetAlphaClipping(GhostMat, false);
+        HDMaterial.SetAlphaClipping(GhostTeethMat, false);
+        GhostMat.SetFloat("_AlphaRemapMax", 0.6f);
+        GhostTeethMat.SetFloat("_AlphaRemapMax", 0.6f);
     }
 }
