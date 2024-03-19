@@ -41,7 +41,10 @@ public class ScrapShelf : NetworkBehaviour {
 
     public void OpenShelf() {
         ShelfOpener.SetTrigger("Open");
-        ShelfSFX.Play();
+        if (GameNetworkManager.Instance.localPlayerController.isInsideFactory) {
+            ShelfSFX.Play();
+        }
+        
     }
 
     [ServerRpc]

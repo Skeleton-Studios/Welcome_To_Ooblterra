@@ -31,16 +31,7 @@ internal class OoblGhostAI : WTOEnemy {
             RandomRange = new Vector2(90, 135);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (GhostList[enemyIndex].ShouldFadeGhost) {
-                GhostList[enemyIndex].timeElapsed = 0f;
-                GhostList[enemyIndex].FadeCoroutine = GhostList[enemyIndex].StartCoroutine(GhostList[enemyIndex].FadeGhostCoroutine());
-                GhostList[enemyIndex].creatureVoice.Stop();
-                GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
-                GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
-                return;
-            } 
-            GhostList[enemyIndex].creatureVoice.Stop();
-            GhostList[enemyIndex].transform.position = new Vector3(0, -1000, 0);
+            GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             
@@ -89,13 +80,12 @@ internal class OoblGhostAI : WTOEnemy {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].StopGhostFade();
             HUDManager.Instance.AttemptScanNewCreature(spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Oobl Ghost").terminalNode.creatureFileID);
-            if (GhostList[enemyIndex].PlayerToAttack = GameNetworkManager.Instance.localPlayerController) { 
+            if (GhostList[enemyIndex].PlayerToAttack == GameNetworkManager.Instance.localPlayerController) { 
                 GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
             }
             GhostList[enemyIndex].creatureVoice.Play();
             GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].PlayerToAttack.transform.position.y, MyRandomInt);
             GhostList[enemyIndex].GhostPickedUpInterference = false;
-            GhostList[enemyIndex].ShouldFadeGhost = true;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].MoveGhostTowardPlayer();
@@ -145,11 +135,14 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private class PlayerHasFoughtBack : StateTransition {
         public override bool CanTransitionBeTaken() {
-            GhostList[enemyIndex].ShouldFlickerLights = false;
+
             return GhostList[enemyIndex].GhostPickedUpInterference;
         }
         public override BehaviorState NextState() {
-
+            GhostList[enemyIndex].ShouldFlickerLights = false;
+            GhostList[enemyIndex].ShouldFadeGhost = true;
+            GhostList[enemyIndex].timeElapsed = 0f;
+            GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
             return new WaitForNextAttack();
         }
     }
@@ -160,14 +153,13 @@ internal class OoblGhostAI : WTOEnemy {
     private float SecondsUntilGhostWillAttack;
     public AudioClip StartupSound;
     public bool GhostPickedUpInterference = false;
-    private bool ShouldFadeGhost;
+    private bool ShouldFadeGhost = false;
     private bool ShouldFlickerLights;
     private bool ShouldFlickerShipLights;
     private bool ShouldListenForWalkie;
-    private const float FadeTimeSeconds = 2f;
+    private const float FadeTimeSeconds = 3f;
     private float TargetFade;
     private float timeElapsed;
-    private Coroutine FadeCoroutine;
 
     private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
 
@@ -184,16 +176,15 @@ internal class OoblGhostAI : WTOEnemy {
         //GetComponent<AcidWater>().DamageAmount = (int)GhostDamagePerTick;
         base.Start();
         transform.position = new Vector3(0, -1000, 0);
-
+        
         GhostRenderer.materials = new Material[3] { GhostMat, GhostMat, GhostTeethMat };
         GhostArmsRenderer.materials = new Material[1] { GhostMat };
+        StopGhostFade();
     }
     public override void Update() {
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
         base.Update();
-        if (FadeCoroutine != null) {
-            HDMaterial.SetAlphaClipping(GhostMat, true);
-            HDMaterial.SetAlphaClipping(GhostTeethMat, true);
+        if (ShouldFadeGhost) {
             StartCoroutine(FadeGhostCoroutine());
         }
         if (PlayerToAttack == null || ActiveState is not GoTowardPlayer) {
@@ -343,11 +334,14 @@ internal class OoblGhostAI : WTOEnemy {
         TargetFade = Mathf.Lerp(0.6f, 0, timeElapsed / FadeTimeSeconds);
 
         if(timeElapsed / FadeTimeSeconds >= 1) {
-            WTOBase.LogToConsole("fortnite");
+            WTOBase.LogToConsole("Ghost Lerp Finished");
+            HDMaterial.SetAlphaClipping(GhostMat, true);
+            HDMaterial.SetAlphaClipping(GhostTeethMat, true);
             ShouldFadeGhost = false;
-            StopCoroutine(FadeGhostCoroutine());
-            FadeCoroutine = null;
+            
             transform.position = new Vector3(0, -1000, 0);
+            timeElapsed = 0f;
+            StopCoroutine(FadeGhostCoroutine());
             yield return null;
         }
         GhostMat.SetFloat("_AlphaRemapMax", TargetFade);
@@ -361,7 +355,7 @@ internal class OoblGhostAI : WTOEnemy {
         ShouldFadeGhost = false;
         HDMaterial.SetAlphaClipping(GhostMat, false);
         HDMaterial.SetAlphaClipping(GhostTeethMat, false);
-        GhostMat.SetFloat("_AlphaRemapMax", 0.6f);
+        GhostMat.SetFloat("_AlphaRemapMax", 0.6f); 
         GhostTeethMat.SetFloat("_AlphaRemapMax", 0.6f);
     }
 }

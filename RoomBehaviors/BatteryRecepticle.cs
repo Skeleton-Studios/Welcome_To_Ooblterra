@@ -63,11 +63,6 @@ public class BatteryRecepticle : NetworkBehaviour {
         }
         WallLightMat.SetColor("_EmissiveColor", LightColor);
         if (RecepticleHasBattery) {
-            /*
-            InsertedBattery.EnablePhysics(false);
-            InsertedBattery.transform.position = StartOfRound.Instance.propsContainer.InverseTransformPoint(parentTo.transform.InverseTransformPoint(BatteryTransform.position));
-            InsertedBattery.transform.rotation = BatteryTransform.rotation;
-            */
             BatteryHitbox.enabled = false;
             triggerScript.interactable = false;
             triggerScript.disabledHoverTip = "";
@@ -76,21 +71,6 @@ public class BatteryRecepticle : NetworkBehaviour {
                 RecepticleHasBattery = false;
                 return;
             }
-            /*
-            if (InsertedBattery.HasCharge) {
-                WTOBase.LogToConsole("Disabling Battery Recepticle Script!");
-                triggerScript.enabled = false;
-                return;
-            }
-            if (GameNetworkManager.Instance.localPlayerController.twoHanded || GameNetworkManager.Instance.localPlayerController.FirstEmptyItemSlot() == -1) {
-                triggerScript.interactable = false;
-                triggerScript.disabledHoverTip = "[Hands Full]";
-                return;
-            }
-            triggerScript.enabled = false;
-            triggerScript.hoverTip = "Take Battery";
-            return;
-            */
         } else { 
             BatteryHitbox.enabled = true;
             triggerScript.enabled = true;
@@ -111,9 +91,10 @@ public class BatteryRecepticle : NetworkBehaviour {
         List<RandomMapObject> AllRandomSpawnList = new();
         List<RandomMapObject> ViableSpawnlist = new();
         AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
-        float MinSpawnRange = 800f;
+        float MinSpawnRange = 80f;
         foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab))) {
             float SpawnPointDistance = Vector3.Distance(this.transform.position, BatterySpawn.transform.position);
+            WTOBase.LogToConsole($"BATTERY DISTANCE: {SpawnPointDistance }");
             if (SpawnPointDistance > MinSpawnRange) {
                 ViableSpawnlist.Add(BatterySpawn);
             }
@@ -166,6 +147,7 @@ public class BatteryRecepticle : NetworkBehaviour {
             Debug.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
         }
         BatteryNetObj.transform.rotation = BatteryTransform.rotation;
+        RecepticleHasBattery = true;
     }
 
     [ServerRpc(RequireOwnership = false)]
