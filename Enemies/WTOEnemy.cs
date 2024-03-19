@@ -219,6 +219,11 @@ public class WTOEnemy : EnemyAI {
         if(PlayerID == -1) {
             targetPlayer = null;
             LogMessage($"Clearing target on {this}");
+            return;
+        }
+        if (StartOfRound.Instance.allPlayerScripts[PlayerID] == null) {
+            LogMessage($"Index invalid! {this}");
+            return;
         }
         targetPlayer = StartOfRound.Instance.allPlayerScripts[PlayerID];
         LogMessage($"{this} setting target to: {targetPlayer.playerUsername}");
