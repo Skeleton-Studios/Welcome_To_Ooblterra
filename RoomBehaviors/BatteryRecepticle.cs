@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using Unity.Netcode;
@@ -38,7 +39,7 @@ public class BatteryRecepticle : NetworkBehaviour {
     public Material FrontConsoleMaterial;
     public Material SideConsoleMaterial;
     public MeshRenderer MachineMesh;
-
+    private System.Random MachineRandom;
 
 
     public void Start() {
@@ -50,6 +51,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         foreach(MeshRenderer WallLight in WallLights) {
             WallLight.sharedMaterial = WallLightMat;
         }
+        MachineRandom = new();
         SpawnBatteryAtFurthestPoint();
         foreach (LightComponent NextLight in GameObject.FindObjectsOfType<LightComponent>().Where(x => x.SetColorByDistance == true)) {
             NextLight.SetColorRelative(this.transform.position);
@@ -107,18 +109,18 @@ public class BatteryRecepticle : NetworkBehaviour {
             return;
         }
         List<RandomMapObject> AllRandomSpawnList = new();
+        List<RandomMapObject> ViableSpawnlist = new();
         AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
-        float FurthestPointDistance = 0f;
-        RandomMapObject FurthestPoint = null;
+        float MinSpawnRange = 800f;
         foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab))) {
             float SpawnPointDistance = Vector3.Distance(this.transform.position, BatterySpawn.transform.position);
-            if (SpawnPointDistance > FurthestPointDistance) {
-                FurthestPoint = BatterySpawn;
-                FurthestPointDistance = SpawnPointDistance;
+            if (SpawnPointDistance > MinSpawnRange) {
+                ViableSpawnlist.Add(BatterySpawn);
             }
         }
-        Vector3 SpawnPos = FurthestPoint.transform.position;
-        GameObject NewHazard = Instantiate(BatteryPrefab, SpawnPos, FurthestPoint.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
+        WTOBase.LogToConsole($"Viable Battery Spawns: {ViableSpawnlist.Count}");
+        RandomMapObject ChosenSpawn = ViableSpawnlist[MachineRandom.Next(0, ViableSpawnlist.Count)];
+        GameObject NewHazard = Instantiate(BatteryPrefab, ChosenSpawn.transform.position, ChosenSpawn.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
         NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
     }
 
@@ -175,7 +177,9 @@ public class BatteryRecepticle : NetworkBehaviour {
         TurnOnPower();
     } 
     public void TurnOnPower() {
-        Noisemaker.PlayOneShot(FacilityPowerUp);
+        if (GameNetworkManager.Instance.localPlayerController.isInsideFactory) { 
+            Noisemaker.PlayOneShot(FacilityPowerUp);
+        }
         scrapShelf.OpenShelf();
         MachineAmbience.Play();
         Pistons.Play();
