@@ -291,6 +291,16 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             if (GallenarmaList[enemyIndex].asleep) { 
                 return new WakingUp();
             }
+            if (GallenarmaList[enemyIndex].ActiveState is Investigate) {
+                //angers the gallenarma if it hears a noise while in its investigate state
+                PlayerControllerB PlayerClosestToLastNoise = GallenarmaList[enemyIndex].GetClosestPlayerToPosition(GallenarmaList[enemyIndex].LatestNoise.Location);
+                if (PlayerClosestToLastNoise == null || Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToLastNoise.transform.position) > 15) {
+                    return new GoToNoise();
+                }
+                GallenarmaList[enemyIndex].SetTargetServerRpc((int)PlayerClosestToLastNoise.playerClientId);
+                GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
+                return new Enraged();
+            }
             return new GoToNoise();
         }
     }
@@ -323,8 +333,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     }
     private class FoundEnemy : StateTransition {
         public override bool CanTransitionBeTaken() {
+            //Angers the gallenarma if there's a player within 5 units of its investigation point
             PlayerControllerB PlayerClosestToGallenama = GallenarmaList[enemyIndex].GetClosestPlayerToPosition(GallenarmaList[enemyIndex].transform.position);
-            if (Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToGallenama.transform.position) < 3) {
+            if (Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToGallenama.transform.position) < 5) {
                 GallenarmaList[enemyIndex].SetTargetServerRpc((int)PlayerClosestToGallenama.playerClientId);
                 GallenarmaList[enemyIndex].ChangeOwnershipOfEnemy(GallenarmaList[enemyIndex].targetPlayer.actualClientId);
                 return true;
@@ -332,6 +343,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             if (GallenarmaList[enemyIndex].LatestNoise.Loudness == -1) {
                 return false;
             } else {
+                //angers the gallenarma if a player is within 7 units of the last noise it heard
                 PlayerControllerB PlayerClosestToLastNoise = GallenarmaList[enemyIndex].GetClosestPlayerToPosition(GallenarmaList[enemyIndex].transform.position);
                 
                 if (PlayerClosestToLastNoise == null || Vector3.Distance(GallenarmaList[enemyIndex].transform.position, PlayerClosestToLastNoise.transform.position) > 7) {
