@@ -89,7 +89,9 @@ internal class OoblGhostAI : WTOEnemy {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].StopGhostFade();
             HUDManager.Instance.AttemptScanNewCreature(spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Oobl Ghost").terminalNode.creatureFileID);
-            GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
+            if (GhostList[enemyIndex].PlayerToAttack = GameNetworkManager.Instance.localPlayerController) { 
+                GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
+            }
             GhostList[enemyIndex].creatureVoice.Play();
             GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].PlayerToAttack.transform.position.y, MyRandomInt);
             GhostList[enemyIndex].GhostPickedUpInterference = false;
