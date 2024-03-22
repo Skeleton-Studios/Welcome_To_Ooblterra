@@ -89,7 +89,6 @@ internal class MoonPatch {
     [HarmonyPrefix]
     private static void ManageTODMusic(TimeOfDay __instance) {
         if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
-            WTOBase.LogToConsole("Music: We are not on Ooblterra...");
             if(CachedTODMusic != null && __instance.timeOfDayCues != CachedTODMusic) {
                 WTOBase.LogToConsole($"Setting TOD music to cached music (Cached Music value: {CachedTODMusic[0].name})");
                 __instance.timeOfDayCues = CachedTODMusic;

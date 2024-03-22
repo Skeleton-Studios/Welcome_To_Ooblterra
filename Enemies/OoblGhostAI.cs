@@ -21,7 +21,7 @@ internal class OoblGhostAI : WTOEnemy {
     [Header("Defaults")]
     public Material GhostMat;
     public Material GhostTeethMat;
-    public SkinnedMeshRenderer GhostRenderer;
+    public SkinnedMeshRenderer GhostRenderer; 
     public SkinnedMeshRenderer GhostArmsRenderer;
 
     //STATES
@@ -80,16 +80,16 @@ internal class OoblGhostAI : WTOEnemy {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].StopGhostFade();
             HUDManager.Instance.AttemptScanNewCreature(spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Oobl Ghost").terminalNode.creatureFileID);
-            if (GhostList[enemyIndex].PlayerToAttack == GameNetworkManager.Instance.localPlayerController) { 
-                GhostList[enemyIndex].PlayerToAttack.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
+            if (GhostList[enemyIndex].targetPlayer == GameNetworkManager.Instance.localPlayerController) { 
+                GhostList[enemyIndex].targetPlayer.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
             }
             GhostList[enemyIndex].creatureVoice.Play();
-            GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].PlayerToAttack.transform.position.y, MyRandomInt);
+            GhostList[enemyIndex].transform.position = new Vector3(MyRandomInt, GhostList[enemyIndex].targetPlayer.transform.position.y, MyRandomInt);
             GhostList[enemyIndex].GhostPickedUpInterference = false;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].MoveGhostTowardPlayer();
-            if (Vector3.Distance(GhostList[enemyIndex].transform.position, GhostList[enemyIndex].PlayerToAttack.transform.position) < GhostList[enemyIndex].GhostInterferenceRange) {
+            if (GhostList[enemyIndex].PlayerWithinRange(GhostList[enemyIndex].GhostInterferenceRange)){
                 GhostList[enemyIndex].ShouldListenForWalkie = true;
                 if(StartOfRound.Instance.connectedPlayersAmount <= 0) {
                     GhostList[enemyIndex].LogMessage("Ghost detected player in SP; listening for walkie");
@@ -100,7 +100,7 @@ internal class OoblGhostAI : WTOEnemy {
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            GhostList[enemyIndex].PlayerToAttack = null;
+            GhostList[enemyIndex].targetPlayer = null;
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new KilledPlayer(),
@@ -119,7 +119,7 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private class TargetChosen : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return GhostList[enemyIndex].PlayerToAttack != null;
+            return GhostList[enemyIndex].targetPlayer != null;
         }
         public override BehaviorState NextState() {
             return new GoTowardPlayer();
@@ -127,7 +127,7 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private class KilledPlayer : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return GhostList[enemyIndex].PlayerToAttack.isPlayerDead;
+            return GhostList[enemyIndex].targetPlayer.isPlayerDead;
         }
         public override BehaviorState NextState() {
             return new WaitForNextAttack();
@@ -149,7 +149,6 @@ internal class OoblGhostAI : WTOEnemy {
 
     public static Dictionary<int, OoblGhostAI> GhostList = new();
     private static int GhostID;
-    private PlayerControllerB PlayerToAttack;
     private float SecondsUntilGhostWillAttack;
     public AudioClip StartupSound;
     public bool GhostPickedUpInterference = false;
@@ -160,6 +159,7 @@ internal class OoblGhostAI : WTOEnemy {
     private const float FadeTimeSeconds = 3f;
     private float TargetFade;
     private float timeElapsed;
+    private Coroutine ListenForWalkieCr;
 
     private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
 
@@ -187,7 +187,7 @@ internal class OoblGhostAI : WTOEnemy {
         if (ShouldFadeGhost) {
             StartCoroutine(FadeGhostCoroutine());
         }
-        if (PlayerToAttack == null || ActiveState is not GoTowardPlayer) {
+        if (targetPlayer == null || ActiveState is not GoTowardPlayer) {
             return;
         }
 
@@ -197,11 +197,14 @@ internal class OoblGhostAI : WTOEnemy {
             StartCoroutine(FlickerNearbyLights());
         }
         if (ShouldListenForWalkie) {
-            if (PlayerToAttack.PlayerIsHearingOthersThroughWalkieTalkie()) {
-                StartCoroutine(ListenForWalkie());
+            WTOBase.LogToConsole($"HEARING OTHERS THROUGH WALKIE TALKIE: {targetPlayer.PlayerIsHearingOthersThroughWalkieTalkie(targetPlayer)}");
+            if (targetPlayer.PlayerIsHearingOthersThroughWalkieTalkie(targetPlayer)) {
+                StartCoroutine("ListenForWalkie");
+                return;
             }
-            StopCoroutine(ListenForWalkie());
-        }
+        } 
+        StopCoroutine("ListenForWalkie");
+
     }
 
     public PlayerControllerB FindMostHauntedPlayer(System.Random EnemyRandom, List<PlayerControllerB> PlayersToCheck) {
@@ -255,14 +258,14 @@ internal class OoblGhostAI : WTOEnemy {
         return ResultingPlayer;
     }
     private void MoveGhostTowardPlayer() {
-        Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
-        if (transform.position != PlayerToAttack.transform.position) {
+        Vector3 DirectionVector = (targetPlayer.transform.position - transform.position).normalized;
+        if (!PlayerWithinRange(0.5f)){
             transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
-            CalculateGhostRotation();
+            CalculateGhostRotation(); 
         }
     }
     private void CalculateGhostRotation() {
-        Vector3 DirectionVector = (PlayerToAttack.transform.position - transform.position).normalized;
+        Vector3 DirectionVector = (targetPlayer.transform.position - transform.position).normalized;
         Quaternion CurrentRot = transform.rotation;
         Quaternion TargetRot = Quaternion.LookRotation(DirectionVector, Vector3.up);
         transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up); //Quaternion.RotateTowards(CurrentRot, TargetRot, 30 * Time.deltaTime);
@@ -270,7 +273,7 @@ internal class OoblGhostAI : WTOEnemy {
 
     //Called every frame
     private void SinglePlayerEvaluateWalkie() {
-        if (PlayerToAttack.speakingToWalkieTalkie ) {
+        if (targetPlayer.speakingToWalkieTalkie) {
             GhostPickedUpInterference = true;
             return;
         }
@@ -279,10 +282,10 @@ internal class OoblGhostAI : WTOEnemy {
     //called when translator used
     public void EvalulateSignalTranslatorUse() {
         WTOBase.LogToConsole("Ghost Recieved Signal Translator use!");
-        if (PlayerToAttack == null || ActiveState is not GoTowardPlayer) {
+        if (targetPlayer == null || ActiveState is not GoTowardPlayer) {
             return;
         }
-        if (Vector3.Distance(transform.position, PlayerToAttack.transform.position) < (GhostInterferenceRange + 10)) {
+        if (Vector3.Distance(transform.position, targetPlayer.transform.position) < (GhostInterferenceRange + 10)) {
             GhostPickedUpInterference = true;
         }
     }
@@ -294,12 +297,12 @@ internal class OoblGhostAI : WTOEnemy {
 
     [ClientRpc]
     public void SetGhostTargetClientRpc(int TargetClientID) {
-        PlayerToAttack = StartOfRound.Instance.allPlayerScripts[TargetClientID];
-        WTOBase.LogToConsole($"GHOST #{WTOEnemyID}: HAUNTING {PlayerToAttack.playerUsername}");
-        if (PlayersTimesHaunted.ContainsKey(PlayerToAttack)) {
-            PlayersTimesHaunted[PlayerToAttack]++;
+        targetPlayer = StartOfRound.Instance.allPlayerScripts[TargetClientID];
+        WTOBase.LogToConsole($"GHOST #{WTOEnemyID}: HAUNTING {targetPlayer.playerUsername}");
+        if (PlayersTimesHaunted.ContainsKey(targetPlayer)) {
+            PlayersTimesHaunted[targetPlayer]++;
         } else {
-            PlayersTimesHaunted.Add(PlayerToAttack, 1);
+            PlayersTimesHaunted.Add(targetPlayer, 1);
         }
     }
 
@@ -325,6 +328,7 @@ internal class OoblGhostAI : WTOEnemy {
 
     IEnumerator ListenForWalkie() {
         yield return new WaitForSeconds(GhostInterferenceSeconds);
+        WTOBase.LogToConsole("Listen Coroutine finished!");
         GhostPickedUpInterference = true;
     }
 

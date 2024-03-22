@@ -15,24 +15,21 @@ public class ScrapShelf : NetworkBehaviour {
     System.Random ShelfRandom;
 
     public void Start() {
-        List<SpawnableItemWithRarity> ScrapPool = StartOfRound.Instance.currentLevel.spawnableScrap;
+        List<SpawnableItemWithRarity> RandomScrapTypes = StartOfRound.Instance.currentLevel.spawnableScrap;
         ShelfRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         foreach (Transform SpawnLocation in ScrapSpawnPoints) {
             //get a random object from the scrap pool
             if (base.IsServer) {
-                SpawnableItemWithRarity NextScrap = ScrapPool[ShelfRandom.Next(0, ScrapPool.Count)];
+                SpawnableItemWithRarity ScrapToSpawn = RandomScrapTypes[ShelfRandom.Next(0, RandomScrapTypes.Count)];
                 //Instantiate it at our current scrap spawn point 
-                GameObject SpawnedScrap = Instantiate(NextScrap.spawnableItem.spawnPrefab, SpawnLocation.transform.position, SpawnLocation.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
-                //set its scrap value THIS PROBABLY ISNT SYNCED PROPERLY 
-                GrabbableObject ImRunningOutOfScrapNames = SpawnedScrap.GetComponent<GrabbableObject>();
-                int ScrapValue = ShelfRandom.Next(ImRunningOutOfScrapNames.itemProperties.minValue, ImRunningOutOfScrapNames.itemProperties.maxValue);
+                GameObject SpawnedScrap = Instantiate(ScrapToSpawn.spawnableItem.spawnPrefab, SpawnLocation.transform.position, SpawnLocation.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
+                //set its scrap value 
+                GrabbableObject ScrapGrabbableObject = SpawnedScrap.GetComponent<GrabbableObject>();
+                int ScrapValue = ShelfRandom.Next(ScrapGrabbableObject.itemProperties.minValue, ScrapGrabbableObject.itemProperties.maxValue);
                 ScrapValue = (int)Math.Round(ScrapValue * 0.4);
-                //ImRunningOutOfScrapNames.SetScrapValue(ScrapValue);
-
-                NetworkObject ScrapNetworkObject = SpawnedScrap.GetComponent<NetworkObject>();
                 //Spawn it
+                NetworkObject ScrapNetworkObject = SpawnedScrap.GetComponent<NetworkObject>();
                 ScrapNetworkObject.Spawn(destroyWithScene: true);
-
                 RoundManager.Instance.spawnedSyncedObjects.Add(SpawnedScrap);
                 SetScrapValueServerRpc(ScrapNetworkObject, ScrapValue);
             }

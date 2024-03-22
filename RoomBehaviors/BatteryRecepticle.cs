@@ -120,16 +120,14 @@ public class BatteryRecepticle : NetworkBehaviour {
             vector = parentTo.transform.InverseTransformPoint(vector);
         }
         InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
+        
         RecepticleHasBattery = true;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
+        InsertedBattery.transform.rotation = BatteryTransform.rotation;
         InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
         Debug.Log("discard held object called from placeobject");
         if (InsertedBattery.HasCharge) {
-            InsertedBattery.grabbable = false;
             TurnOnPowerServerRpc();
-        } else {
-            InsertedBattery.grabbable = true;
-            InsertedBattery.GetComponent<BoxCollider>().enabled = true;
         }
     }
     [ServerRpc(RequireOwnership = false)]
@@ -143,11 +141,18 @@ public class BatteryRecepticle : NetworkBehaviour {
     public void InsertBattery(NetworkObjectReference grabbableObjectNetObject) {
         if (grabbableObjectNetObject.TryGet(out BatteryNetObj)) {
             BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
+            InsertedBattery = BatteryNetObj.GetComponentInChildren<WTOBattery>();
         } else {
-            Debug.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
+            Debug.LogError("BATTERY COULD NOT BE CONVERTED.");
         }
         BatteryNetObj.transform.rotation = BatteryTransform.rotation;
         RecepticleHasBattery = true;
+        if (InsertedBattery.HasCharge) {
+            InsertedBattery.grabbable = false;
+        } else {
+            InsertedBattery.grabbable = true;
+            InsertedBattery.GetComponent<BoxCollider>().enabled = true;
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
