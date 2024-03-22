@@ -27,8 +27,8 @@ internal class CursedEffigy : GrabbableObject {
                 WTOBase.LogToConsole($"Effigy knows that {previousPlayerHeldBy} is dead at position {previousPlayerHeldBy.deadBody.transform.position}");
                 CreateMimicServerRpc(previousPlayerHeldBy.isInsideFactory, previousPlayerHeldBy.deadBody.transform.position);
                 MimicSpawned = true;
+                DestroyEffigyServerRpc();
             }
-            //Destroy(this);
         }
     }
 
@@ -128,4 +128,14 @@ internal class CursedEffigy : GrabbableObject {
 
         previousPlayerHeldBy.redirectToEnemy = MimicReference;
     }
+
+    [ServerRpc]
+    private void DestroyEffigyServerRpc() {
+        DestroyEffigyClientRpc();
+    }
+    [ClientRpc]
+    private void DestroyEffigyClientRpc() {
+        DestroyObjectInHand(playerHeldBy);
+    }
+
 }
