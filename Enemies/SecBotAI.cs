@@ -5,220 +5,249 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
+using Welcome_To_Ooblterra.Properties;
 using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
 
 namespace Welcome_To_Ooblterra.Enemies;
-//Trimming this for now, will add it back later if I have enough time
 
+public class SecBotAI : WTOEnemy {
 
-public class SecBotAI : EnemyAI {
-    /*
-    private class Move : BehaviorState {
-        public bool MovingToNextPoint;
-        private Ray newRaycast;
-        private RaycastHit raycastHit;
+    //STATES
+    private class Charge : BehaviorState {
+        public Charge() {
+
+            RandomRange = new Vector2(0, 100);
+        }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            creatureAnimator.SetBool("Moving", value: true);
+
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (!MovingToNextPoint) {
-                newRaycast.origin = self.transform.position;
-                newRaycast.direction = self.transform.forward;
-                Physics.Raycast(newRaycast, out raycastHit);
-                self.SetDestinationToPosition(raycastHit.point);
-                MovingToNextPoint = true;
-            }
+
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            creatureAnimator.SetBool("Moving", value: false);
+
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
 
         };
     }
-    private class Turn : BehaviorState {
-        public bool SearchInProgress;
-        public bool investigate;
-        public int investigateTimer;
+    private class ExploreNearby : BehaviorState {
+        public ExploreNearby() {
+
+            RandomRange = new Vector2(0, 100);
+        }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            creatureAnimator.SetBool("Moving", value: true);
+
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            creatureAnimator.SetBool("Moving", value: false);
+
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
 
         };
     }
-    private class Chase : BehaviorState {
-        public bool SearchInProgress;
-        public bool investigate;
-        public int investigateTimer;
+    private class ChasePlayer : BehaviorState {
+        public ChasePlayer() {
+
+            RandomRange = new Vector2(0, 100);
+        }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            creatureAnimator.SetBool("Moving", value: true);
+
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            creatureAnimator.SetBool("Moving", value: false);
+
+        }
+        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+
+        };
+    }
+    private class EnterVentSystem : BehaviorState {
+        public EnterVentSystem() {
+
+            RandomRange = new Vector2(0, 100);
+        }
+        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+
+        };
+    }
+    private class WaitInNextVent : BehaviorState {
+        public WaitInNextVent() {
+
+            RandomRange = new Vector2(0, 100);
+        }
+        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+
+        };
+    }
+    private class LeaveVent : BehaviorState {
+        public LeaveVent() {
+
+            RandomRange = new Vector2(0, 100);
+        }
+        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
 
         };
     }
     private class ShutDown : BehaviorState {
-        public bool SearchInProgress;
-        public bool investigate;
-        public int investigateTimer;
+        public ShutDown() {
+
+            RandomRange = new Vector2(0, 100);
+        }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            creatureAnimator.SetBool("Moving", value: true);
+
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            creatureAnimator.SetBool("Moving", value: false);
+
+        }
+        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+
+        };
+    }
+    private class KillTarget : BehaviorState {
+        public KillTarget() {
+
+            RandomRange = new Vector2(0, 100);
+        }
+        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
 
         };
     }
 
-    private class HitWall : StateTransition {
-        EyeSecAI SelfEyeSec;
-        bool ShouldDoScan;
+    //TRANSITIONS
+    private class ShouldDoRandomExplore : StateTransition {
         public override bool CanTransitionBeTaken() {
-            //Grab a list of every player in range
-            PlayerControllerB[] players = self.GetAllPlayersInLineOfSight();
-            return (Vector3.Distance(self.transform.position, self.destination) > 5);
+            return;
         }
         public override BehaviorState NextState() {
-            return new Turn();
+            return new;
         }
-
     }
-    private class FoundDir : StateTransition {
-        EyeSecAI SelfEyeSec;
-        bool ShouldDoScan;
+    private class FoundNothingDuringRandomExplore : StateTransition {
         public override bool CanTransitionBeTaken() {
-            //Grab a list of every player in range
-            PlayerControllerB[] players = self.GetAllPlayersInLineOfSight();
-            if (players.Length > 0 && SelfEyeSec.enemyRandom.Next(0, 50) > 35) {
-                return true;
-            }
-            return false;
+            return;
         }
         public override BehaviorState NextState() {
-            return new ScanEnemies();
+            return new;
         }
-
     }
-    private class LaserTripped : StateTransition {
-        EyeSecAI SelfEyeSec;
-        bool ShouldDoScan;
+    private class ItemHasBeenStolen : StateTransition {
         public override bool CanTransitionBeTaken() {
-            //Grab a list of every player in range
-            PlayerControllerB[] players = self.GetAllPlayersInLineOfSight();
-            if (players.Length > 0 && SelfEyeSec.enemyRandom.Next(0, 50) > 35) {
-                return true;
-            }
-            return false;
+            return;
         }
         public override BehaviorState NextState() {
-            return new ScanEnemies();
+            return new;
         }
-
     }
-    private class Disabled : StateTransition {
-        EyeSecAI SelfEyeSec;
-        bool ShouldDoScan;
+    private class CheckForgivenessAfterItemDropped : StateTransition {
         public override bool CanTransitionBeTaken() {
-            //Grab a list of every player in range
-            PlayerControllerB[] players = self.GetAllPlayersInLineOfSight();
-            if (players.Length > 0 && SelfEyeSec.enemyRandom.Next(0, 50) > 35) {
-                return true;
-            }
-            return false;
+            return;
         }
         public override BehaviorState NextState() {
-            return new ScanEnemies();
+            return new;
         }
-
     }
-    private class StartUp : StateTransition {
-        EyeSecAI SelfEyeSec;
-        bool ShouldDoScan;
+    private class DecideIfRecharging : StateTransition {
         public override bool CanTransitionBeTaken() {
-            //Grab a list of every player in range
-            PlayerControllerB[] players = self.GetAllPlayersInLineOfSight();
-            if (players.Length > 0 && SelfEyeSec.enemyRandom.Next(0, 50) > 35) {
-                return true;
-            }
-            return false;
+            return;
         }
         public override BehaviorState NextState() {
-            return new ScanEnemies();
+            return new;
         }
-
+    }
+    private class OutOfBattery : StateTransition {
+        public override bool CanTransitionBeTaken() {
+            return;
+        }
+        public override BehaviorState NextState() {
+            return new;
+        }
+    }
+    private class CaughtEnemy : StateTransition {
+        public override bool CanTransitionBeTaken() {
+            return;
+        }
+        public override BehaviorState NextState() {
+            return new;
+        }
+    }
+    private class SeesPlayerWhoDidNotAnger : StateTransition {
+        public override bool CanTransitionBeTaken() {
+            return;
+        }
+        public override BehaviorState NextState() {
+            return new;
+        }
+    }
+    private class SeesPlayerWhoAngered : StateTransition {
+        public override bool CanTransitionBeTaken() {
+            return;
+        }
+        public override BehaviorState NextState() {
+            return new;
+        }
     }
 
-    private BehaviorState InitialState = new Move();
-    private BehaviorState ActiveState = null;
-    private System.Random enemyRandom;
-    private RoundManager roundManager;
-    private float AITimer;
-    protected override string __getTypeName() {
-        return "SecBotAI";
-    }
-    public override void DoAIInterval() {
-        base.DoAIInterval();
-        _ = StartOfRound.Instance.livingPlayers;
-    }
+    public static Dictionary<int, SecBotAI> BotList = new();
+    private static int BotID;
+    private static float SecondsUntilRandomExploreChance;
+    private bool NextVentIsPlayerPrediction;
 
     public override void Start() {
+        MyValidState = PlayerState.Inside;
+        InitialState = new Charge();
+        PrintDebugs = true;
+        BotID++;
+        WTOEnemyID = BotID;
+        LogMessage($"Adding Sec Bot {this} #{BotID}");
+        BotList.Add(BotID, this);
         base.Start();
     }
     public override void Update() {
         base.Update();
-        AITimer++;
-        //don't run enemy ai if they're dead
-
-        if (isEnemyDead || !ventAnimationFinished) {
-            return;
-        }
-
-        //play the stun animation if they're stunned 
-        //TODO: SetLayerWeight switches between the basic animation layer (0) and the stun animation layer (1). 
-        //The wanderer will need a similar setup if we want to be able to stun him, plus a stun animation 
-        /*
-        if (stunNormalizedTimer > 0f && !isEnemyDead) {
-            if (stunnedByPlayer != null && currentBehaviourStateIndex != 2 && base.IsOwner) {
-                creatureAnimator.SetLayerWeight(1, 1f);
-            }
-        } else {
-            creatureAnimator.SetLayerWeight(1, 0f);
-        }
-
-        //Custom Monster Code
-        bool RunUpdate = true;
-        //don't run enemy ai if they're dead
-        foreach (StateTransition transition in ActiveState.transitions) {
-            transition.self = this;
-            if (transition.CanTransitionBeTaken()) {
-                RunUpdate = false;
-                ActiveState.OnStateExit(this, enemyRandom, creatureAnimator);
-                ActiveState = transition.NextState();
-                ActiveState.OnStateEntered(this, enemyRandom, creatureAnimator);
-                break;
-            }
-        }
-        if (RunUpdate) {
-            ActiveState.UpdateBehavior(this, enemyRandom, creatureAnimator);
-        }
     }
-    */
 }
