@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
+using Welcome_To_Ooblterra.Things;
 using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
 
 namespace Welcome_To_Ooblterra.Enemies;
@@ -241,6 +242,8 @@ public class SecBotAI : WTOEnemy {
     private System.Random BotRandom;
     private int MyWillingnessToForgive;
     private int MyWillingnessToGiveUp;
+    private bool IsInsideVent;
+    private SecBotDoor NextDoorway;
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
