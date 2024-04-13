@@ -237,6 +237,7 @@
     <Compile Include="RoomBehaviors\FrankensteinBodyPoint.cs" />
     <Compile Include="RoomBehaviors\HideSpot.cs" />
     <Compile Include="Items\SprintTotem.cs" />
+    <Compile Include="Things\BearTrap.cs" />
     <Compile Include="Things\BlinkingMonitors.cs" />
     <Compile Include="Things\LightComponent.cs" />
     <Compile Include="Security\TeslaCoil.cs" />

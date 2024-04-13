@@ -10,7 +10,7 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 public class AcidWater : MonoBehaviour {
 
-    public int DamageAmount;
+    public int UserSetDamageAmount;
     private float TimeSincePlayerDamaged = 0f;
 
     private void OnTriggerStay(Collider other) {
@@ -18,15 +18,19 @@ public class AcidWater : MonoBehaviour {
         if (!other.gameObject.CompareTag("Player")) {
             return;
         }
-        if ((TimeSincePlayerDamaged < 0.5f)) {
-            TimeSincePlayerDamaged += Time.deltaTime;
+        DamageOverlappingPlayer(victim, 0.5f, ref TimeSincePlayerDamaged, UserSetDamageAmount);
+
+
+    }
+    public static void DamageOverlappingPlayer(PlayerControllerB victim, float TotalDamageTime, ref float TimeSinceDamageTaken, int DamageAmount) {
+        if ((TimeSinceDamageTaken < 0.5f)) {
+            TimeSinceDamageTaken += Time.deltaTime;
             return;
         }
         if (victim != null) {
-            TimeSincePlayerDamaged = 0f;
+            TimeSinceDamageTaken = 0f;
             victim.DamagePlayer(DamageAmount, hasDamageSFX: true, callRPC: true, CauseOfDeath.Drowning);
             WTOBase.LogToConsole("New health amount: " + victim.health);
         }
-            
     }
 }
