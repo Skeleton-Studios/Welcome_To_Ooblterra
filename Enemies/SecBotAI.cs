@@ -236,6 +236,11 @@ public class SecBotAI : WTOEnemy {
     private static int BotID;
     private static float SecondsUntilRandomExploreChance;
     private bool NextVentIsPlayerPrediction;
+    private GrabbableObject FavoriteItem;
+    private int BatteryAmount = 100;
+    private System.Random BotRandom;
+    private int MyWillingnessToForgive;
+    private int MyWillingnessToGiveUp;
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -245,6 +250,9 @@ public class SecBotAI : WTOEnemy {
         WTOEnemyID = BotID;
         LogMessage($"Adding Sec Bot {this} #{BotID}");
         BotList.Add(BotID, this);
+        BotRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        MyWillingnessToForgive = BotRandom.Next(0, 100);
+        MyWillingnessToGiveUp = BotRandom.Next(0, 100);
         base.Start();
     }
     public override void Update() {
