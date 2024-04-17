@@ -56,7 +56,7 @@ public class AdultWandererAI : WTOEnemy {
             AWandList[enemyIndex].AttackCooldownSeconds = 1.5f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (Vector3.Distance(AWandList[enemyIndex].MainTarget.transform.position, AWandList[enemyIndex].transform.position) < AWandList[enemyIndex].AttackRange) {
+            if (AWandList[enemyIndex].PlayerWithinRange(AWandList[enemyIndex].AttackRange)) {
                 if (AWandList[enemyIndex].AttackCooldownSeconds <= 0) {
                     AWandList[enemyIndex].AttackCooldownSeconds = 1.5f;
                     HasAttacked = false;
@@ -66,8 +66,8 @@ public class AdultWandererAI : WTOEnemy {
                     creatureAnimator.SetBool("Attacking", value: true);
                 }
                 if(AWandList[enemyIndex].AttackCooldownSeconds <= 0.76f && !HasAttacked) {
-                    AWandList[enemyIndex].LogMessage($"Attacking Player {AWandList[enemyIndex].MainTarget}");
-                    AWandList[enemyIndex].MeleeAttackPlayer(AWandList[enemyIndex].MainTarget);
+                    AWandList[enemyIndex].LogMessage($"Attacking Player {AWandList[enemyIndex].targetPlayer}");
+                    AWandList[enemyIndex].MeleeAttackPlayer(AWandList[enemyIndex].targetPlayer);
                     HasAttacked = true;
                 }
                 return;
@@ -136,7 +136,7 @@ public class AdultWandererAI : WTOEnemy {
             AWandList[enemyIndex].agent.speed = 8f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            AWandList[enemyIndex].SetDestinationToPosition(AWandList[enemyIndex].MainTarget.transform.position);
+            AWandList[enemyIndex].SetDestinationToPosition(AWandList[enemyIndex].targetPlayer.transform.position);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: false);
@@ -150,7 +150,7 @@ public class AdultWandererAI : WTOEnemy {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Stunned", value: true);
             AWandList[enemyIndex].agent.speed = 0f;
-            AWandList[enemyIndex].targetPlayer = AWandList[enemyIndex].stunnedByPlayer;
+            AWandList[enemyIndex].SetTargetServerRpc((int)AWandList[enemyIndex].stunnedByPlayer.playerClientId);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -173,7 +173,7 @@ public class AdultWandererAI : WTOEnemy {
         }
         public override BehaviorState NextState() {
                 
-            if (AWandList[enemyIndex].MainTarget == null) {
+            if (AWandList[enemyIndex].targetPlayer == null) {
                 return new Roam();
             }
             return new WaitForTargetLook();
@@ -192,10 +192,10 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EnemyInShipOrFacility : StateTransition {
         public override bool CanTransitionBeTaken() {
-            if (AWandList[base.enemyIndex].MainTarget == null) {
+            if (AWandList[base.enemyIndex].targetPlayer == null) {
                 return false;
             }
-            return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].MainTarget);
+            return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer);
         }
         public override BehaviorState NextState() {
                 return new Roam();
@@ -203,10 +203,10 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EnemyLeftShipOrFacility : StateTransition {
         public override bool CanTransitionBeTaken() {
-            if(AWandList[base.enemyIndex].MainTarget == null) {
+            if(AWandList[base.enemyIndex].targetPlayer == null) {
                 return false;
             }
-            return AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].MainTarget);
+            return AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer);
         }
         public override BehaviorState NextState() {
             return new Chase();
@@ -214,8 +214,7 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EnemyLeftRange : StateTransition{
         public override bool CanTransitionBeTaken() {
-            bool IsInAttackRange = (Vector3.Distance(AWandList[enemyIndex].transform.position, AWandList[enemyIndex].MainTarget.transform.position) > AWandList[enemyIndex].AttackRange);
-            return (AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].MainTarget) && IsInAttackRange);
+            return (AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].targetPlayer) && !AWandList[enemyIndex].PlayerWithinRange(AWandList[enemyIndex].AttackRange));
         }
         public override BehaviorState NextState() {
             return new Chase();
@@ -224,22 +223,22 @@ public class AdultWandererAI : WTOEnemy {
     private class EnemyKilled : StateTransition {
             
         public override bool CanTransitionBeTaken() {
-            if (AWandList[enemyIndex].MainTarget == null) {
+            if (AWandList[enemyIndex].targetPlayer == null) {
                 return true;
             }
-            return AWandList[enemyIndex].MainTarget.isPlayerDead; 
+            return AWandList[enemyIndex].targetPlayer.isPlayerDead; 
         }
         public override BehaviorState NextState() {
-            AWandList[enemyIndex].MainTarget = null;
+            AWandList[enemyIndex].SetTargetServerRpc(-1);
             return new Roam();
         }
     }
     private class EnemyEnteredRange : StateTransition {
         public override bool CanTransitionBeTaken() {
-            if (AWandList[enemyIndex].MainTarget == null) {
+            if (AWandList[enemyIndex].targetPlayer == null) {
                 return false;
             }    
-            return (AWandList[enemyIndex].PlayerCanBeTargeted(AWandList[enemyIndex].MainTarget) && (Vector3.Distance(AWandList[enemyIndex].transform.position, AWandList[enemyIndex].MainTarget.transform.position) < AWandList[enemyIndex].AttackRange));
+            return (AWandList[enemyIndex].PlayerWithinRange(AWandList[enemyIndex].AttackRange));
         }
         public override BehaviorState NextState() {
             return new Attack();
@@ -281,7 +280,6 @@ public class AdultWandererAI : WTOEnemy {
     }
 
     private bool spawnFinished = false;
-    public PlayerControllerB MainTarget = null;
     private bool LostPatience = false;
     private float AttackCooldownSeconds = 1.2f;
     public int AttackRange = 7;
@@ -291,6 +289,8 @@ public class AdultWandererAI : WTOEnemy {
     private float TotalInvestigationSeconds;
     private bool ReachedNextPoint = false;
     private AISearchRoutine RoamPlanet = new();
+    public BoxCollider AdultBox;
+    public CapsuleCollider AdultCapsule;
 
     public override void Start() {
         InitialState = new Spawn();
@@ -311,21 +311,11 @@ public class AdultWandererAI : WTOEnemy {
     private void MeleeAttackPlayer(PlayerControllerB Target) {
         LogMessage("Attacking player!");
         Target.DamagePlayer(40, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
-        Target.JumpToFearLevel(1f);
+        if (Target == GameNetworkManager.Instance.localPlayerController) {
+            GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(1f);
+        }
     }
     
-    [ServerRpc]
-    public void SetTargetServerRpc(int PlayerID) {
-        SetTargetClientRpc(PlayerID);
-    }
-    [ClientRpc]
-    public void SetTargetClientRpc(int PlayerID) {
-        SetMyTarget(PlayerID);
-    }
-    public void SetMyTarget(int PlayerID) {
-        targetPlayer = StartOfRound.Instance.allPlayerScripts[PlayerID];
-        MainTarget = StartOfRound.Instance.allPlayerScripts[PlayerID];
-    }
 
 
 
@@ -335,26 +325,27 @@ public class AdultWandererAI : WTOEnemy {
     }
 
     public bool CheckForPlayerLOS() {
-        return MainTarget.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);
+        return targetPlayer.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);
     }
-    public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+    public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
         if (isEnemyDead) { return; }
         base.HitEnemy(force, playerWhoHit, playHitSFX);
         enemyHP -= force;
         LogMessage("Adult Wanderer HP remaining: " + enemyHP);
         creatureAnimator.SetTrigger("Hit");
-        if (IsOwner) {
-            if (enemyHP <= 0) {
-                isEnemyDead = true;
-                creatureAnimator.SetTrigger("Killed");
-                creatureVoice.Stop();
+        if (enemyHP <= 0) {   
+            isEnemyDead = true;
+            creatureAnimator.SetTrigger("Killed");
+            creatureVoice.Stop();
+            GameObject.Destroy(AdultBox);
+            GameObject.Destroy(AdultCapsule);
+            if (IsOwner) {
                 KillEnemyOnOwnerClient();
-                return;
             }
+            return;
         }
         //If we're attacked by a player, they need to be immediately set to our target player
-        targetPlayer = playerWhoHit;
-        MainTarget = playerWhoHit;
+        SetTargetServerRpc((int)playerWhoHit.playerClientId);
         OverrideState(new Attack());
     }
 }

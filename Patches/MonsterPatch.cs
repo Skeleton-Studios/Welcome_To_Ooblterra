@@ -2,6 +2,7 @@
 using LethalLib;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Welcome_To_Ooblterra.Enemies;
@@ -99,26 +100,25 @@ public static void Start() {
         CreateEnemy("Lurker.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "LurkerTerminal.asset", "LurkerKeyword.asset");
         CreateEnemy("OoblGhost.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "OoblGhostTerminal.asset", "OoblGhostKeyword.asset");
     }
-    public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity, LethalLib.Modules.Enemies.SpawnType SpawnType, string InfoName = null, string KeywordName = null) {
+public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity, LethalLib.Modules.Enemies.SpawnType SpawnType, string InfoName = null, string KeywordName = null) {
 
-        string EnemyFolderName = EnemyName.Remove(EnemyName.Length - 6, 6) + "/";
-        TerminalNode EnemyInfo = null;
-        TerminalKeyword EnemyKeyword = null;
+    string EnemyFolderName = EnemyName.Remove(EnemyName.Length - 6, 6) + "/";
+    TerminalNode EnemyInfo = null;
+    TerminalKeyword EnemyKeyword = null;
 
-        EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyBundle, EnemyPath + EnemyFolderName + EnemyName);
-        EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
+    EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyBundle, EnemyPath + EnemyFolderName + EnemyName);
+    EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
 
-        if (InfoName != null) {
-            EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyBundle, EnemyPath + EnemyFolderName + InfoName);
-        }
-        if (KeywordName != null) {
-            EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyBundle, EnemyPath + EnemyFolderName + KeywordName);
-            //EnemyKeyword.defaultVerb = TerminalPatch.InfoKeyword;
-        }
-
-        LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
-        LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
-        EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
-        Debug.Log("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
+    if (InfoName != null) {
+        EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyBundle, EnemyPath + EnemyFolderName + InfoName);
     }
+    if (KeywordName != null) {
+        EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyBundle, EnemyPath + EnemyFolderName + KeywordName);
+    }
+
+    LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
+    LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
+    EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
+    Debug.Log("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
+}
 }
