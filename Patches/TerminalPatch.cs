@@ -20,16 +20,16 @@ internal class TerminalPatch {
     [HarmonyPatch(typeof(Terminal), "TextPostProcess")]
     [HarmonyPostfix]
     [HarmonyPriority(500)]
-    private static void ChangeOoblterraWeatherCondition(string ModifiedDisplayText) {
+    private static void ChangeOoblterraWeatherCondition(string modifiedDisplayText) {
         //This is the dirtiest possible way to perform this but it should work
         try {
-            ModifiedDisplayText.Replace("Ooblterra (Foggy)", "Ooblterra (Hazy)");
+            modifiedDisplayText.Replace("Ooblterra (Foggy)", "Ooblterra (Hazy)");
         } catch { }
         try {
-            ModifiedDisplayText.Replace("Ooblterra (Stormy)", "Ooblterra (Cyclonic)");
+            modifiedDisplayText.Replace("Ooblterra (Stormy)", "Ooblterra (Cyclonic)");
         } catch { }
         try {
-            ModifiedDisplayText.Replace("Ooblterra (Flooded)", "Ooblterra (Hallucinogenic)");
+            modifiedDisplayText.Replace("Ooblterra (Flooded)", "Ooblterra (Hallucinogenic)");
         } catch { }
 
     }

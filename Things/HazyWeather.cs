@@ -21,8 +21,8 @@ internal class HazyWeather : MonoBehaviour {
             return;
         }
         //This probably doesn't work
-        HazyRedFog.enabled = new UnityEngine.Rendering.BoolParameter(true);
-        MainOoblFog.enabled = new UnityEngine.Rendering.BoolParameter(false);
+        HazyRedFog.enabled = true;
+        MainOoblFog.enabled = false;
 
         IsFogActive = true;
     }
