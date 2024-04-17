@@ -11,8 +11,8 @@ namespace Welcome_To_Ooblterra.Things;
 
 internal class HazyWeather : MonoBehaviour {
 
-    public Fog HazyRedFog;
-    public Fog MainOoblFog;
+    public LocalVolumetricFog HazyRedFog;
+    public LocalVolumetricFog MainOoblFog;
     private bool IsFogActive = false;
     public BoxCollider MyCollider;
 
