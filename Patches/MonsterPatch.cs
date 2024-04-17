@@ -85,7 +85,7 @@ internal class MonsterPatch {
     private static void TellAllGhostsOfSignalTransmission() {
         OoblGhostAI[] Ghosts = GameObject.FindObjectsOfType<OoblGhostAI>();
         foreach(OoblGhostAI Ghost in Ghosts) {
-            Ghost.EvalulateSignalTranslatorUse();
+            //Ghost.EvalulateSignalTranslatorUse();
         }
     }
 
