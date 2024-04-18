@@ -27,7 +27,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
     public AudioClip FailSound;
     public AudioSource Noisemaker;
     public InteractTrigger GuessScript;
-    public InteractTrigger ReviveScript;
+    public InteractTrigger ReviveScript; 
 
     public FrankensteinVisuals Visuals;
 
@@ -285,7 +285,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.isInsideFactory = true;
             PlayerToRevive.wasInElevatorLastFrame = false;
             StartOfRound.Instance.SetPlayerObjectExtrapolate(enable: false);
-            PlayerToRevive.TeleportPlayer(SpawnLoc);
+            PlayerToRevive.TeleportPlayer(BodyPoint.RespawnPos.position);
             PlayerToRevive.setPositionOfDeadPlayer = false;
             PlayerToRevive.DisablePlayerModel(StartOfRound.Instance.allPlayerObjects[ID], enable: true, disableLocalArms: true);
             PlayerToRevive.helmetLight.enabled = false;
