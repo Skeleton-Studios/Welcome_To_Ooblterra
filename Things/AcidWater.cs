@@ -23,7 +23,7 @@ public class AcidWater : MonoBehaviour {
 
     }
     public static void DamageOverlappingPlayer(PlayerControllerB victim, float TotalDamageTime, ref float TimeSinceDamageTaken, int DamageAmount) {
-        if ((TimeSinceDamageTaken < 0.5f)) {
+        if ((TimeSinceDamageTaken < TotalDamageTime)) {
             TimeSinceDamageTaken += Time.deltaTime;
             return;
         }

@@ -17,13 +17,14 @@ public class BearTrap : MonoBehaviour {
 
     private float SecondsUntilNextRiseAttempt;
     
-    public SkinnedMeshRenderer BearTrapMesh;
+    public Animator BearTrapAnim;
     //public float BearTrapStartPos;
     //public float BearTrapEndPos;
-
+    private bool IsBearTrapRaised = true;
     public System.Random BearTrapRandom;
     private bool IsBearTrapClosed;
     private List<PlayerControllerB> PlayerInRangeList = new();
+
 
     public void OnTriggerEnter(Collider other) {
         try {
@@ -40,6 +41,7 @@ public class BearTrap : MonoBehaviour {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
                 WTOBase.LogToConsole($"Bear Trap: Removing Player {PlayerInRange} from player in range list...");
+                PlayerInRange.movementSpeed = 1f;
                 PlayerInRangeList.Remove(PlayerInRange);
                 MoveBearTrap(false);
             }
@@ -61,7 +63,11 @@ public class BearTrap : MonoBehaviour {
         BearTrapRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         SecondsUntilNextRiseAttempt = BearTrapRandom.Next(35, 80);
     }
+
     private void Update() {
+        if (IsBearTrapRaised) {
+            return;
+        }
         if(SecondsUntilNextRiseAttempt > 0) {
             SecondsUntilNextRiseAttempt -= Time.deltaTime;
         } else {
@@ -79,17 +85,19 @@ public class BearTrap : MonoBehaviour {
     private void MoveBearTrap(bool ShouldRaise) {
         if (ShouldRaise) {
             //play animation for bear trap rising
+            IsBearTrapRaised = true;
         } else {
             //play animation for bear trap descending
+            IsBearTrapRaised = false;
         }
     }
     private void SetBearTrapOpenState(bool isOpen) {
         if (isOpen) {
-            //play animation for opening bear trap
+            BearTrapAnim.SetBool("CloseTrap", false);
             IsBearTrapClosed = false;
             return;
         }
-        //play animation for opening bear trap
+        BearTrapAnim.SetBool("CloseTrap", true);
         IsBearTrapClosed = true;
 
     }
