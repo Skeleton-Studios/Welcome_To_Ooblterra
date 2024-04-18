@@ -550,7 +550,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     }
 
     //If we're attacked by a player, they need to be immediately set to our target player
-    public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+    public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
         if (isEnemyDead) { return; }
         base.HitEnemy(force, playerWhoHit, playHitSFX);
         enemyHP -= force;
