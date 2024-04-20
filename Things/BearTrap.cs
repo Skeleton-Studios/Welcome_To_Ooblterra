@@ -20,9 +20,9 @@ public class BearTrap : MonoBehaviour {
     public Animator BearTrapAnim;
     //public float BearTrapStartPos;
     //public float BearTrapEndPos;
-    private bool IsBearTrapRaised = true;
+    public bool IsBearTrapRaised = false;
     public System.Random BearTrapRandom;
-    private bool IsBearTrapClosed;
+    public bool IsBearTrapClosed;
     private List<PlayerControllerB> PlayerInRangeList = new();
 
 
