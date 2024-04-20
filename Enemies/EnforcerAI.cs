@@ -1,4 +1,5 @@
-﻿using GameNetcodeStuff;
+﻿using DunGen;
+using GameNetcodeStuff;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -24,6 +25,8 @@ public class EnforcerAI : WTOEnemy {
 
     [Header("Defaults")]
     public Material[] EnforcerMatList;
+    public float EyeSweepAnimSeconds = 2f;
+    public float ActiveCamoLerpTime = 0.5f;
 
     //STATES
     private class GoToHidingSpot : BehaviorState {
@@ -49,7 +52,7 @@ public class EnforcerAI : WTOEnemy {
     private class WaitForPlayerToPass : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].ReachedNextPoint = false;
-            EnforcerList[enemyIndex].StartCoroutine(EnforcerList[enemyIndex].RotateTowardActiveLocation());
+            EnforcerList[enemyIndex].transform.rotation = EnforcerList[enemyIndex].CurrentLocation.transform.rotation;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //if a player enters range, consider them our potential target
@@ -59,7 +62,7 @@ public class EnforcerAI : WTOEnemy {
                 if (EnforcerList[enemyIndex].GetAllPlayersInLineOfSight().Contains<PlayerControllerB>(EnforcerList[enemyIndex].PotentialTarget)) {
                     EnforcerList[enemyIndex].IsBeingSeenByPotentialTarget = EnforcerList[enemyIndex].PotentialTarget.HasLineOfSightToPosition(EnforcerList[enemyIndex].transform.position);
                 } else {
-                    EnforcerList[enemyIndex].ShouldChasePotentialTarget = true;
+                    EnforcerList[enemyIndex].ShouldChasePotentialTarget = !EnforcerList[enemyIndex].IsBeingSeenByPotentialTarget;
                 }
             } else {
                 PlayerControllerB PlayerInConsideration = EnforcerList[enemyIndex].GetClosestPlayer(requireLineOfSight: true);
@@ -207,7 +210,7 @@ public class EnforcerAI : WTOEnemy {
     }
     private class PlayerNotFoundDuringSearch : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return EnforcerList[enemyIndex].EnforcerSearchComplete && EnforcerList[enemyIndex].targetPlayer != null;
+            return EnforcerList[enemyIndex].EnforcerSearchComplete;
         }
         public override BehaviorState NextState() {
             return new GoToHidingSpot();
@@ -215,9 +218,11 @@ public class EnforcerAI : WTOEnemy {
     }
     private class PlayerFoundDuringSearch : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return EnforcerList[enemyIndex].EnforcerSearchComplete && EnforcerList[enemyIndex].targetPlayer != null;
+            //I GOTTA BAD FEELING ABOUT THIS
+            return EnforcerList[enemyIndex].GetAllPlayersInLineOfSight().Contains<PlayerControllerB>(EnforcerList[enemyIndex].PotentialTarget);
         }
         public override BehaviorState NextState() {
+            EnforcerList[enemyIndex].StopCoroutine("SearchAreaForPlayer");
             return new ChasePlayer();
         }
     }
@@ -267,10 +272,14 @@ public class EnforcerAI : WTOEnemy {
         ReachedNextPoint = true;
     }
 
+    float timeElapsed = 0f;
+    float LerpPos = 0f;
     public void SetActiveCamoState(bool SetCamoOn) {
         if(EnforcerActiveCamoState == SetCamoOn) {
             return;
         }
+        timeElapsed = 0f;
+        LerpPos = 0f;
         EnforcerActiveCamoState = SetCamoOn;
         if (EnforcerActiveCamoState) {
             StartActiveCamo();
@@ -278,19 +287,40 @@ public class EnforcerAI : WTOEnemy {
             StopActiveCamo();
         }
     }
-
-    IEnumerator SearchAreaForPlayer() {
-        yield return null;
-    }
-
-
     IEnumerator StartActiveCamo() {
-        yield return null;
+        timeElapsed += Time.deltaTime;
+        LerpPos = Mathf.Lerp(0, 1, timeElapsed / ActiveCamoLerpTime);
+        foreach (Material NextMat in EnforcerMatList) {
+            NextMat.SetFloat("", LerpPos);
+        }
+        if (timeElapsed / ActiveCamoLerpTime >= 1) {
+            EnforcerActiveCamoState = true;
+            yield return null;
+        }
     }
     IEnumerator StopActiveCamo() {
         yield return null;
     }
-    IEnumerator RotateTowardActiveLocation() {
+
+    IEnumerator SearchAreaForPlayer() {
+        SetDestinationToPosition(LastKnownTargetPlayerPosition);
+        while (Vector3.Distance(transform.position, LastKnownTargetPlayerPosition) < 0.02f) {
+            yield return null;
+        }
+        LogMessage("Reached last player location; picking points nearby and searching");
+        for(int i = 0; i < enemyRandom.Next(1, 3);) {
+            Vector3 NextSearchPoint = RoundManager.Instance.GetRandomNavMeshPositionInRadius(LastKnownTargetPlayerPosition);
+            SetDestinationToPosition(NextSearchPoint);
+            while (Vector3.Distance(transform.position, NextSearchPoint) < 0.02f) {
+                yield return null;
+            }
+            LogMessage("Reached nearby point #1");
+            //Play animation where eye sweeps
+            yield return new WaitForSeconds(EyeSweepAnimSeconds);
+            i++;
+        }
+        EnforcerSearchComplete = true;
         yield return null;
+
     }
 }
