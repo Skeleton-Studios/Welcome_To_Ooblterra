@@ -41,9 +41,11 @@ public class BearTrap : MonoBehaviour {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
                 WTOBase.LogToConsole($"Bear Trap: Removing Player {PlayerInRange} from player in range list...");
-                PlayerInRange.movementSpeed = 1f;
+                PlayerInRange.movementSpeed = 4.6f;
+                PlayerInRange.jumpForce = 13;
                 PlayerInRangeList.Remove(PlayerInRange);
                 MoveBearTrap(false);
+                SetBearTrapOpenState(true);
             }
         } catch { }
     }
@@ -55,6 +57,7 @@ public class BearTrap : MonoBehaviour {
         }
         if (IsBearTrapClosed) {
             victim.movementSpeed = 0.4f;
+            victim.jumpForce = 1;
             AcidWater.DamageOverlappingPlayer(victim, 1f, ref TimeSincePlayerDamaged, 10);
         } 
     }
@@ -83,12 +86,14 @@ public class BearTrap : MonoBehaviour {
         SecondsUntilNextRiseAttempt = BearTrapRandom.Next(35, 80);
     }
     private void MoveBearTrap(bool ShouldRaise) {
+        IsBearTrapRaised = ShouldRaise;
         if (ShouldRaise) {
             //play animation for bear trap rising
-            IsBearTrapRaised = true;
+            BearTrapAnim.SetBool("IsRaised", true);
         } else {
             //play animation for bear trap descending
-            IsBearTrapRaised = false;
+            BearTrapAnim.SetBool("IsRaised", false);
+            SecondsUntilNextRiseAttempt = BearTrapRandom.Next(35, 80);
         }
     }
     private void SetBearTrapOpenState(bool isOpen) {
