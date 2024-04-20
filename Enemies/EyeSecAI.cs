@@ -225,7 +225,7 @@ public class EyeSecAI : WTOEnemy {
     }
     private class PlayerOutOfRange : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return !EyeSecList[enemyIndex].HasLineOfSightToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f, 15);
+            return !EyeSecList[enemyIndex].CheckLineOfSightForPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f, 15);
         }
         public override BehaviorState NextState() {
             return new MoveToAttackPosition();
@@ -234,7 +234,7 @@ public class EyeSecAI : WTOEnemy {
     }
     private class InRangeOfPlayer : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return EyeSecList[enemyIndex].HasLineOfSightToPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f);
+            return EyeSecList[enemyIndex].CheckLineOfSightForPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f);
         }
         public override BehaviorState NextState() {
             return new Attack();
@@ -432,7 +432,7 @@ public class EyeSecAI : WTOEnemy {
             Debug.LogError(e);
         }
     }
-    public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+    public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
 
         base.HitEnemy(force, playerWhoHit, playHitSFX);
         SetTargetServerRpc((int)playerWhoHit.playerClientId);

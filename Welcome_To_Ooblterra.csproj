@@ -53,7 +53,8 @@
       <HintPath>packages\AsmResolver.PE.File.5.0.0\lib\netstandard2.0\AsmResolver.PE.File.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp" Publicize="true">
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <Private>false</Private>
     </Reference>
     <Reference Include="BepInEx">
       <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\BepInEx\core\BepInEx.dll</HintPath>
@@ -61,12 +62,13 @@
     <Reference Include="BepInEx.AssemblyPublicizer, Version=0.4.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\BepInEx.AssemblyPublicizer.0.4.1\lib\netstandard2.0\BepInEx.AssemblyPublicizer.dll</HintPath>
     </Reference>
-    <Reference Include="LethalLevelLoader">
-      <HintPath>..\..\Lethal Company\BepInEx\DISABLEDMODS\LethalLevelLoader\LethalLevelLoader.dll</HintPath>
-    </Reference>
-    <Reference Include="LethalLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="LethalLevelLoader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\BepInEx\plugins\LethalLib\LethalLib.dll</HintPath>
+      <HintPath>..\..\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Pineguys-LethalLevelLoaderFixedV50\LethalLevelLoader.dll</HintPath>
+    </Reference>
+    <Reference Include="LethalLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>..\..\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Evaisa-LethalLib\LethalLib\LethalLib.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.6.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -258,49 +260,49 @@
     <PostBuildEvent>
 :: Send compiled files to Netcode Patcher
 
-copy "F:\Welcome to Ooblterra!\Project Files\Welcome_To_Ooblterra\bin\Debug\Welcome_To_Ooblterra.dll" "F:\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins"
-copy "F:\Welcome to Ooblterra!\Project Files\Welcome_To_Ooblterra\bin\Debug\Welcome_To_Ooblterra.pdb" "F:\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins"
+copy "F:\Game Projects\Welcome to Ooblterra!\Project Files\Welcome_To_Ooblterra\bin\Debug\Welcome_To_Ooblterra.dll" "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins"
+copy "F:\Game Projects\Welcome to Ooblterra!\Project Files\Welcome_To_Ooblterra\bin\Debug\Welcome_To_Ooblterra.pdb" "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins"
 
 :: Run Netcode Patcher
 
-cd "F:\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0"
+cd "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0"
 NetcodePatcher.dll plugins/ deps/
 
 :: Send Netcode Patched files to R2ModMan Dir
 
-copy "F:\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.dll" "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.pdb" "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.dll" "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.pdb" "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
 
 :: Send Netcode patched files to Unity
 
-copy "F:\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.dll" "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.pdb" "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.dll" "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.pdb" "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 
 :: Send assetbundles to R2ModMan Dir
 
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customdungeon"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customenemies"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customitems"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\custommoon"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customdungeon"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customenemies"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customitems"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\custommoon"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
 
 
 ::Send and rename LLLScene to R2ModMan Dir
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\lllscene"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\lllscene"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
 del "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
 rename "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
 
 :: Send assetbundles to Unity
 
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customdungeon"  "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customenemies"  "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customitems"  "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\custommoon"  "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customdungeon"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customenemies"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\customitems"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\custommoon"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 
 ::Send and rename LLLScene to Unity
 
-copy "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\lllscene"  "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-del "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
-rename "F:\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
+copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\AssetBundles\StandaloneWindows\lllscene"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+del "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
+rename "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
 
 </PostBuildEvent>
   </PropertyGroup>

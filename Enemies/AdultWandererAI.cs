@@ -327,7 +327,7 @@ public class AdultWandererAI : WTOEnemy {
     public bool CheckForPlayerLOS() {
         return targetPlayer.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);
     }
-    public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false) {
+    public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
         if (isEnemyDead) { return; }
         base.HitEnemy(force, playerWhoHit, playHitSFX);
         enemyHP -= force;
