@@ -10,6 +10,7 @@ namespace Welcome_To_Ooblterra.Things;
 internal class SecBotDoor : MonoBehaviour {
 
     public MeshRenderer DoorMesh;
+    public Transform SecBotLocationBehindDoor;
 
     private void SlideDoorDown() { 
         

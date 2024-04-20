@@ -242,6 +242,7 @@
     <Compile Include="Things\BlinkingMonitors.cs" />
     <Compile Include="Things\LightComponent.cs" />
     <Compile Include="Security\TeslaCoil.cs" />
+    <Compile Include="Enemies\EnemyThings\SecBotDoor.cs" />
     <Compile Include="Things\StartRoomLight.cs" />
     <Compile Include="Things\WideDoorway.cs" />
   </ItemGroup>
