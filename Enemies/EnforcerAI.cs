@@ -36,7 +36,8 @@ public class EnforcerAI : WTOEnemy {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].agent.speed = 8f;
             EnforcerList[enemyIndex].SetActiveCamoState(true);
-            EnforcerList[enemyIndex].SetDestinationToPosition(EnforcerList[enemyIndex].EnforcerHidePoints[enemyRandom.Next(0, EnforcerList[enemyIndex].EnforcerHidePoints.Count)].transform.localPosition);
+            EnforcerList[enemyIndex].DetermineNextHidePoint();
+            EnforcerList[enemyIndex].SetDestinationToPosition(EnforcerList[enemyIndex].NextHidePoint.transform.position);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -52,7 +53,7 @@ public class EnforcerAI : WTOEnemy {
     private class WaitForPlayerToPass : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].ReachedNextPoint = false;
-            EnforcerList[enemyIndex].transform.rotation = EnforcerList[enemyIndex].CurrentLocation.transform.rotation;
+            EnforcerList[enemyIndex].transform.rotation = EnforcerList[enemyIndex].NextHidePoint.transform.rotation;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //if a player enters range, consider them our potential target
@@ -233,7 +234,7 @@ public class EnforcerAI : WTOEnemy {
     private List<EnforcerHidePoint> EnforcerHidePoints = new();
     private bool ReachedNextPoint = false;
     private bool EnforcerActiveCamoState = true;
-    private EnforcerHidePoint CurrentLocation;
+    private EnforcerHidePoint NextHidePoint;
     private PlayerControllerB PotentialTarget;
     private bool IsBeingSeenByPotentialTarget;
     private bool ShouldChasePotentialTarget;
@@ -253,6 +254,7 @@ public class EnforcerAI : WTOEnemy {
         base.Start();
         //This might cause a lag spike because im using LINQ
         EnforcerHidePoints = FindObjectsOfType<EnforcerHidePoint>().ToList();
+        
     }
     public override void Update() {
         if (!EnforcerShouldKeepTrackOfTargetPlayer || targetPlayer == null) {
@@ -286,6 +288,10 @@ public class EnforcerAI : WTOEnemy {
         } else {
             StopActiveCamo();
         }
+    }
+
+    public void DetermineNextHidePoint() {
+        NextHidePoint = EnforcerHidePoints[enemyRandom.Next(0, EnforcerHidePoints.Count)];
     }
     IEnumerator StartActiveCamo() {
         timeElapsed += Time.deltaTime;
