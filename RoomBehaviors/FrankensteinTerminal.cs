@@ -130,11 +130,11 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Correctness[] TotalCorrect = { Correctness.Wrong, Correctness.Wrong, Correctness.Wrong, Correctness.Wrong };
         WTOBase.LogToConsole("BEGIN PRINT CORRECT COLORS");
         foreach(ChemColor color in CorrectColors) {
-            Debug.Log(color);
+            WTOBase.WTOLogSource.LogMessage(color);
         }
         WTOBase.LogToConsole("END PRINT CORRECT COLORS ; BEGIN PRINT GUESSED COLORS");
         foreach (ChemColor color in GuessedColorList) {
-            Debug.Log(color);
+            WTOBase.WTOLogSource.LogMessage(color);
         }
         WTOBase.LogToConsole("END PRINT GUESSED COLORS");
 
@@ -256,27 +256,27 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     [ServerRpc(RequireOwnership = false)]
     public void ReviveDeadPlayerServerRpc(int ID, Vector3 SpawnLoc) {
-        Debug.Log($"Reviving dead player {ID} on server...");
+        WTOBase.WTOLogSource.LogMessage($"Reviving dead player {ID} on server...");
         ReviveDeadPlayerClientRpc(ID, SpawnLoc);
     }
     [ClientRpc]
     public void ReviveDeadPlayerClientRpc(int ID, Vector3 SpawnLoc) {
-        Debug.Log($"Reviving dead player {ID} on client...");
+        WTOBase.WTOLogSource.LogMessage($"Reviving dead player {ID} on client...");
         ReviveDeadPlayer(ID, SpawnLoc);
     }
     public void ReviveDeadPlayer(int ID, Vector3 SpawnLoc) {
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
         WTOBase.LogToConsole("DEAD PLAYER INFO:");
-        Debug.Log($"PLAYER ID: {ID}");
-        Debug.Log($"PLAYER SCRIPT: {StartOfRound.Instance.allPlayerScripts[ID]}");
-        Debug.Log("Reviving players A");
+        WTOBase.WTOLogSource.LogMessage($"PLAYER ID: {ID}");
+        WTOBase.WTOLogSource.LogMessage($"PLAYER SCRIPT: {StartOfRound.Instance.allPlayerScripts[ID]}");
+        WTOBase.WTOLogSource.LogMessage("Reviving players A");
         PlayerToRevive.ResetPlayerBloodObjects(PlayerToRevive.isPlayerDead);
         PlayerToRevive.isClimbingLadder = false;
         PlayerToRevive.ResetZAndXRotation();
         PlayerToRevive.thisController.enabled = true;
         PlayerToRevive.health = 100;
         PlayerToRevive.disableLookInput = false;
-        Debug.Log("Reviving players B");
+        WTOBase.WTOLogSource.LogMessage("Reviving players B");
         if (PlayerToRevive.isPlayerDead) {
             PlayerToRevive.isPlayerDead = false;
             PlayerToRevive.isPlayerControlled = true;
@@ -290,7 +290,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.DisablePlayerModel(StartOfRound.Instance.allPlayerObjects[ID], enable: true, disableLocalArms: true);
             PlayerToRevive.helmetLight.enabled = false;
             PlayerToRevive.SetNightVisionEnabled(PlayerToRevive == StartOfRound.Instance.localPlayerController);
-            Debug.Log("Reviving players C");
+            WTOBase.WTOLogSource.LogMessage("Reviving players C");
             PlayerToRevive.Crouch(crouch: false);
             PlayerToRevive.criticallyInjured = false;
             if (PlayerToRevive.playerBodyAnimator != null) {
@@ -304,14 +304,14 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.inAnimationWithEnemy = null;
             PlayerToRevive.holdingWalkieTalkie = false;
             PlayerToRevive.speakingToWalkieTalkie = false;
-            Debug.Log("Reviving players D");
+            WTOBase.WTOLogSource.LogMessage("Reviving players D");
             PlayerToRevive.isSinking = false;
             PlayerToRevive.isUnderwater = false;
             PlayerToRevive.sinkingValue = 0f;
             PlayerToRevive.statusEffectAudio.Stop();
             PlayerToRevive.DisableJetpackControlsLocally();
             PlayerToRevive.health = 100;
-            Debug.Log("Reviving players E");
+            WTOBase.WTOLogSource.LogMessage("Reviving players E");
             PlayerToRevive.mapRadarDotAnimator.SetBool("dead", value: false);
             if (PlayerToRevive.IsOwner) {
                 HUDManager.Instance.gasHelmetAnimator.SetBool("gasEmitting", value: false);
@@ -321,10 +321,10 @@ public class FrankensteinTerminal : NetworkBehaviour {
                 PlayerToRevive.hinderedMultiplier = 1f;
                 PlayerToRevive.isMovementHindered = 0;
                 PlayerToRevive.sourcesCausingSinking = 0;
-                Debug.Log("Reviving players E2");
+                WTOBase.WTOLogSource.LogMessage("Reviving players E2");
             }
         }
-        Debug.Log("Reviving players F");
+        WTOBase.WTOLogSource.LogMessage("Reviving players F");
         SoundManager.Instance.earsRingingTimer = 0f;
         PlayerToRevive.voiceMuffledByEnemy = false;
         SoundManager.Instance.playerVoicePitchTargets[PlayerID] = 1f;
@@ -344,7 +344,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.currentVoiceChatIngameSettings.voiceAudio.GetComponent<OccludeAudio>().overridingLowPass = false;
         }
         */
-        Debug.Log("Reviving players G");
+        WTOBase.WTOLogSource.LogMessage("Reviving players G");
         PlayerControllerB playerControllerB = GameNetworkManager.Instance.localPlayerController;
         playerControllerB.bleedingHeavily = false;
         playerControllerB.criticallyInjured = false;
@@ -353,7 +353,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         HUDManager.Instance.UpdateHealthUI(100, hurtPlayer: false);
         playerControllerB.spectatedPlayerScript = null;
         HUDManager.Instance.audioListenerLowPass.enabled = false;
-        Debug.Log("Reviving players H");
+        WTOBase.WTOLogSource.LogMessage("Reviving players H");
         StartOfRound.Instance.SetSpectateCameraToGameOverMode(enableGameOver: false, playerControllerB);
         RagdollGrabbableObject[] array = UnityEngine.Object.FindObjectsOfType<RagdollGrabbableObject>();
         for (int j = 0; j < array.Length; j++) {
@@ -383,15 +383,15 @@ public class FrankensteinTerminal : NetworkBehaviour {
     [ServerRpc(RequireOwnership = false)]
     public void CreateMimicServerRpc(int ID, Vector3 MimicCreationPoint) {
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
-        Debug.Log("Server creating mimic from Frankenstein");
+        WTOBase.WTOLogSource.LogMessage("Server creating mimic from Frankenstein");
         Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(MimicCreationPoint, default, 10f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
-            Debug.Log("No nav mesh found; no WTOMimic could be created");
+            WTOBase.WTOLogSource.LogMessage("No nav mesh found; no WTOMimic could be created");
             return;
         }
         const int MimicIndex = 12;
         EnemyType TheMimic = StartOfRound.Instance.levels[8].Enemies[MimicIndex].enemyType;
-        Debug.Log($"Mimic Found: {TheMimic != null}");
+        WTOBase.WTOLogSource.LogMessage($"Mimic Found: {TheMimic != null}");
 
         WTOBase.LogToConsole($"NAVMESHPOS: {navMeshPosition}");
         WTOBase.LogToConsole($"PLAYER: {PlayerToRevive}");
@@ -400,7 +400,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         NetworkObjectReference netObjectRef = RoundManager.Instance.SpawnEnemyGameObject(navMeshPosition, PlayerToRevive.transform.eulerAngles.y, -1, TheMimic);
 
         if (netObjectRef.TryGet(out var networkObject)) {
-            Debug.Log("Got network object for WTOMimic");
+            WTOBase.WTOLogSource.LogMessage("Got network object for WTOMimic");
             MaskedPlayerEnemy component = networkObject.GetComponent<MaskedPlayerEnemy>();
             component.SetSuit(PlayerToRevive.currentSuitID);
             component.mimickingPlayer = PlayerToRevive;
@@ -434,7 +434,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         if (netObject == null) {
             yield break;
         }
-        Debug.Log("Got network object for WTOMimic enemy client");
+        WTOBase.WTOLogSource.LogMessage("Got network object for WTOMimic enemy client");
         MaskedPlayerEnemy component = netObject.GetComponent<MaskedPlayerEnemy>();
         component.mimickingPlayer = PlayerToRevive;
         component.SetSuit(PlayerToRevive.currentSuitID);

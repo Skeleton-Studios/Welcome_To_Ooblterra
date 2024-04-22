@@ -169,7 +169,7 @@ internal class MoonPatch {
     public static void Start() {
         ExtendedLevel Ooblterra = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPatch.MoonPath + "OoblterraExtendedLevel.asset");
         MoonFriendlyName = Ooblterra.selectableLevel.PlanetName;
-        Debug.Log($"Ooblterra Found: {Ooblterra != null}");
+        WTOBase.WTOLogSource.LogMessage($"Ooblterra Found: {Ooblterra != null}");
         PatchedContent.RegisterExtendedLevel(Ooblterra);
     }
     private static void MoveNavNodesToNewPositions() {

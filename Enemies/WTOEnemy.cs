@@ -105,7 +105,7 @@ public class WTOEnemy : EnemyAI {
 
     internal void LogMessage(string message) {
         if (PrintDebugs && MonsterPatch.ShouldDebugEnemies) {
-            Debug.Log(message);
+            WTOBase.WTOLogSource.LogMessage(message);
         }
     }
     internal bool PlayerCanBeTargeted(PlayerControllerB myPlayer) {
