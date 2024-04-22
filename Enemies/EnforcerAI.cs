@@ -7,6 +7,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
 using Welcome_To_Ooblterra.Properties;
@@ -14,33 +15,46 @@ using Welcome_To_Ooblterra.Things;
 using static System.Net.Mime.MediaTypeNames;
 
 namespace Welcome_To_Ooblterra.Enemies;
+
+
 public class EnforcerAI : WTOEnemy {
 
     [Header("Balance Constants")]
     public static float SecondsUntilBeginStalking = 5f;
     public static float StalkSpeed = 6f;
-    public static float ChaseSpeed = 6.5f;
-    public static float RangeForPotentialTarget = 2f;
+    public static float ChaseSpeed = 6.5f; 
+    public static float RangeForPotentialTarget = 5f;
     public static int EnforcerAttackDamage = 100;
+    public static float ActiveCamoVisibility = 0.025f;
 
     [Header("Defaults")]
-    public Material[] EnforcerMatList;
+    public SkinnedMeshRenderer[] Meshes;
+    public Material ActiveCamoMaterial; 
     public float EyeSweepAnimSeconds = 2f;
-    public float ActiveCamoLerpTime = 0.5f;
+    public float ActiveCamoLerpTime = 2f;
+
+    private List<Material> EnforcerMatList = new();
 
     //STATES
     private class GoToHidingSpot : BehaviorState {
-        public GoToHidingSpot() {
-
-        }
+        bool EnforcerMovingToHidePoint;
+        Vector3 NextDestination;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            EnforcerMovingToHidePoint = false;
             EnforcerList[enemyIndex].agent.speed = 8f;
             EnforcerList[enemyIndex].SetActiveCamoState(true);
             EnforcerList[enemyIndex].DetermineNextHidePoint();
-            EnforcerList[enemyIndex].SetDestinationToPosition(EnforcerList[enemyIndex].NextHidePoint.transform.position);
+            
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-
+            if (!EnforcerMovingToHidePoint) {
+                EnforcerList[enemyIndex].LogMessage("Current hide point not valid, choosing another...");
+                NextDestination = RoundManager.Instance.GetRandomNavMeshPositionInRadius(EnforcerList[enemyIndex].NextHidePoint.transform.position, radius: 2);
+                EnforcerMovingToHidePoint = EnforcerList[enemyIndex].SetDestinationToPosition(NextDestination, true);
+            }
+            if (Vector3.Distance(EnforcerList[enemyIndex].transform.position, NextDestination) < 1) {
+                EnforcerList[enemyIndex].ReachedNextPoint = true;
+            }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -58,19 +72,27 @@ public class EnforcerAI : WTOEnemy {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //if a player enters range, consider them our potential target
             if (EnforcerList[enemyIndex].PotentialTarget != null) {
-                //check if we still have LOS to the potential target
-                //.CONTAINS IS A LINQ FUNCTION AND IS PROBABLY SLOW
-                if (EnforcerList[enemyIndex].GetAllPlayersInLineOfSight().Contains<PlayerControllerB>(EnforcerList[enemyIndex].PotentialTarget)) {
-                    EnforcerList[enemyIndex].IsBeingSeenByPotentialTarget = EnforcerList[enemyIndex].PotentialTarget.HasLineOfSightToPosition(EnforcerList[enemyIndex].transform.position);
+
+                EnforcerList[enemyIndex].LogMessage($"Range check for target player: {EnforcerList[enemyIndex].PotentialTarget.playerUsername}; " +
+                    $"\nin Range/Enforcer LOS? {EnforcerList[enemyIndex].IsTargetPlayerWithinLOS(EnforcerList[enemyIndex].PotentialTarget, range: (int)RangeForPotentialTarget, width: 120)}; " +
+                    $"\nPlayer has LOS to Enforcer? {EnforcerList[enemyIndex].CheckPlayerLOSForEnforcer(EnforcerList[enemyIndex].PotentialTarget)}");
+                
+                if (EnforcerList[enemyIndex].PlayerWithinRange(EnforcerList[enemyIndex].PotentialTarget, RangeForPotentialTarget)) {
+                    EnforcerList[enemyIndex].IsBeingSeenByPotentialTarget = EnforcerList[enemyIndex].CheckPlayerLOSForEnforcer(EnforcerList[enemyIndex].PotentialTarget);
                 } else {
                     EnforcerList[enemyIndex].ShouldChasePotentialTarget = !EnforcerList[enemyIndex].IsBeingSeenByPotentialTarget;
+                    if (!EnforcerList[enemyIndex].ShouldChasePotentialTarget) {
+                        EnforcerList[enemyIndex].LogMessage($"Player left while looking at us, do not pursue!");
+                        EnforcerList[enemyIndex].PotentialTarget = null;
+                    }
                 }
-            } else {
+            } else { 
                 PlayerControllerB PlayerInConsideration = EnforcerList[enemyIndex].GetClosestPlayer(requireLineOfSight: true);
                 //set the player in consideration to our potential target if he's in range
-                if (PlayerInConsideration != null && EnforcerList[enemyIndex].DistanceFromTargetPlayer(PlayerInConsideration) < RangeForPotentialTarget) {
+                if (PlayerInConsideration != null && EnforcerList[enemyIndex].PlayerWithinRange(PlayerInConsideration, RangeForPotentialTarget)) {
                     EnforcerList[enemyIndex].PotentialTarget = PlayerInConsideration;
-                } 
+                    EnforcerList[enemyIndex].LogMessage($"Setting target player: {EnforcerList[enemyIndex].PotentialTarget.playerUsername}");
+                }
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -87,6 +109,11 @@ public class EnforcerAI : WTOEnemy {
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //this might start pushing the player if the player stands still
+            if (EnforcerList[enemyIndex].PlayerWithinRange(2f)) {
+                EnforcerList[enemyIndex].agent.speed = 0f;
+                return;
+            }
+            EnforcerList[enemyIndex].agent.speed = StalkSpeed;
             EnforcerList[enemyIndex].SetMovingTowardsTargetPlayer(EnforcerList[enemyIndex].targetPlayer);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -102,14 +129,15 @@ public class EnforcerAI : WTOEnemy {
             EnforcerList[enemyIndex].agent.speed = ChaseSpeed;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
             EnforcerList[enemyIndex].SetMovingTowardsTargetPlayer(EnforcerList[enemyIndex].targetPlayer);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-            new PlayerEnteredAttackRange(),
-            new LostPlayerDuringChase()
+            new PlayerEnteredAttackRange()
+            //new LostPlayerDuringChase()
         };
 
     }
@@ -170,7 +198,7 @@ public class EnforcerAI : WTOEnemy {
     }
     private class StalkedPlayerSeesUs : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].transform.position, 20);
+            return EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].eye.position, 20);
         }
         public override BehaviorState NextState() {
             return new AttackPlayer();
@@ -233,7 +261,7 @@ public class EnforcerAI : WTOEnemy {
     private static int EnforcerID;
     private List<EnforcerHidePoint> EnforcerHidePoints = new();
     private bool ReachedNextPoint = false;
-    private bool EnforcerActiveCamoState = true;
+    private bool EnforcerActiveCamoState = false;
     private EnforcerHidePoint NextHidePoint;
     private PlayerControllerB PotentialTarget;
     private bool IsBeingSeenByPotentialTarget;
@@ -251,62 +279,87 @@ public class EnforcerAI : WTOEnemy {
         WTOEnemyID = EnforcerID;
         LogMessage($"Adding Enforcer {this} #{EnforcerID}");
         EnforcerList.Add(EnforcerID, this);
-        base.Start();
         //This might cause a lag spike because im using LINQ
         EnforcerHidePoints = FindObjectsOfType<EnforcerHidePoint>().ToList();
-        
+        foreach(SkinnedMeshRenderer NextMesh in Meshes) {
+            Material[] TempMaterialsArray = new Material[NextMesh.materials.Length];
+            for(int i = 0; i < NextMesh.materials.Length; i++) {
+                Material NextMat = new Material(ActiveCamoMaterial);
+                NextMat.SetFloat("_ACAmount", ActiveCamoVisibility);
+                NextMat.SetTexture("_MainTexture", NextMesh.materials[i].GetTexture("_BaseColorMap"));
+                TempMaterialsArray[i] = NextMat;
+                EnforcerMatList.Add(NextMat); 
+            }
+            NextMesh.materials = TempMaterialsArray;
+        } 
+        base.Start();
     }
     public override void Update() {
+        base.Update();
         if (!EnforcerShouldKeepTrackOfTargetPlayer || targetPlayer == null) {
             return;
         }
-        //.CONTAINS IS A LINQ FUNCTION AND IS PROBABLY SLOW
-        //I AM PLAYING WITH DANGER PUTTING IT ON THE UPDATE
-        //BUT ZEEKERS HAS FORCED MY HAND
-        if (GetAllPlayersInLineOfSight().Contains<PlayerControllerB>(targetPlayer)) {
-            LastKnownTargetPlayerPosition = targetPlayer.transform.position;
+        if (CheckLineOfSightForPosition(targetPlayer.gameplayCamera.transform.position)) {
+            LastKnownTargetPlayerPosition = targetPlayer.gameplayCamera.transform.position;
             EnforcerSeesPlayer = true;
         } else {
         }
-    }
-    public override void ReachedNodeInSearch() {
-        base.ReachedNodeInSearch();
-        ReachedNextPoint = true;
     }
 
     float timeElapsed = 0f;
     float LerpPos = 0f;
     public void SetActiveCamoState(bool SetCamoOn) {
         if(EnforcerActiveCamoState == SetCamoOn) {
-            return;
+            return; 
         }
         timeElapsed = 0f;
         LerpPos = 0f;
         EnforcerActiveCamoState = SetCamoOn;
         if (EnforcerActiveCamoState) {
-            StartActiveCamo();
+            StartCoroutine(StartActiveCamo());
         } else {
-            StopActiveCamo();
+            StartCoroutine(StopActiveCamo());
         }
     }
 
     public void DetermineNextHidePoint() {
+        if(EnforcerHidePoints == null) {
+            EnforcerHidePoints = FindObjectsOfType<EnforcerHidePoint>().ToList();
+            LogMessage($"Hide Point count: {EnforcerHidePoints.Count}");
+        }
         NextHidePoint = EnforcerHidePoints[enemyRandom.Next(0, EnforcerHidePoints.Count)];
     }
     IEnumerator StartActiveCamo() {
-        timeElapsed += Time.deltaTime;
-        LerpPos = Mathf.Lerp(0, 1, timeElapsed / ActiveCamoLerpTime);
-        foreach (Material NextMat in EnforcerMatList) {
-            NextMat.SetFloat("", LerpPos);
+        while ((timeElapsed / ActiveCamoLerpTime) < 1) { 
+            timeElapsed += Time.deltaTime;
+            LerpPos = Mathf.Lerp(1, 0, timeElapsed / ActiveCamoLerpTime);
+            LogMessage($"Active Camo at {(1 - LerpPos) * 100}%...");
+            foreach (Material NextMat in EnforcerMatList) {
+                NextMat.SetFloat("_TextureLerp", LerpPos); 
+            }
         }
-        if (timeElapsed / ActiveCamoLerpTime >= 1) {
-            EnforcerActiveCamoState = true;
-            yield return null;
-        }
-    }
-    IEnumerator StopActiveCamo() {
+        EnforcerActiveCamoState = true;
         yield return null;
     }
+    IEnumerator StopActiveCamo() {
+        while ((timeElapsed / ActiveCamoLerpTime) < 1) {
+            timeElapsed += Time.deltaTime;
+            LerpPos = Mathf.Lerp(0, 1, timeElapsed / ActiveCamoLerpTime);
+            LogMessage($"Active Camo at {(1 - LerpPos) * 100}%...");
+            foreach (Material NextMat in EnforcerMatList) {
+                NextMat.SetFloat("_TextureLerp", LerpPos);
+            }
+        }
+        EnforcerActiveCamoState = true;
+        yield return null;
+    }
+
+    private bool CheckPlayerLOSForEnforcer(PlayerControllerB player, int range = 45, float width = 60) {
+        float num = Vector3.Distance(player.transform.position, eye.position);
+        return num < (float)range && (Vector3.Angle(player.playerEye.transform.forward, eye.position - player.gameplayCamera.transform.position) < width);
+    }
+
+
 
     IEnumerator SearchAreaForPlayer() {
         SetDestinationToPosition(LastKnownTargetPlayerPosition);

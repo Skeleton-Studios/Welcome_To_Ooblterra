@@ -141,6 +141,28 @@ public class WTOEnemy : EnemyAI {
         return;
     }
 
+    public bool IsTargetPlayerWithinLOS(PlayerControllerB player, int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false) {
+        float DistanceToTarget = Vector3.Distance(transform.position, player.gameplayCamera.transform.position);
+        bool TargetInDistance = DistanceToTarget < (float)range;
+        float AngleToTarget = Vector3.Angle(eye.transform.forward, player.transform.position - player.gameplayCamera.transform.position);
+        bool TargetWithinViewCone = AngleToTarget < width;
+        bool TargetWithinProxAwareness = DistanceToTarget < proximityAwareness;
+        bool LOSBlocked = (DoLinecast ? Physics.Linecast(eye.transform.position, player.transform.position, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore) : false);
+        if (PrintResults) {
+            LogMessage($"Target in Distance: {TargetInDistance} ({DistanceToTarget})" +
+                $"Target within view cone: {TargetWithinViewCone} ({AngleToTarget})" +
+                $"LOSBlocked: {LOSBlocked}");
+        }
+        return (TargetInDistance && TargetWithinViewCone) || TargetWithinProxAwareness && !LOSBlocked;
+    }
+    private bool IsTargetPlayerWithinLOS(int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true) {
+        if(targetPlayer == null) {
+            LogMessage("Target Player LOS check called with null target player; returning false!");
+            return false;
+        }
+        return IsTargetPlayerWithinLOS(targetPlayer, range, width, proximityAwareness, DoLinecast);
+    }
+
     internal float DistanceFromTargetPlayer() {
         if(targetPlayer == null) {
             LogMessage($"{this} attempted DistanceFromTargetPlayer with null target; returning -1!");
@@ -150,6 +172,9 @@ public class WTOEnemy : EnemyAI {
     }
     internal bool PlayerWithinRange(float Range) {
         return DistanceFromTargetPlayer() <= Range;
+    }
+    internal bool PlayerWithinRange(PlayerControllerB player, float Range) {
+        return DistanceFromTargetPlayer(player) <= Range;
     }
     internal float DistanceFromTargetPlayer(PlayerControllerB player) {
         return Vector3.Distance(player.transform.position, this.transform.position);
