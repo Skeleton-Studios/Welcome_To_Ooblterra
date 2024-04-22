@@ -75,7 +75,7 @@ internal class CursedEffigy : GrabbableObject {
         NetworkObjectReference MimicNetObject = RoundManager.Instance.SpawnEnemyGameObject(MimicSpawnPos, 0, -1, TheMimic);
 
         if (MimicNetObject.TryGet(out var networkObject)) {
-            Debug.Log("Got network object for Ghost Player");
+            WTOBase.WTOLogSource.LogMessage("Got network object for Ghost Player");
             MaskedPlayerEnemy MimicScript = networkObject.GetComponent<MaskedPlayerEnemy>();
             MimicScript.mimickingPlayer = previousPlayerHeldBy;
             Material suitMaterial = SuitPatch.GhostPlayerSuit;
@@ -111,7 +111,7 @@ internal class CursedEffigy : GrabbableObject {
         if (netObject == null) {
             yield break;
         }
-        Debug.Log("Got network object for Ghost Player enemy client");
+        WTOBase.WTOLogSource.LogMessage("Got network object for Ghost Player enemy client");
         MaskedPlayerEnemy MimicReference = netObject.GetComponent<MaskedPlayerEnemy>();
         MimicReference.mimickingPlayer = previousPlayerHeldBy;
         Material suitMaterial = SuitPatch.GhostPlayerSuit;

@@ -31,10 +31,10 @@ public class WTOBase : BaseUnityPlugin {
     static Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
     private const string modGUID = "SkullCrusher.WTO";
     private const string modName = "Welcome To Ooblterra";
-    private const string modVersion = "0.8";
+    private const string modVersion = "1.0";
 
     private readonly Harmony WTOHarmony = new Harmony(modGUID);
-    internal ManualLogSource WTOLogSource;
+    public static ManualLogSource WTOLogSource;
     public static WTOBase Instance;
 
     public static AssetBundle LevelAssetBundle;
@@ -167,16 +167,19 @@ public class WTOBase : BaseUnityPlugin {
         if (Application.platform == RuntimePlatform.WindowsEditor) {
             string PathMinusFileType = PathToAsset.Substring(17);
             PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
-            Debug.Log($"Loading {PathMinusFileType} from resources folder...");
+            WTOLogSource.LogMessage($"Loading {PathMinusFileType} from resources folder...");
             return Resources.Load<T>(PathMinusFileType);
         } else {
-            Debug.Log($"Loading {PathToAsset} from {Bundle}...");
+            //Some postprocessing on this text to make the readout a little cleaner
+            int LengthOfAssetName = PathToAsset.Length - PathToAsset.LastIndexOf("/");
+            string CleanAssetName = PathToAsset.Substring(PathToAsset.LastIndexOf("/"), LengthOfAssetName);
+            WTOLogSource.LogMessage($"Loading {CleanAssetName} from {Bundle.name}...");
             return Bundle.LoadAsset<T>(PathToAsset);
         }
     }
     public static void LogToConsole(string text) {
         text = "=======" + text + "=======";
-        Debug.Log(text);
+        WTOLogSource.LogMessage(text);
     }
     public enum AllowedState {
         Off = 0,

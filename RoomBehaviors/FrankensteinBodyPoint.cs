@@ -62,7 +62,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         PutObjectOnTableServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
         player.DiscardHeldObject(placeObject: true, TableBodyContainer, vector, matchRotationOfParent: false);
         HasBody = true;
-        Debug.Log("Body placed on frankenstein point");
+        WTOBase.WTOLogSource.LogMessage("Body placed on frankenstein point");
     }
 
     [ServerRpc]
@@ -70,7 +70,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {
                 PutObjectOnTableClientRpc(grabbableObjectNetObject);
         } else {
-            Debug.LogError("ServerRpc: Could not find networkobject in the object that was placed on table.");
+            WTOBase.WTOLogSource.LogError("ServerRpc: Could not find networkobject in the object that was placed on table.");
         }
     }
     [ClientRpc]
@@ -78,7 +78,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {
             lastObjectAddedToTable.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
         } else {
-            Debug.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
+            WTOBase.WTOLogSource.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
         }
     }
 }

@@ -31,7 +31,7 @@ internal class MonsterPatch {
         var testLevel = __instance.testAllEnemiesLevel;
         var firstEnemy = testLevel.Enemies.FirstOrDefault(); //Grab all of the test enemies 
         if (firstEnemy == null) { //check to see if the list of enemies actually exists
-            Debug.Log("Failed to get first enemy for debug list!");
+            WTOBase.WTOLogSource.LogMessage("Failed to get first enemy for debug list!");
             return;
         }
             
@@ -46,7 +46,7 @@ internal class MonsterPatch {
                     enemyType = InsideEnemy.enemyType,
                     rarity = InsideEnemy.rarity
                 });
-                Debug.Log("Added " + InsideEnemy.enemyType.name + "To debug list");
+                WTOBase.WTOLogSource.LogMessage("Added " + InsideEnemy.enemyType.name + "To debug list");
             }
         }
 
@@ -57,7 +57,7 @@ internal class MonsterPatch {
                     enemyType = DaytimeEnemy.enemyType,
                     rarity = DaytimeEnemy.rarity
                 });
-                Debug.Log("Added " + DaytimeEnemy.enemyType.name + "To debug list");
+                WTOBase.WTOLogSource.LogMessage("Added " + DaytimeEnemy.enemyType.name + "To debug list");
             }
         }
 
@@ -66,7 +66,7 @@ internal class MonsterPatch {
             enemyType = AdultWandererContainer[0].enemyType,
             rarity = AdultWandererContainer[0].rarity
         });
-        Debug.Log("Added " + AdultWandererContainer[0].enemyType.name + "To debug list");
+        WTOBase.WTOLogSource.LogMessage("Added " + AdultWandererContainer[0].enemyType.name + "To debug list");
 
         EnemiesInList = true;
     }
@@ -119,6 +119,6 @@ public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> 
     LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
     LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
     EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
-    Debug.Log("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
+    WTOBase.WTOLogSource.LogMessage("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
 }
 }

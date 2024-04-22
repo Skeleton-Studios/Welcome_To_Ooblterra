@@ -429,7 +429,7 @@ public class EyeSecAI : WTOEnemy {
             StunGrenadeItem.StunExplosion(transform.position, affectAudio: false, 2f, 4f, 2f);
         } catch (Exception e) {
             WTOBase.LogToConsole("EyeSec could not stun flash! Error listed: ");
-            Debug.LogError(e);
+            WTOBase.WTOLogSource.LogError(e);
         }
     }
     public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {

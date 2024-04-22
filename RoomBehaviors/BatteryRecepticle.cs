@@ -114,7 +114,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
             return;
         }
-        Debug.Log("Placing battery in recepticle");
+        WTOBase.WTOLogSource.LogMessage("Placing battery in recepticle");
         Vector3 vector = BatteryTransform.position;
         if (parentTo != null) {
             vector = parentTo.transform.InverseTransformPoint(vector);
@@ -125,7 +125,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
         InsertedBattery.transform.rotation = BatteryTransform.rotation;
         InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
-        Debug.Log("discard held object called from placeobject");
+        WTOBase.WTOLogSource.LogMessage("discard held object called from placeobject");
         if (InsertedBattery.HasCharge) {
             TurnOnPowerServerRpc();
         }
@@ -143,7 +143,7 @@ public class BatteryRecepticle : NetworkBehaviour {
             BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
             InsertedBattery = BatteryNetObj.GetComponentInChildren<WTOBattery>();
         } else {
-            Debug.LogError("BATTERY COULD NOT BE CONVERTED.");
+            WTOBase.WTOLogSource.LogError("BATTERY COULD NOT BE CONVERTED.");
         }
         BatteryNetObj.transform.rotation = BatteryTransform.rotation;
         RecepticleHasBattery = true;

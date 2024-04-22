@@ -2,6 +2,7 @@
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Items;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
 public class FrankensteinChemPoint : NetworkBehaviour {
@@ -44,7 +45,7 @@ public class FrankensteinChemPoint : NetworkBehaviour {
         if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
             return;
         }
-        Debug.Log("Placing object in storage");
+        WTOBase.WTOLogSource.LogMessage("Placing chem on chempoint");
         Vector3 vector = itemPlacementPosition(playerWhoTriggered.gameplayCamera.transform, playerWhoTriggered.currentlyHeldObjectServer);
         if(vector == Vector3.zero) {
             return;
@@ -54,7 +55,7 @@ public class FrankensteinChemPoint : NetworkBehaviour {
         }
         HeldChemical = (Chemical)playerWhoTriggered.currentlyHeldObjectServer;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector, matchRotationOfParent: false);
-        Debug.Log("discard held object called from placeobject");
+        WTOBase.WTOLogSource.LogMessage("discard held object called from placeobject");
         SetChemStateServerRpc(true, (int)HeldChemical.GetCurrentColor());
     }
     private Vector3 itemPlacementPosition(Transform gameplayCamera, GrabbableObject heldObject) {
