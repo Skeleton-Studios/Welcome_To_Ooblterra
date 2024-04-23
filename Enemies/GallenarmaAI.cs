@@ -52,11 +52,6 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].agent.speed = 5f;
             GallenarmaList[enemyIndex].StartSearch(GallenarmaList[enemyIndex].transform.position, GallenarmaList[enemyIndex].RoamLab);
             GallenarmaList[enemyIndex].HasBeenEnragedThisCycle = false;
-            /*
-            if (GallenarmaList[enemyIndex].IsOwner) { 
-                canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
-            }
-            */
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (!GallenarmaList[enemyIndex].RoamLab.inProgress) {
