@@ -15,10 +15,13 @@ public class BabyLurkerProjectile : MonoBehaviour {
     public GameObject self;
 
     private void OnTriggerEnter(Collider other) {
-        WTOBase.LogToConsole("Collision registered!");
+        WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
         if (other.gameObject.CompareTag("Player")) {
             victim.DamagePlayer(5, causeOfDeath: CauseOfDeath.Unknown);
+        }
+        if(other.GetComponent<BabyLurkerProjectile>() != null || other.GetComponent<BabyLurkerAI>() != null) {
+            return;
         }
         DestroySelf();
     }

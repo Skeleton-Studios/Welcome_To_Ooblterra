@@ -141,6 +141,14 @@ public class WTOEnemy : EnemyAI {
         return;
     }
 
+    public PlayerControllerB IsAnyPlayerWithinLOS(int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false) {
+        foreach(PlayerControllerB Player in StartOfRound.Instance.allPlayerScripts) {
+            if(IsTargetPlayerWithinLOS(Player, range, width, proximityAwareness, DoLinecast, PrintResults)) {  
+                return Player; 
+            }
+        }
+        return null;
+    }
     public bool IsTargetPlayerWithinLOS(PlayerControllerB player, int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false) {
         float DistanceToTarget = Vector3.Distance(transform.position, player.gameplayCamera.transform.position);
         bool TargetInDistance = DistanceToTarget < (float)range;
