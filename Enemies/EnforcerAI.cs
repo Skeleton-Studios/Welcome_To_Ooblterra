@@ -302,7 +302,7 @@ public class EnforcerAI : WTOEnemy {
         if (CheckLineOfSightForPosition(targetPlayer.gameplayCamera.transform.position)) {
             LastKnownTargetPlayerPosition = targetPlayer.gameplayCamera.transform.position;
             EnforcerSeesPlayer = true;
-        } else {
+        } else { 
         }
     }
 
