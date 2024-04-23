@@ -282,7 +282,6 @@ public class EnforcerAI : WTOEnemy {
     public override void Start() {
         MyValidState = PlayerState.Inside;
         InitialState = new GoToHidingSpot();
-        PrintDebugs = true;
         EnforcerID++;
         WTOEnemyID = EnforcerID;
         LogMessage($"Adding Enforcer {this} #{EnforcerID}");
