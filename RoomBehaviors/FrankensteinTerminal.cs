@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Items;
+using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.RoomBehaviors;
 using static Welcome_To_Ooblterra.Items.Chemical;
@@ -389,8 +390,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
             WTOBase.WTOLogSource.LogMessage("No nav mesh found; no WTOMimic could be created");
             return;
         }
-        const int MimicIndex = 12;
-        EnemyType TheMimic = StartOfRound.Instance.levels[8].Enemies[MimicIndex].enemyType;
+        //const int MimicIndex = 12;
+        EnemyType TheMimic = MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Masked").enemyType;
         WTOBase.WTOLogSource.LogMessage($"Mimic Found: {TheMimic != null}");
 
         WTOBase.LogToConsole($"NAVMESHPOS: {navMeshPosition}");
