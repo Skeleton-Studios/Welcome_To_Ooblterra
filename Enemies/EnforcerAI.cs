@@ -32,6 +32,7 @@ public class EnforcerAI : WTOEnemy {
     public Material ActiveCamoMaterial; 
     public float EyeSweepAnimSeconds = 2f;
     public float ActiveCamoLerpTime = 2f;
+    public AudioClip[] RandomIdleSounds;
 
     private List<Material> EnforcerMatList = new();
 
@@ -116,6 +117,7 @@ public class EnforcerAI : WTOEnemy {
             //this might start pushing the player if the player stands still
             if (EnforcerList[enemyIndex].PlayerWithinRange(2f)) {
                 EnforcerList[enemyIndex].agent.speed = 0f;
+                EnforcerList[enemyIndex].RandomlyPlayIdleSound();
                 return;
             }
             EnforcerList[enemyIndex].agent.speed = StalkSpeed;
@@ -274,7 +276,8 @@ public class EnforcerAI : WTOEnemy {
     private bool EnforcerShouldKeepTrackOfTargetPlayer;
     private Vector3 LastKnownTargetPlayerPosition;
     private bool EnforcerSearchComplete = false;
-    private bool EnforcerSeesPlayer; 
+    private bool EnforcerSeesPlayer;
+    private float IdleSoundCooldownSeconds = 7f;
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -385,5 +388,16 @@ public class EnforcerAI : WTOEnemy {
         EnforcerSearchComplete = true;
         yield return null;
 
+    }
+
+    private void RandomlyPlayIdleSound() {
+        if(IdleSoundCooldownSeconds > 0) {
+            MoveTimerValue(ref IdleSoundCooldownSeconds);
+            return;
+        }
+        if(enemyRandom.Next(0, 100) > 45) {
+            creatureVoice.PlayOneShot(RandomIdleSounds[enemyRandom.Next(0, RandomIdleSounds.Count())]);
+            IdleSoundCooldownSeconds = 7f;
+        }
     }
 }
