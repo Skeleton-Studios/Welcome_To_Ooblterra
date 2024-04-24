@@ -4,11 +4,12 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies.EnemyThings;
-public class BabyLurkerProjectile : MonoBehaviour {
+public class BabyLurkerProjectile : NetworkBehaviour {
 
     public AudioSource Noisemaker;
     public ParticleSystem ExplodeParticle;

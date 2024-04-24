@@ -1,4 +1,5 @@
 ﻿using GameNetcodeStuff;
+using LethalLib.Modules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,42 +7,66 @@ using System.Text;
 using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem.XR;
 using Welcome_To_Ooblterra.Enemies;
+using Welcome_To_Ooblterra.Enemies.EnemyThings;
 using Welcome_To_Ooblterra.Patches;
 
 namespace Welcome_To_Ooblterra.Things;
 public class BabyLurkerEgg : NetworkBehaviour {
 
     private System.Random enemyRandom;
-    public bool BabiesSpawned;
-    public int BabiesToSpawn = 35;
+    private GameObject HiveProjectile;
+    public GameObject HiveMesh;
+    public GameObject projectileTemplate;
+    public Transform DropTransform;
+    private float SecondsUntilNextSpawnAttempt = 25f;
 
-    private void Start() { 
-        enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-    }
     private void OnTriggerStay(Collider other) {
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
         if (other.gameObject.CompareTag("Player")) {
-            SpawnBabyLurkersServerRpc((int)victim.actualClientId);
+            SpawnProjectileServerRpc((int)victim.actualClientId);
         }
-        if (BabiesSpawned) {
-            return;
-        }   
     }
+    private void Start() { 
+        enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        //Raycast up to the ceiling. this will be where we put the base of the egg
+    }
+    private void Update() {
+        if(SecondsUntilNextSpawnAttempt > 0) {
+            SecondsUntilNextSpawnAttempt -= Time.deltaTime;
+            return;
+        }
+
+        if(enemyRandom.Next(0, 100) < 60) {
+            SpawnEggServerRpc();
+        } else {
+            SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
+        }
+    }
+
+
+
     [ServerRpc]
-    public void SpawnBabyLurkersServerRpc(int targetID) {
-        SpawnBabyLurkersClientRpc(targetID);
+    public void SpawnEggServerRpc() {
+        SpawnEggClientRpc();
     }
     [ClientRpc]
-    public void SpawnBabyLurkersClientRpc(int targetID){ 
-        BabiesSpawned = true;
-        GameObject BabyLurkerPrefab = MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Baby Lurker").enemyType.enemyPrefab;
-        for (int i = 0; i < BabiesToSpawn; i++) { 
-            GameObject BabyLurker = Instantiate(BabyLurkerPrefab);
-            if (base.IsServer) {
-                BabyLurker.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
-                BabyLurker.gameObject.GetComponentInChildren<BabyLurkerAI>().SetTargetServerRpc(targetID);
-            }
-        }
+    public void SpawnEggClientRpc() {
+        RaycastHit Linecast;
+        Physics.Linecast(transform.position, transform.up * 5000, out Linecast, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore);
+        GameObject.Instantiate(HiveMesh, Linecast.transform.position, Quaternion.Euler(Linecast.normal));
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void SpawnProjectileServerRpc(int targetID) {
+        SpawnProjectileClientRpc(targetID);
+    }
+    [ClientRpc]
+    public void SpawnProjectileClientRpc(int targetID){
+        HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
+        HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;
+        Destroy(this);
+        
     }
 }

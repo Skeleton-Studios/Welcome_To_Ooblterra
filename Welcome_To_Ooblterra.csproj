@@ -202,6 +202,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enemies\AdultWandererAI.cs" />
+    <Compile Include="Enemies\EnemyThings\BabyLurkerEggProjectile.cs" />
     <Compile Include="Enemies\EnemyThings\BabyLurkerProjectile.cs" />
     <Compile Include="Enemies\EnemyThings\EnforcerHidePoint.cs" />
     <Compile Include="Enemies\OoblGhostAI.cs" />
