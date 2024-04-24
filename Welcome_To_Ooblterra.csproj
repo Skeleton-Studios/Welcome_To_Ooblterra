@@ -62,9 +62,9 @@
     <Reference Include="BepInEx.AssemblyPublicizer, Version=0.4.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\BepInEx.AssemblyPublicizer.0.4.1\lib\netstandard2.0\BepInEx.AssemblyPublicizer.dll</HintPath>
     </Reference>
-    <Reference Include="LethalLevelLoader, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+    <Reference Include="LethalLevelLoader, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Pineguys-LethalLevelLoaderFixedV50\LethalLevelLoader.dll</HintPath>
+      <HintPath>..\..\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\IAmBatby-LethalLevelLoader\LethalLevelLoader.dll</HintPath>
     </Reference>
     <Reference Include="LethalLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
