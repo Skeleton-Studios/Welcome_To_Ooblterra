@@ -44,7 +44,7 @@ public class BabyLurkerAI : WTOEnemy {
             BabyLurkerList[enemyIndex].SetDestinationToPosition(BabyLurkerList[enemyIndex].targetPlayer.transform.position);
         } 
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-
+             
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new AnyPlayerInLOS()
