@@ -5,6 +5,7 @@ using System.Security.AccessControl;
 using System.Text;
 using System.Threading.Tasks;
 using GameNetcodeStuff;
+using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Properties;
@@ -79,12 +80,18 @@ public class BearTrap : MonoBehaviour {
     }
 
     private void TryBearTrapRise() {
-        if(BearTrapRandom.Next(0, 100) > 70) {
-            MoveBearTrap(true);
+        if (BearTrapRandom.Next(0, 100) > 70) {
+            MoveBearTrapServerRpc(true);
             return;
         }
         SecondsUntilNextRiseAttempt = BearTrapRandom.Next(35, 80);
     }
+
+    [ServerRpc]
+    public void MoveBearTrapServerRpc(bool ShouldRaise) {
+        MoveBearTrap(ShouldRaise);
+    }
+
     private void MoveBearTrap(bool ShouldRaise) {
         IsBearTrapRaised = ShouldRaise;
         if (ShouldRaise) {

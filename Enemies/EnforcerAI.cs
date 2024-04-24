@@ -329,7 +329,6 @@ public class EnforcerAI : WTOEnemy {
             StartCoroutine(StopActiveCamo());
         }
     }
-
     public void DetermineNextHidePoint() {
         if(EnforcerHidePoints == null) {
             EnforcerHidePoints = FindObjectsOfType<EnforcerHidePoint>().ToList();
