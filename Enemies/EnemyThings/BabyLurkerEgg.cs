@@ -11,6 +11,7 @@ using UnityEngine.InputSystem.XR;
 using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
 using Welcome_To_Ooblterra.Patches;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
 public class BabyLurkerEgg : NetworkBehaviour {
@@ -20,29 +21,32 @@ public class BabyLurkerEgg : NetworkBehaviour {
     public GameObject HiveMesh;
     public GameObject projectileTemplate;
     public Transform DropTransform;
+    private bool EggSpawned = false;
+    private bool EggDropped = false;
     private float SecondsUntilNextSpawnAttempt = 25f;
 
     private void OnTriggerStay(Collider other) {
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
-        if (other.gameObject.CompareTag("Player")) {
-            SpawnProjectileServerRpc((int)victim.actualClientId);
+        if (other.gameObject.CompareTag("Player") && EggSpawned && !EggDropped) {
+            SpawnProjectileServerRpc((int)victim.actualClientId); 
         }
     }
-    private void Start() { 
+    private void Start() {
         enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-        //Raycast up to the ceiling. this will be where we put the base of the egg
+        
     }
     private void Update() {
         if(SecondsUntilNextSpawnAttempt > 0) {
             SecondsUntilNextSpawnAttempt -= Time.deltaTime;
             return;
         }
-
+        SpawnEggClientRpc();
+        /*
         if(enemyRandom.Next(0, 100) < 1000) {
-            SpawnEggServerRpc();
+            
         } else {
             SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
-        }
+        }*/
     }
 
 
@@ -53,20 +57,28 @@ public class BabyLurkerEgg : NetworkBehaviour {
     }
     [ClientRpc]
     public void SpawnEggClientRpc() {
-        RaycastHit Linecast; 
-        Physics.Linecast(transform.position, transform.up * 5000, out Linecast, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore);
-        HiveMesh.transform.position = Linecast.transform.position;
+        if (EggSpawned) {
+            return;
+        }
+        HiveMesh.SetActive(true);
+        WTOBase.LogToConsole($"Lurker Egg active!");
+        EggSpawned = true;
     }
 
     [ServerRpc(RequireOwnership = false)]
     public void SpawnProjectileServerRpc(int targetID) {
         SpawnProjectileClientRpc(targetID);
     }
-    [ClientRpc]
+    [ClientRpc] 
     public void SpawnProjectileClientRpc(int targetID){
+        if (EggDropped) {
+            return;
+        }
+        WTOBase.LogToConsole($"Lurker egg projectile being spawned!");
         HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
         HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;
-        //Destroy(this);
+        EggDropped = true;
+        DestroyImmediate(this.gameObject);
         
     }
 }

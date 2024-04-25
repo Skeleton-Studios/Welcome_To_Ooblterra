@@ -165,7 +165,7 @@ public class WTOEnemy : EnemyAI {
     }
     public bool IsTargetPlayerWithinLOS(int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false) {
         if(targetPlayer == null) {
-            LogMessage("Target Player LOS check called with null target player; returning false!");
+            LogMessage($"{this.__getTypeName()} called Target Player LOS check called with null target player; returning false!");
             return false;
         }
         return IsTargetPlayerWithinLOS(targetPlayer, range, width, proximityAwareness, DoLinecast, PrintResults);

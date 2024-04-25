@@ -31,7 +31,8 @@ public class BabyLurkerAI : WTOEnemy {
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new TargetPlayerInLOS(),
-            new TargetPlayerNotInLOS()
+            new TargetPlayerNotInLOS(),
+            new AnyPlayerInLOS()
         };
 
     }
@@ -111,7 +112,7 @@ public class BabyLurkerAI : WTOEnemy {
         BabyLurkerID++;
         WTOEnemyID = BabyLurkerID;
         agent.speed = 7f;
-        SetTargetServerRpc((int)StartOfRound.Instance.allPlayerScripts[0].playerClientId);
+        //SetTargetServerRpc((int)StartOfRound.Instance.allPlayerScripts[0].playerClientId);
         LogMessage($"Adding BabyLurker {this} #{BabyLurkerID}");
         BabyLurkerList.Add(BabyLurkerID, this);
         base.Start();
@@ -119,9 +120,6 @@ public class BabyLurkerAI : WTOEnemy {
     }
 
     public override void Update() {
-        if (ThrowProjectile) {
-            LaunchProjectile(LaunchTransform);
-        } 
         base.Update();
     }
 
