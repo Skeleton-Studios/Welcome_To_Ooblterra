@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
+using Welcome_To_Ooblterra.Things;
 
 namespace Welcome_To_Ooblterra.Enemies.EnemyThings;
 public class BabyLurkerProjectile : NetworkBehaviour {
@@ -21,7 +22,7 @@ public class BabyLurkerProjectile : NetworkBehaviour {
         if (other.gameObject.CompareTag("Player")) {
             victim.DamagePlayer(5, causeOfDeath: CauseOfDeath.Unknown);
         }
-        if(other.GetComponent<BabyLurkerProjectile>() != null || other.GetComponent<BabyLurkerAI>() != null) {
+        if(other.GetComponent<BabyLurkerProjectile>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerEggProjectile>() || other.GetComponent<BabyLurkerEgg>()) {
             return;
         }
         DestroySelf();

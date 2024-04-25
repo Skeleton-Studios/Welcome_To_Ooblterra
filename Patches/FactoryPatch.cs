@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine.AI;
 using LethalLevelLoader;
+using UnityEngine.Rendering;
 
 namespace Welcome_To_Ooblterra.Patches;
 internal class FactoryPatch {
@@ -43,6 +44,7 @@ internal class FactoryPatch {
         for (int MapObjectIndex = 0; MapObjectIndex < __instance.currentLevel.spawnableMapObjects.Length; MapObjectIndex++) {
             List<RandomMapObject> ValidRandomSpawnList = new List<RandomMapObject>();
             int MapObjectsToSpawn = (int)__instance.currentLevel.spawnableMapObjects[MapObjectIndex].numberToSpawn.Evaluate((float)MapHazardRandom.NextDouble());
+            WTOBase.WTOLogSource.LogInfo($"Attempting to spawn {__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn}; Quantity: {MapObjectsToSpawn}");
             if (__instance.increasedMapHazardSpawnRateIndex == MapObjectIndex) {
                 MapObjectsToSpawn = Mathf.Min(MapObjectsToSpawn * 2, 150);
             }
@@ -50,19 +52,30 @@ internal class FactoryPatch {
                 continue;
             }
             for (int NextSpawnIndex = 0; NextSpawnIndex < AllRandomSpawnList.Length; NextSpawnIndex++) {
-                if (AllRandomSpawnList[NextSpawnIndex].spawnablePrefabs.Contains(__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn)) {
-                    ValidRandomSpawnList.Add(AllRandomSpawnList[NextSpawnIndex]);
+                string List = "";
+                foreach (GameObject SpawnablePrefab in AllRandomSpawnList[NextSpawnIndex].spawnablePrefabs) {
+                    if (Equals(SpawnablePrefab, __instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn)) {
+
+                        ValidRandomSpawnList.Add(AllRandomSpawnList[NextSpawnIndex]);
+                    }
+                    List += SpawnablePrefab+ ", ";
                 }
+                //WTOBase.WTOLogSource.LogInfo($"Spawn point {AllRandomSpawnList[NextSpawnIndex].name} contains: {List}");
+                
+
             }
+            //WTOBase.WTOLogSource.LogInfo($"Valid Spawns Found: {ValidRandomSpawnList.Count}");
             for (int i = 0; i < MapObjectsToSpawn; i++) {
                 //lol
                 if(ValidRandomSpawnList.Count <= 0) {
-                    continue;
+                    WTOBase.WTOLogSource.LogInfo($"Objects will not spawn; no valid random spots found!");
+                    break;
                 }
                 RandomMapObject RandomSpawn = ValidRandomSpawnList[MapHazardRandom.Next(0, ValidRandomSpawnList.Count)];
                 Vector3 SpawnPos = RandomSpawn.transform.position;
                 GameObject NewHazard = UnityEngine.Object.Instantiate(__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn, SpawnPos, RandomSpawn.transform.rotation, __instance.mapPropsContainer.transform);
                 NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+                WTOBase.WTOLogSource.LogInfo($"Spawned new {NewHazard}"); 
                 ValidRandomSpawnList.Remove(RandomSpawn);
             }
         }

@@ -41,7 +41,7 @@ internal class MonsterPatch {
 
         enemies.Clear();
         foreach(SpawnableEnemyWithRarity InsideEnemy in InsideEnemies) { 
-            if (!enemies.Contains(InsideEnemy)) {
+            if (!enemies.Contains(InsideEnemy)){
                 enemies.Add(new SpawnableEnemyWithRarity {
                     enemyType = InsideEnemy.enemyType,
                     rarity = InsideEnemy.rarity

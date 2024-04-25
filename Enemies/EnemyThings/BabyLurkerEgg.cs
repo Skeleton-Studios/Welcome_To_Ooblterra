@@ -38,7 +38,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
             return;
         }
 
-        if(enemyRandom.Next(0, 100) < 60) {
+        if(enemyRandom.Next(0, 100) < 1000) {
             SpawnEggServerRpc();
         } else {
             SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
@@ -53,9 +53,9 @@ public class BabyLurkerEgg : NetworkBehaviour {
     }
     [ClientRpc]
     public void SpawnEggClientRpc() {
-        RaycastHit Linecast;
+        RaycastHit Linecast; 
         Physics.Linecast(transform.position, transform.up * 5000, out Linecast, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore);
-        GameObject.Instantiate(HiveMesh, Linecast.transform.position, Quaternion.Euler(Linecast.normal));
+        HiveMesh.transform.position = Linecast.transform.position;
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -66,7 +66,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
     public void SpawnProjectileClientRpc(int targetID){
         HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
         HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;
-        Destroy(this);
+        //Destroy(this);
         
     }
 }

@@ -16,12 +16,12 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
 
     public int TargetID;
     public int BabiesToSpawn = 35;
-
+     
     private void OnTriggerEnter(Collider other) {
         WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
-        if(other.GetComponent<BabyLurkerEgg>() != null) {
+        if (other.GetComponent<BabyLurkerEgg>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerProjectile>() != null) {
             return;
-        }
+        } 
         GameObject BabyLurkerPrefab = MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Baby Lurker").enemyType.enemyPrefab;
         for (int i = 0; i < BabiesToSpawn; i++) {
             GameObject BabyLurker = Instantiate(BabyLurkerPrefab);
