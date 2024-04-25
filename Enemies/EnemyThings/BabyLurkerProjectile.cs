@@ -20,7 +20,7 @@ public class BabyLurkerProjectile : NetworkBehaviour {
         WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
         if (other.gameObject.CompareTag("Player")) {
-            victim.DamagePlayer(5, causeOfDeath: CauseOfDeath.Unknown);
+            victim.DamagePlayer(15, causeOfDeath: CauseOfDeath.Unknown);
         }
         if(other.GetComponent<BabyLurkerProjectile>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerEggProjectile>() || other.GetComponent<BabyLurkerEgg>()) {
             return;

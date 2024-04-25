@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 using UnityEngine.Networking;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
@@ -78,7 +79,7 @@ public class WTOEnemy : EnemyAI {
         base.Update();
         AITimer++;
         //don't run enemy ai if they're dead
-            if (isEnemyDead || !ventAnimationFinished) {
+            if (isEnemyDead) {
                 return;
             }
         bool RunUpdate = true;
@@ -170,6 +171,28 @@ public class WTOEnemy : EnemyAI {
         }
         return IsTargetPlayerWithinLOS(targetPlayer, range, width, proximityAwareness, DoLinecast, PrintResults);
     }
+
+    public PlayerControllerB FindNearestPlayer(bool ValidateNav = false) {
+        PlayerControllerB Result = null;
+        float BestDistance = 20000;
+        for (int i = 0; i < StartOfRound.Instance.allPlayerScripts.Length; i++) {
+            PlayerControllerB NextPlayer = StartOfRound.Instance.allPlayerScripts[i];
+            if (ValidateNav && !agent.CalculatePath(NextPlayer.transform.position, path1)) {
+                continue;
+            }
+            float PlayerToMonster = Vector3.Distance(this.transform.position, NextPlayer.transform.position);
+            if (PlayerToMonster < BestDistance) {
+                Result = NextPlayer;
+                BestDistance = PlayerToMonster;
+            }
+        }
+        
+        if(Result == null) {
+            LogMessage($"There is somehow no closest player. get fucked");
+        }
+        return Result;
+    }
+
 
     internal float DistanceFromTargetPlayer() {
         if(targetPlayer == null) {

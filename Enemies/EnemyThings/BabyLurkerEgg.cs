@@ -78,7 +78,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
         HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;
         EggDropped = true;
-        DestroyImmediate(this.gameObject);
-        
+        Destroy(HiveMesh); 
+         
     }
 }
