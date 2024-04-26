@@ -21,9 +21,10 @@ public class BabyLurkerEgg : NetworkBehaviour {
     public GameObject HiveMesh;
     public GameObject projectileTemplate;
     public Transform DropTransform;
+    public AudioClip BreakoffSound;
     private bool EggSpawned = false;
     private bool EggDropped = false;
-    private float SecondsUntilNextSpawnAttempt = 25f;
+    private float SecondsUntilNextSpawnAttempt = 15f;
 
     private void OnTriggerStay(Collider other) {
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
@@ -36,17 +37,18 @@ public class BabyLurkerEgg : NetworkBehaviour {
         
     }
     private void Update() {
+        if (EggSpawned) {
+            return;
+        }
         if(SecondsUntilNextSpawnAttempt > 0) {
             SecondsUntilNextSpawnAttempt -= Time.deltaTime;
             return;
         }
-        SpawnEggClientRpc();
-        /*
-        if(enemyRandom.Next(0, 100) < 1000) {
-            
+        if(enemyRandom.Next(0, 100) < 60) {
+            SpawnEggClientRpc();
         } else {
             SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
-        }*/
+        }
     }
 
 
@@ -74,6 +76,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         if (EggDropped) {
             return;
         }
+        GetComponent<AudioSource>().PlayOneShot(BreakoffSound);
         WTOBase.LogToConsole($"Lurker egg projectile being spawned!");
         HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
         HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;
