@@ -32,9 +32,9 @@ public class EnforcerAI : WTOEnemy {
     public Material ActiveCamoMaterial; 
     public float EyeSweepAnimSeconds = 2f;
     public float ActiveCamoLerpTime = 2f;
-    public AudioClip[] RandomIdleSounds;
+    public AudioClip[] RandomIdleSounds; 
 
-    private List<Material> EnforcerMatList = new();
+    private List<Material> EnforcerMatList = new(); 
 
     //STATES
     private class GoToHidingSpot : BehaviorState {
@@ -283,6 +283,7 @@ public class EnforcerAI : WTOEnemy {
         MyValidState = PlayerState.Inside;
         InitialState = new GoToHidingSpot();
         EnforcerID++;
+        PrintDebugs = true;
         WTOEnemyID = EnforcerID;
         LogMessage($"Adding Enforcer {this} #{EnforcerID}");
         EnforcerList.Add(EnforcerID, this);
