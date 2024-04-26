@@ -1,21 +1,11 @@
-﻿using DunGen;
-using GameNetcodeStuff;
-using System;
+﻿using GameNetcodeStuff;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Net;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
-using Welcome_To_Ooblterra.Properties;
-using Welcome_To_Ooblterra.Things;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Welcome_To_Ooblterra.Enemies;
-
 
 public class EnforcerAI : WTOEnemy {
 
@@ -42,13 +32,16 @@ public class EnforcerAI : WTOEnemy {
         Vector3 NextDestination;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerMovingToHidePoint = false;
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             EnforcerList[enemyIndex].EnforcerShouldKeepTrackOfTargetPlayer = false;
             EnforcerList[enemyIndex].PotentialTarget = null;
             EnforcerList[enemyIndex].targetPlayer = null;
             EnforcerList[enemyIndex].agent.speed = 8f;
             EnforcerList[enemyIndex].SetActiveCamoState(true);
             EnforcerList[enemyIndex].DetermineNextHidePoint();
-            
+            EnforcerList[enemyIndex].creatureSFX.volume = 1f;
+
+
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (!EnforcerMovingToHidePoint) {
@@ -61,7 +54,7 @@ public class EnforcerAI : WTOEnemy {
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new FoundHidingSpot()
@@ -71,10 +64,12 @@ public class EnforcerAI : WTOEnemy {
     private class WaitForPlayerToPass : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].ReachedNextPoint = false;
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
             EnforcerList[enemyIndex].transform.rotation = EnforcerList[enemyIndex].NextHidePoint.transform.rotation;
             EnforcerList[enemyIndex].ShouldChasePotentialTarget = false;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            EnforcerList[enemyIndex].RandomlyPlayIdleSound(10f);
             //if a player enters range, consider them our potential target
             if (EnforcerList[enemyIndex].PotentialTarget != null) {
 
@@ -111,16 +106,20 @@ public class EnforcerAI : WTOEnemy {
     private class StalkPlayer : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].agent.speed = StalkSpeed;
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             EnforcerList[enemyIndex].EnforcerShouldKeepTrackOfTargetPlayer = true;
+            EnforcerList[enemyIndex].creatureSFX.volume = 0.2f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //this might start pushing the player if the player stands still
             if (EnforcerList[enemyIndex].PlayerWithinRange(2f)) {
                 EnforcerList[enemyIndex].agent.speed = 0f;
+                EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
                 EnforcerList[enemyIndex].RandomlyPlayIdleSound();
                 return;
             }
             EnforcerList[enemyIndex].agent.speed = StalkSpeed;
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             EnforcerList[enemyIndex].SetMovingTowardsTargetPlayer(EnforcerList[enemyIndex].targetPlayer);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -144,7 +143,7 @@ public class EnforcerAI : WTOEnemy {
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new PlayerEnteredAttackRange(),
-            new LostPlayerDuringChase()
+            new LostPlayerDuringChase() 
         };
 
     }
@@ -389,14 +388,14 @@ public class EnforcerAI : WTOEnemy {
 
     }
 
-    private void RandomlyPlayIdleSound() {
+    private void RandomlyPlayIdleSound(float newIdleCooldown = 7f) {
         if(IdleSoundCooldownSeconds > 0) {
             MoveTimerValue(ref IdleSoundCooldownSeconds);
             return;
         }
         if(enemyRandom.Next(0, 100) > 45) {
             creatureVoice.PlayOneShot(RandomIdleSounds[enemyRandom.Next(0, RandomIdleSounds.Count())]);
-            IdleSoundCooldownSeconds = 7f;
+            IdleSoundCooldownSeconds = newIdleCooldown;
         }
     }
 }

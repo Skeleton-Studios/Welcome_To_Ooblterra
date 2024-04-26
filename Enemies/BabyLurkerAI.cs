@@ -15,7 +15,8 @@ public class BabyLurkerAI : WTOEnemy {
     public GameObject projectileTemplate;
     private float launchVelocity = 700f;
     public Transform LaunchTransform;
-    public static int AttackRange = 5; 
+    public static int AttackRange = 5;
+    private static float SecondsUntilCanJump = 3f;
 
     //STATES
     private class Spawn : BehaviorState {
@@ -74,7 +75,7 @@ public class BabyLurkerAI : WTOEnemy {
     //TRANSITIONS
     private class TargetPlayerInLOS : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return BabyLurkerList[enemyIndex].IsTargetPlayerWithinLOS(range: AttackRange, width: 90);
+            return BabyLurkerList[enemyIndex].IsTargetPlayerWithinLOS(range: AttackRange, width: 90) && SecondsUntilCanJump <= 0f;
         }
         public override BehaviorState NextState() {
             return new ThrowSelfAtPlayer();
@@ -110,6 +111,7 @@ public class BabyLurkerAI : WTOEnemy {
 
     public override void Update() {
         base.Update();
+        SecondsUntilCanJump -= Time.deltaTime;
     }
 
     public void LaunchProjectile(Transform LaunchTransform) {
