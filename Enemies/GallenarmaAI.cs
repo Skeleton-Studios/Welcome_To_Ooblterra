@@ -179,7 +179,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             if (!GallenarmaList[enemyIndex].PlayerWithinRange(GallenarmaList[enemyIndex].AttackRange)) {
                 GallenarmaList[enemyIndex].agent.speed = 7f;
-            } else {
+            } else { 
                 GallenarmaList[enemyIndex].agent.speed = 2f;
             }
             GallenarmaList[enemyIndex].TryMeleeAttackPlayer(120);

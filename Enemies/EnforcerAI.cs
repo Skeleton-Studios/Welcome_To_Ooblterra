@@ -12,16 +12,18 @@ public class EnforcerAI : WTOEnemy {
     [Header("Balance Constants")]
     public static float SecondsUntilBeginStalking = 5f;
     public static float StalkSpeed = 6f;
-    public static float ChaseSpeed = 6.5f; 
-    public static float RangeForPotentialTarget = 5f;
+    public static float ChaseSpeed = 8.5f; 
+    public static float RangeForPotentialTarget = 10f;
     public static int EnforcerAttackDamage = 100;
     public static float ActiveCamoVisibility = 0.025f;
+
+    private static float SecondsUntilNextSound = 15f;
 
     [Header("Defaults")]
     public SkinnedMeshRenderer[] Meshes;
     public Material ActiveCamoMaterial; 
     public float EyeSweepAnimSeconds = 2f;
-    public float ActiveCamoLerpTime = 2f;
+    public float ActiveCamoLerpTime = 0.5f;
     public AudioClip[] RandomIdleSounds; 
 
     private List<Material> EnforcerMatList = new(); 
@@ -69,7 +71,7 @@ public class EnforcerAI : WTOEnemy {
             EnforcerList[enemyIndex].ShouldChasePotentialTarget = false;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EnforcerList[enemyIndex].RandomlyPlayIdleSound(10f);
+            EnforcerList[enemyIndex].RandomlyPlayIdleSound(SecondsUntilNextSound);
             //if a player enters range, consider them our potential target
             if (EnforcerList[enemyIndex].PotentialTarget != null) {
 
@@ -115,7 +117,7 @@ public class EnforcerAI : WTOEnemy {
             if (EnforcerList[enemyIndex].PlayerWithinRange(2f)) {
                 EnforcerList[enemyIndex].agent.speed = 0f;
                 EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
-                EnforcerList[enemyIndex].RandomlyPlayIdleSound();
+                EnforcerList[enemyIndex].RandomlyPlayIdleSound(SecondsUntilNextSound + 3);
                 return;
             }
             EnforcerList[enemyIndex].agent.speed = StalkSpeed;
@@ -123,7 +125,7 @@ public class EnforcerAI : WTOEnemy {
             EnforcerList[enemyIndex].SetMovingTowardsTargetPlayer(EnforcerList[enemyIndex].targetPlayer);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new StalkedPlayerSeesUs()
@@ -133,6 +135,7 @@ public class EnforcerAI : WTOEnemy {
     private class ChasePlayer : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].agent.speed = ChaseSpeed;
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -147,19 +150,39 @@ public class EnforcerAI : WTOEnemy {
         };
 
     }
+
+    private class ScreamAtPlayer : BehaviorState {
+        public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            EnforcerList[enemyIndex].agent.speed = 0;
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Enraged", true);
+            EnforcerList[enemyIndex].SetActiveCamoState(false);
+        }
+        public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+
+        }
+        public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Enraged", false);
+        }
+        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+            new FinishedScream() 
+        };
+
+    }
     private class AttackPlayer : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EnforcerList[enemyIndex].SetActiveCamoState(false);
-            EnforcerList[enemyIndex].agent.speed = 2f;
+           
+            
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //Wait for the active camo to fully disable before attacking
-            if(EnforcerList[enemyIndex].EnforcerActiveCamoState == false) {
+            if (EnforcerList[enemyIndex].AttackCooldownSeconds <= 0f) {
+                EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Attacking", true);
                 EnforcerList[enemyIndex].targetPlayer.DamagePlayer(EnforcerAttackDamage, causeOfDeath: CauseOfDeath.Mauling);
+                EnforcerList[enemyIndex].AttackCooldownSeconds = 2f;
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Attacking", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new PlayerKilled(),
@@ -207,7 +230,7 @@ public class EnforcerAI : WTOEnemy {
             return EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].eye.position, 20);
         }
         public override BehaviorState NextState() {
-            return new AttackPlayer();
+            return new ScreamAtPlayer();
         }
     }
     private class PlayerEnteredAttackRange : StateTransition {
@@ -262,6 +285,15 @@ public class EnforcerAI : WTOEnemy {
         }
     }
 
+    private class FinishedScream : StateTransition {
+        public override bool CanTransitionBeTaken() {
+            //I GOTTA better FEELING ABOUT THIS
+            return EnforcerList[enemyIndex].AnimationIsFinished("Scream");
+        }
+        public override BehaviorState NextState() {
+            return new AttackPlayer();
+        }
+    }
 
     public static Dictionary<int, EnforcerAI> EnforcerList = new();
     private static int EnforcerID;
@@ -277,6 +309,7 @@ public class EnforcerAI : WTOEnemy {
     private bool EnforcerSearchComplete = false;
     private bool EnforcerSeesPlayer;
     private float IdleSoundCooldownSeconds = 7f;
+    private float AttackCooldownSeconds = 2f;
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -295,7 +328,7 @@ public class EnforcerAI : WTOEnemy {
                 //NextMat.SetFloat("_ACAmount", ActiveCamoVisibility);
                 NextMat.SetTexture("_MainTexture", NextMesh.materials[i].GetTexture("_BaseColorMap"));
                 TempMaterialsArray[i] = NextMat;
-                EnforcerMatList.Add(NextMat); 
+                EnforcerMatList.Add(NextMat);
             }
             NextMesh.materials = TempMaterialsArray;
         } 
@@ -306,11 +339,14 @@ public class EnforcerAI : WTOEnemy {
         if (!EnforcerShouldKeepTrackOfTargetPlayer || targetPlayer == null) {
             return;
         }
-        if (IsTargetPlayerWithinLOS(width: 120, PrintResults: true)) {
+        if (IsTargetPlayerWithinLOS(width: 120)) {
             LastKnownTargetPlayerPosition = targetPlayer.gameplayCamera.transform.position;
             EnforcerSeesPlayer = true;
         } else {
             EnforcerSeesPlayer = false;
+        }
+        if(ActiveState is AttackPlayer) { 
+            MoveTimerValue(ref AttackCooldownSeconds);
         }
     }
 
