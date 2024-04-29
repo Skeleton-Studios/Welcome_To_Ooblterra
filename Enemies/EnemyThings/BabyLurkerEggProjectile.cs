@@ -20,6 +20,9 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
     private Vector3 SpawnPosition;
     private EnemyType BabyLurker;
     private int iterator = 0;
+    private float TimeTillExplode = 3f;
+    public MeshRenderer EggMesh;
+    public AudioClip Splat;
      
     private void OnTriggerEnter(Collider other) {
         WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
@@ -31,8 +34,24 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
         if(SpawnPosition == transform.position) {
             return;
         }
+        GetComponent<AudioSource>().PlayOneShot(Splat);
+        GetComponent<Rigidbody>().isKinematic = true;
+        StartCoroutine(StartEggExploding());
+    }
+
+    private float timeElapsed;
+    private float ExpandTime = 2f;
+    private float LerpValue;
+    IEnumerator StartEggExploding() {
+        while ((timeElapsed / ExpandTime) < 1) {
+            timeElapsed += Time.deltaTime;
+            LerpValue = Mathf.Lerp(0.5f, 0.8f, timeElapsed / ExpandTime);
+            EggMesh.transform.localScale = new Vector3(LerpValue, LerpValue, LerpValue);
+            yield return null;
+        }
         StartCoroutine(SpawnBabyLurkers());
         DestroyEgg();
+        StopCoroutine(StartEggExploding());
     }
 
     private void DestroyEgg() {

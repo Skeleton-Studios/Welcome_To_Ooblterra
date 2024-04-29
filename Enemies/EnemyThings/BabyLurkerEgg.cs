@@ -12,6 +12,7 @@ using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
+using static LethalLib.Modules.Enemies;
 
 namespace Welcome_To_Ooblterra.Things;
 public class BabyLurkerEgg : NetworkBehaviour {
@@ -25,8 +26,9 @@ public class BabyLurkerEgg : NetworkBehaviour {
     private bool EggSpawned = false;
     private bool EggDropped = false;
     private float SecondsUntilNextSpawnAttempt = 15f;
+    public ScanNodeProperties ScanNode;
 
-    private void OnTriggerStay(Collider other) {
+    private void OnTriggerStay(Collider other) { 
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
         if (other.gameObject.CompareTag("Player") && EggSpawned && !EggDropped) {
             SpawnProjectileServerRpc((int)victim.actualClientId); 
@@ -34,7 +36,9 @@ public class BabyLurkerEgg : NetworkBehaviour {
     }
     private void Start() {
         enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-        
+        ScanNode.creatureScanID = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Baby Lurker").terminalNode.creatureFileID;
+
+
     }
     private void Update() {
         if (EggSpawned) {
@@ -53,7 +57,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
 
 
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void SpawnEggServerRpc() {
         SpawnEggClientRpc();
     }
@@ -63,8 +67,15 @@ public class BabyLurkerEgg : NetworkBehaviour {
             return;
         }
         HiveMesh.SetActive(true);
-        WTOBase.LogToConsole($"Lurker Egg active!");
-        EggSpawned = true;
+        if(Physics.Linecast(DropTransform.position, DropTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
+            HiveMesh.transform.position = HitResult.point;
+            HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
+            WTOBase.LogToConsole($"Lurker Egg active!");
+            EggSpawned = true;
+        } else {
+            WTOBase.LogToConsole($"Lurker Egg Line trace failed!");
+        }
+
     }
 
     [ServerRpc(RequireOwnership = false)]

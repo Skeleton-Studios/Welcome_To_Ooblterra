@@ -178,7 +178,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             if (!GallenarmaList[enemyIndex].PlayerWithinRange(GallenarmaList[enemyIndex].AttackRange)) {
-                GallenarmaList[enemyIndex].agent.speed = 7f;
+                GallenarmaList[enemyIndex].agent.speed = 9.1f;
             } else { 
                 GallenarmaList[enemyIndex].agent.speed = 2f;
             }
@@ -201,7 +201,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
                 GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);
             }
-            GallenarmaList[enemyIndex].agent.speed = 7f;
+            GallenarmaList[enemyIndex].agent.speed = 9.1f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
                 
@@ -607,7 +607,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             return;
         }
         if (AttackTimerSeconds <= 0.8f && Vector3.Distance(targetPlayer.transform.position, transform.position) < AttackRange && !HasAttackedThisCycle) {
-            LogMessage("Attacking!");
+            LogMessage("Gallenarma Attacking!");
             targetPlayer.DamagePlayer(damage, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0, force: ((this.transform.position - targetPlayer.transform.position) * 40f));
             HasAttackedThisCycle = true;
         }

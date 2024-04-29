@@ -15,23 +15,33 @@ public class BabyLurkerProjectile : NetworkBehaviour {
     public AudioSource Noisemaker;
     public ParticleSystem ExplodeParticle;
     public GameObject self;
-
+    public BabyLurkerAI OwningLurker;
+    private float AutoDestroyTime = 2f;
+     
     private void OnTriggerEnter(Collider other) {
         WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
         if (other.gameObject.CompareTag("Player")) {
-            victim.DamagePlayer(15, causeOfDeath: CauseOfDeath.Unknown);
-        }
-        if(other.GetComponent<BabyLurkerProjectile>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerEggProjectile>() || other.GetComponent<BabyLurkerEgg>()) {
-            return;
+            victim.DamagePlayer(15, causeOfDeath: CauseOfDeath.Unknown); 
         }
         DestroySelf();
+    }
+
+    private void Update() {
+        AutoDestroyTime -= Time.deltaTime;
+        if(AutoDestroyTime <= 0f) {
+            DestroySelf();
+        }
     }
 
     private void DestroySelf() {
         
         Noisemaker?.Play();
         ExplodeParticle?.Play();
+        if(OwningLurker != null) { 
+            OwningLurker.ThrowingSelfAtPlayer = false;
+            OwningLurker.KillEnemyOnOwnerClient(true);
+        }
         Destroy(self); 
     }
 }

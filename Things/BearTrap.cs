@@ -16,7 +16,7 @@ public class BearTrap : MonoBehaviour {
     public int DamageAmount = 5;
     private float TimeSincePlayerDamaged = 0f;
 
-    private float SecondsUntilNextRiseAttempt;
+    private float SecondsUntilNextRiseAttempt = 400;
     
     public Animator BearTrapAnim;
     //public float BearTrapStartPos;
@@ -65,7 +65,6 @@ public class BearTrap : MonoBehaviour {
 
     private void Start() {
         BearTrapRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-        SecondsUntilNextRiseAttempt = BearTrapRandom.Next(35, 80);
     }
 
     private void Update() {

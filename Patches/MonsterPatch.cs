@@ -18,10 +18,10 @@ internal class MonsterPatch {
 
     private static readonly AssetBundle EnemyBundle = WTOBase.MonsterAssetBundle;
     private const string EnemyPath = WTOBase.RootPath + "CustomEnemies/";
-    private static bool EnemiesInList;
+    private static bool EnemiesInList; 
     public const bool ShouldDebugEnemies = true;
 
-    //PATCHES
+
     [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
     [HarmonyPrefix]
     private static void AddMonstersToDebug(QuickMenuManager __instance) {
@@ -48,11 +48,11 @@ internal class MonsterPatch {
                 });
                 WTOBase.WTOLogSource.LogMessage("Added " + InsideEnemy.enemyType.name + "To debug list");
             }
-        }
-
-        daytimeEnemies.Clear();
+        } 
+         
+        daytimeEnemies.Clear(); 
         foreach (SpawnableEnemyWithRarity DaytimeEnemy in DaytimeEnemies) {
-            if (!daytimeEnemies.Contains(DaytimeEnemy)) {
+            if (!daytimeEnemies.Contains(DaytimeEnemy)){
                 daytimeEnemies.Add(new SpawnableEnemyWithRarity {
                     enemyType = DaytimeEnemy.enemyType,
                     rarity = DaytimeEnemy.rarity
@@ -74,7 +74,7 @@ internal class MonsterPatch {
     [HarmonyPatch(typeof(EnemyAI), "SetEnemyStunned")]
     [HarmonyPostfix]
     private static void SetOwnershipToStunningPlayer(EnemyAI __instance) { 
-        if(__instance is not WTOEnemy || __instance.stunnedByPlayer == null) {
+        if(__instance is not WTOEnemy || __instance.stunnedByPlayer == null){
             return;
         }
         WTOBase.LogToConsole($"Enemy: {__instance.GetType()} STUNNED BY: {__instance.stunnedByPlayer}; Switching ownership...");
@@ -95,9 +95,8 @@ public static void Start() {
         CreateEnemy("Wanderer.asset", DaytimeEnemies, 50, LethalLib.Modules.Enemies.SpawnType.Daytime, "WandererTerminal.asset", "WandererKeyword.asset");
         CreateEnemy("AdultWanderer.asset", AdultWandererContainer, 0, LethalLib.Modules.Enemies.SpawnType.Outside, "AdultWandererTerminal.asset", "AdultWandererKeyword.asset");
         CreateEnemy("Gallenarma.asset", InsideEnemies, 30, LethalLib.Modules.Enemies.SpawnType.Default, "GallenTerminal.asset", "GallenKeyword.asset");
-        //CreateEnemy("Assets/CustomMonsters/BabyLurker/BabyLurker.asset", InsideEnemies, 10);
         CreateEnemy("EyeSecurity.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "EyeSecTerminal.asset", "EyeSecKeyword.asset");
-        CreateEnemy("Lurker.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "LurkerTerminal.asset", "LurkerKeyword.asset");
+        //CreateEnemy("Lurker.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "LurkerTerminal.asset", "LurkerKeyword.asset");
         CreateEnemy("OoblGhost.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "OoblGhostTerminal.asset", "OoblGhostKeyword.asset");
         CreateEnemy("Enforcer.asset", InsideEnemies, 10, LethalLib.Modules.Enemies.SpawnType.Default, "EnforcerTerminal.asset", "EnforcerKeyword.asset");
         CreateEnemy("BabyLurker.asset", InsideEnemies, 10, LethalLib.Modules.Enemies.SpawnType.Default, "BabyLurkerTerminal.asset", "BabyLurkerKeyword.asset");

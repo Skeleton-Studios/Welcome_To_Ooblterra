@@ -17,7 +17,7 @@ public class EyeSecAI : WTOEnemy {
     private const float ScanCooldownTotal = 30f;
     private const float EyeSecDefaultSpeed = 9f;
     private const float EyeSecAttackSpeed = 9f;
-    private const float EyeSecLaserSpeed = 5f;
+    private const float EyeSecLaserSpeed = 4f;
     private const int EyeSecScanSpeed = 2;
 
     //BEHAVIOR STATES
@@ -234,7 +234,7 @@ public class EyeSecAI : WTOEnemy {
     }
     private class InRangeOfPlayer : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return EyeSecList[enemyIndex].CheckLineOfSightForPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f);
+            return EyeSecList[enemyIndex].CheckLineOfSightForPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f, 15);
         }
         public override BehaviorState NextState() {
             return new Attack();

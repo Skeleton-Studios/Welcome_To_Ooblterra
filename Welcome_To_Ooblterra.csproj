@@ -205,6 +205,7 @@
     <Compile Include="Enemies\EnemyThings\BabyLurkerEggProjectile.cs" />
     <Compile Include="Enemies\EnemyThings\BabyLurkerProjectile.cs" />
     <Compile Include="Enemies\EnemyThings\EnforcerHidePoint.cs" />
+    <Compile Include="Enemies\EnemyThings\LurkerDamageVolume.cs" />
     <Compile Include="Enemies\OoblGhostAI.cs" />
     <Compile Include="Enemies\SecBotAI.cs" />
     <Compile Include="Enemies\EyeSecAI.cs" />

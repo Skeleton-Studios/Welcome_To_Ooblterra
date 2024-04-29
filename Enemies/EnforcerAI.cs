@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
 
@@ -12,7 +13,7 @@ public class EnforcerAI : WTOEnemy {
     [Header("Balance Constants")]
     public static float SecondsUntilBeginStalking = 5f;
     public static float StalkSpeed = 6f;
-    public static float ChaseSpeed = 8.5f; 
+    public static float ChaseSpeed = 9.5f; 
     public static float RangeForPotentialTarget = 10f;
     public static int EnforcerAttackDamage = 100;
     public static float ActiveCamoVisibility = 0.025f;
@@ -23,7 +24,7 @@ public class EnforcerAI : WTOEnemy {
     public SkinnedMeshRenderer[] Meshes;
     public Material ActiveCamoMaterial; 
     public float EyeSweepAnimSeconds = 2f;
-    public float ActiveCamoLerpTime = 0.5f;
+    public float ActiveCamoLerpTime = 1f;
     public AudioClip[] RandomIdleSounds; 
 
     private List<Material> EnforcerMatList = new(); 
@@ -48,6 +49,7 @@ public class EnforcerAI : WTOEnemy {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (!EnforcerMovingToHidePoint) {
                 EnforcerList[enemyIndex].LogMessage("Current hide point not valid, choosing another...");
+                EnforcerList[enemyIndex].DetermineNextHidePoint();
                 NextDestination = RoundManager.Instance.GetRandomNavMeshPositionInRadius(EnforcerList[enemyIndex].NextHidePoint.transform.position, radius: 2);
                 EnforcerMovingToHidePoint = EnforcerList[enemyIndex].SetDestinationToPosition(NextDestination, true);
             }
@@ -149,19 +151,18 @@ public class EnforcerAI : WTOEnemy {
             new LostPlayerDuringChase() 
         };
 
-    }
+    } 
 
     private class ScreamAtPlayer : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EnforcerList[enemyIndex].agent.speed = 0;
-            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Enraged", true);
+            EnforcerList[enemyIndex].agent.speed = 0; 
+            EnforcerList[enemyIndex].SetAnimTriggerOnServerRpc("Scream");
             EnforcerList[enemyIndex].SetActiveCamoState(false);
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Enraged", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new FinishedScream() 
@@ -170,19 +171,22 @@ public class EnforcerAI : WTOEnemy {
     }
     private class AttackPlayer : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-           
-            
+            EnforcerList[enemyIndex].AttackCooldownSeconds = 1.5f;
+            EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Attacking", true);
+            EnforcerList[enemyIndex].HasAttackedThisCycle = false;
+
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            //Wait for the active camo to fully disable before attacking
-            if (EnforcerList[enemyIndex].AttackCooldownSeconds <= 0f) {
-                EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Attacking", true);
-                EnforcerList[enemyIndex].targetPlayer.DamagePlayer(EnforcerAttackDamage, causeOfDeath: CauseOfDeath.Mauling);
-                EnforcerList[enemyIndex].AttackCooldownSeconds = 2f;
+            if (!EnforcerList[enemyIndex].PlayerWithinRange(3f)) {
+                EnforcerList[enemyIndex].agent.speed = 9f;
+            } else {
+                EnforcerList[enemyIndex].agent.speed = 2f;
             }
+            EnforcerList[enemyIndex].TryMeleeAttackPlayer(120);
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Attacking", false);
+            EnforcerList[enemyIndex].HasAttackedThisCycle = false;  
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new PlayerKilled(),
@@ -288,7 +292,7 @@ public class EnforcerAI : WTOEnemy {
     private class FinishedScream : StateTransition {
         public override bool CanTransitionBeTaken() {
             //I GOTTA better FEELING ABOUT THIS
-            return EnforcerList[enemyIndex].AnimationIsFinished("Scream");
+            return EnforcerList[enemyIndex].EnforcerScreamSeconds <= 0f; 
         }
         public override BehaviorState NextState() {
             return new AttackPlayer();
@@ -309,7 +313,9 @@ public class EnforcerAI : WTOEnemy {
     private bool EnforcerSearchComplete = false;
     private bool EnforcerSeesPlayer;
     private float IdleSoundCooldownSeconds = 7f;
-    private float AttackCooldownSeconds = 2f;
+    private float AttackCooldownSeconds = 0f;
+    private float EnforcerScreamSeconds = 3.13f;
+    private bool HasAttackedThisCycle;
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -336,6 +342,7 @@ public class EnforcerAI : WTOEnemy {
     }
     public override void Update() {
         base.Update();
+        MoveTimerValue(ref AttackCooldownSeconds);
         if (!EnforcerShouldKeepTrackOfTargetPlayer || targetPlayer == null) {
             return;
         }
@@ -345,8 +352,8 @@ public class EnforcerAI : WTOEnemy {
         } else {
             EnforcerSeesPlayer = false;
         }
-        if(ActiveState is AttackPlayer) { 
-            MoveTimerValue(ref AttackCooldownSeconds);
+        if(ActiveState is ScreamAtPlayer) {
+            MoveTimerValue(ref EnforcerScreamSeconds);
         }
     }
 
@@ -434,4 +441,19 @@ public class EnforcerAI : WTOEnemy {
             IdleSoundCooldownSeconds = newIdleCooldown;
         }
     }
+    public void TryMeleeAttackPlayer(int damage) {
+        if (targetPlayer == null) {
+            return;
+        }
+        if (AttackCooldownSeconds <= 0.8f && Vector3.Distance(targetPlayer.transform.position, transform.position) < 3 && !HasAttackedThisCycle) {
+            LogMessage("Gallenarma Attacking!");
+            targetPlayer.DamagePlayer(damage, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0, force: ((this.transform.position - targetPlayer.transform.position) * 40f));
+            HasAttackedThisCycle = true;
+        }
+        if (AttackCooldownSeconds <= 0f) {
+            AttackCooldownSeconds = 1;
+            HasAttackedThisCycle = false;
+        }
+    }
+
 }

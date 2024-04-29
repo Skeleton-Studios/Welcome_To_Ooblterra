@@ -1,11 +1,8 @@
 ﻿using GameNetcodeStuff;
-using LethalLib.Modules;
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.AI;
-using UnityEngine.Networking;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 
