@@ -168,7 +168,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", true);
-            GallenarmaList[enemyIndex].HasAttackedThisCycle = false;
+            GallenarmaList[enemyIndex].HasAttackedThisCycle = false; 
             GallenarmaList[enemyIndex].AttackTimerSeconds = 1.667f;
             if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
                 GallenarmaList[enemyIndex].SetMovingTowardsTargetPlayer(GallenarmaList[enemyIndex].targetPlayer);

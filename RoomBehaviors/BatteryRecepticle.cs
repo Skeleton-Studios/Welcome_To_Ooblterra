@@ -8,7 +8,9 @@ using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition.Attributes;
+using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Items;
+using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
@@ -183,7 +185,15 @@ public class BatteryRecepticle : NetworkBehaviour {
         StartRoomLight StartRoomLights = FindObjectOfType<StartRoomLight>();
         StartRoomLights.SetCentralRoomWhite();
         BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
+        ManageEnemies();
     }
 
+    private void ManageEnemies() {
+        EyeSecAI.BuffedByMachineOn = true;
+        if(OoblGhostAI.GhostList.Count < 1) {
+            RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);
+        }
+        RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);
+    }
 
 }

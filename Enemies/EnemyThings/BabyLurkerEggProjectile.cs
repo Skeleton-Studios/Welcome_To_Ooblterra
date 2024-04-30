@@ -22,8 +22,16 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
     private int iterator = 0;
     private float TimeTillExplode = 3f;
     public MeshRenderer EggMesh;
-    public AudioClip Splat;
-     
+    public MeshRenderer InnerEggMesh;
+    public AudioClip[] Splat;
+    public AudioClip[] Boom;
+    public ParticleSystem ExplodeParticle;
+    private System.Random EggRandom;
+
+    private void Start() {
+        EggRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+    }
+
     private void OnTriggerEnter(Collider other) {
         WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
         if (other.GetComponent<BoxCollider>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerProjectile>() != null) {
@@ -34,29 +42,33 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
         if(SpawnPosition == transform.position) {
             return;
         }
-        GetComponent<AudioSource>().PlayOneShot(Splat);
+        GetComponent<AudioSource>().PlayOneShot(Splat[EggRandom.Next(0, Splat.Length)]);
         GetComponent<Rigidbody>().isKinematic = true;
         StartCoroutine(StartEggExploding());
     }
 
     private float timeElapsed;
-    private float ExpandTime = 2f;
+    private float ExpandTime = 3f;
     private float LerpValue;
     IEnumerator StartEggExploding() {
         while ((timeElapsed / ExpandTime) < 1) {
-            timeElapsed += Time.deltaTime;
+            timeElapsed += Time.deltaTime; 
             LerpValue = Mathf.Lerp(0.5f, 0.8f, timeElapsed / ExpandTime);
             EggMesh.transform.localScale = new Vector3(LerpValue, LerpValue, LerpValue);
             yield return null;
         }
-        StartCoroutine(SpawnBabyLurkers());
         DestroyEgg();
+        StartCoroutine(SpawnBabyLurkers());
         StopCoroutine(StartEggExploding());
+
     }
 
     private void DestroyEgg() {
-        GetComponent<MeshRenderer>().enabled = false;
+        EggMesh.enabled = false;
+        InnerEggMesh.enabled = false;
+        ExplodeParticle.Play();
         GetComponent<BoxCollider>().enabled = false;
+        GetComponent<AudioSource>().PlayOneShot(Boom[EggRandom.Next(0, Boom.Length)]);
     }
 
     IEnumerator SpawnBabyLurkers() {

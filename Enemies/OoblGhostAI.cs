@@ -13,7 +13,7 @@ namespace Welcome_To_Ooblterra.Enemies;
 internal class OoblGhostAI : WTOEnemy {
 
     [Header("Balance Constants")]
-    public float GhostInterferenceRange = 5f;
+    public float GhostInterferenceRange = 6f;
     public float OoblGhostSpeed = 6f;
     public float GhostDamagePerTick = 10f;
     public float GhostInterferenceSeconds = 3f;

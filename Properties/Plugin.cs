@@ -177,9 +177,11 @@ public class WTOBase : BaseUnityPlugin {
             return Bundle.LoadAsset<T>(PathToAsset);
         }
     }
-    public static void LogToConsole(string text) {
-        text = "=======" + text + "=======";
-        WTOLogSource.LogMessage(text);
+    public static void LogToConsole(string text, bool AddFlair = true) {
+        if (AddFlair) { 
+            text = "=======" + text + "=======";
+        }
+        //WTOLogSource.LogMessage(text);
     }
     public enum AllowedState {
         Off = 0,

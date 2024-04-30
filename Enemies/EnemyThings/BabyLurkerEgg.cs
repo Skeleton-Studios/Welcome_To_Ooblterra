@@ -19,10 +19,12 @@ public class BabyLurkerEgg : NetworkBehaviour {
 
     private System.Random enemyRandom;
     private GameObject HiveProjectile;
-    public GameObject HiveMesh;
+    public GameObject HiveMesh; 
     public GameObject projectileTemplate;
+    public GameObject MapDot;
     public Transform DropTransform;
-    public AudioClip BreakoffSound;
+    public Transform TraceTransform; 
+    public AudioClip[] BreakoffSound;
     private bool EggSpawned = false;
     private bool EggDropped = false;
     private float SecondsUntilNextSpawnAttempt = 15f;
@@ -38,7 +40,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         ScanNode.creatureScanID = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Baby Lurker").terminalNode.creatureFileID;
 
-
+        SpawnEggClientRpc();
     }
     private void Update() {
         if (EggSpawned) {
@@ -48,7 +50,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
             SecondsUntilNextSpawnAttempt -= Time.deltaTime;
             return;
         }
-        if(enemyRandom.Next(0, 100) < 200) {
+        if(enemyRandom.Next(0, 100) < 60) {
             SpawnEggClientRpc();
         } else {
             SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
@@ -59,7 +61,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
 
     [ServerRpc(RequireOwnership = false)]
     public void SpawnEggServerRpc() {
-        SpawnEggClientRpc();
+        SpawnEggClientRpc(); 
     }
     [ClientRpc]
     public void SpawnEggClientRpc() {
@@ -67,12 +69,13 @@ public class BabyLurkerEgg : NetworkBehaviour {
             return;
         }
         HiveMesh.SetActive(true);
-        if(Physics.Linecast(DropTransform.position, DropTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
+        MapDot.SetActive(true);
+        if (Physics.Linecast(TraceTransform.position, TraceTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
             HiveMesh.transform.position = HitResult.point;
             HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
             WTOBase.LogToConsole($"Lurker Egg active!");
             EggSpawned = true;
-        } else {
+        } else { 
             WTOBase.LogToConsole($"Lurker Egg Line trace failed!");
         }
 
@@ -87,7 +90,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         if (EggDropped) {
             return;
         }
-        GetComponent<AudioSource>()?.PlayOneShot(BreakoffSound);
+        GetComponent<AudioSource>()?.PlayOneShot(BreakoffSound[enemyRandom.Next(0, BreakoffSound.Length)]);
         WTOBase.LogToConsole($"Lurker egg projectile being spawned!");
         HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
         HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;

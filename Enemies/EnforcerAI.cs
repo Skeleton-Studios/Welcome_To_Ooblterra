@@ -24,8 +24,9 @@ public class EnforcerAI : WTOEnemy {
     public SkinnedMeshRenderer[] Meshes;
     public Material ActiveCamoMaterial; 
     public float EyeSweepAnimSeconds = 2f;
-    public float ActiveCamoLerpTime = 1f;
-    public AudioClip[] RandomIdleSounds; 
+    public float ActiveCamoLerpTime = 2f;
+    public AudioClip[] RandomIdleSounds;
+    public BoxCollider ScanNode;
 
     private List<Material> EnforcerMatList = new(); 
 
@@ -361,14 +362,16 @@ public class EnforcerAI : WTOEnemy {
     float LerpPos = 0f;
     public void SetActiveCamoState(bool SetCamoOn) {
         if(EnforcerActiveCamoState == SetCamoOn) {
-            return; 
+            return;
         }
         timeElapsed = 0f;
         LerpPos = 0f;
-        EnforcerActiveCamoState = SetCamoOn;
+        EnforcerActiveCamoState = SetCamoOn; 
         if (EnforcerActiveCamoState) {
+            ScanNode.enabled = false;
             StartCoroutine(StartActiveCamo());
         } else {
+            ScanNode.enabled = true;
             StartCoroutine(StopActiveCamo());
         }
     }

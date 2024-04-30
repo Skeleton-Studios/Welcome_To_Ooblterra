@@ -16,6 +16,7 @@ public class EyeSecAI : WTOEnemy {
 
     private const float ScanCooldownTotal = 30f;
     private const float EyeSecDefaultSpeed = 9f;
+    private const float EyeSecBuffSpeed = 12f;
     private const float EyeSecAttackSpeed = 9f;
     private const float EyeSecLaserSpeed = 4f;
     private const int EyeSecScanSpeed = 2;
@@ -26,7 +27,7 @@ public class EyeSecAI : WTOEnemy {
         private int PatrolPointAttempts;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: true);
-            EyeSecList[enemyIndex].agent.speed = EyeSecDefaultSpeed; 
+            EyeSecList[enemyIndex].agent.speed = BuffedByMachineOn ? EyeSecBuffSpeed : EyeSecDefaultSpeed; 
             EyeSecList[enemyIndex].StartSearch(EyeSecList[enemyIndex].transform.position, EyeSecList[enemyIndex].SearchLab);
             EyeSecList[enemyIndex].FoundPlayerHoldingScrap = false;
             EyeSecList[enemyIndex].SetTargetServerRpc(-1);
@@ -56,8 +57,8 @@ public class EyeSecAI : WTOEnemy {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EyeSecList[enemyIndex].creatureAnimator.enabled = false;
             bool IsEven = MyRandomInt % 2 == 0;
-            EyeSecList[enemyIndex].IsDeepScan = (EyeSecList[enemyIndex].BuffedByTeslaCoil || IsEven);
-            SecondsToScan = EyeSecList[enemyIndex].BuffedByTeslaCoil ? EyeSecScanSpeed : (IsEven ? EyeSecScanSpeed * 2 : EyeSecScanSpeed);
+            EyeSecList[enemyIndex].IsDeepScan = (EyeSecList[enemyIndex].BuffedByTeslaCoil || BuffedByMachineOn || IsEven);
+            SecondsToScan = EyeSecList[enemyIndex].IsDeepScan ? EyeSecScanSpeed * 2 :  EyeSecScanSpeed;
             EyeSecList[enemyIndex].StartScanVisuals();
             EyeSecList[enemyIndex].agent.speed = 0f;
             if (EyeSecList[enemyIndex].IsDeepScan) {
@@ -128,7 +129,7 @@ public class EyeSecAI : WTOEnemy {
     }
     private class MoveToAttackPosition : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            EyeSecList[enemyIndex].agent.speed = EyeSecAttackSpeed;
+            EyeSecList[enemyIndex].agent.speed = BuffedByMachineOn ? EyeSecBuffSpeed : EyeSecAttackSpeed;
             EyeSecList[enemyIndex].StopAttackVisuals();
             EyeSecList[enemyIndex].PlayerTracker.transform.position = EyeSecList[enemyIndex].transform.position;
             if (EyeSecList[enemyIndex].agent.isOnNavMesh) { 
@@ -325,6 +326,7 @@ public class EyeSecAI : WTOEnemy {
     private const float HeadMoveTime = 1f;
     private bool DoHeadMove;
     private bool DoFearEffect = true;
+    public static bool BuffedByMachineOn = false;
 
     public bool BuffedByTeslaCoil;
 
@@ -401,8 +403,8 @@ public class EyeSecAI : WTOEnemy {
     }
     private void SpinWheel() {
         //Wheel.transform.forward = agent.transform.forward;
-        if(agent.speed > 0) {
-            Wheel.transform.Rotate(-160 * Time.deltaTime, 0, 0);
+        if(agent.velocity.magnitude > 0) {
+            Wheel.transform.Rotate(160 * Time.deltaTime, 0, 0);
             if (!PlayingMoveSound) {
                 creatureSFX.clip = MoveSFX;
                 creatureSFX.Play();

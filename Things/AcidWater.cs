@@ -11,7 +11,7 @@ namespace Welcome_To_Ooblterra.Things;
 public class AcidWater : MonoBehaviour {
 
     public int UserSetDamageAmount;
-    private float TimeSincePlayerDamaged = 0f;
+    private float TimeSincePlayerDamaged = 0f; 
 
     private void OnTriggerStay(Collider other) {
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
