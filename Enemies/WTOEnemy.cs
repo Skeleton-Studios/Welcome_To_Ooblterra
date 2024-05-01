@@ -73,12 +73,13 @@ public class WTOEnemy : EnemyAI {
 
     }
     public override void Update() {
+        if (isEnemyDead) {
+            return;
+        }
         base.Update();
         AITimer++;
         //don't run enemy ai if they're dead
-            if (isEnemyDead) {
-                return;
-            }
+
         bool RunUpdate = true;
 
         //Reset transition list to match all those in our current state, along with any global transitions that exist regardless of state (stunned, mostly)
@@ -103,7 +104,7 @@ public class WTOEnemy : EnemyAI {
 
     internal void LogMessage(string message) {
         if (PrintDebugs && MonsterPatch.ShouldDebugEnemies) {
-            WTOBase.WTOLogSource.LogMessage(message);
+            WTOBase.LogToConsole(message);
         }
     }
     internal bool PlayerCanBeTargeted(PlayerControllerB myPlayer) {
@@ -134,6 +135,9 @@ public class WTOEnemy : EnemyAI {
     }
 
     internal void OverrideState(BehaviorState state) {
+        if (isEnemyDead) {
+            return;
+        }
         ActiveState = state;
         ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
         return;
@@ -191,6 +195,28 @@ public class WTOEnemy : EnemyAI {
     }
 
 
+    internal bool IsPlayerReachable() {
+        if (targetPlayer == null) {
+            LogMessage("Player Reach Test has no target player or passed in argument!");
+            return false;
+        }
+        return IsPlayerReachable(targetPlayer);
+    }
+    internal bool IsPlayerReachable(PlayerControllerB PlayerToCheck) {
+        RoundManager.Instance.GetNavMeshPosition(targetPlayer.transform.position, RoundManager.Instance.navHit, 2.7f);
+        return RoundManager.Instance.GotNavMeshPositionResult;
+    }
+    internal float PlayerDistanceFromShip(PlayerControllerB PlayerToCheck = null) {
+        if(PlayerToCheck == null) {
+            if(targetPlayer == null) {
+                LogMessage("PlayerNearShip check has no target player or passed in argument!");
+                return -1;
+            }
+            PlayerToCheck = targetPlayer;
+        }
+        float DistanceFromShip = Vector3.Distance(targetPlayer.transform.position, StartOfRound.Instance.shipBounds.transform.position);
+        return DistanceFromShip;
+    }
     internal float DistanceFromTargetPlayer() {
         if(targetPlayer == null) {
             LogMessage($"{this} attempted DistanceFromTargetPlayer with null target; returning -1!");

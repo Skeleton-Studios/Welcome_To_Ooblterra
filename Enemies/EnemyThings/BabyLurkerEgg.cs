@@ -39,8 +39,6 @@ public class BabyLurkerEgg : NetworkBehaviour {
     private void Start() {
         enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         ScanNode.creatureScanID = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Baby Lurker").terminalNode.creatureFileID;
-
-        SpawnEggClientRpc();
     }
     private void Update() {
         if (EggSpawned) {
@@ -51,7 +49,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
             return;
         }
         if(enemyRandom.Next(0, 100) < 60) {
-            SpawnEggClientRpc();
+            SpawnEggServerRpc();
         } else {
             SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
         }

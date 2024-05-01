@@ -91,7 +91,7 @@ internal class OoblGhostAI : WTOEnemy {
             GhostList[enemyIndex].MoveGhostTowardPlayer();
             if (GhostList[enemyIndex].PlayerWithinRange(GhostList[enemyIndex].GhostInterferenceRange)){
                 GhostList[enemyIndex].ShouldListenForWalkie = true;
-                if(StartOfRound.Instance.connectedPlayersAmount <= 0) {
+                if(StartOfRound.Instance.connectedPlayersAmount <= 0 || StartOfRound.Instance.livingPlayers <= 1) {
                     GhostList[enemyIndex].LogMessage("Ghost detected player in SP; listening for walkie");
                     GhostList[enemyIndex].SinglePlayerEvaluateWalkie();
                 }

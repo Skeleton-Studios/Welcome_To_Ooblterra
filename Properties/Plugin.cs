@@ -167,13 +167,13 @@ public class WTOBase : BaseUnityPlugin {
         if (Application.platform == RuntimePlatform.WindowsEditor) {
             string PathMinusFileType = PathToAsset.Substring(17);
             PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
-            WTOLogSource.LogMessage($"Loading {PathMinusFileType} from resources folder...");
+            LogToConsole($"Loading {PathMinusFileType} from resources folder...");
             return Resources.Load<T>(PathMinusFileType);
         } else {
             //Some postprocessing on this text to make the readout a little cleaner
             int LengthOfAssetName = PathToAsset.Length - PathToAsset.LastIndexOf("/");
             string CleanAssetName = PathToAsset.Substring(PathToAsset.LastIndexOf("/"), LengthOfAssetName);
-            WTOLogSource.LogMessage($"Loading {CleanAssetName} from {Bundle.name}...");
+            LogToConsole($"Loading {CleanAssetName} from {Bundle.name}...");
             return Bundle.LoadAsset<T>(PathToAsset);
         }
     }
@@ -181,7 +181,7 @@ public class WTOBase : BaseUnityPlugin {
         if (AddFlair) { 
             text = "=======" + text + "=======";
         }
-        //WTOLogSource.LogMessage(text);
+        WTOLogSource.LogMessage(text);
     }
     public enum AllowedState {
         Off = 0,

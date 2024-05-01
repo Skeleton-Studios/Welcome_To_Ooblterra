@@ -62,7 +62,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         PutObjectOnTableServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
         player.DiscardHeldObject(placeObject: true, TableBodyContainer, vector, matchRotationOfParent: false);
         HasBody = true;
-        WTOBase.WTOLogSource.LogMessage("Body placed on frankenstein point");
+        WTOBase.LogToConsole("Body placed on frankenstein point");
     }
 
     [ServerRpc]

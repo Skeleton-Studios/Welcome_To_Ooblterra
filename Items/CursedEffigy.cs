@@ -6,6 +6,7 @@ using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
+using System.Linq;
 
 namespace Welcome_To_Ooblterra.Items;
 internal class CursedEffigy : GrabbableObject {
@@ -24,7 +25,7 @@ internal class CursedEffigy : GrabbableObject {
         }
         if (previousPlayerHeldBy.isPlayerDead) {
             if (!MimicSpawned && IsOwner) {
-                WTOBase.LogToConsole($"Effigy knows that {previousPlayerHeldBy} is dead at position {previousPlayerHeldBy.deadBody.transform.position}");
+                WTOBase.LogToConsole($"Effigy knows that {previousPlayerHeldBy.playerUsername} is dead at position {previousPlayerHeldBy.deadBody.transform.position}");
                 CreateMimicServerRpc(previousPlayerHeldBy.isInsideFactory, previousPlayerHeldBy.deadBody.transform.position);
                 MimicSpawned = true;
                 DestroyEffigyServerRpc();
@@ -62,20 +63,19 @@ internal class CursedEffigy : GrabbableObject {
             WTOBase.LogToConsole("Previousplayerheldby is null so the Ghost Player could not be spawned");
             return;
         }
-        WTOBase.LogToConsole($"Server creating Ghost Player from Effigy. Previous Player: {previousPlayerHeldBy}");
+        WTOBase.LogToConsole($"Server creating Ghost Player from Effigy. Previous Player: {previousPlayerHeldBy.playerUsername}");
         Vector3 MimicSpawnPos = RoundManager.Instance.GetNavMeshPosition(playerPositionAtDeath, default, 10f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
             WTOBase.LogToConsole("No nav mesh found; no Ghost Player could be created");
             return;
         }
-        const int MimicIndex = 12;
-        TheMimic = StartOfRound.Instance.levels[8].Enemies[MimicIndex].enemyType;
+        TheMimic = StartOfRound.Instance.levels.First(x => x.PlanetName == "8 Titan").Enemies.First(x => x.enemyType.enemyName == "Masked").enemyType;
         WTOBase.LogToConsole($"Masked Enemy Type Found: {TheMimic != null}");
 
         NetworkObjectReference MimicNetObject = RoundManager.Instance.SpawnEnemyGameObject(MimicSpawnPos, 0, -1, TheMimic);
 
         if (MimicNetObject.TryGet(out var networkObject)) {
-            WTOBase.WTOLogSource.LogMessage("Got network object for Ghost Player");
+            WTOBase.LogToConsole("Got network object for Ghost Player");
             MaskedPlayerEnemy MimicScript = networkObject.GetComponent<MaskedPlayerEnemy>();
             MimicScript.mimickingPlayer = previousPlayerHeldBy;
             Material suitMaterial = SuitPatch.GhostPlayerSuit;
@@ -111,7 +111,7 @@ internal class CursedEffigy : GrabbableObject {
         if (netObject == null) {
             yield break;
         }
-        WTOBase.WTOLogSource.LogMessage("Got network object for Ghost Player enemy client");
+        WTOBase.LogToConsole("Got network object for Ghost Player enemy client");
         MaskedPlayerEnemy MimicReference = netObject.GetComponent<MaskedPlayerEnemy>();
         MimicReference.mimickingPlayer = previousPlayerHeldBy;
         Material suitMaterial = SuitPatch.GhostPlayerSuit;

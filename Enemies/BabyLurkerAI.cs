@@ -155,7 +155,7 @@ public class BabyLurkerAI : WTOEnemy {
         LogMessage($"Adding BabyLurker {this} #{BabyLurkerID}");
         BabyLurkerList.Add(BabyLurkerID, this); 
         base.Start();
-        LaunchTransform.rotation = Quaternion.Euler(new Vector3(45, 0, enemyRandom.Next(-10, 10)));
+        LaunchTransform.rotation = Quaternion.Euler(new Vector3(45, 0, enemyRandom.Next(-5, 5)));
     }
 
     public override void Update() {
@@ -172,6 +172,7 @@ public class BabyLurkerAI : WTOEnemy {
             //set target to random player
             if(LivingPlayers.Count > 0) {
                 targetPlayer = LivingPlayers[enemyRandom.Next(0, LivingPlayers.Count)];
+                LogMessage($"setting new baby lurker target! {targetPlayer.playerUsername}");
             } else {
                 LogMessage("No target for baby lurkers!");
             }

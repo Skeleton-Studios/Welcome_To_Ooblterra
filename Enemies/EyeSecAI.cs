@@ -18,7 +18,7 @@ public class EyeSecAI : WTOEnemy {
     private const float EyeSecDefaultSpeed = 9f;
     private const float EyeSecBuffSpeed = 12f;
     private const float EyeSecAttackSpeed = 9f;
-    private const float EyeSecLaserSpeed = 4f;
+    private const float EyeSecLaserSpeed = 5f;
     private const int EyeSecScanSpeed = 2;
 
     //BEHAVIOR STATES

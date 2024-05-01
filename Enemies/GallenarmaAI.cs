@@ -439,7 +439,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     }
     private class LostTrackOfPlayer : StateTransition {
         public override bool CanTransitionBeTaken() {
-            if (GallenarmaList[enemyIndex].targetPlayer == null || !GallenarmaList[enemyIndex].PlayerCanBeTargeted(GallenarmaList[enemyIndex].targetPlayer)){
+            if (GallenarmaList[enemyIndex].targetPlayer == null || !GallenarmaList[enemyIndex].PlayerCanBeTargeted(GallenarmaList[enemyIndex].targetPlayer) || !GallenarmaList[enemyIndex].IsPlayerReachable()){
                 GallenarmaList[enemyIndex].SetTargetServerRpc(-1);
                 return true;
             }
@@ -587,7 +587,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
         hearNoiseCooldown = 0.03f;
         float num = Vector3.Distance(base.transform.position, noisePosition);
-        WTOBase.WTOLogSource.LogMessage($"Gallenarma '{gameObject.name}': Heard noise! Distance: {num} meters. Location: {noisePosition}");
+        WTOBase.LogToConsole($"Gallenarma '{gameObject.name}': Heard noise! Distance: {num} meters. Location: {noisePosition}");
         float num2 = 18f * noiseLoudness;
         if (Physics.Linecast(base.transform.position, noisePosition, 256)) {
             noiseLoudness /= 2f;

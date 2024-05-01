@@ -75,7 +75,7 @@ internal class MoonPatch {
         }
         MoveNavNodesToNewPositions();
         GrassSurfaceRef.clips = OoblFootstepClips;
-        GrassSurfaceRef.hitSurfaceSFX = OoblHitSFX;
+        GrassSurfaceRef.hitSurfaceSFX = OoblHitSFX; 
     }
 
     [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
@@ -169,7 +169,7 @@ internal class MoonPatch {
     public static void Start() {
         ExtendedLevel Ooblterra = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPatch.MoonPath + "OoblterraExtendedLevel.asset");
         MoonFriendlyName = Ooblterra.selectableLevel.PlanetName;
-        WTOBase.WTOLogSource.LogMessage($"Ooblterra Found: {Ooblterra != null}");
+        WTOBase.LogToConsole($"Ooblterra Found: {Ooblterra != null}");
         PatchedContent.RegisterExtendedLevel(Ooblterra);
     }
     private static void MoveNavNodesToNewPositions() {

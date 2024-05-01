@@ -195,7 +195,7 @@ public class AdultWandererAI : WTOEnemy {
             if (AWandList[base.enemyIndex].targetPlayer == null) {
                 return false;
             }
-            return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer);
+            return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer) || AWandList[base.enemyIndex].PlayerDistanceFromShip() < 10;
         }
         public override BehaviorState NextState() {
                 return new Roam();
@@ -206,7 +206,7 @@ public class AdultWandererAI : WTOEnemy {
             if(AWandList[base.enemyIndex].targetPlayer == null) {
                 return false;
             }
-            return AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer);
+            return AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer) && AWandList[base.enemyIndex].IsPlayerReachable();
         }
         public override BehaviorState NextState() {
             return new Chase();
@@ -328,7 +328,9 @@ public class AdultWandererAI : WTOEnemy {
         return targetPlayer.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);
     }
     public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
-        if (isEnemyDead) { return; }
+        if (isEnemyDead) { 
+            return; 
+        }
         base.HitEnemy(force, playerWhoHit, playHitSFX);
         enemyHP -= force;
         LogMessage("Adult Wanderer HP remaining: " + enemyHP);

@@ -116,7 +116,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
             return;
         }
-        WTOBase.WTOLogSource.LogMessage("Placing battery in recepticle");
+        WTOBase.LogToConsole("Placing battery in recepticle");
         Vector3 vector = BatteryTransform.position;
         if (parentTo != null) {
             vector = parentTo.transform.InverseTransformPoint(vector);
@@ -127,7 +127,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
         InsertedBattery.transform.rotation = BatteryTransform.rotation;
         InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
-        WTOBase.WTOLogSource.LogMessage("discard held object called from placeobject");
+        WTOBase.LogToConsole("discard held object called from placeobject");
         if (InsertedBattery.HasCharge) {
             TurnOnPowerServerRpc();
         }

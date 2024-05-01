@@ -45,7 +45,7 @@ public class FrankensteinChemPoint : NetworkBehaviour {
         if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
             return;
         }
-        WTOBase.WTOLogSource.LogMessage("Placing chem on chempoint");
+        WTOBase.LogToConsole("Placing chem on chempoint");
         Vector3 vector = itemPlacementPosition(playerWhoTriggered.gameplayCamera.transform, playerWhoTriggered.currentlyHeldObjectServer);
         if(vector == Vector3.zero) {
             return;
@@ -55,7 +55,7 @@ public class FrankensteinChemPoint : NetworkBehaviour {
         }
         HeldChemical = (Chemical)playerWhoTriggered.currentlyHeldObjectServer;
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector, matchRotationOfParent: false);
-        WTOBase.WTOLogSource.LogMessage("discard held object called from placeobject");
+        WTOBase.LogToConsole("discard held object called from placeobject");
         SetChemStateServerRpc(true, (int)HeldChemical.GetCurrentColor());
     }
     private Vector3 itemPlacementPosition(Transform gameplayCamera, GrabbableObject heldObject) {

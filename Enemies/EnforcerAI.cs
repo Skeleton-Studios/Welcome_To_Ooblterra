@@ -131,7 +131,7 @@ public class EnforcerAI : WTOEnemy {
             EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-            new StalkedPlayerSeesUs()
+            new StalkedPlayerSeesUs() 
         };
 
     }
@@ -153,7 +153,7 @@ public class EnforcerAI : WTOEnemy {
         };
 
     } 
-
+     
     private class ScreamAtPlayer : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].agent.speed = 0; 
@@ -367,7 +367,7 @@ public class EnforcerAI : WTOEnemy {
         timeElapsed = 0f;
         LerpPos = 0f;
         EnforcerActiveCamoState = SetCamoOn; 
-        if (EnforcerActiveCamoState) {
+        if (EnforcerActiveCamoState) { 
             ScanNode.enabled = false;
             StartCoroutine(StartActiveCamo());
         } else {
@@ -375,13 +375,13 @@ public class EnforcerAI : WTOEnemy {
             StartCoroutine(StopActiveCamo());
         }
     }
-    public void DetermineNextHidePoint() {
+    public void DetermineNextHidePoint() { 
         if(EnforcerHidePoints == null) {
             EnforcerHidePoints = FindObjectsOfType<EnforcerHidePoint>().ToList();
             LogMessage($"Hide Point count: {EnforcerHidePoints.Count}");
         }
         NextHidePoint = EnforcerHidePoints[enemyRandom.Next(0, EnforcerHidePoints.Count)];
-    }
+    } 
     IEnumerator StartActiveCamo() {
         while ((timeElapsed / ActiveCamoLerpTime) < 1) { 
             timeElapsed += Time.deltaTime;
