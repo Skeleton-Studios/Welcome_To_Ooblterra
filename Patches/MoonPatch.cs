@@ -16,7 +16,7 @@ internal class MoonPatch {
 
     public static string MoonFriendlyName;
     public static SelectableLevel MyNewMoon;
-
+    private static bool StoryLogLoaded = false;
     public static Animator OoblFogAnimator;
 
     private static readonly AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
@@ -133,6 +133,7 @@ internal class MoonPatch {
         SoundManager.Instance.DaytimeMusic = new AudioClip[0];
     }
     */
+
     [HarmonyPatch(typeof(StartOfRound), "OnShipLandedMiscEvents")]
     [HarmonyPostfix]
     private static void SetFogTies(StartOfRound __instance) {
@@ -161,7 +162,20 @@ internal class MoonPatch {
         timeOfDay.sunIndirect = Indirect;
         timeOfDay.sunDirect = Direct;
     }
-    
+
+    [HarmonyPatch(typeof(PreInitSceneScript), "ChooseLaunchOption")]
+    [HarmonyPrefix]
+    private static void LoadStoryLog() {
+        if (StoryLogLoaded) {
+            return;
+        }
+        ExtendedStoryLog WTOLog1 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog1Security.asset");
+        ExtendedMod WTOMod = PatchedContent.ExtendedMods.First(x => x.ModName == "Welcome to Ooblterra!");
+        WTOBase.LogToConsole($"Extended mod found: {WTOMod}");
+        WTOMod.ExtendedStoryLogs.Add(WTOLog1);
+
+        StoryLogLoaded = true;
+    }
 
     //METHODS
     public static void Start() {
