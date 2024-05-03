@@ -45,6 +45,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         private bool canMakeNextPoint;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].Awakening = false;
+            GallenarmaList[enemyIndex].creatureVoice.clip = null;
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Breaking", true);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Attack", false);
@@ -210,6 +211,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].creatureVoice.loop = false;
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
+            
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new ReachedChasedEnemy(),
@@ -541,6 +543,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
         MoveTimerValue(ref hearNoiseCooldown);
         MoveTimerValue(ref RandomAwakeTimerSeconds);
+        IdleAnimation();
         base.Update();
     }
 
@@ -616,6 +619,10 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             HasAttackedThisCycle = false;
         }
     }
+
+    private void IdleAnimation() {
+    }
+
     public void TryRandomAwake() {
         if (RandomAwakeTimerSeconds > 0f) {
             return;
