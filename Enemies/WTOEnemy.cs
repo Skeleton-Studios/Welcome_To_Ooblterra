@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 
@@ -197,29 +198,37 @@ public class WTOEnemy : EnemyAI {
 
     internal bool IsPlayerReachable() {
         if (targetPlayer == null) {
-            LogMessage("Player Reach Test has no target player or passed in argument!");
+            WTOBase.WTOLogSource.LogError("Player Reach Test has no target player or passed in argument!");
             return false;
         }
         return IsPlayerReachable(targetPlayer);
     }
     internal bool IsPlayerReachable(PlayerControllerB PlayerToCheck) {
-        RoundManager.Instance.GetNavMeshPosition(targetPlayer.transform.position, RoundManager.Instance.navHit, 2.7f);
-        return RoundManager.Instance.GotNavMeshPositionResult;
+        Vector3 Position = RoundManager.Instance.GetNavMeshPosition(targetPlayer.transform.position, RoundManager.Instance.navHit, 2.7f);
+        if (!RoundManager.Instance.GotNavMeshPositionResult) {
+            LogMessage("Player Reach Test: No Navmesh position");
+            return false; 
+        }
+        agent.CalculatePath(Position, agent.path);
+        bool HasPath = (agent.path.status == NavMeshPathStatus.PathComplete);
+        LogMessage($"Player Reach Test: {HasPath}");
+        return HasPath;
     }
     internal float PlayerDistanceFromShip(PlayerControllerB PlayerToCheck = null) {
         if(PlayerToCheck == null) {
             if(targetPlayer == null) {
-                LogMessage("PlayerNearShip check has no target player or passed in argument!");
+                WTOBase.WTOLogSource.LogError("PlayerNearShip check has no target player or passed in argument!");
                 return -1;
             }
             PlayerToCheck = targetPlayer;
         }
         float DistanceFromShip = Vector3.Distance(targetPlayer.transform.position, StartOfRound.Instance.shipBounds.transform.position);
+        LogMessage($"PlayerNearShip check: {DistanceFromShip}");
         return DistanceFromShip;
     }
     internal float DistanceFromTargetPlayer() {
         if(targetPlayer == null) {
-            LogMessage($"{this} attempted DistanceFromTargetPlayer with null target; returning -1!");
+            WTOBase.WTOLogSource.LogError($"{this} attempted DistanceFromTargetPlayer with null target; returning -1!");
             return -1f;
         }
         return Vector3.Distance(targetPlayer.transform.position, this.transform.position);
