@@ -38,7 +38,9 @@ public class BabyLurkerEgg : NetworkBehaviour {
     }
     private void Start() {
         enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        //SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 120);
         ScanNode.creatureScanID = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Baby Lurker").terminalNode.creatureFileID;
+        SpawnEgg();
     }
     private void Update() {
         if (EggSpawned) {
@@ -48,21 +50,10 @@ public class BabyLurkerEgg : NetworkBehaviour {
             SecondsUntilNextSpawnAttempt -= Time.deltaTime;
             return;
         }
-        if(enemyRandom.Next(0, 100) < 60) {
-            SpawnEggServerRpc();
-        } else {
-            SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
-        }
+        
     }
 
-
-
-    [ServerRpc(RequireOwnership = false)]
-    public void SpawnEggServerRpc() {
-        SpawnEggClientRpc(); 
-    }
-    [ClientRpc]
-    public void SpawnEggClientRpc() {
+    public void SpawnEgg() {
         if (EggSpawned) {
             return;
         }
@@ -78,6 +69,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         }
 
     }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void SpawnProjectileServerRpc(int targetID) {
