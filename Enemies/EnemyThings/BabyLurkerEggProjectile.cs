@@ -16,7 +16,7 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings;
 public class BabyLurkerEggProjectile : NetworkBehaviour {
 
     public int TargetID = 0;
-    public int BabiesToSpawn = 35;
+    public int BabiesToSpawn = 20;
     private Vector3 SpawnPosition;
     private EnemyType BabyLurker;
     private int iterator = 0;
@@ -27,9 +27,11 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
     public AudioClip[] Boom;
     public ParticleSystem ExplodeParticle;
     private System.Random EggRandom;
+    private bool IsArachnophobiaMode;
 
     private void Start() {
         EggRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+
     }
 
     private void OnTriggerEnter(Collider other) {
