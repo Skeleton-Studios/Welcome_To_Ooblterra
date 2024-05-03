@@ -93,6 +93,7 @@ internal class FactoryPatch {
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, BehaviorPath + "ChargedBattery.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "TeslaCoil.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "SpikeTrap.prefab"));
+        NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "BabyLurkerEgg.prefab"));
         
     }
 }
