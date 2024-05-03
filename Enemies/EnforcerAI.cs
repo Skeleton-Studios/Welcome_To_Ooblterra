@@ -13,7 +13,7 @@ public class EnforcerAI : WTOEnemy {
     [Header("Balance Constants")]
     public static float SecondsUntilBeginStalking = 5f;
     public static float StalkSpeed = 6f;
-    public static float ChaseSpeed = 9.5f; 
+    public static float ChaseSpeed = 10f; 
     public static float RangeForPotentialTarget = 10f;
     public static int EnforcerAttackDamage = 100;
     public static float ActiveCamoVisibility = 0.025f;
@@ -36,11 +36,13 @@ public class EnforcerAI : WTOEnemy {
         Vector3 NextDestination;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerMovingToHidePoint = false;
+            EnforcerList[enemyIndex].PlayerStareAtTimer = 0f;
+            EnforcerList[enemyIndex].IsBeingSeenByPotentialTarget = false;
             EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", true);
             EnforcerList[enemyIndex].EnforcerShouldKeepTrackOfTargetPlayer = false;
             EnforcerList[enemyIndex].PotentialTarget = null;
-            EnforcerList[enemyIndex].targetPlayer = null;
-            EnforcerList[enemyIndex].agent.speed = 8f;
+            EnforcerList[enemyIndex].targetPlayer = null; 
+            EnforcerList[enemyIndex].agent.speed = 8f; 
             EnforcerList[enemyIndex].SetActiveCamoState(true);
             EnforcerList[enemyIndex].DetermineNextHidePoint();
             EnforcerList[enemyIndex].creatureSFX.volume = 1f;
@@ -77,7 +79,6 @@ public class EnforcerAI : WTOEnemy {
             EnforcerList[enemyIndex].RandomlyPlayIdleSound(SecondsUntilNextSound);
             //if a player enters range, consider them our potential target
             if (EnforcerList[enemyIndex].PotentialTarget != null) {
-
                 EnforcerList[enemyIndex].LogMessage($"Range check for target player: {EnforcerList[enemyIndex].PotentialTarget.playerUsername}; " +
                     $"\nin Range/Enforcer LOS? {EnforcerList[enemyIndex].IsTargetPlayerWithinLOS(EnforcerList[enemyIndex].PotentialTarget, range: (int)RangeForPotentialTarget, width: 120)}; " +
                     $"\nPlayer has LOS to Enforcer? {EnforcerList[enemyIndex].CheckPlayerLOSForEnforcer(EnforcerList[enemyIndex].PotentialTarget)}");
@@ -104,7 +105,8 @@ public class EnforcerAI : WTOEnemy {
 
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-            new PlayerPassedBy()
+            new PlayerPassedBy(),
+            new PlayerStaringAtUs()
         };
 
     }
@@ -178,10 +180,10 @@ public class EnforcerAI : WTOEnemy {
 
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (!EnforcerList[enemyIndex].PlayerWithinRange(3f)) {
-                EnforcerList[enemyIndex].agent.speed = 9f;
-            } else {
+            if (!EnforcerList[enemyIndex].PlayerWithinRange(2f)) {
                 EnforcerList[enemyIndex].agent.speed = 2f;
+            } else {
+                EnforcerList[enemyIndex].agent.speed = 0f;
             }
             EnforcerList[enemyIndex].TryMeleeAttackPlayer(120);
         }
@@ -232,7 +234,7 @@ public class EnforcerAI : WTOEnemy {
     }
     private class StalkedPlayerSeesUs : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].eye.position, 20);
+            return EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].eye.position, 30);
         }
         public override BehaviorState NextState() {
             return new ScreamAtPlayer();
@@ -289,6 +291,14 @@ public class EnforcerAI : WTOEnemy {
             return new ChasePlayer();
         }
     }
+    private class PlayerStaringAtUs : StateTransition {
+        public override bool CanTransitionBeTaken() {
+            return EnforcerList[enemyIndex].PlayerStareAtTimer > 5f;
+        }
+        public override BehaviorState NextState() {
+            return new GoToHidingSpot();
+        }
+    }
 
     private class FinishedScream : StateTransition {
         public override bool CanTransitionBeTaken() {
@@ -317,6 +327,7 @@ public class EnforcerAI : WTOEnemy {
     private float AttackCooldownSeconds = 0f;
     private float EnforcerScreamSeconds = 3.13f;
     private bool HasAttackedThisCycle;
+    private float PlayerStareAtTimer = 0f;
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -344,18 +355,27 @@ public class EnforcerAI : WTOEnemy {
     public override void Update() {
         base.Update();
         MoveTimerValue(ref AttackCooldownSeconds);
+        if (IsBeingSeenByPotentialTarget) {
+            PlayerStareAtTimer += Time.deltaTime;
+        } else {
+            PlayerStareAtTimer = 0f;
+        }
+
+        if (ActiveState is ScreamAtPlayer) {
+            MoveTimerValue(ref EnforcerScreamSeconds);
+        }
+
         if (!EnforcerShouldKeepTrackOfTargetPlayer || targetPlayer == null) {
             return;
         }
+
         if (IsTargetPlayerWithinLOS(width: 120)) {
             LastKnownTargetPlayerPosition = targetPlayer.gameplayCamera.transform.position;
             EnforcerSeesPlayer = true;
         } else {
             EnforcerSeesPlayer = false;
         }
-        if(ActiveState is ScreamAtPlayer) {
-            MoveTimerValue(ref EnforcerScreamSeconds);
-        }
+
     }
 
     float timeElapsed = 0f;
