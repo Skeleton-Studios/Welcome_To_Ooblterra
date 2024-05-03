@@ -13,7 +13,7 @@ namespace Welcome_To_Ooblterra.Enemies;
 internal class OoblGhostAI : WTOEnemy {
 
     [Header("Balance Constants")]
-    public float GhostInterferenceRange = 6f;
+    public float GhostInterferenceRange = 10f;
     public float OoblGhostSpeed = 6f;
     public float GhostDamagePerTick = 10f;
     public float GhostInterferenceSeconds = 3f;
@@ -91,6 +91,7 @@ internal class OoblGhostAI : WTOEnemy {
             GhostList[enemyIndex].MoveGhostTowardPlayer();
             if (GhostList[enemyIndex].PlayerWithinRange(GhostList[enemyIndex].GhostInterferenceRange)){
                 GhostList[enemyIndex].ShouldListenForWalkie = true;
+                WTOBase.LogToConsole($"Living player count: {StartOfRound.Instance.livingPlayers}");
                 if(StartOfRound.Instance.connectedPlayersAmount <= 0 || StartOfRound.Instance.livingPlayers <= 1) {
                     GhostList[enemyIndex].LogMessage("Ghost detected player in SP; listening for walkie");
                     GhostList[enemyIndex].SinglePlayerEvaluateWalkie();
@@ -184,6 +185,9 @@ internal class OoblGhostAI : WTOEnemy {
     public override void Update() {
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
         base.Update();
+        if (agent.enabled) {
+            agent.enabled = false;
+        }
         if (ShouldFadeGhost) {
             StartCoroutine(FadeGhostCoroutine());
         }
