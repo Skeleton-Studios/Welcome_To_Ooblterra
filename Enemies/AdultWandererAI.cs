@@ -191,11 +191,11 @@ public class AdultWandererAI : WTOEnemy {
         }
     }
     private class EnemyInShipOrFacility : StateTransition {
-        public override bool CanTransitionBeTaken() {
+        public override bool CanTransitionBeTaken(){
             if (AWandList[base.enemyIndex].targetPlayer == null) {
-                return false;
+                return false; 
             }
-            return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer) || AWandList[base.enemyIndex].PlayerDistanceFromShip() < 10;
+            return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer) || AWandList[base.enemyIndex].PlayerDistanceFromShip() < 15;
         }
         public override BehaviorState NextState() {
                 return new Roam();
@@ -203,10 +203,10 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class EnemyLeftShipOrFacility : StateTransition {
         public override bool CanTransitionBeTaken() {
-            if(AWandList[base.enemyIndex].targetPlayer == null) {
-                return false;
+            if(AWandList[base.enemyIndex].targetPlayer == null) { 
+                return false; 
             }
-            return AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer) && AWandList[base.enemyIndex].IsPlayerReachable();
+            return AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer) && AWandList[base.enemyIndex].PlayerDistanceFromShip() > 15;
         }
         public override BehaviorState NextState() {
             return new Chase();
@@ -315,15 +315,10 @@ public class AdultWandererAI : WTOEnemy {
             GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(1f);
         }
     }
-    
-
-
-
     public override void ReachedNodeInSearch() {
         base.ReachedNodeInSearch();
         ReachedNextPoint = true;
     }
-
     public bool CheckForPlayerLOS() {
         return targetPlayer.HasLineOfSightToPosition(transform.position + Vector3.up * 1.6f, 68f);
     }
