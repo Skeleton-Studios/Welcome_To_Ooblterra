@@ -49,6 +49,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
     private System.Random MyRandom;
     private bool IsUsedUp = false;
     private int PopulatedChemPoints;
+    private static bool MimicSpawned = false;
 
     private void Start() {
         MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
@@ -220,6 +221,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         } else {
             CreateMimicServerRpc(PlayerID, SpawnTarget);
         }
+        StopCoroutine(StartScene(Correctness));
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -257,18 +259,21 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     [ServerRpc(RequireOwnership = false)]
     public void ReviveDeadPlayerServerRpc(int ID, Vector3 SpawnLoc) {
-        WTOBase.LogToConsole($"Reviving dead player {ID} on server...");
+        WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on server...");
         ReviveDeadPlayerClientRpc(ID, SpawnLoc);
     }
-    [ClientRpc]
+        [ClientRpc]
     public void ReviveDeadPlayerClientRpc(int ID, Vector3 SpawnLoc) {
-        WTOBase.LogToConsole($"Reviving dead player {ID} on client...");
+        WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on client...");
         ReviveDeadPlayer(ID, SpawnLoc);
     }
     public void ReviveDeadPlayer(int ID, Vector3 SpawnLoc) {
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
+        if(PlayerToRevive.isPlayerDead == false) {
+            return;
+        }
         WTOBase.LogToConsole("DEAD PLAYER INFO:");
-        WTOBase.LogToConsole($"PLAYER ID: {ID}");
+        WTOBase.LogToConsole($"PLAYER Name: {StartOfRound.Instance.allPlayerScripts[ID].playerUsername}");
         WTOBase.LogToConsole($"PLAYER SCRIPT: {StartOfRound.Instance.allPlayerScripts[ID]}");
         WTOBase.LogToConsole("Reviving players A");
         PlayerToRevive.ResetPlayerBloodObjects(PlayerToRevive.isPlayerDead);
@@ -374,7 +379,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
         for (int k = 0; k < array2.Length; k++) {
             UnityEngine.Object.Destroy(array2[k].gameObject);
         }
-        StartOfRound.Instance.livingPlayers++;
+        StartOfRound.Instance.livingPlayers += 1;
+        WTOBase.LogToConsole($"New living player count: {StartOfRound.Instance.livingPlayers}");
         StartOfRound.Instance.allPlayersDead = false;
         HUDManager.Instance.HideHUD(hide: false);
 
@@ -383,19 +389,23 @@ public class FrankensteinTerminal : NetworkBehaviour {
     //if fail, spawn a mimic from the player's body
     [ServerRpc(RequireOwnership = false)]
     public void CreateMimicServerRpc(int ID, Vector3 MimicCreationPoint) {
+        if(MimicSpawned == true) {
+            return;
+        }
+        MimicSpawned = true;
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
         WTOBase.LogToConsole("Server creating mimic from Frankenstein");
         Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(MimicCreationPoint, default, 10f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
             WTOBase.LogToConsole("No nav mesh found; no WTOMimic could be created");
             return;
-        }
+        } 
         //const int MimicIndex = 12;
         EnemyType TheMimic = StartOfRound.Instance.levels.First(x => x.PlanetName == "8 Titan").Enemies.First(x => x.enemyType.enemyName == "Masked").enemyType;
         WTOBase.LogToConsole($"Mimic Found: {TheMimic != null}");
 
         WTOBase.LogToConsole($"NAVMESHPOS: {navMeshPosition}");
-        WTOBase.LogToConsole($"PLAYER: {PlayerToRevive}");
+        WTOBase.LogToConsole($"PLAYER: {PlayerToRevive.playerUsername}");
         WTOBase.LogToConsole($"MIMIC: {TheMimic}");
 
         NetworkObjectReference netObjectRef = RoundManager.Instance.SpawnEnemyGameObject(navMeshPosition, PlayerToRevive.transform.eulerAngles.y, -1, TheMimic);
@@ -420,6 +430,9 @@ public class FrankensteinTerminal : NetworkBehaviour {
     }
     [ClientRpc]
     public void CreateMimicClientRpc(int ID, NetworkObjectReference netObjectRef) {
+        if (!base.IsServer) {
+            return;
+        }
         StartCoroutine(waitForMimicEnemySpawn(ID, netObjectRef));
     }
     private IEnumerator waitForMimicEnemySpawn(int ID, NetworkObjectReference netObjectRef) {
