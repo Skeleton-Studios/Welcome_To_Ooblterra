@@ -17,11 +17,13 @@ public class BabyLurkerProjectile : NetworkBehaviour {
     public ParticleSystem ExplodeParticle;
     public GameObject self;
     public SkinnedMeshRenderer LurkerMesh;
+    public MeshRenderer ArachnophobiaMesh;
     public BabyLurkerAI OwningLurker;
     private float AutoDestroyTime = 2f;
     private bool StartAutoDestroy = false;
     private System.Random ProjectileRandom;
     private bool IsDead = false;
+    private bool IsArachnophobiaMode = false;
     
     private void OnTriggerEnter(Collider other) {
         WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
@@ -36,8 +38,13 @@ public class BabyLurkerProjectile : NetworkBehaviour {
     
     private void Start() {
         ProjectileRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        if (IsArachnophobiaMode != IngamePlayerSettings.Instance.unsavedSettings.spiderSafeMode) {
+            IsArachnophobiaMode = IngamePlayerSettings.Instance.unsavedSettings.spiderSafeMode;
+            ArachnophobiaMesh.enabled = IsArachnophobiaMode;
+            LurkerMesh.enabled = !IsArachnophobiaMode;
+        }
     }
-    private void Update() {
+    private void Update() { 
         if (!StartAutoDestroy){
             return;
         }
@@ -54,6 +61,7 @@ public class BabyLurkerProjectile : NetworkBehaviour {
         GetComponent<Rigidbody>().isKinematic = true;
         
         LurkerMesh.enabled = false;
+        ArachnophobiaMesh.enabled = false;
         if (OwningLurker != null) { 
             OwningLurker.ThrowingSelfAtPlayer = false;
             OwningLurker.KillEnemyOnOwnerClient(true);

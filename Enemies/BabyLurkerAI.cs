@@ -18,6 +18,9 @@ public class BabyLurkerAI : WTOEnemy {
     public Transform LaunchTransform;
     public static int AttackRange = 5;
     private float JumpCooldownSeconds = 3f;
+    public SkinnedMeshRenderer LurkerMesh; 
+    public MeshRenderer ArachnophobiaMesh;
+    private bool IsArachnophobiaMode;
 
     //STATES
     private class Spawn : BehaviorState {
@@ -158,8 +161,13 @@ public class BabyLurkerAI : WTOEnemy {
         LaunchTransform.rotation = Quaternion.Euler(new Vector3(45, 0, enemyRandom.Next(-5, 5)));
     }
 
-    public override void Update() {
+    public override void Update() { 
         base.Update();
+        if(IsArachnophobiaMode != IngamePlayerSettings.Instance.unsavedSettings.spiderSafeMode) {
+            IsArachnophobiaMode = IngamePlayerSettings.Instance.unsavedSettings.spiderSafeMode;
+            ArachnophobiaMesh.enabled = IsArachnophobiaMode;
+            LurkerMesh.enabled = !IsArachnophobiaMode;
+        }
         MoveTimerValue(ref JumpCooldownSeconds);
         if(targetPlayer != null && (targetPlayer.isPlayerDead || !targetPlayer.isInsideFactory)) {
             //get all living players
@@ -193,7 +201,7 @@ public class BabyLurkerAI : WTOEnemy {
         if(ProjectilesThrown > 0) {
             return;
         }
-        LurkerBody.SetActive(false);
+        LurkerBody.SetActive(false); 
         creatureSFX.volume = 0;
         creatureVoice.volume = 0;
         ProjectilesThrown++;
