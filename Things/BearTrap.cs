@@ -57,9 +57,14 @@ public class BearTrap : MonoBehaviour {
             return;
         }
         if (IsBearTrapClosed) {
-            victim.movementSpeed = 0.4f;
-            victim.jumpForce = 1;
             AcidWater.DamageOverlappingPlayer(victim, 1f, ref TimeSincePlayerDamaged, 10);
+            if (victim.health > 1) {
+                victim.movementSpeed = 0.4f;
+                victim.jumpForce = 1;
+            } else {
+                victim.jumpForce = 13;
+                victim.movementSpeed = 4.6f;
+            }
         } 
     }
 
