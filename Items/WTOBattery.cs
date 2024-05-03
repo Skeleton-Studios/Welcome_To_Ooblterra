@@ -21,25 +21,31 @@ public class WTOBattery : GrabbableObject {
 
     public override void Start() {
         base.Start();
-        int StartingScrapValue;
+        //int StartingScrapValue;
         System.Random ScrapValueRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         if(ScanNode == null) {
             ScanNode = base.gameObject.GetComponentInChildren<ScanNodeProperties>();
         }
-        if (!HasCharge) {
+        WTOBase.WTOLogSource.LogMessage($"Battery value: {scrapValue}");
+        if (scrapValue < 100) {
             WTOBase.LogToConsole("Setting Battery State to Drained");
             ScanNode.headerText = "Drained Battery";
-            StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
+            HasCharge = false;
             mainObjectRenderer.SetMaterials(new List<Material>() { EmptyMaterial });
+            /*
+            StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
             StartingScrapValue /= 5;
             StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
+            */ 
             insertedBattery.charge = 100;
         } else {
             WTOBase.LogToConsole("Setting Battery State to Charged");
             ScanNode.headerText = "Charged Battery";
             mainObjectRenderer.SetMaterials(new List<Material>() { ChargedMaterial });
-            StartingScrapValue = ScrapValueRandom.Next(450, 550);
+            HasCharge = true;
+            /*StartingScrapValue = ScrapValueRandom.Next(450, 550);
+            */
         }
-        SetScrapValue(StartingScrapValue);
+        SetScrapValue(scrapValue); 
     }
 }
