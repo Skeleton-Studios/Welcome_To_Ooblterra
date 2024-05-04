@@ -325,7 +325,7 @@ public class EnforcerAI : WTOEnemy {
     private bool EnforcerSeesPlayer;
     private float IdleSoundCooldownSeconds = 7f;
     private float AttackCooldownSeconds = 0f;
-    private float EnforcerScreamSeconds = 3.13f;
+    private float EnforcerScreamSeconds = 2.5f;
     private bool HasAttackedThisCycle;
     private float PlayerStareAtTimer = 0f;
 
@@ -357,11 +357,12 @@ public class EnforcerAI : WTOEnemy {
         MoveTimerValue(ref AttackCooldownSeconds);
         if (IsBeingSeenByPotentialTarget) {
             PlayerStareAtTimer += Time.deltaTime;
-        } else {
-            PlayerStareAtTimer = 0f;
+        } else { 
+           PlayerStareAtTimer = 0f;
         }
 
         if (ActiveState is ScreamAtPlayer) {
+            LogMessage($"SCREAM SECONDS: {EnforcerScreamSeconds}");
             MoveTimerValue(ref EnforcerScreamSeconds);
         }
 
@@ -369,7 +370,7 @@ public class EnforcerAI : WTOEnemy {
             return;
         }
 
-        if (IsTargetPlayerWithinLOS(width: 120)) {
+        if (IsTargetPlayerWithinLOS(width: 250)) {
             LastKnownTargetPlayerPosition = targetPlayer.gameplayCamera.transform.position;
             EnforcerSeesPlayer = true;
         } else {
@@ -459,7 +460,7 @@ public class EnforcerAI : WTOEnemy {
             MoveTimerValue(ref IdleSoundCooldownSeconds);
             return;
         }
-        if(enemyRandom.Next(0, 100) > 45) {
+        if(enemyRandom.Next(0, 100) < 15) {
             creatureVoice.PlayOneShot(RandomIdleSounds[enemyRandom.Next(0, RandomIdleSounds.Count())]);
             IdleSoundCooldownSeconds = newIdleCooldown;
         }

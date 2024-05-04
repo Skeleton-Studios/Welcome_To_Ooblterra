@@ -153,7 +153,7 @@ public class BabyLurkerAI : WTOEnemy {
         PrintDebugs = false;
         BabyLurkerID++;
         WTOEnemyID = BabyLurkerID;
-        agent.speed = 5f;
+        agent.speed = 7f;
         //SetTargetServerRpc((int)StartOfRound.Instance.allPlayerScripts[0].playerClientId);
         LogMessage($"Adding BabyLurker {this} #{BabyLurkerID}");
         BabyLurkerList.Add(BabyLurkerID, this); 

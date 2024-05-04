@@ -14,9 +14,9 @@ internal class OoblGhostAI : WTOEnemy {
 
     [Header("Balance Constants")]
     public float GhostInterferenceRange = 10f;
-    public float OoblGhostSpeed = 6f;
+    public float OoblGhostSpeed = 7f;
     public float GhostDamagePerTick = 10f;
-    public float GhostInterferenceSeconds = 3f;
+    public float GhostInterferenceSeconds = 1.5f;
 
     [Header("Defaults")]
     public Material GhostMat;

@@ -226,9 +226,15 @@ public class EyeSecAI : WTOEnemy {
     }
     private class PlayerOutOfRange : StateTransition {
         public override bool CanTransitionBeTaken() {
+            if(EyeSecList[enemyIndex].targetPlayer == null) {
+                return true;
+            }
             return !EyeSecList[enemyIndex].CheckLineOfSightForPosition(EyeSecList[enemyIndex].targetPlayer.transform.position, 360f, 15);
         }
-        public override BehaviorState NextState() {
+        public override BehaviorState NextState() {      
+            if(EyeSecList[enemyIndex].targetPlayer == null) {
+                return new Patrol();
+            }
             return new MoveToAttackPosition();
         }
 
