@@ -78,6 +78,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         SpawnEggClientRpc();
     }
 
+    [ClientRpc]
     public void SpawnEggClientRpc() {
         SpawnEgg();
     }
