@@ -88,6 +88,7 @@ internal class OoblGhostAI : WTOEnemy {
             GhostList[enemyIndex].GhostPickedUpInterference = false;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            GhostList[enemyIndex].StopGhostFade();
             GhostList[enemyIndex].MoveGhostTowardPlayer();
             if (GhostList[enemyIndex].PlayerWithinRange(GhostList[enemyIndex].GhostInterferenceRange)){
                 GhostList[enemyIndex].ShouldListenForWalkie = true;
