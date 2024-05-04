@@ -25,6 +25,7 @@ public class BearTrap : MonoBehaviour {
     public System.Random BearTrapRandom;
     public bool IsBearTrapClosed;
     private List<PlayerControllerB> PlayerInRangeList = new();
+    private int BearTrapRiseChance = 70;
 
 
     public void OnTriggerEnter(Collider other) {
@@ -78,7 +79,7 @@ public class BearTrap : MonoBehaviour {
         }
         if(SecondsUntilNextRiseAttempt > 0) {
             SecondsUntilNextRiseAttempt -= Time.deltaTime;
-        } else {
+        } else { 
             TryBearTrapRise();
         }
     }
@@ -89,6 +90,9 @@ public class BearTrap : MonoBehaviour {
             return;
         }
         SecondsUntilNextRiseAttempt = BearTrapRandom.Next(35, 80);
+        if(BearTrapRiseChance > 0) {
+            BearTrapRiseChance -= 10;
+        }
     }
 
     [ServerRpc]
