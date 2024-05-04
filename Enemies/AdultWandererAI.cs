@@ -89,6 +89,7 @@ public class AdultWandererAI : WTOEnemy {
         public int TotalInvestigateTime;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             AWandList[enemyIndex].agent.speed = 7f;
+            AWandList[enemyIndex].targetPlayer = null;
             creatureAnimator.SetBool("Moving", value: true);
             if (!AWandList[enemyIndex].RoamPlanet.inProgress) {
                 AWandList[enemyIndex].StartSearch(AWandList[enemyIndex].transform.position, AWandList[enemyIndex].RoamPlanet);
@@ -104,7 +105,7 @@ public class AdultWandererAI : WTOEnemy {
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new StartInvestigation(),
-            new EnemyLeftShipOrFacility()
+            new NewPlayerNearBy()
         };
     }
     private class Investigate : BehaviorState {
@@ -126,14 +127,14 @@ public class AdultWandererAI : WTOEnemy {
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new DoneInvestigating(),
-            new EnemyLeftShipOrFacility()
+            new NewPlayerNearBy()
         };
 
     }
     private class Chase : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: true);
-            AWandList[enemyIndex].agent.speed = 8f;
+            AWandList[enemyIndex].agent.speed = 9f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             AWandList[enemyIndex].SetDestinationToPosition(AWandList[enemyIndex].targetPlayer.transform.position);
@@ -198,7 +199,7 @@ public class AdultWandererAI : WTOEnemy {
             return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer) || AWandList[base.enemyIndex].PlayerDistanceFromShip() < 15;
         }
         public override BehaviorState NextState() {
-                return new Roam();
+                return new Investigate();
         }
     }
     private class EnemyLeftShipOrFacility : StateTransition {
@@ -219,7 +220,7 @@ public class AdultWandererAI : WTOEnemy {
         public override BehaviorState NextState() {
             return new Chase();
         }
-    }
+    } 
     private class EnemyKilled : StateTransition {
             
         public override bool CanTransitionBeTaken() {
@@ -276,6 +277,15 @@ public class AdultWandererAI : WTOEnemy {
         }
         public override BehaviorState NextState() {
             return new Roam();
+        }
+    }
+    private class NewPlayerNearBy : StateTransition {
+        public override bool CanTransitionBeTaken() {
+            return AWandList[enemyIndex].IsAnyPlayerWithinLOS(range: 10, width: 40, SortByDistance: true) != null;
+        }
+        public override BehaviorState NextState() {
+            AWandList[enemyIndex].targetPlayer = AWandList[enemyIndex].IsAnyPlayerWithinLOS(range: 10, width: 40, SortByDistance: true);
+            return new Chase();
         }
     }
 

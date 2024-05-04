@@ -80,7 +80,7 @@ public class EnforcerAI : WTOEnemy {
             //if a player enters range, consider them our potential target
             if (EnforcerList[enemyIndex].PotentialTarget != null) {
                 EnforcerList[enemyIndex].LogMessage($"Range check for target player: {EnforcerList[enemyIndex].PotentialTarget.playerUsername}; " +
-                    $"\nin Range/Enforcer LOS? {EnforcerList[enemyIndex].IsTargetPlayerWithinLOS(EnforcerList[enemyIndex].PotentialTarget, range: (int)RangeForPotentialTarget, width: 120)}; " +
+                    $"\nin Range/Enforcer LOS? {EnforcerList[enemyIndex].IsTargetPlayerWithinLOS(EnforcerList[enemyIndex].PotentialTarget, range: (int)RangeForPotentialTarget, width: 180)}; " +
                     $"\nPlayer has LOS to Enforcer? {EnforcerList[enemyIndex].CheckPlayerLOSForEnforcer(EnforcerList[enemyIndex].PotentialTarget)}");
                 
                 if (EnforcerList[enemyIndex].PlayerWithinRange(EnforcerList[enemyIndex].PotentialTarget, RangeForPotentialTarget)) {

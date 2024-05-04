@@ -144,18 +144,31 @@ public class WTOEnemy : EnemyAI {
         return;
     }
 
-    public PlayerControllerB IsAnyPlayerWithinLOS(int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false) {
-        foreach(PlayerControllerB Player in StartOfRound.Instance.allPlayerScripts) {
-            if(IsTargetPlayerWithinLOS(Player, range, width, proximityAwareness, DoLinecast, PrintResults)) {  
-                return Player; 
+    public PlayerControllerB IsAnyPlayerWithinLOS(int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false, bool SortByDistance = false) {
+        float ShortestDistance = range;
+        float NextDistance;
+        PlayerControllerB ClosestPlayer = null;
+        foreach (PlayerControllerB Player in StartOfRound.Instance.allPlayerScripts) {
+            if (Player.isPlayerDead || !Player.isPlayerControlled) {
+                continue;
+            }
+            if(IsTargetPlayerWithinLOS(Player, range, width, proximityAwareness, DoLinecast, PrintResults)) {
+                if (!SortByDistance) { 
+                    return Player;
+                }
+                NextDistance = Vector3.Distance(Player.transform.position, this.transform.position);
+                if(NextDistance < ShortestDistance) {
+                    ShortestDistance = NextDistance;
+                    ClosestPlayer = Player; 
+                }
             }
         }
-        return null;
+        return ClosestPlayer;
     }
     public bool IsTargetPlayerWithinLOS(PlayerControllerB player, int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false) {
         float DistanceToTarget = Vector3.Distance(transform.position, player.gameplayCamera.transform.position);
         bool TargetInDistance = DistanceToTarget < (float)range;
-        float AngleToTarget = Vector3.Angle(eye.transform.forward, player.transform.position - player.gameplayCamera.transform.position);
+        float AngleToTarget = Vector3.Angle(eye.transform.forward, player.gameplayCamera.transform.position - eye.transform.position);
         bool TargetWithinViewCone = AngleToTarget < width;
         bool TargetWithinProxAwareness = DistanceToTarget < proximityAwareness;
         bool LOSBlocked = (DoLinecast ? Physics.Linecast(eye.transform.position, player.transform.position, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore) : false);
