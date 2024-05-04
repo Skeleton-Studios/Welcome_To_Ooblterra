@@ -170,11 +170,23 @@ internal class MoonPatch {
             return;
         }
         ExtendedStoryLog WTOLog1 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog1Security.asset");
-        ExtendedMod WTOMod = PatchedContent.ExtendedMods.First(x => x.ModName == "Welcome to Ooblterra!");
-        WTOBase.LogToConsole($"Extended mod found: {WTOMod}");
-        WTOMod.ExtendedStoryLogs.Add(WTOLog1);
-
-        StoryLogLoaded = true;
+        ExtendedStoryLog WTOLog2 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog2Walker.asset");
+        ExtendedStoryLog WTOLog3 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog3Clearing.asset");
+        ExtendedStoryLog WTOLog4 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog4Truck.asset");
+        ExtendedStoryLog WTOLog5 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog5Underneath.asset");
+        try { 
+            ExtendedMod WTOMod = PatchedContent.ExtendedMods.First(x => x.ModName == "Welcome to Ooblterra!");
+            WTOBase.LogToConsole($"Extended mod found: {WTOMod}");
+            WTOMod.ExtendedStoryLogs.Add(WTOLog1);
+            WTOMod.ExtendedStoryLogs.Add(WTOLog2);
+            WTOMod.ExtendedStoryLogs.Add(WTOLog3);
+            WTOMod.ExtendedStoryLogs.Add(WTOLog4);
+            WTOMod.ExtendedStoryLogs.Add(WTOLog5);
+            StoryLogLoaded = true;
+        } catch {
+            WTOBase.LogToConsole($"Could not find extended mod!");
+        }
+        
     }
 
     //METHODS
