@@ -178,11 +178,10 @@ internal class OoblGhostAI : WTOEnemy {
         //GetComponent<AcidWater>().DamageAmount = (int)GhostDamagePerTick;
         base.Start();
         transform.position = new Vector3(0, -1000, 0);
-        
         GhostRenderer.materials = new Material[3] { GhostMat, GhostMat, GhostTeethMat };
         GhostArmsRenderer.materials = new Material[1] { GhostMat };
         StopGhostFade();
-    }
+    } 
     public override void Update() {
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
         base.Update();
@@ -208,7 +207,7 @@ internal class OoblGhostAI : WTOEnemy {
                 return;
             }
         } 
-        StopCoroutine("ListenForWalkie");
+        StopCoroutine("ListenForWalkie"); 
 
     }
 
