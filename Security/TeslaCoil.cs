@@ -78,6 +78,10 @@ internal class TeslaCoil : NetworkBehaviour {
             return;
         }
         foreach (PlayerControllerB Player in PlayerInRangeList) {
+            if(Vector3.Distance(Player.transform.position, this.transform.position) > 30) {
+                PlayerInRangeList.Remove(Player);
+                continue;
+            }
             if(Player.ItemSlots.Count() <= 0) {
                 continue;
             }

@@ -27,8 +27,9 @@ internal class OoblGhostAI : WTOEnemy {
     //STATES
     private class WaitForNextAttack : BehaviorState {
         public WaitForNextAttack() {
-
-            RandomRange = new Vector2(90, 135);
+            int min = (GetNumberOfGhosts() * 80) + 30;
+            int max = (GetNumberOfGhosts() * 100) + 50;
+            RandomRange = new Vector2(min, max);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
@@ -92,9 +93,7 @@ internal class OoblGhostAI : WTOEnemy {
             GhostList[enemyIndex].MoveGhostTowardPlayer();
             if (GhostList[enemyIndex].PlayerWithinRange(GhostList[enemyIndex].GhostInterferenceRange)){
                 GhostList[enemyIndex].ShouldListenForWalkie = true;
-                WTOBase.LogToConsole($"Living player count: {StartOfRound.Instance.livingPlayers}");
                 if(StartOfRound.Instance.connectedPlayersAmount <= 0 || StartOfRound.Instance.livingPlayers <= 1) {
-                    GhostList[enemyIndex].LogMessage("Ghost detected player in SP; listening for walkie");
                     GhostList[enemyIndex].SinglePlayerEvaluateWalkie();
                 }
             } else {
@@ -132,6 +131,10 @@ internal class OoblGhostAI : WTOEnemy {
             return GhostList[enemyIndex].targetPlayer.isPlayerDead;
         }
         public override BehaviorState NextState() {
+            GhostList[enemyIndex].ShouldFlickerLights = false;
+            GhostList[enemyIndex].ShouldFadeGhost = true;
+            GhostList[enemyIndex].timeElapsed = 0f;
+            GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
             return new WaitForNextAttack();
         }
     }
@@ -161,7 +164,7 @@ internal class OoblGhostAI : WTOEnemy {
     private const float FadeTimeSeconds = 3f;
     private float TargetFade;
     private float timeElapsed;
-    private Coroutine ListenForWalkieCr;
+    private bool ListenForWalkieCrActive;
 
     private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
 
@@ -195,19 +198,19 @@ internal class OoblGhostAI : WTOEnemy {
             return;
         }
 
-        if (ShouldFlickerShipLights) {
-            StartCoroutine(FlickerShipLights());
-        } else {
-            StartCoroutine(FlickerNearbyLights());
-        }
         if (ShouldListenForWalkie) {
             WTOBase.LogToConsole($"HEARING OTHERS THROUGH WALKIE TALKIE: {targetPlayer.PlayerIsHearingOthersThroughWalkieTalkie(targetPlayer)}");
-            if (targetPlayer.PlayerIsHearingOthersThroughWalkieTalkie(targetPlayer)) {
+            if (targetPlayer.PlayerIsHearingOthersThroughWalkieTalkie(targetPlayer) && !ListenForWalkieCrActive) {
                 StartCoroutine("ListenForWalkie");
+                ListenForWalkieCrActive = true;
+                return;
+            }
+            if (ListenForWalkieCrActive) {
                 return;
             }
         } 
-        StopCoroutine("ListenForWalkie"); 
+        StopCoroutine("ListenForWalkie");
+        ListenForWalkieCrActive = false;
 
     }
 
@@ -319,6 +322,16 @@ internal class OoblGhostAI : WTOEnemy {
     public void FlickerNearbyLightsClientRpc(bool ShipLights) {
         ShouldFlickerLights = true;
         this.ShouldFlickerShipLights = ShipLights;
+    }
+
+    internal static int GetNumberOfGhosts() {
+        int Number = 0;
+        foreach(OoblGhostAI Ghost in GhostList.Values) {
+            if (Ghost != null) {
+                Number++;
+            }
+        }
+        return Number;
     }
 
     //TODO: Impliment

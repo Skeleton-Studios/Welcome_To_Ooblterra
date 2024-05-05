@@ -144,6 +144,8 @@ public class WTOEnemy : EnemyAI {
         return;
     }
 
+
+
     public PlayerControllerB IsAnyPlayerWithinLOS(int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false, bool SortByDistance = false) {
         float ShortestDistance = range;
         float NextDistance;

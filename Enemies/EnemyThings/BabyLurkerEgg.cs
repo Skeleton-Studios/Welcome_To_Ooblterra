@@ -92,6 +92,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         if (EggDropped) {
             return;
         }
+        MapDot.SetActive(false);
         GetComponent<AudioSource>()?.PlayOneShot(BreakoffSound[enemyRandom.Next(0, BreakoffSound.Length)]);
         WTOBase.LogToConsole($"Lurker egg projectile being spawned!");
         HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);

@@ -281,10 +281,10 @@ public class AdultWandererAI : WTOEnemy {
     }
     private class NewPlayerNearBy : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return AWandList[enemyIndex].IsAnyPlayerWithinLOS(range: 10, width: 40, SortByDistance: true) != null;
+            return AWandList[enemyIndex].IsAnyPlayerWithinLOS(range: 10, width: 80, SortByDistance: true) != null;
         }
         public override BehaviorState NextState() {
-            AWandList[enemyIndex].targetPlayer = AWandList[enemyIndex].IsAnyPlayerWithinLOS(range: 10, width: 40, SortByDistance: true);
+            AWandList[enemyIndex].targetPlayer = AWandList[enemyIndex].IsAnyPlayerWithinLOS(range: 10, width: 80, SortByDistance: true);
             return new Chase();
         }
     }

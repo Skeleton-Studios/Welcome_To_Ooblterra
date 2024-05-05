@@ -80,7 +80,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     }
     private class GoToNoise : BehaviorState {
         bool OnRouteToNextPoint;
-        Transform RangeOfTargetNoise;
+        Vector3 RangeOfTargetNoise;
         Vector3 TargetNoisePosition;
         NoiseInfo CurrentNoise;
         Vector3 NextPoint;
@@ -104,8 +104,8 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 CurrentNoise = GallenarmaList[enemyIndex].LatestNoise;
 
                 if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
-                    RangeOfTargetNoise = GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(CurrentNoise.Location);
-                    OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RangeOfTargetNoise.position, true);
+                    RangeOfTargetNoise = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].LatestNoise.Location, 2);
+                    OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RangeOfTargetNoise, true);
                 }
                 GallenarmaList[enemyIndex].agent.speed = 7.5f;
             }
@@ -429,6 +429,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             if (GallenarmaList[enemyIndex].targetPlayer == null) {
                 return true;
             }
+            if (!GallenarmaList[enemyIndex].IsPlayerReachable()) {
+                return true;
+            }
             if (Vector3.Distance(GallenarmaList[enemyIndex].targetPlayer.transform.position, GallenarmaList[enemyIndex].transform.position) > GallenarmaList[enemyIndex].AttackRange + 2.5) {
                 GallenarmaList[enemyIndex].AttackTimerSeconds = 0;
                 return true;
@@ -436,6 +439,9 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             return false;
         }
         public override BehaviorState NextState() {
+            if (!GallenarmaList[enemyIndex].IsPlayerReachable()) {
+                return new Patrol();
+            }
             return new Chase();
         }
     }

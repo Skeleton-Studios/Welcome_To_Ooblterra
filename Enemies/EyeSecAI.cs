@@ -352,7 +352,9 @@ public class EyeSecAI : WTOEnemy {
         MoveTimerValue(ref ScanCooldownSeconds);
         MoveTimerValue(ref FlashCooldownSeconds);
         MoveTimerValue(ref ShutdownTimerSeconds);
-        SpinWheel();
+        if (base.IsOwner) { 
+            SpinWheelServerRpc();
+        }
         base.Update();
     }
     public static void RefreshGrabbableObjectsInMapList() {
@@ -390,9 +392,10 @@ public class EyeSecAI : WTOEnemy {
         if (grabbableObjectsInMap.Contains(Player.currentlyHeldObjectServer)) {
             //if it is...
             LogMessage("Player is guilty!");
-            FoundPlayerHoldingScrap = true;
+            
             ScanFinished = true;
             SetTargetServerRpc((int)Player.playerClientId);
+            FoundPlayerHoldingScrap = true;
         }
     }
     private void CheckPlayerDeepScan(PlayerControllerB Player) {
@@ -400,14 +403,22 @@ public class EyeSecAI : WTOEnemy {
         for(int i = 0; i < Player.ItemSlots.Count(); i++) {
             if (grabbableObjectsInMap.Contains(Player.ItemSlots[i])) {
                 LogMessage("Player is guilty!");
-                FoundPlayerHoldingScrap = true;
+                
                 ScanFinished = true;
                 SetTargetServerRpc((int)Player.playerClientId);
+                FoundPlayerHoldingScrap = true;
                 break;
             }
         }
     }
-    private void SpinWheel() {
+
+    [ServerRpc]
+    private void SpinWheelServerRpc() {
+        SpinWheelClientRpc();
+    }
+
+    [ClientRpc]
+    private void SpinWheelClientRpc() {
         //Wheel.transform.forward = agent.transform.forward;
         if(agent.velocity.magnitude > 0) {
             Wheel.transform.Rotate(160 * Time.deltaTime, 0, 0);

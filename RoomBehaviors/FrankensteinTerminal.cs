@@ -32,6 +32,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     public FrankensteinVisuals Visuals;
 
+    private bool ReviveStarted = false;
     private enum Correctness {
         Correct,
         Partial,
@@ -216,11 +217,12 @@ public class FrankensteinTerminal : NetworkBehaviour {
             Visuals.StartVisuals();
         }
         yield return new WaitForSeconds(7);
-        if (Correctness > 50) {
+        if (Correctness > 50 ) {
             ReviveDeadPlayerServerRpc(PlayerID, SpawnTarget);
         } else {
             CreateMimicServerRpc(PlayerID, SpawnTarget);
         }
+
         StopCoroutine(StartScene(Correctness));
     }
 
@@ -262,10 +264,14 @@ public class FrankensteinTerminal : NetworkBehaviour {
         WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on server...");
         ReviveDeadPlayerClientRpc(ID, SpawnLoc);
     }
-        [ClientRpc]
+    [ClientRpc]
     public void ReviveDeadPlayerClientRpc(int ID, Vector3 SpawnLoc) {
+        if (ReviveStarted) {
+            return;
+        }
         WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on client...");
         ReviveDeadPlayer(ID, SpawnLoc);
+        ReviveStarted = true;
     }
     public void ReviveDeadPlayer(int ID, Vector3 SpawnLoc) {
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
@@ -351,39 +357,22 @@ public class FrankensteinTerminal : NetworkBehaviour {
         }
         */
         WTOBase.LogToConsole("Reviving players G");
-        PlayerControllerB playerControllerB = GameNetworkManager.Instance.localPlayerController;
-        playerControllerB.bleedingHeavily = false;
-        playerControllerB.criticallyInjured = false;
-        playerControllerB.playerBodyAnimator.SetBool("Limp", value: false);
-        playerControllerB.health = 100;
-        HUDManager.Instance.UpdateHealthUI(100, hurtPlayer: false);
-        playerControllerB.spectatedPlayerScript = null;
-        HUDManager.Instance.audioListenerLowPass.enabled = false;
+        if(GameNetworkManager.Instance.localPlayerController == PlayerToRevive) {
+            HUDManager.Instance.HideHUD(hide: false);
+            StartOfRound.Instance.SetSpectateCameraToGameOverMode(enableGameOver: false, PlayerToRevive);
+            HUDManager.Instance.audioListenerLowPass.enabled = false;
+            HUDManager.Instance.UpdateHealthUI(100, hurtPlayer: false);
+        }
+        PlayerToRevive.bleedingHeavily = false;
+        PlayerToRevive.criticallyInjured = false;
+        PlayerToRevive.playerBodyAnimator.SetBool("Limp", value: false);
+        PlayerToRevive.health = 100;
+        PlayerToRevive.spectatedPlayerScript = null;
         WTOBase.LogToConsole("Reviving players H");
-        StartOfRound.Instance.SetSpectateCameraToGameOverMode(enableGameOver: false, playerControllerB);
-        RagdollGrabbableObject[] array = UnityEngine.Object.FindObjectsOfType<RagdollGrabbableObject>();
-        for (int j = 0; j < array.Length; j++) {
-            if (!array[j].isHeld) {
-                if (StartOfRound.Instance.IsServer) {
-                    if (array[j].NetworkObject.IsSpawned) {
-                        array[j].NetworkObject.Despawn();
-                    } else {
-                        UnityEngine.Object.Destroy(array[j].gameObject);
-                    }
-                }
-            } else if (array[j].isHeld && array[j].playerHeldBy != null) {
-                array[j].playerHeldBy.DropAllHeldItems();
-            }
-        }
-        DeadBodyInfo[] array2 = UnityEngine.Object.FindObjectsOfType<DeadBodyInfo>();
-        for (int k = 0; k < array2.Length; k++) {
-            UnityEngine.Object.Destroy(array2[k].gameObject);
-        }
+        GameObject.Destroy(BodyPoint.BodyGO);
         StartOfRound.Instance.livingPlayers += 1;
         WTOBase.LogToConsole($"New living player count: {StartOfRound.Instance.livingPlayers}");
         StartOfRound.Instance.allPlayersDead = false;
-        HUDManager.Instance.HideHUD(hide: false);
-
     }
 
     //if fail, spawn a mimic from the player's body
