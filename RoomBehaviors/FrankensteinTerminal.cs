@@ -369,7 +369,10 @@ public class FrankensteinTerminal : NetworkBehaviour {
         PlayerToRevive.health = 100;
         PlayerToRevive.spectatedPlayerScript = null;
         WTOBase.LogToConsole("Reviving players H");
-        GameObject.Destroy(BodyPoint.BodyGO);
+        if (base.IsServer) {
+            BodyPoint.BodyGO.NetworkObject.Despawn();
+        }
+        Destroy(BodyPoint.BodyGO);
         StartOfRound.Instance.livingPlayers += 1;
         WTOBase.LogToConsole($"New living player count: {StartOfRound.Instance.livingPlayers}");
         StartOfRound.Instance.allPlayersDead = false;
