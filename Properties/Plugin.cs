@@ -53,21 +53,8 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPatch(typeof(StartOfRound), "Update")]
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
-        if (Keyboard.current.f8Key.wasPressedThisFrame) {
-            WTOBase.LogToConsole("BEGIN PRINT TERMINAL LOGS");
-            for (int i = 0; i < FindObjectOfType<Terminal>().logEntryFiles.Count; i++) {
-                TerminalNode NextNode = FindObjectOfType<Terminal>().logEntryFiles[i];
-                WTOBase.LogToConsole($"LOG ID: {i} ", false);
-                WTOBase.LogToConsole($"LOG NAME: {NextNode.name} ", false);
-                WTOBase.LogToConsole($"LOG CONTENTS: {NextNode.displayText}", false);
-            }
-            WTOBase.LogToConsole("END PRINT TERMINAL LOGS");
-        }
         if (Keyboard.current.f9Key.wasPressedThisFrame) {
-            WTOBase.LogToConsole($"BEGIN PRINT KEYWORD LIST");
-            foreach (TerminalKeyword NextKeyword in FindObjectOfType<Terminal>().terminalNodes.allKeywords) {
-                WTOBase.LogToConsole($"keyword NAME: {NextKeyword.name} WORD: {NextKeyword.word} verb: {NextKeyword.defaultVerb}");
-            }
+            StartOfRound.Instance.ChangeLevelServerRpc(13, 60);
         }
     }
 
@@ -134,7 +121,7 @@ public class WTOBase : BaseUnityPlugin {
         if (AddFlair) { 
             text = "=======" + text + "=======";
         }
-        WTOLogSource.LogMessage(text);
+        //WTOLogSource.LogMessage(text);
     }
     public enum AllowedState {
         Off = 0,

@@ -21,7 +21,7 @@ internal class MonsterPatch {
     private static bool EnemiesInList; 
     public const bool ShouldDebugEnemies = true;
 
-
+    /*
     [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
     [HarmonyPrefix]
     private static void AddMonstersToDebug(QuickMenuManager __instance) {
@@ -70,6 +70,7 @@ internal class MonsterPatch {
 
         EnemiesInList = true;
     }
+    */
 
     [HarmonyPatch(typeof(EnemyAI), "SetEnemyStunned")]
     [HarmonyPostfix]
