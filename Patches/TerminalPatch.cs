@@ -63,18 +63,28 @@ internal class TerminalPatch {
             5231114,
             5231115
         };
+        bool SkipNouns = false;
+        foreach (TerminalKeyword NextKeyword in GameObject.FindObjectOfType<Terminal>().terminalNodes.allKeywords) {
+            if (NextKeyword.word == "mack1") {
+                SkipNouns = true;
+            }
+        }
         for (int i = 0; i < NodeList.Count; i++) {
             WTOBase.LogToConsole($"nextIndex = {NextIndex}");
             KeywordList[i].defaultVerb = ViewKeyword;
-            NodeList[i].creatureFileID = NextIndex;
+            NodeList[i].storyLogFileID = NextIndex;
             GameObject.FindObjectOfType<Terminal>().logEntryFiles.Add(NodeList[i]);
             try {
                 LogDictionary.Add(IDList[i], NextIndex);
             } catch {}
-            GameObject.FindObjectOfType<Terminal>().terminalNodes.allKeywords.AddItem(KeywordList[i]);
+            
+            if (SkipNouns) {
+                continue;
+            }
             ViewKeyword.AddCompatibleNoun(KeywordList[i], NodeList[i]);
             NextIndex++;
         }
+        GameObject.FindObjectOfType<Terminal>().terminalNodes.allKeywords = GameObject.FindObjectOfType<Terminal>().terminalNodes.allKeywords.Concat(KeywordList).ToArray();
         WTOBase.LogToConsole("END ADD WTO STORY LOGS!");
     }
 }

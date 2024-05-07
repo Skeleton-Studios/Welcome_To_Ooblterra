@@ -64,9 +64,9 @@ public class WTOBase : BaseUnityPlugin {
             WTOBase.LogToConsole("END PRINT TERMINAL LOGS");
         }
         if (Keyboard.current.f9Key.wasPressedThisFrame) {
-            WTOBase.LogToConsole($"BEGIN PRINT {FindObjectOfType<Terminal>().terminalNodes.allKeywords[19].name} COMPATIBLE NOUNS");
-            foreach (CompatibleNoun NextNoun in FindObjectOfType<Terminal>().terminalNodes.allKeywords[19].compatibleNouns) {
-                WTOBase.LogToConsole($"NOUN NAME: {NextNoun.noun} WORD: {NextNoun.noun.word} RESULT: {NextNoun.result}");
+            WTOBase.LogToConsole($"BEGIN PRINT KEYWORD LIST");
+            foreach (TerminalKeyword NextKeyword in FindObjectOfType<Terminal>().terminalNodes.allKeywords) {
+                WTOBase.LogToConsole($"keyword NAME: {NextKeyword.name} WORD: {NextKeyword.word} verb: {NextKeyword.defaultVerb}");
             }
         }
     }
