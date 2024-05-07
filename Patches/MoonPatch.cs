@@ -16,11 +16,11 @@ internal class MoonPatch {
 
     public static string MoonFriendlyName;
     public static SelectableLevel MyNewMoon;
-    private static bool StoryLogLoaded = false;
+
     public static Animator OoblFogAnimator;
 
-    private static readonly AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
-    private const string MoonPath = WTOBase.RootPath + "CustomMoon/";
+    public static readonly AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
+    public const string MoonPath = WTOBase.RootPath + "CustomMoon/";
 
     private static FootstepSurface GrassSurfaceRef;
     
@@ -31,32 +31,11 @@ internal class MoonPatch {
 
     private static AudioClip[] CachedTODMusic;
     private static AudioClip[] CachedAmbientMusic;
-    private static AudioClip[] OoblTODMusic; 
+    private static AudioClip[] OoblTODMusic;
+
+
 
     //PATCHES
-    /*
-    [HarmonyPatch(typeof(StartOfRound), "Start")]
-    [HarmonyPostfix]
-    private static void CacheFootstepSounds(StartOfRound __instance) {
-        const string FootstepPath = MoonPath + "Sound/Footsteps/";
-        GrassSurfaceRef = StartOfRound.Instance.footstepSurfaces[4];
-        if(GrassFootstepClips == null) {
-            GrassFootstepClips = StartOfRound.Instance.footstepSurfaces[4].clips;
-            GrassHitSFX = StartOfRound.Instance.footstepSurfaces[4].hitSurfaceSFX;
-        }
-        if (OoblFootstepClips == null) {
-            OoblFootstepClips = new AudioClip[] {
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP01.wav"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP02.wav"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP03.wav"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP04.wav"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
-            };
-            OoblHitSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
-        }
-    }
-    */
-
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
     [HarmonyPostfix] 
     private static void ManageNav(StartOfRound __instance) {
@@ -103,36 +82,8 @@ internal class MoonPatch {
         GrassSurfaceRef.hitSurfaceSFX = OoblHitSFX;
         TimeOfDay.Instance.timeOfDayCues = OoblTODMusic;
         SoundManager.Instance.DaytimeMusic = new AudioClip[0];
+        ReplaceStoryLogIDs();       
     }
-    /*
-    [HarmonyPatch(typeof(StartOfRound), "ShipHasLeft")]
-    [HarmonyPostfix]
-    public static void DestroyLevel(StartOfRound __instance) {
-        GrassSurfaceRef.clips = GrassFootstepClips;
-        GrassSurfaceRef.hitSurfaceSFX = GrassHitSFX;
-        TimeOfDay.Instance.timeOfDayCues = CachedTODMusic;
-    }
-
-    [HarmonyPatch(typeof(TimeOfDay), "MoveGlobalTime")]
-    [HarmonyPrefix]
-    private static void ManageTODMusic(TimeOfDay __instance) {
-        if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
-            if(CachedTODMusic != null && __instance.timeOfDayCues != CachedTODMusic) {
-                WTOBase.LogToConsole($"Setting TOD music to cached music (Cached Music value: {CachedTODMusic[0].name})");
-                __instance.timeOfDayCues = CachedTODMusic;
-                SoundManager.Instance.DaytimeMusic = CachedAmbientMusic;
-            }
-            return;
-        }
-        if (CachedTODMusic != null) {
-            WTOBase.LogToConsole($"Putting TOD cues in cache (current value: {__instance.timeOfDayCues[0].name})");
-            CachedTODMusic = __instance.timeOfDayCues;
-            CachedAmbientMusic = SoundManager.Instance.DaytimeMusic;
-        }
-        __instance.timeOfDayCues = OoblTODMusic;
-        SoundManager.Instance.DaytimeMusic = new AudioClip[0];
-    }
-    */
 
     [HarmonyPatch(typeof(StartOfRound), "OnShipLandedMiscEvents")]
     [HarmonyPostfix]
@@ -161,32 +112,6 @@ internal class MoonPatch {
         TimeOfDay timeOfDay = GameObject.FindObjectOfType<TimeOfDay>();
         timeOfDay.sunIndirect = Indirect;
         timeOfDay.sunDirect = Direct;
-    }
-
-    [HarmonyPatch(typeof(PreInitSceneScript), "ChooseLaunchOption")]
-    [HarmonyPrefix]
-    private static void LoadStoryLog() {
-        if (StoryLogLoaded) {
-            return;
-        }
-        ExtendedStoryLog WTOLog1 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog1Security.asset");
-        ExtendedStoryLog WTOLog2 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog2Walker.asset");
-        ExtendedStoryLog WTOLog3 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog3Clearing.asset");
-        ExtendedStoryLog WTOLog4 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog4Truck.asset");
-        ExtendedStoryLog WTOLog5 = WTOBase.ContextualLoadAsset<ExtendedStoryLog>(LevelBundle, MoonPatch.MoonPath + "WTOLog5Underneath.asset");
-        try { 
-            ExtendedMod WTOMod = PatchedContent.ExtendedMods.First(x => x.ModName == "Welcome to Ooblterra!");
-            WTOBase.LogToConsole($"Extended mod found: {WTOMod}");
-            WTOMod.ExtendedStoryLogs.Add(WTOLog1);
-            WTOMod.ExtendedStoryLogs.Add(WTOLog2);
-            WTOMod.ExtendedStoryLogs.Add(WTOLog3);
-            WTOMod.ExtendedStoryLogs.Add(WTOLog4);
-            WTOMod.ExtendedStoryLogs.Add(WTOLog5);
-            StoryLogLoaded = true;
-        } catch {
-            WTOBase.LogToConsole($"Could not find extended mod!");
-        }
-        
     }
 
     //METHODS
@@ -218,5 +143,16 @@ internal class MoonPatch {
             }
         }
     }
+    private static void ReplaceStoryLogIDs() {
+        StoryLog[] LevelStoryLogs = GameObject.FindObjectsOfType<StoryLog>();
+        foreach(StoryLog LevelStoryLog in LevelStoryLogs) {
+            if (TerminalPatch.LogDictionary.TryGetValue(LevelStoryLog.storyLogID, out int ResultValue)){
+                LevelStoryLog.storyLogID = ResultValue;
+            } else {
+                //WTOBase.LogToConsole("FAILED TO FIND ID for story log!!!");
+            }
+        }
+    }
+
 }
 

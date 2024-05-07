@@ -54,67 +54,20 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f8Key.wasPressedThisFrame) {
-            /*
-            SpikeTrap[] TeslaCoils = FindObjectsOfType<SpikeTrap>();
-            foreach(SpikeTrap coil in TeslaCoils) {
-                coil.RecieveToggleSpikes(SwitchState);
+            WTOBase.LogToConsole("BEGIN PRINT TERMINAL LOGS");
+            for (int i = 0; i < FindObjectOfType<Terminal>().logEntryFiles.Count; i++) {
+                TerminalNode NextNode = FindObjectOfType<Terminal>().logEntryFiles[i];
+                WTOBase.LogToConsole($"LOG ID: {i} ", false);
+                WTOBase.LogToConsole($"LOG NAME: {NextNode.name} ", false);
+                WTOBase.LogToConsole($"LOG CONTENTS: {NextNode.displayText}", false);
             }
-            SwitchState = !SwitchState;
-            
-            ("Hotkey override triggered to start visuals...");
-            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
-            LabTerminal.StartSceneServerRpc(100);
-
-            
-            SprayPaintItem[] SprayPaints = GameObject.FindObjectsOfType<SprayPaintItem>();
-            foreach (SprayPaintItem sprayPaint in SprayPaints) {
-                sprayPaint.debugSprayPaint = true;
-            }
-
-            
-            LightsOn = !LightsOn;
-            WTOBase.LogToConsole($"SETTING OUTDOOR LIGHTS TO: {(LightsOn ? "ON" : "OFF")}");
-            //GameObject.Find("ActualSun").GetComponent<Light>().enabled = LightsOn;
-            GameObject.Find("ActualIndirect").GetComponent<Light>().enabled = LightsOn;
-            
-            
-            LabTerminal = FindObjectOfType<FrankensteinTerminal>();
-            WTOBase.LogToConsole($"REVIVING PLAYER at {LabTerminal}");
-            LabTerminal.ReviveDeadPlayerServerRpc();
-            
-            DoInteractCheck = !DoInteractCheck;
-            LogToConsole($"PRINTING INTERACT INFORMATION? {DoInteractCheck}");
-                
-            UnityEngine.Object[] NumberOfEntrances = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: false);
-            LogToConsole($"Number of entrances on map: {NumberOfEntrances.Length}");
-            for (int i = 0; i < NumberOfEntrances.Length; i++) {
-                ((EntranceTeleport)NumberOfEntrances[i]).FindExitPoint();
-                LogToConsole($"Entrance #{i} exitPoint: {((EntranceTeleport)NumberOfEntrances[i]).exitPoint}");
-            }
-                
-            bool flag = TimeOfDay.Instance.sunAnimator == MoonPatch.OoblFogAnimator;
-            WTOBase.LogToConsole($"Is fog animator correct? {flag}");
-            if (!flag) {
-                TimeOfDay.Instance.sunAnimator = MoonPatch.OoblFogAnimator;
-            }
-                
-
-
-                
-            WTOBase.LogToConsole("BEGIN PRINTING LIST OF ENTRANCES");
-            EntranceTeleport[] array = UnityEngine.Object.FindObjectsOfType<EntranceTeleport>(includeInactive: true);
-            foreach (EntranceTeleport entrance in array) {
-                Debug.Log(entrance);
-            }
-            WTOBase.LogToConsole("END PRINTING LIST OF ENTRANCES");
-                
-            var Monster = UnityEngine.Object.Instantiate(InsideEnemies[2].enemyType.enemyPrefab, __instance.localPlayerController.gameplayCamera.transform.position, Quaternion.identity);
-            Monster.GetComponent<NetworkObject>().Spawn();
-            WTOBase.LogToConsole("EyeSec spawned...");
-            */
+            WTOBase.LogToConsole("END PRINT TERMINAL LOGS");
         }
         if (Keyboard.current.f9Key.wasPressedThisFrame) {
-            StartOfRound.Instance.ChangeLevelServerRpc(9, 60);
+            WTOBase.LogToConsole($"BEGIN PRINT {FindObjectOfType<Terminal>().terminalNodes.allKeywords[19].name} COMPATIBLE NOUNS");
+            foreach (CompatibleNoun NextNoun in FindObjectOfType<Terminal>().terminalNodes.allKeywords[19].compatibleNouns) {
+                WTOBase.LogToConsole($"NOUN NAME: {NextNoun.noun} WORD: {NextNoun.noun.word} RESULT: {NextNoun.result}");
+            }
         }
     }
 
