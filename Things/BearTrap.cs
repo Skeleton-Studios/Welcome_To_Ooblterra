@@ -16,7 +16,7 @@ public class BearTrap : MonoBehaviour {
     public int DamageAmount = 5;
     private float TimeSincePlayerDamaged = 0f;
 
-    private float SecondsUntilNextRiseAttempt = 400;
+    private float SecondsUntilNextRiseAttempt = 200;
     
     public Animator BearTrapAnim;
     //public float BearTrapStartPos;
@@ -89,7 +89,7 @@ public class BearTrap : MonoBehaviour {
             MoveBearTrapServerRpc(true);
             return;
         }
-        SecondsUntilNextRiseAttempt = BearTrapRandom.Next(35, 80);
+        SecondsUntilNextRiseAttempt = BearTrapRandom.Next(15, 50);
         if(BearTrapRiseChance > 0) {
             BearTrapRiseChance -= 10;
         }
@@ -108,7 +108,7 @@ public class BearTrap : MonoBehaviour {
         } else {
             //play animation for bear trap descending
             BearTrapAnim.SetBool("IsRaised", false);
-            SecondsUntilNextRiseAttempt = BearTrapRandom.Next(35, 80);
+            SecondsUntilNextRiseAttempt = BearTrapRandom.Next(15, 50);
         }
     }
     private void SetBearTrapOpenState(bool isOpen) {

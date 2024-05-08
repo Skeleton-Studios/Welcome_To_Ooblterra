@@ -1,4 +1,5 @@
 ﻿using GameNetcodeStuff;
+using LethalLib.Modules;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -43,12 +44,8 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         if (TableBodyContainer.GetComponentsInChildren<GrabbableObject>().Length > 0 || GameNetworkManager.Instance == null || player != GameNetworkManager.Instance.localPlayerController) {
             return;
         }
-        BodyGO = player.currentlyHeldObjectServer;
-        try {
-            PlayerRagdoll = BodyGO as RagdollGrabbableObject;
-        } catch {
-            WTOBase.LogToConsole("Body is not a Ragdoll?!?");
-        }
+        
+
         Vector3 vector = RoundManager.RandomPointInBounds(triggerCollider.bounds);
         vector.y = triggerCollider.bounds.min.y;
         if (Physics.Raycast(new Ray(vector + Vector3.up * 3f, Vector3.down), out var hitInfo, 8f, 1048640, QueryTriggerInteraction.Collide)) {
@@ -56,12 +53,10 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         }
         vector.y += player.currentlyHeldObjectServer.itemProperties.verticalOffset;
         vector = TableBodyContainer.transform.InverseTransformPoint(vector);
-        if(PlayerRagdoll != null) { 
-            WTOBase.LogToConsole($"Player Body ID is {PlayerRagdoll.bodyID.Value}");
-        }
+
         PutObjectOnTableServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
         player.DiscardHeldObject(placeObject: true, TableBodyContainer, vector, matchRotationOfParent: false);
-        HasBody = true;
+
         WTOBase.LogToConsole("Body placed on frankenstein point");
     }
 
@@ -77,6 +72,16 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
     public void PutObjectOnTableClientRpc(NetworkObjectReference grabbableObjectNetObject) {
         if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {
             lastObjectAddedToTable.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
+            BodyGO = lastObjectAddedToTable.gameObject.GetComponentInChildren<GrabbableObject>();
+            try {
+                PlayerRagdoll = BodyGO as RagdollGrabbableObject;
+            } catch {
+                WTOBase.LogToConsole("Body is not a Ragdoll?!?");
+            }
+            HasBody = true;
+            if (PlayerRagdoll != null) {
+                WTOBase.LogToConsole($"Player Body ID is {PlayerRagdoll.bodyID.Value}");
+            }
         } else {
             WTOBase.WTOLogSource.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
         }
