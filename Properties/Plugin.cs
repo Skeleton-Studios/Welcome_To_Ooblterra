@@ -54,7 +54,7 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
         if (Keyboard.current.f9Key.wasPressedThisFrame) {
-            StartOfRound.Instance.ChangeLevelServerRpc(13, 60);
+            StartOfRound.Instance.ChangeLevelServerRpc(13, FindObjectOfType<Terminal>().groupCredits);
         }
     }
 

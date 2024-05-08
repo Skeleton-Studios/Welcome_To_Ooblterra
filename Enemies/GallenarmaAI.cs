@@ -511,6 +511,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     public AudioClip GallenarmaScream;
     public AudioClip GallenarmaBeatChest;
     public List<AudioClip> Search = new List<AudioClip>();
+    private float FlinchTimerSeconds = 0f;
 
     private struct NoiseInfo {
         public Vector3 Location { get; private set; }
@@ -544,6 +545,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     public override void Update() {
         MoveTimerValue(ref AttackTimerSeconds);
         MoveTimerValue(ref TameTimerSeconds);
+        MoveTimerValue(ref FlinchTimerSeconds);
         if(TameTimerSeconds <= 0) {
             IsDancing = false;
         }
@@ -558,7 +560,10 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         if (isEnemyDead) { return; }
         base.HitEnemy(force, playerWhoHit, playHitSFX);
         enemyHP -= force;
-        SetAnimTriggerOnServerRpc("Hit");
+        if(FlinchTimerSeconds <= 0f) { 
+            SetAnimTriggerOnServerRpc("Hit");
+            FlinchTimerSeconds = 4f;
+        }
         if (enemyHP <= 0) {
             SetAnimTriggerOnServerRpc("Killed");
             GameObject.Destroy(GallenarmaHitbox);
@@ -576,7 +581,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         SetTargetServerRpc((int)playerWhoHit.playerClientId);
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
         if (!(ActiveState is Attack || ActiveState is Chase || ActiveState is Enraged)) {
-            OverrideState(new Enraged());
+            OverrideState(new Attack());
         }
     }
     public override void DetectNoise(Vector3 noisePosition, float noiseLoudness, int timesNoisePlayedInOneSpot = 0, int noiseID = 0) {
