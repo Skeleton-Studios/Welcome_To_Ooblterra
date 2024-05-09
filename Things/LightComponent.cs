@@ -24,10 +24,19 @@ public class LightComponent : MonoBehaviour {
     public Color CloseColor = Color.green;
     public Color FarColor = Color.red;
     public float MaxDistance = 300;
+    private System.Random LightRandom;
+    private int LightOnChance = 70;
 
     private void Start() {
+        
+        LightRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        if(LightRandom.Next(0, 100) > LightOnChance) {
+            SetLightBrightness(0);
+            SetLightColor(Chemical.ChemColor.Clear);
+        }
         SetLightColor(InitLightColor);
         SetLightBrightness(LightBrightness);
+        
     }
     private void Update() {
         if (!Application.IsPlaying(this)) {
