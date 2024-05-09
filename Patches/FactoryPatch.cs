@@ -86,8 +86,8 @@ internal class FactoryPatch {
     public static void Start() {
 
         ExtendedDungeonFlow OoblDungeonFlow = WTOBase.ContextualLoadAsset<ExtendedDungeonFlow>(FactoryBundle, DungeonPath + "OoblLabExtendedDungeonFlow.asset");
-        OoblDungeonFlow.manualPlanetNameReferenceList.Clear();
-        OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
+        //OoblDungeonFlow.manualPlanetNameReferenceList.Clear();
+        //OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
         PatchedContent.RegisterExtendedDungeonFlow(OoblDungeonFlow);
 
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, BehaviorPath + "ChargedBattery.prefab"));
