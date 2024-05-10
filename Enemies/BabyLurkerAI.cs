@@ -83,7 +83,7 @@ public class BabyLurkerAI : WTOEnemy {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //if(BabyLurkerList[enemyIndex].CheckIfWeAreFirstToJump()){
                 //BabyLurkerList[enemyIndex].ThrowingSelfAtPlayer = true;
-                BabyLurkerList[enemyIndex].LaunchProjectile(BabyLurkerList[enemyIndex].LaunchTransform);
+                BabyLurkerList[enemyIndex].LaunchProjectile();
             //} else { 
             //    BabyLurkerList[enemyIndex].JumpCooldownSeconds = .1f;
             //}
@@ -158,7 +158,7 @@ public class BabyLurkerAI : WTOEnemy {
         LogMessage($"Adding BabyLurker {this} #{BabyLurkerID}");
         BabyLurkerList.Add(BabyLurkerID, this); 
         base.Start();
-        LaunchTransform.rotation = Quaternion.Euler(new Vector3(45, 0, enemyRandom.Next(-5, 5)));
+        
     }
 
     public override void Update() { 
@@ -196,19 +196,20 @@ public class BabyLurkerAI : WTOEnemy {
         return true;
     }
 
-    public void LaunchProjectile(Transform LaunchTransform) {
+    public void LaunchProjectile() {
         ThrowingSelfAtPlayer = true;
         if(ProjectilesThrown > 0) {
             return;
         }
-        LurkerBody.SetActive(false); 
+        //LurkerBody.SetActive(false); 
         creatureSFX.volume = 0;
         creatureVoice.volume = 0;
         ProjectilesThrown++;
+        this.agent.speed = 0f; 
+        LaunchTransform.LookAt(targetPlayer.gameplayCamera.transform.position);
+        LaunchTransform.rotation *= Quaternion.Euler(-3, enemyRandom.Next(-15, 15), 0);
         LiveProjectile = Instantiate(projectileTemplate, LaunchTransform.position, LaunchTransform.rotation);
         LiveProjectile.GetComponent<BabyLurkerProjectile>().OwningLurker = this;
-        LiveProjectile.GetComponent<Rigidbody>().AddRelativeForce(new Vector3(0, launchVelocity, 0));
-        this.agent.speed = 0f;
-        
+        LiveProjectile.GetComponent<Rigidbody>().AddRelativeForce(new Vector3(0, 0, launchVelocity));
     }
 }
