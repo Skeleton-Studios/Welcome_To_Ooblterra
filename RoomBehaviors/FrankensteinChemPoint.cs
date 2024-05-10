@@ -39,7 +39,9 @@ public class FrankensteinChemPoint : NetworkBehaviour {
         return (Chemical.ChemColor)HeldChemicalColorIndex;
     }
     public void ClearChemical() {
-        HeldChemical.EmptyBeaker();
+        if(HeldChemical != null) { 
+            HeldChemical.EmptyBeaker();
+        }
     }
     public void PlaceObject(PlayerControllerB playerWhoTriggered) {
         if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {

@@ -45,7 +45,6 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
             return;
         }
         
-
         Vector3 vector = RoundManager.RandomPointInBounds(triggerCollider.bounds);
         vector.y = triggerCollider.bounds.min.y;
         if (Physics.Raycast(new Ray(vector + Vector3.up * 3f, Vector3.down), out var hitInfo, 8f, 1048640, QueryTriggerInteraction.Collide)) {
@@ -60,7 +59,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         WTOBase.LogToConsole("Body placed on frankenstein point");
     }
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void PutObjectOnTableServerRpc(NetworkObjectReference grabbableObjectNetObject) {
         if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {
                 PutObjectOnTableClientRpc(grabbableObjectNetObject);

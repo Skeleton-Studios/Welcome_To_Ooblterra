@@ -3,6 +3,7 @@ using LethalLib.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -91,11 +92,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Target.interactable = CheckAllChemPoints(false);
         Target.disabledHoverTip = $"[{PopulatedChemPoints}/{NumberOfPoints} Chemicals Placed!]";
     }
-    public void SetVariables(Vector3 Target, int ID) {
-        SpawnTarget = Target;
-        PlayerID = ID;
-        PlayerToRevive = StartOfRound.Instance.allPlayerScripts[PlayerID];
-    }
+
     public void GuessIfChemsAreCorrect(PlayerControllerB TriggeringPlayer) {
         if (IsUsedUp) {
             return;
@@ -122,7 +119,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             WTOBase.LogToConsole("Problem with body point!!!");
             return;
         }
-        SetVariables(BodyPoint.RespawnPos.position, BodyPoint.PlayerRagdoll.bodyID.Value);
+        SetVariablesServerRpc(BodyPoint.RespawnPos.position, BodyPoint.PlayerRagdoll.bodyID.Value);
         StartSceneServerRpc(CalculateCorrectnessPercentage());
         foreach(FrankensteinChemPoint ChemPoint in FrankensteinChemPoints) {
             ChemPoint.ClearChemical();
@@ -260,6 +257,18 @@ public class FrankensteinTerminal : NetworkBehaviour {
     }
 
     [ServerRpc(RequireOwnership = false)]
+    public void SetVariablesServerRpc(Vector3 TargetLoc, int iD) {
+        SetVariablesClientRpc(TargetLoc, iD);
+    }
+
+    [ClientRpc]
+    public void SetVariablesClientRpc(Vector3 Target, int ID) {
+        SpawnTarget = Target;
+        PlayerID = ID;
+        PlayerToRevive = StartOfRound.Instance.allPlayerScripts[PlayerID];
+    }
+
+    [ServerRpc(RequireOwnership = false)]
     public void ReviveDeadPlayerServerRpc(int ID, Vector3 SpawnLoc) {
         WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on server...");
         ReviveDeadPlayerClientRpc(ID, SpawnLoc);
@@ -378,6 +387,25 @@ public class FrankensteinTerminal : NetworkBehaviour {
         StartOfRound.Instance.allPlayersDead = false;
     }
 
+    [ServerRpc]
+    public void SyncMimicPropertiesServerRpc(NetworkObjectReference MimicNetObject, int SuitID) {
+        SyncMimicPropertiesClientRpc(MimicNetObject, SuitID);
+    }
+
+    [ClientRpc]
+    public void SyncMimicPropertiesClientRpc(NetworkObjectReference MimicNetObject, int SuitID) {
+        NetworkObject netObject = null;
+        MimicNetObject.TryGet(out netObject);
+        MaskedPlayerEnemy Mask = netObject.GetComponent<MaskedPlayerEnemy>();
+        Mask.maskTypes[0].SetActive(value: false);
+        Mask.maskTypes[1].SetActive(value: false);
+        Mask.SetSuit(PlayerToRevive.currentSuitID);
+        Mask.maskTypeIndex = 0;
+        PlayerToRevive.redirectToEnemy = Mask;
+        Mask.mimickingPlayer = PlayerToRevive;
+        PlayerToRevive.deadBody.DeactivateBody(setActive: false);
+    }
+
     //if fail, spawn a mimic from the player's body
     [ServerRpc(RequireOwnership = false)]
     public void CreateMimicServerRpc(int ID, Vector3 MimicCreationPoint) {
@@ -443,15 +471,11 @@ public class FrankensteinTerminal : NetworkBehaviour {
         WTOBase.LogToConsole("Got network object for WTOMimic enemy client");
         MaskedPlayerEnemy component = netObject.GetComponent<MaskedPlayerEnemy>();
         component.mimickingPlayer = PlayerToRevive;
-        component.SetSuit(PlayerToRevive.currentSuitID);
         component.SetEnemyOutside(false);
         component.SetVisibilityOfMaskedEnemy();
-
         //This makes it such that the mimic has no visible mask :)
-        component.maskTypes[0].SetActive(value: false);
-        component.maskTypes[1].SetActive(value: false);
-        component.maskTypeIndex = 0;
-
-        PlayerToRevive.redirectToEnemy = component;
+        if (base.IsServer) {
+            SyncMimicPropertiesServerRpc(netObjectRef, PlayerToRevive.currentSuitID);
+        }        
     }
 }
