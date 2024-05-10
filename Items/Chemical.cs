@@ -66,8 +66,13 @@ public class Chemical : GrabbableObject {
         }
     }
 
-    private void ChangeChemColorAndEffect(bool PlayShakeSound = true) {
-        int NextColor = GetNextIntOrdered();
+    private void ChangeChemColorAndEffect(bool PlayShakeSound = true, bool RandomNextColor = false) {
+        int NextColor;
+        if (RandomNextColor) {
+            NextColor = MyRandom.Next(0, 7);
+        } else { 
+            NextColor = GetNextIntOrdered();
+        }
         int NextRandomEffect = MyRandom.Next(0, 7);
         WTOBase.LogToConsole($"Next Color Value: {(ChemColor)NextColor}");
         SetColorAndEffectServerRpc(NextColor, NextRandomEffect, PlayShakeSound);
