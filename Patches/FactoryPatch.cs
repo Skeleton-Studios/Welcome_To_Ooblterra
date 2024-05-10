@@ -26,13 +26,13 @@ internal class FactoryPatch {
     private const string SecurityPath = WTOBase.RootPath + "CustomDungeon/Security/";
     private const string DoorPath = WTOBase.RootPath + "CustomDungeon/Doors/";
     public static List<SpawnableMapObject> SecurityList = new();
-
+    private static ExtendedDungeonFlow OoblDungeonFlow;
 
     //PATCHES 
     [HarmonyPatch(typeof(RoundManager), "SpawnMapObjects")]
     [HarmonyPrefix]
     private static bool WTOSpawnMapObjects(RoundManager __instance) {
-        if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+        if (DungeonManager.CurrentExtendedDungeonFlow != OoblDungeonFlow) {
             return true;
         }
         if (__instance.currentLevel.spawnableMapObjects.Length == 0) {
@@ -85,10 +85,11 @@ internal class FactoryPatch {
     //METHODS
     public static void Start() {
 
-        ExtendedDungeonFlow OoblDungeonFlow = WTOBase.ContextualLoadAsset<ExtendedDungeonFlow>(FactoryBundle, DungeonPath + "OoblLabExtendedDungeonFlow.asset");
+        OoblDungeonFlow = WTOBase.ContextualLoadAsset<ExtendedDungeonFlow>(FactoryBundle, DungeonPath + "OoblLabExtendedDungeonFlow.asset");
         //OoblDungeonFlow.manualPlanetNameReferenceList.Clear();
         //OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
         PatchedContent.RegisterExtendedDungeonFlow(OoblDungeonFlow);
+
 
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, BehaviorPath + "ChargedBattery.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "TeslaCoil.prefab"));
