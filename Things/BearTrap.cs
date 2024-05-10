@@ -26,6 +26,7 @@ public class BearTrap : MonoBehaviour {
     public bool IsBearTrapClosed;
     private List<PlayerControllerB> PlayerInRangeList = new();
     private int BearTrapRiseChance = 70;
+    public AudioClip CloseSound;
 
 
     public void OnTriggerEnter(Collider other) {
@@ -35,6 +36,7 @@ public class BearTrap : MonoBehaviour {
                 WTOBase.LogToConsole($"Bear Trap: Adding Player {PlayerInRange} to player in range list...");
                 PlayerInRangeList.Add(PlayerInRange);
                 SetBearTrapOpenState(false);
+                GetComponent<AudioSource>().PlayOneShot(CloseSound);
             }
         } catch { }
     }
