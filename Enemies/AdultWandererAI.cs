@@ -79,7 +79,8 @@ public class AdultWandererAI : WTOEnemy {
         }
         public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
             new EnemyKilled(),
-            new EnemyLeftRange()
+            new EnemyLeftRange(),
+            new EnemyInShipOrFacility()
         };
     }
     private class Roam : BehaviorState {
@@ -196,7 +197,7 @@ public class AdultWandererAI : WTOEnemy {
             if (AWandList[base.enemyIndex].targetPlayer == null) {
                 return false; 
             }
-            return !AWandList[base.enemyIndex].PlayerCanBeTargeted(AWandList[base.enemyIndex].targetPlayer) || AWandList[base.enemyIndex].PlayerDistanceFromShip() < 15;
+            return AWandList[base.enemyIndex].targetPlayer.isInsideFactory || (AWandList[base.enemyIndex].PlayerDistanceFromShip() < 10 && StartOfRound.Instance.hangarDoorsClosed);
         }
         public override BehaviorState NextState() {
                 return new Investigate();
