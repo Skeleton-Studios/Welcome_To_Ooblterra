@@ -67,7 +67,7 @@ public class Chemical : GrabbableObject {
     }
 
     private void ChangeChemColorAndEffect(bool PlayShakeSound = true) {
-        int NextColor = GetNextRandomInt();
+        int NextColor = GetNextIntOrdered();
         int NextRandomEffect = MyRandom.Next(0, 7);
         WTOBase.LogToConsole($"Next Color Value: {(ChemColor)NextColor}");
         SetColorAndEffectServerRpc(NextColor, NextRandomEffect, PlayShakeSound);
@@ -78,6 +78,13 @@ public class Chemical : GrabbableObject {
             return NextInt;
         }
         return GetNextRandomInt();
+    }
+    private int GetNextIntOrdered() {
+        int NextInt = (int)CurrentColor;
+        if (CurrentColor == ChemColor.Purple) {
+            return (int)ChemColor.Red;
+        }
+        return NextInt + 1;
     }
     public void EmptyBeaker() {
         SetColorAndEffectServerRpc(7, -1);

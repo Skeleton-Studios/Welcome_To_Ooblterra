@@ -14,7 +14,7 @@ namespace Welcome_To_Ooblterra.Things;
 public class BearTrap : MonoBehaviour {
 
     public int DamageAmount = 5;
-    private float TimeSincePlayerDamaged = 0f;
+    private float TimeSincePlayerDamaged = 0.5f;
 
     private float SecondsUntilNextRiseAttempt = 200;
     
@@ -60,7 +60,7 @@ public class BearTrap : MonoBehaviour {
             return;
         }
         if (IsBearTrapClosed) {
-            AcidWater.DamageOverlappingPlayer(victim, 1f, ref TimeSincePlayerDamaged, 10);
+            AcidWater.DamageOverlappingPlayer(victim, 0.5f, ref TimeSincePlayerDamaged, 5);
             if (victim.health > 1) {
                 victim.movementSpeed = 0.4f;
                 victim.jumpForce = 1;
