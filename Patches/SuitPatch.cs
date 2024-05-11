@@ -73,6 +73,9 @@ internal class SuitPatch {
     [HarmonyPostfix]
     [HarmonyPriority(0)]
     private static void PatchPosters(StartOfRound __instance) {
+        if(GameObject.Find(PosterGameObject) == null) {
+            return;
+        }
         Material[] materials = ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials;
         materials[1] = WTOBase.ContextualLoadAsset<Material>(SuitBundle, SuitPath + "Poster.mat");
         ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials = materials;

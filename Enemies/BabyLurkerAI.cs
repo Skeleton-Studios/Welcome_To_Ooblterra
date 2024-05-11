@@ -201,7 +201,7 @@ public class BabyLurkerAI : WTOEnemy {
         if(ProjectilesThrown > 0) {
             return;
         }
-        //LurkerBody.SetActive(false); 
+        LurkerBody.SetActive(false); 
         creatureSFX.volume = 0;
         creatureVoice.volume = 0;
         ProjectilesThrown++;

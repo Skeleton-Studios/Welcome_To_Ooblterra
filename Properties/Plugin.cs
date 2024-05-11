@@ -121,7 +121,7 @@ public class WTOBase : BaseUnityPlugin {
         if (AddFlair) { 
             text = "=======" + text + "=======";
         }
-        //WTOLogSource.LogMessage(text);
+        WTOLogSource.LogMessage(text);
     }
     public enum AllowedState {
         Off = 0,
