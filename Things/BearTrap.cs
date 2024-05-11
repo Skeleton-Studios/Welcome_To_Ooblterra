@@ -11,7 +11,7 @@ using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
-public class BearTrap : MonoBehaviour {
+public class BearTrap : MonoBehaviour, IHittable {
 
     public int DamageAmount = 5;
     private float TimeSincePlayerDamaged = 0.5f;
@@ -28,6 +28,15 @@ public class BearTrap : MonoBehaviour {
     private int BearTrapRiseChance = 70;
     public AudioClip CloseSound;
 
+    public bool Hit(int force, Vector3 hitDirection, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
+        if (!IsBearTrapClosed) {
+            SetBearTrapOpenState(false);
+        }
+        if (IsBearTrapRaised) {
+            MoveBearTrap(false);
+        }
+        return true;
+    }
 
     public void OnTriggerEnter(Collider other) {
         try {
@@ -105,7 +114,7 @@ public class BearTrap : MonoBehaviour {
     private void MoveBearTrap(bool ShouldRaise) {
         IsBearTrapRaised = ShouldRaise;
         if (ShouldRaise) {
-            //play animation for bear trap rising
+            SetBearTrapOpenState(true);
             BearTrapAnim.SetBool("IsRaised", true);
         } else {
             //play animation for bear trap descending
