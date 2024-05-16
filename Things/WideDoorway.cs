@@ -35,7 +35,7 @@ internal class WideDoorway : NetworkBehaviour {
     private void Start() {
         MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         int PlayerCount = GameObject.FindGameObjectsWithTag("Player").Count();
-        int MinTimesBeforeClose = (2 * PlayerCount - 1) + 6;
+        int MinTimesBeforeClose = (3 * PlayerCount - 1) + 6;
         int MaxTimesBeforeClose = MinTimesBeforeClose + 5;
         TotalTimesBeforeClose = MyRandom.Next(MinTimesBeforeClose, MaxTimesBeforeClose);
         DistanceToTravelEachTime = TotalDistanceToTravel / TotalTimesBeforeClose;
