@@ -1,4 +1,5 @@
-﻿using GameNetcodeStuff;
+﻿using DunGen;
+using GameNetcodeStuff;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -42,10 +43,11 @@ public class BatteryRecepticle : NetworkBehaviour {
     public Material SideConsoleMaterial;
     public MeshRenderer MachineMesh;
     private System.Random MachineRandom;
-
+    private WideDoorway[] Doorways;
 
     public void Start() {
         scrapShelf = FindFirstObjectByType<ScrapShelf>();
+        FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
         WTOBattery[] BatteryList = FindObjectsOfType<WTOBattery>();
         InsertedBattery = BatteryList.First(x => x.HasCharge == false);
         RecepticleHasBattery = true;
@@ -58,6 +60,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         foreach (LightComponent NextLight in GameObject.FindObjectsOfType<LightComponent>().Where(x => x.SetColorByDistance == true)) {
             NextLight.SetColorRelative(this.transform.position);
         }
+        Doorways = FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
     }
     private void Update() {
         if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
@@ -186,6 +189,10 @@ public class BatteryRecepticle : NetworkBehaviour {
         StartRoomLights.SetCentralRoomWhite();
         BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
         ManageEnemies();
+        foreach(WideDoorway NextDoorway in Doorways) {
+            NextDoorway.RaiseDoor();
+        }
+        
     }
 
     private void ManageEnemies() {

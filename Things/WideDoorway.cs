@@ -24,6 +24,7 @@ internal class WideDoorway : NetworkBehaviour {
     //Lerp Stuff
     private float timeElapsed;
     private const float CloseTime = 0.2f;
+    private Vector3 DoorStartPosition;
     private Vector3 CurrentDoorPosition;
     private Vector3 TargetDoorPosition;
     private List<Collider> CurrentColliderList = new();
@@ -40,7 +41,15 @@ internal class WideDoorway : NetworkBehaviour {
         TotalTimesBeforeClose = MyRandom.Next(MinTimesBeforeClose, MaxTimesBeforeClose);
         DistanceToTravelEachTime = TotalDistanceToTravel / TotalTimesBeforeClose;
         FinalDoorPosition = Doorway.transform.position + new Vector3(0, TotalDistanceToTravel, 0);
+        DoorStartPosition = Doorway.transform.position;
     }
+
+    public void RaiseDoor() {
+        ShouldFall = false;
+        Doorway.transform.position = DoorStartPosition;
+        CloseSoundSource.Play();
+    }
+
     private void Update() {
         if (!ShouldFall) {
             return;
