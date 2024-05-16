@@ -227,7 +227,6 @@
     <Compile Include="Patches\ItemPatch.cs" />
     <Compile Include="Patches\TerminalPatch.cs" />
     <Compile Include="Enemies\WandererAI.cs" />
-    <Compile Include="Properties\WTOConfig.cs" />
     <Compile Include="Patches\FactoryPatch.cs" />
     <Compile Include="Patches\MonsterPatch.cs" />
     <Compile Include="Patches\MoonPatch.cs" />
