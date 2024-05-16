@@ -16,6 +16,7 @@ internal class KitchenCrusher : MonoBehaviour {
     public Vector3 CrusherEndPos;
     public AudioSource CrusherSound;
     public AudioClip SoundToPlay;
+    public AudioClip ClickSound;
     public GameObject Crusher;
 
     private PlayerControllerB victim;
@@ -39,6 +40,8 @@ internal class KitchenCrusher : MonoBehaviour {
                 ActivateCrusher = true;
                 CrusherSound.PlayOneShot(SoundToPlay);
             }
+        } else { 
+            CrusherSound.PlayOneShot(ClickSound);
         }
     }
     private void OnTriggerExit(Collider other) { 
