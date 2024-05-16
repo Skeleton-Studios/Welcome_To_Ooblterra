@@ -25,11 +25,15 @@ public class LightComponent : MonoBehaviour {
     public Color FarColor = Color.red;
     public float MaxDistance = 300;
     private static System.Random LightRandom;
-    private int LightOnChance = 60;
+    private static int LightOnChance = -1;
 
     private void Start() {
         if(LightRandom == null) { 
             LightRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        }
+        if(LightOnChance == -1) {
+            int NextChance = LightRandom.Next(4, 8);
+            LightOnChance = NextChance * 10;
         }
         if (LightRandom.Next(0, 100) > LightOnChance) {
             SetLightBrightness(0);
