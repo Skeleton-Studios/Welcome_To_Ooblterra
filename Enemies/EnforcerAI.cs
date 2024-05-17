@@ -180,7 +180,7 @@ public class EnforcerAI : WTOEnemy {
 
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (!EnforcerList[enemyIndex].PlayerWithinRange(2f)) {
+            if (!EnforcerList[enemyIndex].PlayerWithinRange(2.9f, false)) {
                 EnforcerList[enemyIndex].agent.speed = 2f;
             } else {
                 EnforcerList[enemyIndex].agent.speed = 0f;
@@ -242,7 +242,7 @@ public class EnforcerAI : WTOEnemy {
     }
     private class PlayerEnteredAttackRange : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return EnforcerList[enemyIndex].DistanceFromTargetPlayer() < 2f;
+            return EnforcerList[enemyIndex].PlayerWithinRange(2f, false);
         }
         public override BehaviorState NextState() {
             return new AttackPlayer();
@@ -259,7 +259,7 @@ public class EnforcerAI : WTOEnemy {
     private class PlayerLeftAttackRange : StateTransition {
 
         public override bool CanTransitionBeTaken() {
-            return EnforcerList[enemyIndex].DistanceFromTargetPlayer() > 3f;
+            return EnforcerList[enemyIndex].PlayerWithinRange(3f, false);
         }
         public override BehaviorState NextState() {
             return new ChasePlayer();

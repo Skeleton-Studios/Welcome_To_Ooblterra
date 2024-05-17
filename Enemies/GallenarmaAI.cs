@@ -178,7 +178,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
             GallenarmaList[enemyIndex].SetAnimBoolOnServerRpc("Investigating", false);
-            if (!GallenarmaList[enemyIndex].PlayerWithinRange(GallenarmaList[enemyIndex].AttackRange)) {
+            if (!GallenarmaList[enemyIndex].PlayerWithinRange(GallenarmaList[enemyIndex].AttackRange, false)) {
                 GallenarmaList[enemyIndex].agent.speed = 9.1f;
             } else { 
                 GallenarmaList[enemyIndex].agent.speed = 2f;
@@ -432,7 +432,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             if (!GallenarmaList[enemyIndex].IsPlayerReachable()) {
                 return true;
             }
-            if (Vector3.Distance(GallenarmaList[enemyIndex].targetPlayer.transform.position, GallenarmaList[enemyIndex].transform.position) > GallenarmaList[enemyIndex].AttackRange + 2.5) {
+            if (!GallenarmaList[enemyIndex].PlayerWithinRange(GallenarmaList[enemyIndex].AttackRange + 1, false)) {
                 GallenarmaList[enemyIndex].AttackTimerSeconds = 0;
                 return true;
             }

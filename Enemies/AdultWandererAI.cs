@@ -56,7 +56,7 @@ public class AdultWandererAI : WTOEnemy {
             AWandList[enemyIndex].AttackCooldownSeconds = 1.5f;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            if (AWandList[enemyIndex].PlayerWithinRange(AWandList[enemyIndex].AttackRange)) {
+            if (AWandList[enemyIndex].PlayerWithinRange(AWandList[enemyIndex].AttackRange, false)) {
                 if (AWandList[enemyIndex].AttackCooldownSeconds <= 0) {
                     AWandList[enemyIndex].AttackCooldownSeconds = 1.5f;
                     HasAttacked = false;

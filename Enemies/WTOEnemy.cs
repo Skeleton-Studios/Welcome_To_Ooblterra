@@ -123,7 +123,6 @@ public class WTOEnemy : EnemyAI {
         }
         return PlayerState.Outside;
     }
-
     internal void MoveTimerValue(ref float Timer, bool ShouldRaise = false) {
         if (ShouldRaise) {
             Timer += Time.deltaTime;
@@ -134,7 +133,6 @@ public class WTOEnemy : EnemyAI {
         }
         Timer -= Time.deltaTime;
     }
-
     internal void OverrideState(BehaviorState state) {
         if (isEnemyDead) {
             return;
@@ -143,9 +141,6 @@ public class WTOEnemy : EnemyAI {
         ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
         return;
     }
-
-
-
     public PlayerControllerB IsAnyPlayerWithinLOS(int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false, bool SortByDistance = false) {
         float ShortestDistance = range;
         float NextDistance;
@@ -188,7 +183,6 @@ public class WTOEnemy : EnemyAI {
         }
         return IsTargetPlayerWithinLOS(targetPlayer, range, width, proximityAwareness, DoLinecast, PrintResults);
     }
-
     public PlayerControllerB FindNearestPlayer(bool ValidateNav = false) {
         PlayerControllerB Result = null;
         float BestDistance = 20000;
@@ -209,8 +203,6 @@ public class WTOEnemy : EnemyAI {
         }
         return Result;
     }
-
-
     internal bool IsPlayerReachable() {
         if (targetPlayer == null) {
             WTOBase.WTOLogSource.LogError("Player Reach Test has no target player or passed in argument!");
@@ -241,21 +233,31 @@ public class WTOEnemy : EnemyAI {
         LogMessage($"PlayerNearShip check: {DistanceFromShip}");
         return DistanceFromShip;
     }
-    internal float DistanceFromTargetPlayer() {
-        if(targetPlayer == null) {
+    internal bool PlayerWithinRange(float Range, bool IncludeYAxis = true) {
+        return DistanceFromTargetPlayer(IncludeYAxis) <= Range;
+    }
+    internal bool PlayerWithinRange(PlayerControllerB player, float Range, bool IncludeYAxis = true) {
+        return DistanceFromTargetPlayer(player, IncludeYAxis) <= Range;
+    }
+    private float DistanceFromTargetPlayer(bool IncludeYAxis) {
+        if (targetPlayer == null) {
             WTOBase.WTOLogSource.LogError($"{this} attempted DistanceFromTargetPlayer with null target; returning -1!");
             return -1f;
         }
-        return Vector3.Distance(targetPlayer.transform.position, this.transform.position);
+        if (IncludeYAxis) {
+            return Vector3.Distance(targetPlayer.transform.position, this.transform.position);
+        }
+        Vector2 PlayerFlatLocation = new Vector2(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
+        Vector2 EnemyFlatLocation = new Vector2(transform.position.x, transform.position.z);
+        return Vector2.Distance(PlayerFlatLocation, EnemyFlatLocation);
     }
-    internal bool PlayerWithinRange(float Range) {
-        return DistanceFromTargetPlayer() <= Range;
-    }
-    internal bool PlayerWithinRange(PlayerControllerB player, float Range) {
-        return DistanceFromTargetPlayer(player) <= Range;
-    }
-    internal float DistanceFromTargetPlayer(PlayerControllerB player) {
-        return Vector3.Distance(player.transform.position, this.transform.position);
+    private float DistanceFromTargetPlayer(PlayerControllerB player, bool IncludeYAxis) {
+        if (IncludeYAxis) { 
+            return Vector3.Distance(player.transform.position, this.transform.position);
+        }
+        Vector2 PlayerFlatLocation = new Vector2(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
+        Vector2 EnemyFlatLocation = new Vector2(transform.position.x, transform.position.z);
+        return Vector2.Distance(PlayerFlatLocation, EnemyFlatLocation);
     }
     internal bool AnimationIsFinished(string AnimName) {
         if (!creatureAnimator.GetCurrentAnimatorStateInfo(0).IsName(AnimName)) {
