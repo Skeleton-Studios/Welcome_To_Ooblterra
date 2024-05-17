@@ -27,12 +27,12 @@ internal class OoblGhostAI : WTOEnemy {
     //STATES
     private class WaitForNextAttack : BehaviorState {
         public WaitForNextAttack() {
-            int min = (GetNumberOfGhosts() * 80) + 30;
-            int max = (GetNumberOfGhosts() * 100) + 50;
+            int min = (GetNumberOfGhosts() * 8) + 3;
+            int max = (GetNumberOfGhosts() * 10) + 5;
             RandomRange = new Vector2(min, max);
         }
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt;
+            GhostList[enemyIndex].SecondsUntilGhostWillAttack = MyRandomInt * 10;
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             
