@@ -26,12 +26,16 @@ internal class FactoryPatch {
     private const string SecurityPath = WTOBase.RootPath + "CustomDungeon/Security/";
     private const string DoorPath = WTOBase.RootPath + "CustomDungeon/Doors/";
     public static List<SpawnableMapObject> SecurityList = new();
-    private static ExtendedDungeonFlow OoblDungeonFlow;
+    public static ExtendedDungeonFlow OoblDungeonFlow;
 
     //PATCHES 
     [HarmonyPatch(typeof(RoundManager), "SpawnMapObjects")]
     [HarmonyPrefix]
     private static bool WTOSpawnMapObjects(RoundManager __instance) {
+        if (WTOBase.WTOForceHazards.Value == TiedToLabEnum.UseMoonDefault && __instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+            return true;
+            
+        }
         if (DungeonManager.CurrentExtendedDungeonFlow != OoblDungeonFlow) {
             return true;
         }
@@ -41,7 +45,18 @@ internal class FactoryPatch {
         System.Random MapHazardRandom = new System.Random(StartOfRound.Instance.randomMapSeed + 587);
         __instance.mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
         RandomMapObject[] AllRandomSpawnList = UnityEngine.Object.FindObjectsOfType<RandomMapObject>();
+        List<string> ValidHazardList = WTOBase.CSVSeperatedStringList(WTOBase.WTOHazardList.Value);
+        if(WTOBase.WTOForceHazards.Value != TiedToLabEnum.WTOOnly) {
+            foreach(SpawnableMapObject MapObj in __instance.currentLevel.spawnableMapObjects) {
+                ValidHazardList.Add(MapObj.prefabToSpawn.name.ToLower());
+            }
+        }
         for (int MapObjectIndex = 0; MapObjectIndex < __instance.currentLevel.spawnableMapObjects.Length; MapObjectIndex++) {
+            //Check if the map object is allowed to spawn :)
+            if (!ValidHazardList.Contains(__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn.name.ToLower())){
+                WTOBase.LogToConsole($"Object {__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn.name.ToLower()} not found in valid spawn list!");
+                continue;
+            }
             List<RandomMapObject> ValidRandomSpawnList = new List<RandomMapObject>();
             int MapObjectsToSpawn = (int)__instance.currentLevel.spawnableMapObjects[MapObjectIndex].numberToSpawn.Evaluate((float)MapHazardRandom.NextDouble());
             WTOBase.WTOLogSource.LogInfo($"Attempting to spawn {__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn}; Quantity: {MapObjectsToSpawn}");
@@ -89,7 +104,7 @@ internal class FactoryPatch {
         //OoblDungeonFlow.manualPlanetNameReferenceList.Clear();
         //OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
         PatchedContent.RegisterExtendedDungeonFlow(OoblDungeonFlow);
-
+        
 
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, BehaviorPath + "ChargedBattery.prefab"));
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "TeslaCoil.prefab"));

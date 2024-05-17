@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using DunGen.Adapters;
 using System.Runtime.InteropServices.WindowsRuntime;
 using LethalLevelLoader;
+using GameNetcodeStuff;
 
 namespace Welcome_To_Ooblterra.Patches;
 
@@ -33,6 +34,8 @@ internal class MoonPatch {
     private static AudioClip[] CachedAmbientMusic;
     private static AudioClip[] OoblTODMusic;
 
+    private static SpawnableMapObject[] CachedSpawnableMapObjects;
+    public static ExtendedLevel OoblterraExtendedLevel;
 
 
     //PATCHES
@@ -114,13 +117,54 @@ internal class MoonPatch {
         timeOfDay.sunDirect = Direct;
     }
 
+    [HarmonyPatch(typeof(PlayerControllerB), "PlayFootstepSound")]
+    [HarmonyPrefix]
+    private static void PatchFootstepSound(PlayerControllerB __instance) {
+        if(StartOfRound.Instance.currentLevel.PlanetName != MoonFriendlyName || __instance.currentFootstepSurfaceIndex != 4) {
+            __instance.movementAudio.volume = 0.447f;
+            return;
+        }
+        __instance.movementAudio.volume = (((float)WTOBase.WTOFootsteps.Value / 100f) * 0.447f);
+    }
+
+    [HarmonyPatch(typeof(RoundManager), "SpawnOutsideHazards")]
+    [HarmonyPrefix]
+    private static bool WTOSpawnOutsideObjects(RoundManager __instance) {
+        if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
+            return true;
+        }
+        if (!WTOBase.CSVSeperatedStringList(WTOBase.WTOHazardList.Value).Contains("beartrap")) {
+            __instance.currentLevel.spawnableMapObjects = null;
+            return true;
+        }
+        __instance.currentLevel.spawnableMapObjects = CachedSpawnableMapObjects;
+        return true;
+    }
+
+    [HarmonyPatch(typeof(GrabbableObject), "Start")]
+    [HarmonyPostfix]
+    private static void SetScrapValueWTO(GrabbableObject __instance) {
+        if(RoundManager.Instance.currentLevel.PlanetName != MoonFriendlyName || !WTOBase.WTOScalePrice.Value) {
+            return;
+        }
+        int FinalScrapValue = __instance.scrapValue;
+        int RoutePrice = PatchedContent.ExtendedLevels.First(x => x.SelectableLevel.PlanetName == MoonFriendlyName).RoutePrice;
+        WTOBase.LogToConsole($" Current Ooblterra route price: {RoutePrice}");
+        float ValueScale = RoutePrice / 1700;
+        float ClampedValue = Mathf.Clamp(FinalScrapValue * ValueScale, FinalScrapValue * 0.1f, FinalScrapValue * 2);
+        FinalScrapValue = Mathf.RoundToInt(ClampedValue);
+        __instance.SetScrapValue(FinalScrapValue);
+    }
+
+
+
     //METHODS
     public static void Start() {
-        ExtendedLevel Ooblterra = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPatch.MoonPath + "OoblterraExtendedLevel.asset");
-        MoonFriendlyName = Ooblterra.SelectableLevel.PlanetName;
-        WTOBase.LogToConsole($"Ooblterra Found: {Ooblterra != null}");
-        PatchedContent.RegisterExtendedLevel(Ooblterra);
-
+        OoblterraExtendedLevel = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPath + "OoblterraExtendedLevel.asset");
+        MoonFriendlyName = OoblterraExtendedLevel.SelectableLevel.PlanetName;
+        WTOBase.LogToConsole($"Ooblterra Found: {OoblterraExtendedLevel != null}");
+        PatchedContent.RegisterExtendedLevel(OoblterraExtendedLevel);
+        CachedSpawnableMapObjects = OoblterraExtendedLevel.SelectableLevel.spawnableMapObjects;
     }
     private static void MoveNavNodesToNewPositions() {
         //Get a list of all outside navigation nodes
@@ -148,9 +192,7 @@ internal class MoonPatch {
         foreach(StoryLog LevelStoryLog in LevelStoryLogs) {
             if (TerminalPatch.LogDictionary.TryGetValue(LevelStoryLog.storyLogID, out int ResultValue)){
                 LevelStoryLog.storyLogID = ResultValue;
-            } else {
-                //WTOBase.LogToConsole("FAILED TO FIND ID for story log!!!");
-            }
+            } 
         }
     }
 

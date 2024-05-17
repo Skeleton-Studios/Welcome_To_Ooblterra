@@ -5,9 +5,15 @@ using LethalLib.Modules;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
 using Unity.Netcode;
+using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Patches;
+
 internal class ItemPatch {
+
+
+    private static AudioClip CachedDiscoBallMusic;
+    private static AudioClip OoblterraDiscoMusic;
     public class ItemData {
         private string AssetName;
         private int Rarity;
@@ -24,6 +30,8 @@ internal class ItemPatch {
     }
     private static readonly AssetBundle ItemBundle = WTOBase.ItemAssetBundle;
     private const string ItemPath = WTOBase.RootPath + "CustomItems/";
+
+    private static Dictionary<string, List<SpawnableItemWithRarity>> MoonsToItemLists;
 
     //This array stores all our custom items
     public static ItemData[] ItemList = new ItemData[] {
@@ -52,11 +60,43 @@ internal class ItemPatch {
         __instance.keyPrefab = KeyObject;
     }
 
+    [HarmonyPatch(typeof(CozyLights), "SetAudio")]
+    [HarmonyPrefix]
+    private static bool ReplaceDiscoBall(CozyLights __instance) {
+        if (StartOfRound.Instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
+            //set the disco ball music back to the default
+            if(__instance.turnOnAudio != null) {
+                __instance.turnOnAudio.clip = CachedDiscoBallMusic;
+            }
+            return true;
+        }
+        if (__instance.turnOnAudio != null) {
+            __instance.turnOnAudio.clip = OoblterraDiscoMusic;
+        }
+        return true;
+    }
+
+    [HarmonyPatch(typeof(StartOfRound), "StartGame")]
+    [HarmonyPostfix]
+    private static void SetItemsWTO(StartOfRound __instance) {
+        string PlanetName = __instance.currentLevel.PlanetName;
+        if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
+            if (MoonsToItemLists.TryGetValue(PlanetName, out List<SpawnableItemWithRarity> ResultItemList)) {
+                __instance.currentLevel.spawnableScrap = ResultItemList;
+            }
+            return;
+        }
+        if (!MoonsToItemLists.ContainsKey(PlanetName)) {
+            MoonsToItemLists.Add(PlanetName, __instance.currentLevel.spawnableScrap);
+        }
+        SetItemStuff(WTOBase.WTOForceScrap.Value, ref __instance.currentLevel.spawnableScrap, MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap);
+    }
+
     //METHODS
     public static void Start() {
         //Create our custom items
         Item NextItemToProcess;
-        foreach(ItemData MyCustomScrap in ItemList){
+        foreach (ItemData MyCustomScrap in ItemList) {
             //Load item based on its path 
             NextItemToProcess = WTOBase.ContextualLoadAsset<Item>(ItemBundle, MyCustomScrap.GetItemPath());
             //Register it with LethalLib
@@ -68,5 +108,22 @@ internal class ItemPatch {
             //Debug.Log("Item Loaded: " + NextItemToProcess.name);
         }
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(ItemBundle, ItemPath + "OoblKey.prefab"));
-    }       
+        CachedDiscoBallMusic = WTOBase.ContextualLoadAsset<AudioClip>(ItemBundle, ItemPath + "Boombox6QuestionMark.ogg", false);
+        OoblterraDiscoMusic = WTOBase.ContextualLoadAsset<AudioClip>(ItemBundle, ItemPath + "ooblboombox.ogg", false);
+    }
+
+    private static void SetItemStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableItemWithRarity> CurrentMoonItemList, List<SpawnableItemWithRarity> OoblterraItemList) {
+        List<SpawnableItemWithRarity> WeightedOoblterraItems = new();
+        foreach (SpawnableItemWithRarity Item in OoblterraItemList) {
+            WeightedOoblterraItems.Add(new SpawnableItemWithRarity { spawnableItem = Item.spawnableItem, rarity = Item.rarity * WTOBase.WTOWeightScale.Value });
+        }
+        switch (TiedToLabState) {
+            case TiedToLabEnum.WTOOnly:
+                CurrentMoonItemList = OoblterraItemList;
+                break;
+            case TiedToLabEnum.AppendWTO:
+                CurrentMoonItemList.AddRange(WeightedOoblterraItems);
+                break;
+        }
+    }
 }
