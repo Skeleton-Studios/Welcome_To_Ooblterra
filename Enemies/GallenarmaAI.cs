@@ -551,7 +551,6 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
         MoveTimerValue(ref hearNoiseCooldown);
         MoveTimerValue(ref RandomAwakeTimerSeconds);
-        IdleAnimation();
         base.Update();
     }
 
@@ -629,9 +628,6 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             AttackTimerSeconds = AttackTime;
             HasAttackedThisCycle = false;
         }
-    }
-
-    private void IdleAnimation() {
     }
 
     public void TryRandomAwake() {

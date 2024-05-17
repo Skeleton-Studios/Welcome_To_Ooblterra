@@ -118,7 +118,6 @@ public class WTOBase : BaseUnityPlugin {
         }
 
         WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
-        //WTOLogSource.LogInfo($"Welcome to Ooblterra! VERSION {version}");
 
         WTOHarmony.PatchAll(typeof(WTOBase));
         WTOHarmony.PatchAll(typeof(FactoryPatch));
