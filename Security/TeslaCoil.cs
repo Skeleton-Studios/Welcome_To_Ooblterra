@@ -30,7 +30,8 @@ internal class TeslaCoil : NetworkBehaviour {
     private bool AttemptedFireShotgun = false;
 
     private List<PlayerControllerB> PlayerInRangeList = new();
-
+    private List<WalkieTalkie> WalkiesToReEnable = new();
+    private List<FlashlightItem> FlashLightsToReEnable = new();
     WalkieTalkie NowYoureOnWalkies;
 
     public void OnTriggerEnter(Collider other) {
@@ -60,6 +61,7 @@ internal class TeslaCoil : NetworkBehaviour {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
                 WTOBase.LogToConsole($"Removing Player {PlayerInRange} from player in range list...");
+                ReEnableEquipment(PlayerInRange);
                 PlayerInRangeList.Remove(PlayerInRange);
             }
         } catch { }
@@ -86,37 +88,42 @@ internal class TeslaCoil : NetworkBehaviour {
                 continue;
             }
             foreach (GrabbableObject HeldObject in Player.ItemSlots) {
-                if(HeldObject is WalkieTalkie) {
-                    NowYoureOnWalkies = HeldObject.GetComponent<WalkieTalkie>();
+                if(HeldObject is WalkieTalkie NextWalkie) {
                     if (HeldObject.isBeingUsed == false) {
                         continue;
                     }
-                    if (NowYoureOnWalkies.clientIsHoldingAndSpeakingIntoThis) {                    
-                        NowYoureOnWalkies.SwitchWalkieTalkieOn(false);
+                    if (!WalkiesToReEnable.Contains(NextWalkie)) {
+                        WalkiesToReEnable.Add(NextWalkie);
+                    }
+                    if (NextWalkie.clientIsHoldingAndSpeakingIntoThis) {
+                        NextWalkie.SwitchWalkieTalkieOn(false);
                         SendDeathSFXServerRpc((int)Player.actualClientId);
                         continue;
                     }
-                    NowYoureOnWalkies.SwitchWalkieTalkieOn(false);
+                    NextWalkie.SwitchWalkieTalkieOn(false);
                     continue;
                 }
-                if(HeldObject is FlashlightItem) {
+                if(HeldObject is FlashlightItem NextFlashlight) {
+                    if(NextFlashlight.isBeingUsed && !FlashLightsToReEnable.Contains(NextFlashlight)) {
+                        FlashLightsToReEnable.Add(NextFlashlight);
+                    }
                     HeldObject.GetComponent<FlashlightItem>().SwitchFlashlight(false);
                     continue;
                 }
-                if(HeldObject is BoomboxItem) {
-                    HeldObject.GetComponent<BoomboxItem>().StartMusic(false);
+                if(HeldObject is BoomboxItem NextBoombox) {
+                    NextBoombox.StartMusic(false);
                     continue;
                 }
-                if(HeldObject is PatcherTool) {
-                    HeldObject.GetComponent<PatcherTool>().DisablePatcherGun();
+                if(HeldObject is PatcherTool NextZapGun) {
+                    NextZapGun.DisablePatcherGun();
                     continue;
                 }
-                if(HeldObject is RadarBoosterItem) {
-                    HeldObject.GetComponent<RadarBoosterItem>().EnableRadarBooster(false);
+                if(HeldObject is RadarBoosterItem NextBooster) {
+                    NextBooster.EnableRadarBooster(false);
                     continue;
                 }
-                if(HeldObject is ShotgunItem && AttemptedFireShotgun == false) {
-                    HeldObject.GetComponent<ShotgunItem>().ItemActivate(true);
+                if(HeldObject is ShotgunItem NextShotgun && AttemptedFireShotgun == false) {
+                    NextShotgun.ItemActivate(true);
                     AttemptedFireShotgun = true;
                     continue;
                 }
@@ -148,6 +155,19 @@ internal class TeslaCoil : NetworkBehaviour {
     public void RecieveToggleTeslaCoil(bool enabled) {
         ToggleTeslaCoilServerRpc(enabled);
         ToggleTeslaCoil(enabled);
+    }
+
+    private void ReEnableEquipment(PlayerControllerB PlayerToCheck) {
+        foreach (GrabbableObject NextItem in PlayerToCheck.ItemSlots) {
+            if (WalkiesToReEnable.Contains(NextItem)) {
+                WalkiesToReEnable.Remove(NextItem as WalkieTalkie);
+                NextItem.GetComponent<WalkieTalkie>().SwitchWalkieTalkieOn(true);
+            }
+            if (FlashLightsToReEnable.Contains(NextItem)) {
+                FlashLightsToReEnable.Remove(NextItem as FlashlightItem);
+                NextItem.GetComponent<FlashlightItem>().SwitchFlashlight(true);
+            }
+        }
     }
 
     [ServerRpc(RequireOwnership = false)]
