@@ -10,6 +10,7 @@ using DunGen.Adapters;
 using System.Runtime.InteropServices.WindowsRuntime;
 using LethalLevelLoader;
 using GameNetcodeStuff;
+using UnityEngine.InputSystem;
 
 namespace Welcome_To_Ooblterra.Patches;
 
@@ -92,7 +93,7 @@ internal class MoonPatch {
     [HarmonyPostfix]
     private static void SetFogTies(StartOfRound __instance) {
         if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
-            return;
+            return; 
         }
         OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
         WTOBase.LogToConsole($"Fog animator found : {OoblFogAnimator != null}");
@@ -102,6 +103,7 @@ internal class MoonPatch {
         }
         TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
         WTOBase.LogToConsole($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
+        TimeOfDay.Instance.playDelayedMusicCoroutine = null;
     }
 
     [HarmonyPatch(typeof(TimeOfDay), "SetInsideLightingDimness")]
@@ -124,7 +126,8 @@ internal class MoonPatch {
             __instance.movementAudio.volume = 0.447f;
             return;
         }
-        __instance.movementAudio.volume = (((float)WTOBase.WTOFootsteps.Value / 100f) * 0.447f);
+        float BoundFootstepSound = Mathf.Clamp((float)WTOBase.WTOFootsteps.Value, 0, 100);
+        __instance.movementAudio.volume = ((BoundFootstepSound / 100f) * 0.447f);
     }
 
     [HarmonyPatch(typeof(RoundManager), "SpawnOutsideHazards")]
@@ -165,6 +168,9 @@ internal class MoonPatch {
         WTOBase.LogToConsole($"Ooblterra Found: {OoblterraExtendedLevel != null}");
         PatchedContent.RegisterExtendedLevel(OoblterraExtendedLevel);
         CachedSpawnableMapObjects = OoblterraExtendedLevel.SelectableLevel.spawnableMapObjects;
+        foreach (SpawnableItemWithRarity Hazard in MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap) {
+            WTOBase.LogToConsole($"{Hazard.spawnableItem.name}");
+        }
     }
     private static void MoveNavNodesToNewPositions() {
         //Get a list of all outside navigation nodes
