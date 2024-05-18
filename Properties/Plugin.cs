@@ -80,14 +80,7 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPatch(typeof(StartOfRound), "Update")]
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
-        if (Keyboard.current.f8Key.wasPressedThisFrame) {
-            foreach(SpawnableMapObject Hazard in __instance.currentLevel.spawnableMapObjects) {
-                LogToConsole($"{Hazard.prefabToSpawn.name}");
-            }
-            foreach (SpawnableOutsideObjectWithRarity OutsideObject in __instance.currentLevel.spawnableOutsideObjects) {
-                LogToConsole($"{OutsideObject.spawnableObject.prefabToSpawn.name}");
-            }
-        }
+
         if (Keyboard.current.f9Key.wasPressedThisFrame) {
             StartOfRound.Instance.ChangeLevelServerRpc(13, FindObjectOfType<Terminal>().groupCredits);
         }
@@ -137,10 +130,11 @@ public class WTOBase : BaseUnityPlugin {
         string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
         MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
 
+        MoonPatch.Start();
         FactoryPatch.Start();
         ItemPatch.Start();
         MonsterPatch.Start();
-        MoonPatch.Start();
+        
 
         //NetcodeWeaver stuff
         var types = Assembly.GetExecutingAssembly().GetTypes();
@@ -153,6 +147,9 @@ public class WTOBase : BaseUnityPlugin {
                 }
             }
         }
+    }
+    public void Update() {
+
     }
     public static T ContextualLoadAsset<T>(AssetBundle Bundle, string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object {
         if (Application.platform == RuntimePlatform.WindowsEditor) {
