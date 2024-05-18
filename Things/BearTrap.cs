@@ -64,10 +64,10 @@ public class BearTrap : MonoBehaviour, IHittable {
     }
 
     private void OnTriggerStay(Collider other) {
-        PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
         if (!other.gameObject.CompareTag("Player")) {
             return;
         }
+        PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
         if (IsBearTrapClosed) {
             AcidWater.DamageOverlappingPlayer(victim, 0.5f, ref TimeSincePlayerDamaged, 5);
             if (victim.health > 1) {
