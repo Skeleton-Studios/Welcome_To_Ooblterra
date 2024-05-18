@@ -16,11 +16,25 @@ public class ScrapShelf : NetworkBehaviour {
 
     public void Start() {
         List<SpawnableItemWithRarity> RandomScrapTypes = StartOfRound.Instance.currentLevel.spawnableScrap;
+        List<SpawnableItemWithRarity> OneHanded = new();
+        List<SpawnableItemWithRarity> TwoHanded = new();
         ShelfRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        foreach(SpawnableItemWithRarity spawnableItem in RandomScrapTypes) {
+            if (spawnableItem.spawnableItem.twoHanded) {
+                TwoHanded.Add(spawnableItem);
+            } else {
+                OneHanded.Add(spawnableItem);
+            }
+        }
         foreach (Transform SpawnLocation in ScrapSpawnPoints) {
             //get a random object from the scrap pool
             if (base.IsServer) {
-                SpawnableItemWithRarity ScrapToSpawn = RandomScrapTypes[ShelfRandom.Next(0, RandomScrapTypes.Count)];
+                SpawnableItemWithRarity ScrapToSpawn;
+                if (ShelfRandom.Next(0, 100) < 80) {
+                     ScrapToSpawn = TwoHanded[ShelfRandom.Next(0, TwoHanded.Count)];
+                } else {
+                     ScrapToSpawn = OneHanded[ShelfRandom.Next(0, TwoHanded.Count)];
+                }
                 //Instantiate it at our current scrap spawn point 
                 GameObject SpawnedScrap = Instantiate(ScrapToSpawn.spawnableItem.spawnPrefab, SpawnLocation.transform.position, SpawnLocation.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
                 //set its scrap value 
