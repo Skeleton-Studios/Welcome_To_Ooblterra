@@ -31,7 +31,7 @@ internal class ItemPatch {
     private static readonly AssetBundle ItemBundle = WTOBase.ItemAssetBundle;
     private const string ItemPath = WTOBase.RootPath + "CustomItems/";
 
-    private static Dictionary<string, List<SpawnableItemWithRarity>> MoonsToItemLists;
+    private static Dictionary<string, List<SpawnableItemWithRarity>> MoonsToItemLists = new();
 
     //This array stores all our custom items
     public static ItemData[] ItemList = new ItemData[] {
@@ -76,9 +76,9 @@ internal class ItemPatch {
         return true;
     }
 
-    [HarmonyPatch(typeof(StartOfRound), "StartGame")]
-    [HarmonyPostfix]
-    private static void SetItemsWTO(StartOfRound __instance) {
+    [HarmonyPatch(typeof(RoundManager), "SpawnScrapInLevel")]
+    [HarmonyPrefix]
+    private static void SetItemsWTO(RoundManager __instance) {
         string PlanetName = __instance.currentLevel.PlanetName;
         if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
             if (MoonsToItemLists.TryGetValue(PlanetName, out List<SpawnableItemWithRarity> ResultItemList)) {
@@ -86,10 +86,7 @@ internal class ItemPatch {
             }
             return;
         }
-        if (!MoonsToItemLists.ContainsKey(PlanetName)) {
-            MoonsToItemLists.Add(PlanetName, __instance.currentLevel.spawnableScrap);
-        }
-        SetItemStuff(WTOBase.WTOForceScrap.Value, ref __instance.currentLevel.spawnableScrap, MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap);
+        SetItemStuff(WTOBase.WTOForceScrap.Value, ref __instance.currentLevel.spawnableScrap, MoonsToItemLists[MoonPatch.MoonFriendlyName]);
     }
 
     //METHODS
@@ -110,6 +107,9 @@ internal class ItemPatch {
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(ItemBundle, ItemPath + "OoblKey.prefab"));
         CachedDiscoBallMusic = WTOBase.ContextualLoadAsset<AudioClip>(ItemBundle, ItemPath + "Boombox6QuestionMark.ogg", false);
         OoblterraDiscoMusic = WTOBase.ContextualLoadAsset<AudioClip>(ItemBundle, ItemPath + "ooblboombox.ogg", false);
+        if (!MoonsToItemLists.ContainsKey(MoonPatch.MoonFriendlyName)) {
+            MoonsToItemLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap);
+        }
     }
 
     private static void SetItemStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableItemWithRarity> CurrentMoonItemList, List<SpawnableItemWithRarity> OoblterraItemList) {
