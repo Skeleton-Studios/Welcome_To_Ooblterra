@@ -112,7 +112,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].PlayerTracker.transform.position = EyeSecList[enemyIndex].targetPlayer.transform.position;
             laserTimer += Time.deltaTime;
             if (laserTimer > EyeSecLaserSpeed) {
-                EyeSecList[enemyIndex].targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Blast);
+                EyeSecList[enemyIndex].targetPlayer.DamagePlayer(150, causeOfDeath: CauseOfDeath.Burning);
                 EyeSecList[enemyIndex].creatureVoice.PlayOneShot(EyeSecList[enemyIndex].BurnSFX);
             }
         }
