@@ -45,7 +45,6 @@ internal class WideDoorway : NetworkBehaviour {
     }
 
     public void RaiseDoor() {
-        ShouldFall = false;
         Doorway.transform.position = DoorStartPosition;
         CloseSoundSource.Play();
     }
