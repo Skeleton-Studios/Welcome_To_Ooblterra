@@ -91,7 +91,7 @@ internal class MoonPatch {
 
     [HarmonyPatch(typeof(StartOfRound), "OnShipLandedMiscEvents")]
     [HarmonyPostfix]
-    private static void SetFogTies(StartOfRound __instance) {
+    private static void SetFogTies(StartOfRound __instance) { 
         if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
             return; 
         }
