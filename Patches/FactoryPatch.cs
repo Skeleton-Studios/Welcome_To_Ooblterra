@@ -39,7 +39,7 @@ internal class FactoryPatch {
         if (DungeonManager.CurrentExtendedDungeonFlow != OoblDungeonFlow) {
             return true;
         }
-        if (__instance.currentLevel.spawnableMapObjects.Length == 0) {
+        if (__instance.currentLevel.spawnableMapObjects == null || __instance.currentLevel.spawnableMapObjects.Length == 0) {
             return true;
         }
         System.Random MapHazardRandom = new System.Random(StartOfRound.Instance.randomMapSeed + 587);
