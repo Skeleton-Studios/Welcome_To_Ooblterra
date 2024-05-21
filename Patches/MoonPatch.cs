@@ -138,13 +138,13 @@ internal class MoonPatch {
         }
         if (!WTOBase.CSVSeperatedStringList(WTOBase.WTOHazardList.Value).Contains("beartrap")) {
             __instance.currentLevel.spawnableMapObjects = null;
-            return true;
+            return false;
         }
         __instance.currentLevel.spawnableMapObjects = CachedSpawnableMapObjects;
         return true;
     }
 
-    [HarmonyPatch(typeof(GrabbableObject), "Start")]
+    /*[HarmonyPatch(typeof(GrabbableObject), "Start")]
     [HarmonyPostfix]
     private static void SetScrapValueWTO(GrabbableObject __instance) {
         if(RoundManager.Instance.currentLevel.PlanetName != MoonFriendlyName || !WTOBase.WTOScalePrice.Value) {
@@ -157,7 +157,7 @@ internal class MoonPatch {
         float ClampedValue = Mathf.Clamp(FinalScrapValue * ValueScale, FinalScrapValue * 0.1f, FinalScrapValue * 2);
         FinalScrapValue = Mathf.RoundToInt(ClampedValue);
         __instance.SetScrapValue(FinalScrapValue);
-    }
+    }*/
 
 
 

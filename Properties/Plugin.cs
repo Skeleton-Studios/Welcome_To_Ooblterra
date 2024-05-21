@@ -89,18 +89,18 @@ public class WTOBase : BaseUnityPlugin {
     void Awake() {
         /*CONFIG STUFF*/{
             WTODebug = Config.Bind("1. Debugging", "Print Debug Strings", false, "Whether or not to write WTO's debug print-strings to the log."); //IMPLEMENTED
-            WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED
+            WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED 
             WTOCustomSuits = Config.Bind("3. Ship Stuff", "Custom Suit Status", true, "Whether or not to add WTO's custom suits."); //IMPLEMENTED
             WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status",  true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
             WTOHazardList = Config.Bind("4. Map Hazards", "Custom Hazard List", "SpikeTrap, TeslaCoil, BabyLurkerEgg, BearTrap", "A list of all of WTO's custom hazards to enable. Affects 523-Ooblterra, and also has influence on the settings below."); //IMPLEMENTED
             /*WTOForceOutsideOnly = Config.Bind("5. Modded Content", "Force Configuration settings on 523 Ooblterra", true, "When true, forces 523 Ooblterra to spawn only the enemies/scrap found in its LLL config settings. This prevents custom monsters/scrap from spawning on the moon, unless manually specified.");*/
-            WTOScalePrice = Config.Bind("5. Scrap", "Scale Scrap By Route Price", false, "Changes the value of Ooblterra's scrap to fit relative to the route price set for 523 Ooblterra. Only affects Ooblterra's custom scrap."); //IMPLEMENTED
-            WTOForceHazards = Config.Bind("6. Modpack Controls", "Bind WTO Hazards to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own hazards, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOForceInsideMonsters = Config.Bind("6. Modpack Controls", "Bind WTO Inside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own inside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOForceOutsideMonsters = Config.Bind("6. Modpack Controls", "Bind WTO Outside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's outside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOForceDaytimeMonsters = Config.Bind("6. Modpack Controls", "Bind WTO Daytime Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's daytime enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOForceScrap = Config.Bind("6. Modpack Controls", "Bind WTO Scrap to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own scrap, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOWeightScale = Config.Bind("6. Modpack Controls", "WTOAppend Weight Scale", 1, "For any setting configured to WTOAppend above, this setting multiplies that thing's weight before appending it to list."); //IMPLEMENTED
+            //WTOScalePrice = Config.Bind("5. Scrap", "Scale Scrap By Route Price", false, "Changes the value of Ooblterra's scrap to fit relative to the route price set for 523 Ooblterra. Only affects Ooblterra's custom scrap."); //IMPLEMENTED
+            WTOForceHazards = Config.Bind("5. Modpack Controls", "Bind WTO Hazards to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own hazards, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+            WTOForceInsideMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Inside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own inside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+            WTOForceOutsideMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Outside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's outside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+            WTOForceDaytimeMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Daytime Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's daytime enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+            WTOForceScrap = Config.Bind("5. Modpack Controls", "Bind WTO Scrap to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own scrap, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+            WTOWeightScale = Config.Bind("5. Modpack Controls", "WTOAppend Weight Scale", 1, "For any setting configured to WTOAppend above, this setting multiplies that thing's weight before appending it to list."); //IMPLEMENTED
 
 
         }
