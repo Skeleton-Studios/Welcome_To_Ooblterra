@@ -234,6 +234,7 @@ public class WTOEnemy : EnemyAI {
         return DistanceFromShip;
     }
     internal bool PlayerWithinRange(float Range, bool IncludeYAxis = true) {
+        WTOBase.LogToConsole($"Distance from target player: {DistanceFromTargetPlayer(IncludeYAxis)}");
         return DistanceFromTargetPlayer(IncludeYAxis) <= Range;
     }
     internal bool PlayerWithinRange(PlayerControllerB player, float Range, bool IncludeYAxis = true) {

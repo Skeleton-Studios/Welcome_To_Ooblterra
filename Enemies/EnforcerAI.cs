@@ -234,7 +234,7 @@ public class EnforcerAI : WTOEnemy {
     }
     private class StalkedPlayerSeesUs : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].eye.position, 30);
+            return EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].eye.position, 30) || EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].transform.position, 30);
         }
         public override BehaviorState NextState() {
             return new ScreamAtPlayer();
@@ -259,7 +259,7 @@ public class EnforcerAI : WTOEnemy {
     private class PlayerLeftAttackRange : StateTransition {
 
         public override bool CanTransitionBeTaken() {
-            return EnforcerList[enemyIndex].PlayerWithinRange(3f, false);
+            return !EnforcerList[enemyIndex].PlayerWithinRange(3f, false);
         }
         public override BehaviorState NextState() {
             return new ChasePlayer();
