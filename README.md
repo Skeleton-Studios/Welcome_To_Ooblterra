@@ -12,6 +12,8 @@ EchoSem - Animation
 
 IAmBreeze, Hanori, Wasomute - Playtesting
 
+Joseph 'Jojo' Evans - Sound design, Voice Acting
+
 Evaisa - Programming (API for custom items and interior)
 
 IAmBatby - Programming (created API for custom moon adapted from old Ooblterra code, thank you!)
