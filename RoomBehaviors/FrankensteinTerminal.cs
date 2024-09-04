@@ -304,7 +304,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.isInElevator = false;
             PlayerToRevive.isInHangarShipRoom = false;
             PlayerToRevive.isInsideFactory = true;
-            PlayerToRevive.wasInElevatorLastFrame = false;
+            //PlayerToRevive.wasInElevatorLastFrame = false;
             StartOfRound.Instance.SetPlayerObjectExtrapolate(enable: false);
             PlayerToRevive.TeleportPlayer(BodyPoint.RespawnPos.position);
             PlayerToRevive.setPositionOfDeadPlayer = false;

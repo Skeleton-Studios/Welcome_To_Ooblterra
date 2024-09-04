@@ -26,7 +26,7 @@ internal class TerminalPatch {
         LoadStoryLogs();
     }
 
-    private static void LoadLogKeywords() {
+    private static void LoadLogKeywords(){
         KeywordList = new List<TerminalKeyword>() {
             WTOBase.ContextualLoadAsset<TerminalKeyword>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile1Keyword.asset"),
             WTOBase.ContextualLoadAsset<TerminalKeyword>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile2Keyword.asset"),

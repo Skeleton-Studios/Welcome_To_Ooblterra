@@ -81,7 +81,7 @@ internal class OoblGhostAI : WTOEnemy {
         Vector3 DirectionVector;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].StopGhostFade();
-            AttemptScanOoblGhost();
+            GhostList[enemyIndex].AttemptScanOoblGhost();
             if (GhostList[enemyIndex].targetPlayer == GameNetworkManager.Instance.localPlayerController) {
                 GhostList[enemyIndex].targetPlayer.statusEffectAudio.PlayOneShot(GhostList[enemyIndex].StartupSound);
             }
@@ -382,14 +382,14 @@ internal class OoblGhostAI : WTOEnemy {
         GhostTeethMat.SetFloat("_AlphaRemapMax", 0.6f);
     }
 
-    private static void AttemptScanOoblGhost() {
+    private void AttemptScanOoblGhost() {
         if (!HUDManager.Instance.terminalScript.scannedEnemyIDs.Contains(OoblGhostTerminalInt)){
             ScanOoblGhostServerRpc();
         }
     }
 
     [ServerRpc]
-    private static void ScanOoblGhostServerRpc() {
+    private void ScanOoblGhostServerRpc() {
         if (!HUDManager.Instance.terminalScript.scannedEnemyIDs.Contains(OoblGhostTerminalInt)) {
             HUDManager.Instance.terminalScript.scannedEnemyIDs.Add(OoblGhostTerminalInt);
             HUDManager.Instance.terminalScript.newlyScannedEnemyIDs.Add(OoblGhostTerminalInt);
@@ -398,7 +398,7 @@ internal class OoblGhostAI : WTOEnemy {
         }
     }
     [ClientRpc]
-    private static void ScanOoblGhostClientRpc() {
+    private void ScanOoblGhostClientRpc() {
         if (!HUDManager.Instance.terminalScript.scannedEnemyIDs.Contains(OoblGhostTerminalInt)) {
             HUDManager.Instance.terminalScript.scannedEnemyIDs.Add(OoblGhostTerminalInt);
             HUDManager.Instance.terminalScript.newlyScannedEnemyIDs.Add(OoblGhostTerminalInt);

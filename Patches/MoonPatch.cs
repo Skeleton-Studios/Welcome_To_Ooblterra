@@ -159,8 +159,6 @@ internal class MoonPatch {
         __instance.SetScrapValue(FinalScrapValue);
     }*/
 
-
-
     //METHODS
     public static void Start() {
         OoblterraExtendedLevel = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPath + "OoblterraExtendedLevel.asset");
@@ -169,7 +167,7 @@ internal class MoonPatch {
         PatchedContent.RegisterExtendedLevel(OoblterraExtendedLevel);
         CachedSpawnableMapObjects = OoblterraExtendedLevel.SelectableLevel.spawnableMapObjects;
         foreach (SpawnableItemWithRarity Hazard in MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap) {
-            WTOBase.LogToConsole($"{Hazard.spawnableItem.name}");
+            WTOBase.LogToConsole($"{Hazard.spawnableItem.name}"); 
         }
     }
     private static void MoveNavNodesToNewPositions() {
