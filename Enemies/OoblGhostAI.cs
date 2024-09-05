@@ -7,6 +7,7 @@ using System.Security.Cryptography;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
+using Welcome_To_Ooblterra.Items;
 using Welcome_To_Ooblterra.Properties;
 using static LethalLib.Modules.Enemies;
 
@@ -14,7 +15,7 @@ namespace Welcome_To_Ooblterra.Enemies;
 internal class OoblGhostAI : WTOEnemy {
 
     [Header("Balance Constants")]
-    public float GhostInterferenceRange = 10f;
+    public float GhostInterferenceRange = 10f; 
     public float OoblGhostSpeed = 7f;
     public float GhostDamagePerTick = 10f;
     public float GhostInterferenceSeconds = 1.5f;
@@ -23,7 +24,7 @@ internal class OoblGhostAI : WTOEnemy {
     public Material GhostMat;
     public Material GhostTeethMat;
     public SkinnedMeshRenderer GhostRenderer;
-    public SkinnedMeshRenderer GhostArmsRenderer;
+    public SkinnedMeshRenderer GhostArmsRenderer; 
 
     //STATES
     private class WaitForNextAttack : BehaviorState {
@@ -49,6 +50,7 @@ internal class OoblGhostAI : WTOEnemy {
 
         List<PlayerControllerB> AllPlayersList;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+            /*
             AllPlayersList = StartOfRound.Instance.allPlayerScripts.ToList();
             for (int i = 0; i < StartOfRound.Instance.allPlayerScripts.Length; i++) {
                 PlayerControllerB player = StartOfRound.Instance.allPlayerScripts[i];
@@ -63,6 +65,7 @@ internal class OoblGhostAI : WTOEnemy {
                 GhostList[enemyIndex].SetGhostTargetServerRpc(Array.IndexOf(StartOfRound.Instance.allPlayerScripts, CachedTargetPlayer));
 
             }
+            */
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -74,8 +77,8 @@ internal class OoblGhostAI : WTOEnemy {
             new TargetChosen()
         };
     }
-    private class GoTowardPlayer : BehaviorState {
-        public GoTowardPlayer() {
+    private class GoTowardTarget : BehaviorState {
+        public GoTowardTarget() {
             RandomRange = new Vector2(-300, 300);
         }
         Vector3 DirectionVector;
@@ -91,12 +94,12 @@ internal class OoblGhostAI : WTOEnemy {
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].StopGhostFade();
-            GhostList[enemyIndex].MoveGhostTowardPlayer();
+            GhostList[enemyIndex].MoveGhostTowardTarget();
             if (GhostList[enemyIndex].PlayerWithinRange(GhostList[enemyIndex].GhostInterferenceRange)) {
-                GhostList[enemyIndex].ShouldListenForWalkie = true;
-                if (StartOfRound.Instance.connectedPlayersAmount <= 0 || StartOfRound.Instance.livingPlayers <= 1) {
+                //GhostList[enemyIndex].ShouldListenForWalkie = true;
+                //if (StartOfRound.Instance.connectedPlayersAmount <= 0 || StartOfRound.Instance.livingPlayers <= 1) {
                     GhostList[enemyIndex].SinglePlayerEvaluateWalkie();
-                }
+                //}
             } else {
                 GhostList[enemyIndex].ShouldListenForWalkie = false;
             }
@@ -124,7 +127,7 @@ internal class OoblGhostAI : WTOEnemy {
             return GhostList[enemyIndex].targetPlayer != null;
         }
         public override BehaviorState NextState() {
-            return new GoTowardPlayer();
+            return new GoTowardTarget();
         }
     }
     private class KilledPlayer : StateTransition {
@@ -149,6 +152,9 @@ internal class OoblGhostAI : WTOEnemy {
             GhostList[enemyIndex].ShouldFadeGhost = true;
             GhostList[enemyIndex].timeElapsed = 0f;
             GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
+            if (GhostList[enemyIndex].LinkedCorpsePart == null) {
+                GhostList[enemyIndex].KillEnemyOnOwnerClient();
+            }
             return new WaitForNextAttack();
         }
     }
@@ -167,12 +173,14 @@ internal class OoblGhostAI : WTOEnemy {
     private float timeElapsed;
     private bool ListenForWalkieCrActive;
     private static int OoblGhostTerminalInt;
+    public OoblCorpsePart LinkedCorpsePart;
+    public bool IsMovingTowardPlayer = true;
 
     private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
-        InitialState = new WaitForNextAttack();
+        InitialState = new ChooseTarget();
         PrintDebugs = true;
         GhostID++;
         WTOEnemyID = GhostID;
@@ -196,7 +204,7 @@ internal class OoblGhostAI : WTOEnemy {
         if (ShouldFadeGhost) {
             StartCoroutine(FadeGhostCoroutine());
         }
-        if (targetPlayer == null || ActiveState is not GoTowardPlayer) {
+        if (targetPlayer == null || ActiveState is not GoTowardTarget) {
             return;
         }
 
@@ -266,11 +274,28 @@ internal class OoblGhostAI : WTOEnemy {
         ChangeOwnershipOfEnemy(ResultingPlayer.actualClientId);
         return ResultingPlayer;
     }
-    private void MoveGhostTowardPlayer() {
-        Vector3 DirectionVector = (targetPlayer.transform.position - transform.position).normalized;
-        if (!PlayerWithinRange(0.5f)) {
-            transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
-            CalculateGhostRotation();
+    private void MoveGhostTowardTarget() {
+        if (IsMovingTowardPlayer) {
+            Vector3 DirectionVector = (targetPlayer.transform.position - transform.position).normalized;        
+            if (!PlayerWithinRange(0.5f)) {
+                transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
+                CalculateGhostRotation();
+            }
+        }
+        else {
+            if (LinkedCorpsePart.isInShipRoom) {
+                LinkedCorpsePart = null;
+                GhostPickedUpInterference = true;
+            }
+            Vector3 DirectionVector = (LinkedCorpsePart.transform.position - transform.position).normalized;
+            if (Vector3.Distance(transform.position, LinkedCorpsePart.transform.position) > 0.5f) {
+                transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
+                CalculateGhostRotation();
+            } else {
+                LinkedCorpsePart.DestroyCorpsePartServerRpc();
+                LinkedCorpsePart = null;
+                GhostPickedUpInterference = true;
+            }
         }
     }
     private void CalculateGhostRotation() {
@@ -282,7 +307,7 @@ internal class OoblGhostAI : WTOEnemy {
 
     //Called every frame
     private void SinglePlayerEvaluateWalkie() {
-        if (targetPlayer.speakingToWalkieTalkie) {
+        if (GetClosestPlayer().speakingToWalkieTalkie) {
             GhostPickedUpInterference = true;
             return;
         }
@@ -291,7 +316,7 @@ internal class OoblGhostAI : WTOEnemy {
     //called when translator used
     public void EvalulateSignalTranslatorUse() {
         WTOBase.LogToConsole("Ghost Recieved Signal Translator use!");
-        if (targetPlayer == null || ActiveState is not GoTowardPlayer) {
+        if (targetPlayer == null || ActiveState is not GoTowardTarget) {
             return;
         }
         if (Vector3.Distance(transform.position, targetPlayer.transform.position) < (GhostInterferenceRange + 10)) {
@@ -315,16 +340,6 @@ internal class OoblGhostAI : WTOEnemy {
         }
     }
 
-    [ServerRpc]
-    public void FlickerNearbyLightsServerRpc(bool ShipLights) {
-        FlickerNearbyLightsClientRpc(ShipLights);
-    }
-
-    [ClientRpc]
-    public void FlickerNearbyLightsClientRpc(bool ShipLights) {
-        ShouldFlickerLights = true;
-        this.ShouldFlickerShipLights = ShipLights;
-    }
 
     internal static int GetNumberOfGhosts() {
         int Number = 0;
@@ -334,15 +349,6 @@ internal class OoblGhostAI : WTOEnemy {
             }
         }
         return Number;
-    }
-
-    //TODO: Impliment
-    IEnumerator FlickerShipLights() {
-        yield return null;
-    }
-
-    IEnumerator FlickerNearbyLights() {
-        yield return null;
     }
 
     IEnumerator ListenForWalkie() {
@@ -387,7 +393,6 @@ internal class OoblGhostAI : WTOEnemy {
             ScanOoblGhostServerRpc();
         }
     }
-
     [ServerRpc]
     private void ScanOoblGhostServerRpc() {
         if (!HUDManager.Instance.terminalScript.scannedEnemyIDs.Contains(OoblGhostTerminalInt)) {
