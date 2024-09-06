@@ -44,14 +44,18 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
         if(SpawnPosition == transform.position) {
             return;
         }
-        GetComponent<AudioSource>().PlayOneShot(Splat[EggRandom.Next(0, Splat.Length)]);
+        try {
+            GetComponent<AudioSource>().PlayOneShot(Splat[EggRandom.Next(0, Splat.Length - 1)]);
+        } catch {
+            WTOBase.LogToConsole("Couldn't play splat sound!"); 
+        }
         GetComponent<Rigidbody>().isKinematic = true;
         StartCoroutine(StartEggExploding());
     }
 
-    private float timeElapsed;
+    private float timeElapsed = 0f;
     private float ExpandTime = 3f;
-    private float LerpValue;
+    private float LerpValue = 0f;
     IEnumerator StartEggExploding() {
         while ((timeElapsed / ExpandTime) < 1) {
             timeElapsed += Time.deltaTime; 

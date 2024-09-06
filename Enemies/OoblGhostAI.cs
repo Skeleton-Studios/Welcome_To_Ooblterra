@@ -77,7 +77,7 @@ internal class OoblGhostAI : WTOEnemy {
             new TargetChosen()
         };
     }
-    private class GoTowardTarget : BehaviorState {
+    private class GoTowardTarget : BehaviorState { 
         public GoTowardTarget() {
             RandomRange = new Vector2(-300, 300);
         }
@@ -153,7 +153,8 @@ internal class OoblGhostAI : WTOEnemy {
             GhostList[enemyIndex].timeElapsed = 0f;
             GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
             if (GhostList[enemyIndex].LinkedCorpsePart == null) {
-                GhostList[enemyIndex].KillEnemyOnOwnerClient();
+                WTOBase.LogToConsole("Corpse part removed; killing enemy!");
+                GhostList[enemyIndex].KillEnemyOnOwnerClient(true);
             }
             return new WaitForNextAttack();
         }

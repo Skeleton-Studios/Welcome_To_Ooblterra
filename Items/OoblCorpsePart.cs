@@ -13,7 +13,7 @@ namespace Welcome_To_Ooblterra.Items;
 internal class OoblCorpsePart : GrabbableObject {
 
     PlayerControllerB previousPlayerHeldBy;
-    private EnemyType OoblGhostTemplate;
+    public EnemyType OoblGhostTemplate;
     private OoblGhostAI MySpawnedGhost;
 
     public override void GrabItem() {
@@ -58,10 +58,6 @@ internal class OoblCorpsePart : GrabbableObject {
     }
     [ClientRpc]
     public void DestroyCorpsePartClientRpc() {
-        if (isHeld) { 
-            DestroyObjectInHand(playerHeldBy);
-        } else {
-            Destroy(this);
-        }
+        DestroyObjectInHand(playerHeldBy);
     }
 }
