@@ -37,7 +37,7 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
     private void OnTriggerEnter(Collider other) {
         WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
         if (other.GetComponent<BoxCollider>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerProjectile>() != null) {
-            return;
+            return; 
         } 
         BabyLurker = MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Baby Lurker").enemyType;
         SpawnPosition = RoundManager.Instance.GetRandomNavMeshPositionInRadius(transform.position, radius: 1);
