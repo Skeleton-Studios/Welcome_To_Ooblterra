@@ -69,6 +69,7 @@ public class WTOBase : BaseUnityPlugin {
     public static ConfigEntry<string> WTOHazardList;
     public static ConfigEntry<string> WTOHazardMoonList;
     public static ConfigEntry<int> WTOFootsteps;
+    public static ConfigEntry<int> WTOMusic;
     public static ConfigEntry<TiedToLabEnum> WTOForceHazards;
     public static ConfigEntry<TiedToLabEnum> WTOForceInsideMonsters;
     public static ConfigEntry<TiedToLabEnum> WTOForceOutsideMonsters;
@@ -81,15 +82,13 @@ public class WTOBase : BaseUnityPlugin {
     [HarmonyPostfix]
     public static void DebugHelper(StartOfRound __instance) {
 
-        if (Keyboard.current.f9Key.wasPressedThisFrame) {
-            StartOfRound.Instance.ChangeLevelServerRpc(13, FindObjectOfType<Terminal>().groupCredits);
-        }
     }
 
     void Awake() {
         /*CONFIG STUFF*/{
             WTODebug = Config.Bind("1. Debugging", "Print Debug Strings", false, "Whether or not to write WTO's debug print-strings to the log."); //IMPLEMENTED
             WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED 
+            WTOMusic = Config.Bind("2. Accessibility", "Music Volume", 100, "Adjust the volume of 523-Ooblterra's custom Time-Of-Day music. Binds between 0 and 100.");
             WTOCustomSuits = Config.Bind("3. Ship Stuff", "Custom Suit Status", true, "Whether or not to add WTO's custom suits."); //IMPLEMENTED
             WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status",  true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
             WTOHazardList = Config.Bind("4. Map Hazards", "Custom Hazard List", "SpikeTrap, TeslaCoil, BabyLurkerEgg, BearTrap", "A list of all of WTO's custom hazards to enable. Affects 523-Ooblterra, and also has influence on the settings below."); //IMPLEMENTED

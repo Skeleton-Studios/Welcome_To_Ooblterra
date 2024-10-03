@@ -15,17 +15,23 @@ internal class OoblCorpsePart : GrabbableObject {
     PlayerControllerB previousPlayerHeldBy;
     public EnemyType OoblGhostTemplate;
     private OoblGhostAI MySpawnedGhost;
+    private bool HasSpawnedGhost = false;
 
     public override void GrabItem() {
         base.GrabItem();
+        if (HasSpawnedGhost) {
+            return;
+        }
         SetOwningPlayerServerRpc(Array.IndexOf(StartOfRound.Instance.allPlayerScripts, playerHeldBy));
         //TODO: spawn in oobl ghost and make them attack the owning player
         if(MySpawnedGhost != null) {
             MySpawnedGhost.SetGhostTargetServerRpc((int)previousPlayerHeldBy.actualClientId);
             MySpawnedGhost.IsMovingTowardPlayer = true;
+            
             return;
         }
         NetworkObjectReference NextGhost = RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -700, 0), 0, 1, OoblGhostTemplate);
+        HasSpawnedGhost = true;
         if (NextGhost.TryGet(out NetworkObject GhostNetObject)){
             MySpawnedGhost = GhostNetObject.GetComponent<OoblGhostAI>();
             MySpawnedGhost.LinkedCorpsePart = this;
@@ -58,6 +64,7 @@ internal class OoblCorpsePart : GrabbableObject {
     }
     [ClientRpc]
     public void DestroyCorpsePartClientRpc() {
+        WTOBase.LogToConsole($"Destroying: {this}");
         DestroyObjectInHand(playerHeldBy);
     }
 }

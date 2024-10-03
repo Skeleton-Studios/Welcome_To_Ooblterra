@@ -98,7 +98,7 @@ internal class OoblGhostAI : WTOEnemy {
             if (GhostList[enemyIndex].PlayerWithinRange(GhostList[enemyIndex].GhostInterferenceRange)) {
                 //GhostList[enemyIndex].ShouldListenForWalkie = true;
                 //if (StartOfRound.Instance.connectedPlayersAmount <= 0 || StartOfRound.Instance.livingPlayers <= 1) {
-                    GhostList[enemyIndex].SinglePlayerEvaluateWalkie();
+                    GhostList[enemyIndex]?.SinglePlayerEvaluateWalkie();
                 //}
             } else {
                 GhostList[enemyIndex].ShouldListenForWalkie = false;
@@ -152,10 +152,6 @@ internal class OoblGhostAI : WTOEnemy {
             GhostList[enemyIndex].ShouldFadeGhost = true;
             GhostList[enemyIndex].timeElapsed = 0f;
             GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
-            if (GhostList[enemyIndex].LinkedCorpsePart == null) {
-                WTOBase.LogToConsole("Corpse part removed; killing enemy!");
-                GhostList[enemyIndex].KillEnemyOnOwnerClient(true);
-            }
             return new WaitForNextAttack();
         }
     }
@@ -176,6 +172,7 @@ internal class OoblGhostAI : WTOEnemy {
     private static int OoblGhostTerminalInt;
     public OoblCorpsePart LinkedCorpsePart;
     public bool IsMovingTowardPlayer = true;
+    private bool KillGhost = false;
 
     private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
 
@@ -203,7 +200,7 @@ internal class OoblGhostAI : WTOEnemy {
             agent.enabled = false;
         }
         if (ShouldFadeGhost) {
-            StartCoroutine(FadeGhostCoroutine());
+            StartCoroutine(FadeGhostCoroutine(KillGhost));
         }
         if (targetPlayer == null || ActiveState is not GoTowardTarget) {
             return;
@@ -276,18 +273,20 @@ internal class OoblGhostAI : WTOEnemy {
         return ResultingPlayer;
     }
     private void MoveGhostTowardTarget() {
+        if (LinkedCorpsePart.isInShipRoom) {
+            WTOBase.LogToConsole("Corpse dropped in ship!");
+            LinkedCorpsePart = null;
+            GhostPickedUpInterference = true;
+            KillGhost = true;
+            return;
+        }
         if (IsMovingTowardPlayer) {
             Vector3 DirectionVector = (targetPlayer.transform.position - transform.position).normalized;        
             if (!PlayerWithinRange(0.5f)) {
                 transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
                 CalculateGhostRotation();
             }
-        }
-        else {
-            if (LinkedCorpsePart.isInShipRoom) {
-                LinkedCorpsePart = null;
-                GhostPickedUpInterference = true;
-            }
+        } else {
             Vector3 DirectionVector = (LinkedCorpsePart.transform.position - transform.position).normalized;
             if (Vector3.Distance(transform.position, LinkedCorpsePart.transform.position) > 0.5f) {
                 transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
@@ -358,7 +357,7 @@ internal class OoblGhostAI : WTOEnemy {
         GhostPickedUpInterference = true;
     }
 
-    IEnumerator FadeGhostCoroutine() {
+    IEnumerator FadeGhostCoroutine(bool DestroyGhostAfterFade) {
         timeElapsed += Time.deltaTime;
         WTOBase.LogToConsole($"Ghost Lerp Position: {timeElapsed / FadeTimeSeconds}");
         TargetFade = Mathf.Lerp(0.6f, 0, timeElapsed / FadeTimeSeconds);
@@ -371,7 +370,11 @@ internal class OoblGhostAI : WTOEnemy {
 
             transform.position = new Vector3(0, -1000, 0);
             timeElapsed = 0f;
-            StopCoroutine(FadeGhostCoroutine());
+            if (DestroyGhostAfterFade) {
+                WTOBase.LogToConsole("Corpse part removed; killing enemy!");
+                KillEnemyOnOwnerClient(true);
+            }
+            StopCoroutine(FadeGhostCoroutine(DestroyGhostAfterFade));
             yield return null;
         }
         GhostMat.SetFloat("_AlphaRemapMax", TargetFade);

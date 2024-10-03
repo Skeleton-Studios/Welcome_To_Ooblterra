@@ -144,6 +144,18 @@ internal class MoonPatch {
         return true;
     }
 
+    [HarmonyPatch(typeof(TimeOfDay), "Start")]
+    [HarmonyPrefix]
+    private static bool AdjustTODMusic(TimeOfDay __instance) {
+        if (RoundManager.Instance.currentLevel.PlanetName != MoonFriendlyName) {
+            __instance.TimeOfDayMusic.volume = 1f;
+            return true;
+        }
+        float MusicPercentage = Mathf.Clamp((float)WTOBase.WTOFootsteps.Value, 0, 100);
+        __instance.TimeOfDayMusic.volume = MusicPercentage / 100f;
+        return true;
+    }
+
     /*[HarmonyPatch(typeof(GrabbableObject), "Start")]
     [HarmonyPostfix]
     private static void SetScrapValueWTO(GrabbableObject __instance) {

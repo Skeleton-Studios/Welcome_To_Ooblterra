@@ -312,10 +312,10 @@ public class EnforcerAI : WTOEnemy {
 
     public static Dictionary<int, EnforcerAI> EnforcerList = new();
     private static int EnforcerID;
-    private List<EnforcerHidePoint> EnforcerHidePoints = new();
+    private List<GameObject> EnforcerHidePoints = new();
     private bool ReachedNextPoint = false;
     private bool EnforcerActiveCamoState = false;
-    private EnforcerHidePoint NextHidePoint;
+    private GameObject NextHidePoint;
     private PlayerControllerB PotentialTarget;
     private bool IsBeingSeenByPotentialTarget;
     private bool ShouldChasePotentialTarget;
@@ -338,7 +338,7 @@ public class EnforcerAI : WTOEnemy {
         LogMessage($"Adding Enforcer {this} #{EnforcerID}");
         EnforcerList.Add(EnforcerID, this);
         //This might cause a lag spike because im using LINQ 
-        EnforcerHidePoints = FindObjectsOfType<EnforcerHidePoint>().ToList();
+        PopulateHidePoints();
         foreach(SkinnedMeshRenderer NextMesh in Meshes) {
             Material[] TempMaterialsArray = new Material[NextMesh.materials.Length];
             for(int i = 0; i < NextMesh.materials.Length; i++) {
@@ -366,7 +366,7 @@ public class EnforcerAI : WTOEnemy {
             MoveTimerValue(ref EnforcerScreamSeconds);
         }
 
-        if (!EnforcerShouldKeepTrackOfTargetPlayer || targetPlayer == null) {
+        if (!EnforcerShouldKeepTrackOfTargetPlayer || targetPlayer == null){
             return;
         }
 
@@ -396,9 +396,20 @@ public class EnforcerAI : WTOEnemy {
             StartCoroutine(StopActiveCamo());
         }
     }
+
+    public void PopulateHidePoints() { 
+        if(FindObjectsOfType<EnforcerHidePoint>().Length <= 0){
+            EnforcerHidePoints = GameObject.FindGameObjectsWithTag("AINode").ToList<GameObject>();
+            return;
+        }
+        foreach (EnforcerHidePoint Hidepoints in FindObjectsOfType<EnforcerHidePoint>()) {
+            EnforcerHidePoints.Add(Hidepoints.gameObject);
+        }
+
+    }
     public void DetermineNextHidePoint() { 
         if(EnforcerHidePoints == null) {
-            EnforcerHidePoints = FindObjectsOfType<EnforcerHidePoint>().ToList();
+            PopulateHidePoints();
             LogMessage($"Hide Point count: {EnforcerHidePoints.Count}");
         }
         NextHidePoint = EnforcerHidePoints[enemyRandom.Next(0, EnforcerHidePoints.Count)];
@@ -412,7 +423,7 @@ public class EnforcerAI : WTOEnemy {
                 NextMat.SetFloat("_TextureLerp", LerpPos); 
             }
         }
-        EnforcerActiveCamoState = true;
+        EnforcerActiveCamoState = true; 
         yield return null;
     }
     IEnumerator StopActiveCamo() {
