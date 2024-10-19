@@ -35,10 +35,22 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
+  <PropertyGroup>
+  <!--
+    <LethalCompanyPath>E:\SteamLibrary\steamapps\common\Lethal Company\</LethalCompanyPath>
+    <WTOAssetsPath>..\..\Unity Stuff\WTO-Assets\</WTOAssetsPath>
+    <NetcodePatcherPath>F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\</NetcodePatcherPath>
+    <R2ModManPath>C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\</R2ModManPath>
+    -->
+    <LethalCompanyPath>H:\SteamLibrary\steamapps\common\Lethal Company\</LethalCompanyPath>
+    <WTOAssetsPath>H:\oyh\WTO-Assets\</WTOAssetsPath>
+    <NetcodePatcherPath>H:\oyh\NetcodePatcher-2.4.0\</NetcodePatcherPath>
+    <R2ModManPath>C:\Users\sam63\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\</R2ModManPath>
+  </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="All" />
     <Reference Include="0Harmony">
-      <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\BepInEx\core\0Harmony.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
     <Reference Include="AsmResolver, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\AsmResolver.5.0.0\lib\netstandard2.0\AsmResolver.dll</HintPath>
@@ -53,22 +65,22 @@
       <HintPath>packages\AsmResolver.PE.File.5.0.0\lib\netstandard2.0\AsmResolver.PE.File.dll</HintPath>
     </Reference>
     <Reference Include="Assembly-CSharp" Publicize="true">
-      <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\Lethal Company_Data\Managed\Assembly-CSharp.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
     </Reference>
     <Reference Include="BepInEx">
-      <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\BepInEx\core\BepInEx.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
     <Reference Include="BepInEx.AssemblyPublicizer, Version=0.4.1.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\BepInEx.AssemblyPublicizer.0.4.1\lib\netstandard2.0\BepInEx.AssemblyPublicizer.dll</HintPath>
     </Reference>
     <Reference Include="LethalLevelLoader, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\IAmBatby-LethalLevelLoader\LethalLevelLoader.dll</HintPath>
+      <HintPath>$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\IAmBatby-LethalLevelLoader\LethalLevelLoader.dll</HintPath>
     </Reference>
     <Reference Include="LethalLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Evaisa-LethalLib\LethalLib\LethalLib.dll</HintPath>
+      <HintPath>$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Evaisa-LethalLib\LethalLib\LethalLib.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.6.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -108,97 +120,97 @@
     <Reference Include="System.Xml" />
     <Reference Include="Unity.AI.Navigation, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.AI.Navigation.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.AI.Navigation.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Animation.Rigging, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.Animation.Rigging.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.Animation.Rigging.dll</HintPath>
     </Reference>
     <Reference Include="Unity.InputSystem, Version=1.7.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.InputSystem.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.InputSystem.dll</HintPath>
     </Reference>
     <Reference Include="Unity.Netcode.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Tools\Unity.Netcode.Runtime.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.Netcode.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.RenderPipelines.Core.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipelines.HighDefinition.Config.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.HighDefinition.Config.Runtime.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.RenderPipelines.HighDefinition.Config.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.RenderPipelines.HighDefinition.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
     </Reference>
     <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Unity.TextMeshPro.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AIModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" />
     <Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.AssetBundleModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.AudioModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.CoreModule">
-      <HintPath>E:\SteamLibrary\steamapps\common\Lethal Company\Lethal Company_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.CoreModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.ImageConversionModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.JSONSerializeModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.JSONSerializeModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.ParticleSystemModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.PhysicsModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.TerrainModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.TerrainModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.TerrainModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestAudioModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.UnityWebRequestModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestTextureModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
     </Reference>
     <Reference Include="UnityEngine.UnityWebRequestWWWModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\Lethal Company\Lethal Company_Data\Managed\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -266,49 +278,49 @@
     <PostBuildEvent>
 :: Send compiled files to Netcode Patcher
 
-copy "F:\Game Projects\Welcome to Ooblterra!\Project Files\Welcome_To_Ooblterra\bin\Debug\Welcome_To_Ooblterra.dll" "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins"
-copy "F:\Game Projects\Welcome to Ooblterra!\Project Files\Welcome_To_Ooblterra\bin\Debug\Welcome_To_Ooblterra.pdb" "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins"
+copy "$(ProjectDir)\bin\Debug\Welcome_To_Ooblterra.dll" "$(NetcodePatcherPath)plugins"
+copy "$(ProjectDir)\bin\Debug\Welcome_To_Ooblterra.pdb" "$(NetcodePatcherPath)plugins"
 
 :: Run Netcode Patcher
 
-cd "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0"
+cd "$(NetcodePatcherPath)"
 NetcodePatcher.dll plugins/ deps/
 
 :: Send Netcode Patched files to R2ModMan Dir
 
-copy "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.dll" "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.pdb" "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.dll" "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.pdb" "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
 
 :: Send Netcode patched files to Unity
 
-copy "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.dll" "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\plugins\Welcome_To_Ooblterra.pdb" "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.dll" "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.pdb" "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 
 :: Send assetbundles to R2ModMan Dir
 
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customdungeon"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customenemies"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customitems"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\custommoon"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customdungeon"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customenemies"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customitems"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\custommoon"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
 
 
 ::Send and rename LLLScene to R2ModMan Dir
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\lllscene"  "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-del "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
-rename "C:\Users\skull\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\lllscene"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+del "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
+rename "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
 
 :: Send assetbundles to Unity
 
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customdungeon"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customenemies"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customitems"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\custommoon"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customdungeon"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customenemies"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customitems"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\custommoon"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 
 ::Send and rename LLLScene to Unity
 
-copy "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\lllscene"  "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
-del "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
-rename "F:\Game Projects\Welcome to Ooblterra!\Unity Stuff\WTO-Assets\WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\lllscene"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
+del "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
+rename "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
 
 </PostBuildEvent>
   </PropertyGroup>
