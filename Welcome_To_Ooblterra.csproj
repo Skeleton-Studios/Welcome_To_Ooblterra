@@ -36,7 +36,7 @@
     <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <PropertyGroup>
-  <!--
+    <!--
     <LethalCompanyPath>E:\SteamLibrary\steamapps\common\Lethal Company\</LethalCompanyPath>
     <WTOAssetsPath>..\..\Unity Stuff\WTO-Assets\</WTOAssetsPath>
     <NetcodePatcherPath>F:\Game Projects\Welcome to Ooblterra!\Tools\NetcodePatcher-2.4.0\</NetcodePatcherPath>
@@ -48,10 +48,54 @@
     <R2ModManPath>C:\Users\sam63\AppData\Roaming\r2modmanPlus-local\LethalCompany\profiles\Ooblterra_Testing\</R2ModManPath>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="AsmResolver">
+      <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="AsmResolver.DotNet">
+      <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="AsmResolver.PE">
+      <Version>5.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="AsmResolver.PE.File">
+      <Version>5.0.0</Version>
+    </PackageReference>
     <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="All" />
+    <PackageReference Include="BepInEx.AssemblyPublicizer">
+      <Version>0.4.1</Version>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces">
+      <Version>6.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Buffers">
+      <Version>4.5.1</Version>
+    </PackageReference>
+    <PackageReference Include="System.Memory">
+      <Version>4.5.4</Version>
+    </PackageReference>
+    <PackageReference Include="System.Numerics.Vectors">
+      <Version>4.5.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
+      <Version>6.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Text.Encodings.Web">
+      <Version>6.0.0</Version>
+    </PackageReference>
+    <PackageReference Include="System.Text.Json">
+      <Version>6.0.10</Version>
+    </PackageReference>
+    <PackageReference Include="System.Threading.Tasks.Extensions">
+      <Version>4.5.4</Version>
+    </PackageReference>
+    <PackageReference Include="System.ValueTuple">
+      <Version>4.5.0</Version>
+    </PackageReference>
+
     <Reference Include="0Harmony">
       <HintPath>$(LethalCompanyPath)BepInEx\core\0Harmony.dll</HintPath>
     </Reference>
+    <!--
     <Reference Include="AsmResolver, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\AsmResolver.5.0.0\lib\netstandard2.0\AsmResolver.dll</HintPath>
     </Reference>
@@ -64,6 +108,38 @@
     <Reference Include="AsmResolver.PE.File, Version=5.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>packages\AsmResolver.PE.File.5.0.0\lib\netstandard2.0\AsmResolver.PE.File.dll</HintPath>
     </Reference>
+        <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.6.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+        <Reference Include="BepInEx.AssemblyPublicizer, Version=0.4.1.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>packages\BepInEx.AssemblyPublicizer.0.4.1\lib\netstandard2.0\BepInEx.AssemblyPublicizer.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+        <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+        <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+        <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
+      <HintPath>packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+        <Reference Include="System.Text.Encodings.Web, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Text.Encodings.Web.6.0.0\lib\net461\System.Text.Encodings.Web.dll</HintPath>
+    </Reference>
+        <Reference Include="System.Text.Json, Version=6.0.0.10, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
+      <HintPath>packages\System.Text.Json.6.0.10\lib\net461\System.Text.Json.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+        <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+        <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
+      <HintPath>packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
+    </Reference>
+    -->
     <Reference Include="Assembly-CSharp" Publicize="true">
       <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\Assembly-CSharp.dll</HintPath>
       <Private>false</Private>
@@ -71,48 +147,17 @@
     <Reference Include="BepInEx">
       <HintPath>$(LethalCompanyPath)BepInEx\core\BepInEx.dll</HintPath>
     </Reference>
-    <Reference Include="BepInEx.AssemblyPublicizer, Version=0.4.1.0, Culture=neutral, processorArchitecture=MSIL">
-      <HintPath>packages\BepInEx.AssemblyPublicizer.0.4.1\lib\netstandard2.0\BepInEx.AssemblyPublicizer.dll</HintPath>
-    </Reference>
     <Reference Include="LethalLevelLoader, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\IAmBatby-LethalLevelLoader\LethalLevelLoader.dll</HintPath>
+      <HintPath>$(R2ModManPath)BepInEx\plugins\IAmBatby-LethalLevelLoader\LethalLevelLoader.dll</HintPath>
     </Reference>
     <Reference Include="LethalLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra\Assets\LethalCompany\Mods\Evaisa-LethalLib\LethalLib\LethalLib.dll</HintPath>
-    </Reference>
-    <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\Microsoft.Bcl.AsyncInterfaces.6.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+      <HintPath>$(R2ModManPath)BepInEx\plugins\Evaisa-LethalLib\LethalLib\LethalLib.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Buffers, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
-    </Reference>
     <Reference Include="System.Core" />
-    <Reference Include="System.Memory, Version=4.0.1.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.Memory.4.5.4\lib\net461\System.Memory.dll</HintPath>
-    </Reference>
     <Reference Include="System.Numerics" />
-    <Reference Include="System.Numerics.Vectors, Version=4.1.4.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Runtime.CompilerServices.Unsafe, Version=6.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
-      <HintPath>packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Text.Encodings.Web, Version=6.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.Text.Encodings.Web.6.0.0\lib\net461\System.Text.Encodings.Web.dll</HintPath>
-    </Reference>
-    <Reference Include="System.Text.Json, Version=6.0.0.10, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51">
-      <HintPath>packages\System.Text.Json.6.0.10\lib\net461\System.Text.Json.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-    <Reference Include="System.Threading.Tasks.Extensions, Version=4.2.0.1, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
-    </Reference>
-    <Reference Include="System.ValueTuple, Version=4.0.3.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <HintPath>packages\System.ValueTuple.4.5.0\lib\net47\System.ValueTuple.dll</HintPath>
-    </Reference>
     <Reference Include="System.Xml.Linq" />
     <Reference Include="System.Data.DataSetExtensions" />
     <Reference Include="System.Data" />
@@ -156,7 +201,10 @@
     <Reference Include="UnityEngine">
       <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
-    <Reference Include="UnityEngine.AIModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null" />
+    <Reference Include="UnityEngine.AIModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
+          <SpecificVersion>False</SpecificVersion>
+      <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.AIModule.dll</HintPath>
+    </Reference>
     <Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>$(LethalCompanyPath)Lethal Company_Data\Managed\UnityEngine.AnimationModule.dll</HintPath>
@@ -276,48 +324,40 @@
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>
-:: Send compiled files to Netcode Patcher
-
+echo "Send compiled files to Netcode Patcher"
 copy "$(ProjectDir)\bin\Debug\Welcome_To_Ooblterra.dll" "$(NetcodePatcherPath)plugins"
 copy "$(ProjectDir)\bin\Debug\Welcome_To_Ooblterra.pdb" "$(NetcodePatcherPath)plugins"
 
-:: Run Netcode Patcher
-
+echo "Run Netcode Patcher"
 cd "$(NetcodePatcherPath)"
 NetcodePatcher.dll plugins/ deps/
 
-:: Send Netcode Patched files to R2ModMan Dir
+echo "Send Netcode Patched files to R2ModMan Dir"
+copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.dll" "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra"
+copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.pdb" "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra"
 
-copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.dll" "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.pdb" "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-
-:: Send Netcode patched files to Unity
-
+echo "Send Netcode patched files to Unity"
 copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.dll" "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 copy "$(NetcodePatcher)plugins\Welcome_To_Ooblterra.pdb" "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 
-:: Send assetbundles to R2ModMan Dir
+echo "Send assetbundles to R2ModMan Dir"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customdungeon"  "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customenemies"  "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customitems"  "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\custommoon"  "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra"
 
-copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customdungeon"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customenemies"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customitems"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\custommoon"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
+echo "Send and rename LLLScene to R2ModMan Dir"
+copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\lllscene"  "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra"
+del "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra\lllscene.lethalbundle"
+rename "$(R2ModManPath)BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra\lllscene"  "lllscene.lethalbundle" 
 
-
-::Send and rename LLLScene to R2ModMan Dir
-copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\lllscene"  "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra"
-del "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
-rename "$(R2ModManPath)BepInEx\plugins\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
-
-:: Send assetbundles to Unity
-
+echo "Send assetbundles to Unity"
 copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customdungeon"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customenemies"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\customitems"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\custommoon"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 
-::Send and rename LLLScene to Unity
-
+echo "Send and rename LLLScene to Unity"
 copy "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\AssetBundles\StandaloneWindows\lllscene"  "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra"
 del "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene.lethalbundle"
 rename "$(WTOAssetsPath)WTO-Unity\WelcomeToOoblterra_V60\Assets\LethalCompany\Mods\Skeleton Studios-Welcome To Ooblterra\lllscene"  "lllscene.lethalbundle" 
