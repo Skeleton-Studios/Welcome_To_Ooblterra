@@ -19,6 +19,7 @@ internal class OoblCorpsePart : GrabbableObject {
 
     public override void GrabItem() {
         base.GrabItem();
+        WTOBase.LogToConsole("Grabbed Corpse Part");
         if (HasSpawnedGhost) {
             return;
         }
