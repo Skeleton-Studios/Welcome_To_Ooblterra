@@ -299,7 +299,6 @@ internal class OoblGhostAI : WTOEnemy {
                 transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
                 CalculateGhostRotation();
             } else {
-                WTOBase.LogToConsole("Calling DestroyCorpsePartServerRpc");
                 LinkedCorpsePart.DestroyCorpsePart();
                 LinkedCorpsePart = null;
                 GhostPickedUpInterference = true;
