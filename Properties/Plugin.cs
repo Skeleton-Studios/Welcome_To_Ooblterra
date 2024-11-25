@@ -85,8 +85,7 @@ public class WTOBase : BaseUnityPlugin {
     }
 
     void Awake() {
-        /*CONFIG STUFF*/
-        {
+        /*CONFIG STUFF*/{
             WTODebug = Config.Bind("1. Debugging", "Print Debug Strings", false, "Whether or not to write WTO's debug print-strings to the log."); //IMPLEMENTED
             WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED 
             WTOMusic = Config.Bind("2. Accessibility", "Music Volume", 100, "Adjust the volume of 523-Ooblterra's custom Time-Of-Day music. Binds between 0 and 100.");
@@ -119,8 +118,7 @@ public class WTOBase : BaseUnityPlugin {
         WTOHarmony.PatchAll(typeof(MoonPatch));
         WTOHarmony.PatchAll(typeof(SuitPatch));
         WTOHarmony.PatchAll(typeof(TerminalPatch));
-        LogToConsole("RUNNING NEW COMPILATRION OF MOD ?", ForcePrint:true);
-
+            
         LogToConsole("BEGIN PRINTING LOADED ASSETS");
         string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
         FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
@@ -153,14 +151,14 @@ public class WTOBase : BaseUnityPlugin {
 
     }
     public static T ContextualLoadAsset <T>(AssetBundle Bundle, string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object {
-        //if (Application.platform == RuntimePlatform.WindowsEditor) {
-        //    string PathMinusFileType = PathToAsset.Substring(17);
-        //    PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
-        //    if (LogLoading) { 
-        //        LogToConsole($"Loading {PathMinusFileType} from resources folder...", ForcePrint: true);
-        //    }
-        //    return Resources.Load<T>(PathMinusFileType);
-        //} else {
+        if (Application.platform == RuntimePlatform.WindowsEditor) {
+            string PathMinusFileType = PathToAsset.Substring(17);
+            PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
+            if (LogLoading) { 
+                LogToConsole($"Loading {PathMinusFileType} from resources folder...", ForcePrint: true);
+            }
+            return Resources.Load<T>(PathMinusFileType);
+        } else {
             //Some postprocessing on this text to make the readout a little cleaner
             int LengthOfAssetName = PathToAsset.Length - PathToAsset.LastIndexOf("/");
             string CleanAssetName = PathToAsset.Substring(PathToAsset.LastIndexOf("/"), LengthOfAssetName);
@@ -168,7 +166,7 @@ public class WTOBase : BaseUnityPlugin {
                 LogToConsole($"Loading {CleanAssetName} from {Bundle.name}...", ForcePrint:true);
             }
             return Bundle.LoadAsset<T>(PathToAsset);
-        //}
+        }
     }
     public static void LogToConsole(string text, bool AddFlair = true, bool ForcePrint = false) {
         if (AddFlair) { 
