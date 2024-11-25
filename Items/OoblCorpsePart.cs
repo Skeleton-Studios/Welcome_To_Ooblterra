@@ -1,70 +1,85 @@
-﻿using GameNetcodeStuff;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
-using System.Linq;
 using Welcome_To_Ooblterra.Enemies;
 
 namespace Welcome_To_Ooblterra.Items;
 internal class OoblCorpsePart : GrabbableObject {
 
-    PlayerControllerB previousPlayerHeldBy;
     public EnemyType OoblGhostTemplate;
-    private OoblGhostAI MySpawnedGhost;
-    private bool HasSpawnedGhost = false;
+    private OoblGhostAI MySpawnedGhost = null;
 
     public override void GrabItem() {
         base.GrabItem();
-        WTOBase.LogToConsole("Grabbed Corpse Part");
-        if (HasSpawnedGhost) {
+        OnGrabItemServerRpc(Array.IndexOf(StartOfRound.Instance.allPlayerScripts, playerHeldBy));
+    }
+
+    public override void DiscardItem() {
+        base.DiscardItem();
+        OnDiscardItemServerRpc();
+    }
+
+    [ServerRpc]
+    private void OnGrabItemServerRpc(int clientId)
+    {
+        if(isInShipRoom)
+        {
             return;
         }
-        SetOwningPlayerServerRpc(Array.IndexOf(StartOfRound.Instance.allPlayerScripts, playerHeldBy));
-        //TODO: spawn in oobl ghost and make them attack the owning player
-        if(MySpawnedGhost != null) {
-            MySpawnedGhost.SetGhostTargetServerRpc((int)previousPlayerHeldBy.actualClientId);
+        
+        if (MySpawnedGhost)
+        {
             MySpawnedGhost.IsMovingTowardPlayer = true;
-            
             return;
         }
+
+        WTOBase.LogToConsole("Spawning Oobl Ghost");
         NetworkObjectReference NextGhost = RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -700, 0), 0, 1, OoblGhostTemplate);
-        HasSpawnedGhost = true;
-        if (NextGhost.TryGet(out NetworkObject GhostNetObject)){
+        if (NextGhost.TryGet(out NetworkObject GhostNetObject))
+        {
             MySpawnedGhost = GhostNetObject.GetComponent<OoblGhostAI>();
+            MySpawnedGhost.IsMovingTowardPlayer = true;
             MySpawnedGhost.LinkedCorpsePart = this;
-            MySpawnedGhost.SetGhostTargetServerRpc((int)previousPlayerHeldBy.actualClientId);
-        } else {
+            MySpawnedGhost.SetGhostTargetServerRpc(clientId);
+        }
+        else
+        {
             WTOBase.LogToConsole("Could not link this corpse part to the Oobl Ghost!");
         }
     }
-    public override void DiscardItem() {
-        base.DiscardItem();
-        MySpawnedGhost.IsMovingTowardPlayer = false;
-    }
 
     [ServerRpc]
-    public void SetOwningPlayerServerRpc(int OwnerID) {
-        SetOwningPlayerClientRpc(OwnerID);
-    }
-    [ClientRpc]
-    public void SetOwningPlayerClientRpc(int OwnerID) {
-        if (OwnerID == -1) {
-            previousPlayerHeldBy = null;
-            return;
+    private void OnDiscardItemServerRpc()
+    {
+        if (MySpawnedGhost)
+        {
+            MySpawnedGhost.IsMovingTowardPlayer = false;
         }
-        previousPlayerHeldBy = StartOfRound.Instance.allPlayerScripts[OwnerID];
+    }
+
+    public void DestroyCorpsePart()
+    {
+        if (IsHost)
+        {
+            DestroyCorpsePartClientRpc();
+        }
+        else
+        {
+            // probably unnecessary since this should not be called
+            // from a client
+            DestroyCorpsePartServerRpc();
+        }
     }
 
     [ServerRpc]
-    public void DestroyCorpsePartServerRpc() {
+    private void DestroyCorpsePartServerRpc() 
+    {
         DestroyCorpsePartClientRpc();
     }
+
     [ClientRpc]
-    public void DestroyCorpsePartClientRpc() {
+    private void DestroyCorpsePartClientRpc() {
         WTOBase.LogToConsole($"Destroying: {this}");
         DestroyObjectInHand(playerHeldBy);
     }

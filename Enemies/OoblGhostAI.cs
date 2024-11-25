@@ -273,6 +273,13 @@ internal class OoblGhostAI : WTOEnemy {
         return ResultingPlayer;
     }
     private void MoveGhostTowardTarget() {
+        if(!IsHost)
+        {
+            // transform logic gets replicated to client and only needs to be called
+            // on host
+            return;
+        }
+
         if (LinkedCorpsePart.isInShipRoom) {
             WTOBase.LogToConsole("Corpse dropped in ship!");
             LinkedCorpsePart = null;
@@ -292,7 +299,8 @@ internal class OoblGhostAI : WTOEnemy {
                 transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
                 CalculateGhostRotation();
             } else {
-                LinkedCorpsePart.DestroyCorpsePartServerRpc();
+                WTOBase.LogToConsole("Calling DestroyCorpsePartServerRpc");
+                LinkedCorpsePart.DestroyCorpsePart();
                 LinkedCorpsePart = null;
                 GhostPickedUpInterference = true;
             }
@@ -307,7 +315,8 @@ internal class OoblGhostAI : WTOEnemy {
 
     //Called every frame
     private void SinglePlayerEvaluateWalkie() {
-        if (GetClosestPlayer().speakingToWalkieTalkie) {
+        var closest = GetClosestPlayer();
+        if (closest != null && closest.speakingToWalkieTalkie) {
             GhostPickedUpInterference = true;
             return;
         }
