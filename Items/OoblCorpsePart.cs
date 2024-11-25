@@ -30,7 +30,9 @@ internal class OoblCorpsePart : GrabbableObject {
         
         if (MySpawnedGhost)
         {
+            // Change target to the player who most recently grabbed us
             MySpawnedGhost.IsMovingTowardPlayer = true;
+            MySpawnedGhost.SetGhostTargetServerRpc(clientId);
             return;
         }
 
