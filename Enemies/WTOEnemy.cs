@@ -50,6 +50,7 @@ public class WTOEnemy : EnemyAI {
         base.DoAIInterval();
         _ = StartOfRound.Instance.livingPlayers;
     }
+
     public override void Start() {
         base.Start();
             
@@ -73,6 +74,7 @@ public class WTOEnemy : EnemyAI {
         ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
 
     }
+
     public override void Update() {
         if (isEnemyDead) {
             return;
