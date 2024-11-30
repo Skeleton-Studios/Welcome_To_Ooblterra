@@ -50,6 +50,7 @@ public class WTOEnemy : EnemyAI {
         base.DoAIInterval();
         _ = StartOfRound.Instance.livingPlayers;
     }
+
     public override void Start() {
         base.Start();
             
@@ -73,6 +74,7 @@ public class WTOEnemy : EnemyAI {
         ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
 
     }
+
     public override void Update() {
         if (isEnemyDead) {
             return;
@@ -234,7 +236,7 @@ public class WTOEnemy : EnemyAI {
         return DistanceFromShip;
     }
     internal bool PlayerWithinRange(float Range, bool IncludeYAxis = true) {
-        WTOBase.LogToConsole($"Distance from target player: {DistanceFromTargetPlayer(IncludeYAxis)}");
+        //WTOBase.LogToConsole($"Distance from target player: {DistanceFromTargetPlayer(IncludeYAxis)}");
         return DistanceFromTargetPlayer(IncludeYAxis) <= Range;
     }
     internal bool PlayerWithinRange(PlayerControllerB player, float Range, bool IncludeYAxis = true) {
@@ -298,12 +300,13 @@ public class WTOEnemy : EnemyAI {
         Type type = Type.GetType(StateName);
         StateTransition LocalNextTransition = (StateTransition)Activator.CreateInstance(type);
         LocalNextTransition.enemyIndex = WTOEnemyID;
-        if (LocalNextTransition.NextState().GetType() == ActiveState.GetType()) {
+        if (ActiveState != null && LocalNextTransition.NextState().GetType() == ActiveState.GetType()) {
             return;
         }
         //LogMessage(StateName);
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Exiting:  {ActiveState}");
-        ActiveState.OnStateExit(WTOEnemyID, enemyRandom, creatureAnimator);
+        var statename = ActiveState == null ? "null" : $"{ActiveState}";
+        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Exiting:  {statename}");
+        ActiveState?.OnStateExit(WTOEnemyID, enemyRandom, creatureAnimator);
         LogMessage($"{__getTypeName()} #{WTOEnemyID} is Transitioning via:  {LocalNextTransition}");
         ActiveState = LocalNextTransition.NextState();
         ActiveState.MyRandomInt = RandomInt;

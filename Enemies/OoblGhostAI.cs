@@ -176,23 +176,29 @@ internal class OoblGhostAI : WTOEnemy {
 
     private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
 
-    public override void Start() {
+    private void Awake()
+    {
+        // Init vaiables inside Awake so that they are ready when Start is called
         MyValidState = PlayerState.Inside;
         InitialState = new ChooseTarget();
         PrintDebugs = true;
         GhostID++;
         WTOEnemyID = GhostID;
-        //transform.position = new Vector3(0, -300, 0);
-        LogMessage($"Adding Oobl Ghost {this} #{GhostID}");
+        LogMessage($"Adding Oobl Ghost {this} #{GhostID}: Awake");
         GhostList.Add(GhostID, this);
-        OoblGhostTerminalInt = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Oobl Ghost").terminalNode.creatureFileID;
-        //GetComponent<AcidWater>().DamageAmount = (int)GhostDamagePerTick;
-        base.Start();
         transform.position = new Vector3(0, -1000, 0);
         GhostRenderer.materials = new Material[3] { GhostMat, GhostMat, GhostTeethMat };
         GhostArmsRenderer.materials = new Material[1] { GhostMat };
+    }
+
+    public override void Start() {
+        //transform.position = new Vector3(0, -300, 0);
+        OoblGhostTerminalInt = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Oobl Ghost").terminalNode.creatureFileID;
+        //GetComponent<AcidWater>().DamageAmount = (int)GhostDamagePerTick;
+        base.Start();
         StopGhostFade();
     }
+
     public override void Update() {
         MoveTimerValue(ref SecondsUntilGhostWillAttack);
         base.Update();
@@ -273,6 +279,13 @@ internal class OoblGhostAI : WTOEnemy {
         return ResultingPlayer;
     }
     private void MoveGhostTowardTarget() {
+        if(!IsHost)
+        {
+            // transform logic gets replicated to client and only needs to be called
+            // on host
+            return;
+        }
+
         if (LinkedCorpsePart.isInShipRoom) {
             WTOBase.LogToConsole("Corpse dropped in ship!");
             LinkedCorpsePart = null;
@@ -292,7 +305,7 @@ internal class OoblGhostAI : WTOEnemy {
                 transform.position += DirectionVector * OoblGhostSpeed * Time.deltaTime;
                 CalculateGhostRotation();
             } else {
-                LinkedCorpsePart.DestroyCorpsePartServerRpc();
+                LinkedCorpsePart.DestroyCorpsePart();
                 LinkedCorpsePart = null;
                 GhostPickedUpInterference = true;
             }
@@ -307,7 +320,8 @@ internal class OoblGhostAI : WTOEnemy {
 
     //Called every frame
     private void SinglePlayerEvaluateWalkie() {
-        if (GetClosestPlayer().speakingToWalkieTalkie) {
+        var closest = GetClosestPlayer();
+        if (closest != null && closest.speakingToWalkieTalkie) {
             GhostPickedUpInterference = true;
             return;
         }
@@ -393,21 +407,19 @@ internal class OoblGhostAI : WTOEnemy {
     }
 
     private void AttemptScanOoblGhost() {
-        if (!HUDManager.Instance.terminalScript.scannedEnemyIDs.Contains(OoblGhostTerminalInt)){
-            ScanOoblGhostServerRpc();
-        }
+        ScanOoblGhostServerRpc();
     }
-    [ServerRpc]
-    private void ScanOoblGhostServerRpc() {
-        if (!HUDManager.Instance.terminalScript.scannedEnemyIDs.Contains(OoblGhostTerminalInt)) {
-            HUDManager.Instance.terminalScript.scannedEnemyIDs.Add(OoblGhostTerminalInt);
-            HUDManager.Instance.terminalScript.newlyScannedEnemyIDs.Add(OoblGhostTerminalInt);
-            HUDManager.Instance.DisplayGlobalNotification("Check your terminal.");
-            ScanOoblGhostClientRpc();
-        }
+
+    [ServerRpc(RequireOwnership = false)]
+    private void ScanOoblGhostServerRpc()
+    {
+        ScanOoblGhostClientRpc();
     }
+
+
     [ClientRpc]
     private void ScanOoblGhostClientRpc() {
+        WTOBase.LogToConsole("Scanning Oobl Ghost");
         if (!HUDManager.Instance.terminalScript.scannedEnemyIDs.Contains(OoblGhostTerminalInt)) {
             HUDManager.Instance.terminalScript.scannedEnemyIDs.Add(OoblGhostTerminalInt);
             HUDManager.Instance.terminalScript.newlyScannedEnemyIDs.Add(OoblGhostTerminalInt);
