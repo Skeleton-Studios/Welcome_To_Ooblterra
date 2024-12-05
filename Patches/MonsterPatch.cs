@@ -12,19 +12,18 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Patches;
 internal class MonsterPatch {
 
-    public static List<SpawnableEnemyWithRarity> InsideEnemies = new List<SpawnableEnemyWithRarity>();
-    public static List<SpawnableEnemyWithRarity> OutsideEnemies = new List<SpawnableEnemyWithRarity>();
-    public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
-    public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
+    public static List<SpawnableEnemyWithRarity> InsideEnemies = [];
+    public static List<SpawnableEnemyWithRarity> OutsideEnemies = [];
+    public static List<SpawnableEnemyWithRarity> DaytimeEnemies = [];
+    public static List<SpawnableEnemyWithRarity> AdultWandererContainer = [];
 
     private static readonly AssetBundle EnemyBundle = WTOBase.MonsterAssetBundle;
     private const string EnemyPath = WTOBase.RootPath + "CustomEnemies/";
-    private static bool EnemiesInList; 
     public const bool ShouldDebugEnemies = true;
 
-    private static Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToInsideSpawnLists = new();
-    private static Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToOutsideSpawnLists = new();
-    private static Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToDaytimeSpawnLists = new();
+    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToInsideSpawnLists = [];
+    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToOutsideSpawnLists = [];
+    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToDaytimeSpawnLists = [];
 
     /*
     [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
@@ -178,7 +177,7 @@ internal class MonsterPatch {
 }
 
     private static void SetMonsterStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableEnemyWithRarity> CurrentMoonEnemyList, List<SpawnableEnemyWithRarity> OoblterraEnemyList) {
-        List<SpawnableEnemyWithRarity> WeightedOoblterraEnemies = new();
+        List<SpawnableEnemyWithRarity> WeightedOoblterraEnemies = [];
         foreach(SpawnableEnemyWithRarity Enemy in OoblterraEnemyList) {
             WeightedOoblterraEnemies.Add(new SpawnableEnemyWithRarity { enemyType = Enemy.enemyType, rarity = Enemy.rarity * WTOBase.WTOWeightScale.Value });
         }

@@ -24,7 +24,7 @@ public class BearTrap : MonoBehaviour, IHittable {
     public bool IsBearTrapRaised = false;
     public System.Random BearTrapRandom;
     public bool IsBearTrapClosed;
-    private List<PlayerControllerB> PlayerInRangeList = new();
+    private readonly List<PlayerControllerB> PlayerInRangeList = [];
     private int BearTrapRiseChance = 70;
     public AudioClip CloseSound;
 

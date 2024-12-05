@@ -16,12 +16,14 @@ using static System.Net.Mime.MediaTypeNames;
 namespace Welcome_To_Ooblterra.Security;
 internal class SpikeTrap : NetworkBehaviour {
 
+#pragma warning disable 0649 // Assigned in Unity Editor
     public GameObject SpikeMesh;
     public AudioClip SpikesExtend;
     public AudioClip SpikesRetract;
     public AudioClip SpikesDisable;
     public AudioSource SpikeSoundPlayer;
     public Transform RootRotation;
+#pragma warning restore 0649
 
     private bool SpikesEnabled = true;
     private bool SpikesActivated;
@@ -33,8 +35,8 @@ internal class SpikeTrap : NetworkBehaviour {
     //anim controls
     private float TimeElapsed;
     private const float MoveTime = 0.2f;
-    private Vector3 SpikeRaisePos = new Vector3(0, 1.163f, 0);
-    private Vector3 SpikeFallPos;
+    private readonly Vector3 SpikeRaisePos = new(0, 1.163f, 0);
+    private readonly Vector3 SpikeFallPos = new(0, 0, 0);
 
     public void OnTriggerEnter(Collider other) {
         if (!SpikesEnabled) {

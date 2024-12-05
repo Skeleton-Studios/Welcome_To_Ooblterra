@@ -38,13 +38,13 @@ public class WandererAI : WTOEnemy {
             WandererList[enemyIndex].creatureAnimator.SetBool("Investigating", false);
             WandererList[enemyIndex].ReachedNextPoint = false;
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new DoneInvestigating(),
             new InDanger()
-        };
+        ];
     }
     private class Roam : BehaviorState {
-        bool Wandering;
+        // bool Wandering;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             
             //Wandering = WandererList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(WandererList[enemyIndex].allAINodes[enemyRandom.Next(WandererList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
@@ -66,10 +66,10 @@ public class WandererAI : WTOEnemy {
             WandererList[enemyIndex].creatureAnimator.SetBool("Moving", false);
             //WandererList[enemyIndex].StopSearch(WandererList[enemyIndex].RoamPlanet, clear: false);
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new FoundNextPoint(),
             new InDanger()
-        };
+        ];
     }
     private class Flee : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -84,9 +84,9 @@ public class WandererAI : WTOEnemy {
             WandererList[enemyIndex].creatureAnimator.SetBool("Moving", false);
             WandererList[enemyIndex].creatureAnimator.speed = 1f;
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new NoLongerInDanger()
-        };
+        ];
     }
     private class Stunned : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -101,9 +101,9 @@ public class WandererAI : WTOEnemy {
             creatureAnimator.SetBool("Stunned", value: false);
             WandererList[enemyIndex].agent.speed = 10f;
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new InDanger()
-        };
+        ];
     }
         
     //TRANSITIONS
@@ -144,7 +144,7 @@ public class WandererAI : WTOEnemy {
     }
     private class HitByStunGun : StateTransition {
         public override bool CanTransitionBeTaken() {
-            return WandererList[enemyIndex].stunNormalizedTimer > 0 && !(WandererList[enemyIndex].ActiveState is Stunned);
+            return WandererList[enemyIndex].stunNormalizedTimer > 0 && WandererList[enemyIndex].ActiveState is not Stunned;
         }
         public override BehaviorState NextState() {
             return new Stunned();
@@ -152,14 +152,14 @@ public class WandererAI : WTOEnemy {
 
     }
 
-    private List<PlayerControllerB> RegisteredThreats = new List<PlayerControllerB>();
+    private readonly List<PlayerControllerB> RegisteredThreats = [];
     private float TotalInvestigationSeconds;
     public Transform WandererHead;
-    bool shouldLookAtPlayer = false;
+    readonly bool shouldLookAtPlayer = false;
     private float HeadTurnTime;
-    public static Dictionary<int, WandererAI> WandererList = new Dictionary<int, WandererAI>();
+    public static Dictionary<int, WandererAI> WandererList = [];
     private static int WandererID;
-    private AISearchRoutine RoamPlanet = new();
+    private readonly AISearchRoutine RoamPlanet = new();
     private bool ReachedNextPoint = false;
     private bool CalledMom;
 
@@ -242,7 +242,6 @@ public class WandererAI : WTOEnemy {
         //Spawn Wanderer Corpse
         Item WandererCorpse = ItemPatch.ItemList[5].GetItem();
         GameObject SpawnedItem = Object.Instantiate(WandererCorpse.spawnPrefab, base.transform.position + new Vector3(0, 5, 0), Quaternion.identity);
-        GrabbableObject ItemGrabbableObject = SpawnedItem.GetComponent<GrabbableObject>();
         NetworkObject ItemNetworkObject = SpawnedItem.GetComponent<NetworkObject>();
         int WandererCorpseValue = (int)(RoundManager.Instance.AnomalyRandom.Next(WandererCorpse.minValue, WandererCorpse.maxValue) * RoundManager.Instance.scrapValueMultiplier);
 
@@ -252,7 +251,7 @@ public class WandererAI : WTOEnemy {
         SetCorpseValueServerRpc(ItemNetworkObject, WandererCorpseValue);
 
         Vector3 AdultSpawnPos = Killer.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), Killer.transform.forward * -1);
-        Quaternion AdultSpawnRot = new Quaternion(0, Quaternion.LookRotation(Killer.transform.position - AdultSpawnPos).y, 0, 1);
+        Quaternion AdultSpawnRot = new(0, Quaternion.LookRotation(Killer.transform.position - AdultSpawnPos).y, 0, 1);
         GameObject AdultWanderer = Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
         if (base.IsServer) { 
             AdultWanderer.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
@@ -275,8 +274,6 @@ public class WandererAI : WTOEnemy {
     public void SetCorpseValueClientRpc(NetworkObjectReference Corpse, int CorpseValue) {
         Corpse.TryGet(out var ScrapNetworkobject);
         GrabbableObject LocalCorpseRef = ScrapNetworkobject.GetComponent<GrabbableObject>();
-        if (LocalCorpseRef != null) {
-            LocalCorpseRef.SetScrapValue(CorpseValue);
-        }
+        LocalCorpseRef?.SetScrapValue(CorpseValue);
     }
 }

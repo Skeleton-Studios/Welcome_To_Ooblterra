@@ -1,16 +1,9 @@
-﻿using GameNetcodeStuff;
-using System;
-using System.Collections;
-using System.Collections.Generic;
+﻿using System.Collections;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
-using Welcome_To_Ooblterra.Things;
-using static UnityEngine.GraphicsBuffer;
 
 namespace Welcome_To_Ooblterra.Enemies.EnemyThings;
 public class BabyLurkerEggProjectile : NetworkBehaviour {
@@ -20,14 +13,12 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
     private Vector3 SpawnPosition;
     private EnemyType BabyLurker;
     private int iterator = 0;
-    private float TimeTillExplode = 3f;
     public MeshRenderer EggMesh;
     public MeshRenderer InnerEggMesh;
     public AudioClip[] Splat;
     public AudioClip[] Boom;
     public ParticleSystem ExplodeParticle;
     private System.Random EggRandom;
-    private bool IsArachnophobiaMode;
 
     private void Start() {
         EggRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
@@ -54,7 +45,7 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
     }
 
     private float timeElapsed = 0f;
-    private float ExpandTime = 3f;
+    private readonly float ExpandTime = 3f;
     private float LerpValue = 0f;
     IEnumerator StartEggExploding() {
         while ((timeElapsed / ExpandTime) < 1) {

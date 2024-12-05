@@ -40,9 +40,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Wrong
     }
 
-    private bool AnimStarted;
-    private ChemColor[] GuessedColorList = new ChemColor[NumberOfPoints];
-    private ChemColor[] CorrectColors = new ChemColor[NumberOfPoints];
+    private readonly ChemColor[] GuessedColorList = new ChemColor[NumberOfPoints];
+    private readonly ChemColor[] CorrectColors = new ChemColor[NumberOfPoints];
     private PlayerControllerB PlayerToRevive;
     private Vector3 SpawnTarget;
     private int PlayerID;
@@ -127,7 +126,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         IsUsedUp = true;
     }
     private Correctness[] CheckCorrectness() {
-        Correctness[] TotalCorrect = { Correctness.Wrong, Correctness.Wrong, Correctness.Wrong, Correctness.Wrong };
+        Correctness[] TotalCorrect = [Correctness.Wrong, Correctness.Wrong, Correctness.Wrong, Correctness.Wrong];
         WTOBase.LogToConsole("BEGIN PRINT CORRECT COLORS");
         foreach(ChemColor color in CorrectColors) {
             WTOBase.LogToConsole(color.ToString());
@@ -170,7 +169,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         return TotalScore;
     }
     private void SetColorList() {
-        List<ChemColor> AllColors = new List<ChemColor>((ChemColor[])Enum.GetValues(typeof(ChemColor)));
+        List<ChemColor> AllColors = new((ChemColor[])Enum.GetValues(typeof(ChemColor)));
         ChemColor NextColor;
         for (int i = 0; i < NumberOfPoints; i++) {
             NextColor = AllColors[MyRandom.Next(0, AllColors.Count - 1)];
@@ -209,10 +208,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
         StartCoroutine(StartScene(Correctness));
     }
     IEnumerator StartScene(int Correctness) {
-        if (!AnimStarted) {
-            WTOBase.LogToConsole("Telling Visuals script to start visuals ...");
-            Visuals.StartVisuals();
-        }
+        WTOBase.LogToConsole("Telling Visuals script to start visuals ...");
+        Visuals.StartVisuals();
         yield return new WaitForSeconds(7);
         if (Correctness > 50 ) {
             ReviveDeadPlayerServerRpc(PlayerID, SpawnTarget);
@@ -314,9 +311,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             WTOBase.LogToConsole("Reviving players C");
             PlayerToRevive.Crouch(crouch: false);
             PlayerToRevive.criticallyInjured = false;
-            if (PlayerToRevive.playerBodyAnimator != null) {
-                PlayerToRevive.playerBodyAnimator.SetBool("Limp", value: false);
-            }
+            PlayerToRevive.playerBodyAnimator?.SetBool("Limp", value: false);
             PlayerToRevive.bleedingHeavily = false;
             PlayerToRevive.activatingItem = false;
             PlayerToRevive.twoHanded = false;
@@ -394,8 +389,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     [ClientRpc]
     public void SyncMimicPropertiesClientRpc(NetworkObjectReference MimicNetObject, int SuitID) {
-        NetworkObject netObject = null;
-        MimicNetObject.TryGet(out netObject);
+        MimicNetObject.TryGet(out NetworkObject netObject);
         MaskedPlayerEnemy Mask = netObject.GetComponent<MaskedPlayerEnemy>();
         Mask.maskTypes[0].SetActive(value: false);
         Mask.maskTypes[1].SetActive(value: false);
@@ -453,9 +447,9 @@ public class FrankensteinTerminal : NetworkBehaviour {
         if (!base.IsServer) {
             return;
         }
-        StartCoroutine(waitForMimicEnemySpawn(ID, netObjectRef));
+        StartCoroutine(WaitForMimicEnemySpawn(ID, netObjectRef));
     }
-    private IEnumerator waitForMimicEnemySpawn(int ID, NetworkObjectReference netObjectRef) {
+    private IEnumerator WaitForMimicEnemySpawn(int ID, NetworkObjectReference netObjectRef) {
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
         NetworkObject netObject = null;
         float startTime = Time.realtimeSinceStartup;

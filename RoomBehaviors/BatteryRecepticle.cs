@@ -93,8 +93,8 @@ public class BatteryRecepticle : NetworkBehaviour {
         if (!base.IsServer) {
             return;
         }
-        List<RandomMapObject> AllRandomSpawnList = new();
-        List<RandomMapObject> ViableSpawnlist = new();
+        List<RandomMapObject> AllRandomSpawnList = [];
+        List<RandomMapObject> ViableSpawnlist = [];
         AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
         float MinSpawnRange = 80f;
         foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab))) {

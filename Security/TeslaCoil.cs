@@ -10,8 +10,9 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 internal class TeslaCoil : NetworkBehaviour {
 
+#pragma warning disable 0649 // Assigned in Unity Editor
     public BoxCollider RangeBox;
-    public GameObject SmallRing;
+    public GameObject SmallRing; 
     public GameObject MediumRing;
     public GameObject LargeRing;
     public AudioSource StaticNoiseMaker;
@@ -25,14 +26,17 @@ internal class TeslaCoil : NetworkBehaviour {
     public MeshRenderer[] Emissives;
     public Animator TeslaCoilAnim;
 
+    readonly WalkieTalkie NowYoureOnWalkies;
+#pragma warning restore 0649
+
     [HideInInspector]
     private bool TeslaCoilOn = true;
     private bool AttemptedFireShotgun = false;
 
-    private List<PlayerControllerB> PlayerInRangeList = new();
-    private List<WalkieTalkie> WalkiesToReEnable = new();
-    private List<FlashlightItem> FlashLightsToReEnable = new();
-    WalkieTalkie NowYoureOnWalkies;
+    private readonly List<PlayerControllerB> PlayerInRangeList = [];
+    private readonly List<WalkieTalkie> WalkiesToReEnable = [];
+    private readonly List<FlashlightItem> FlashLightsToReEnable = [];
+
 
     public void OnTriggerEnter(Collider other) {
         try {

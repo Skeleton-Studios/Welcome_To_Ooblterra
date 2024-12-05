@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace Welcome_To_Ooblterra.Things;
 public class EnforcerWeapon : GrabbableObject {
@@ -12,11 +7,10 @@ public class EnforcerWeapon : GrabbableObject {
     public bool isTargetingLaser;
     public bool isLaunchingRocket;
 
-    public void TargetLaser(UnityEngine.Object target) { 
+    public void TargetLaser() { 
         
     }
-    public void LaunchRocket(UnityEngine.Object target) { 
+    public void LaunchRocket() { 
         
     }
-
 }

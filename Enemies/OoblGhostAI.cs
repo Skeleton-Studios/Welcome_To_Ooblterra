@@ -21,9 +21,11 @@ internal class OoblGhostAI : WTOEnemy {
     public float GhostInterferenceSeconds = 1.5f;
 
     [Header("Defaults")]
+    #pragma warning disable 0649 // Assigned in Unity Editor
     public Material GhostMat;
     public Material GhostTeethMat;
     public SkinnedMeshRenderer GhostRenderer;
+    #pragma warning disable 0649 // Assigned in Unity Editor
     public SkinnedMeshRenderer GhostArmsRenderer; 
 
     //STATES
@@ -42,16 +44,15 @@ internal class OoblGhostAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new AttackTimerDone()
-        };
+        ];
     }
     private class ChooseTarget : BehaviorState {
 
-        List<PlayerControllerB> AllPlayersList;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             /*
-            AllPlayersList = StartOfRound.Instance.allPlayerScripts.ToList();
+            List<PlayerControllerB> AllPlayersList = StartOfRound.Instance.allPlayerScripts.ToList();
             for (int i = 0; i < StartOfRound.Instance.allPlayerScripts.Length; i++) {
                 PlayerControllerB player = StartOfRound.Instance.allPlayerScripts[i];
                 if (!player.isPlayerControlled || player.isPlayerDead) {
@@ -73,15 +74,14 @@ internal class OoblGhostAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new TargetChosen()
-        };
+        ];
     }
     private class GoTowardTarget : BehaviorState { 
         public GoTowardTarget() {
             RandomRange = new Vector2(-300, 300);
         }
-        Vector3 DirectionVector;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].StopGhostFade();
             GhostList[enemyIndex].AttemptScanOoblGhost();
@@ -107,10 +107,10 @@ internal class OoblGhostAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GhostList[enemyIndex].targetPlayer = null;
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new KilledPlayer(),
             new PlayerHasFoughtBack()
-        };
+        ];
     }
 
     //TRANSITIONS
@@ -135,7 +135,6 @@ internal class OoblGhostAI : WTOEnemy {
             return GhostList[enemyIndex].targetPlayer.isPlayerDead;
         }
         public override BehaviorState NextState() {
-            GhostList[enemyIndex].ShouldFlickerLights = false;
             GhostList[enemyIndex].ShouldFadeGhost = true;
             GhostList[enemyIndex].timeElapsed = 0f;
             GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
@@ -148,7 +147,6 @@ internal class OoblGhostAI : WTOEnemy {
             return GhostList[enemyIndex].GhostPickedUpInterference;
         }
         public override BehaviorState NextState() {
-            GhostList[enemyIndex].ShouldFlickerLights = false;
             GhostList[enemyIndex].ShouldFadeGhost = true;
             GhostList[enemyIndex].timeElapsed = 0f;
             GhostList[enemyIndex].creatureVoice.PlayOneShot(GhostList[enemyIndex].enemyType.deathSFX);
@@ -156,14 +154,12 @@ internal class OoblGhostAI : WTOEnemy {
         }
     }
 
-    public static Dictionary<int, OoblGhostAI> GhostList = new();
+    public static Dictionary<int, OoblGhostAI> GhostList = [];
     private static int GhostID;
     private float SecondsUntilGhostWillAttack;
     public AudioClip StartupSound;
     public bool GhostPickedUpInterference = false;
     private bool ShouldFadeGhost = false;
-    private bool ShouldFlickerLights;
-    private bool ShouldFlickerShipLights;
     private bool ShouldListenForWalkie;
     private const float FadeTimeSeconds = 3f;
     private float TargetFade;
@@ -174,7 +170,7 @@ internal class OoblGhostAI : WTOEnemy {
     public bool IsMovingTowardPlayer = true;
     private bool KillGhost = false;
 
-    private static Dictionary<PlayerControllerB, int> PlayersTimesHaunted = new();
+    private static readonly Dictionary<PlayerControllerB, int> PlayersTimesHaunted = [];
 
     private void Awake()
     {
@@ -187,8 +183,8 @@ internal class OoblGhostAI : WTOEnemy {
         LogMessage($"Adding Oobl Ghost {this} #{GhostID}: Awake");
         GhostList.Add(GhostID, this);
         transform.position = new Vector3(0, -1000, 0);
-        GhostRenderer.materials = new Material[3] { GhostMat, GhostMat, GhostTeethMat };
-        GhostArmsRenderer.materials = new Material[1] { GhostMat };
+        GhostRenderer.materials = [GhostMat, GhostMat, GhostTeethMat];
+        GhostArmsRenderer.materials = [GhostMat];
     }
 
     public override void Start() {
@@ -313,9 +309,7 @@ internal class OoblGhostAI : WTOEnemy {
     }
     private void CalculateGhostRotation() {
         Vector3 DirectionVector = (targetPlayer.transform.position - transform.position).normalized;
-        Quaternion CurrentRot = transform.rotation;
-        Quaternion TargetRot = Quaternion.LookRotation(DirectionVector, Vector3.up);
-        transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up); //Quaternion.RotateTowards(CurrentRot, TargetRot, 30 * Time.deltaTime);
+        transform.rotation = Quaternion.LookRotation(DirectionVector, Vector3.up);
     }
 
     //Called every frame

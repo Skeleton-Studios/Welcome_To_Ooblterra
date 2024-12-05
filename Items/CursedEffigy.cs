@@ -10,10 +10,12 @@ using System.Linq;
 
 namespace Welcome_To_Ooblterra.Items;
 internal class CursedEffigy : GrabbableObject {
-    
+
+#pragma warning disable 0649 // Assigned in Unity Editor
     public List<AudioClip> AmbientSounds;
     public AudioSource AudioPlayer;
     public EnemyType TheMimic;
+#pragma warning restore 0649
 
     private bool MimicSpawned;
     private PlayerControllerB previousPlayerHeldBy;
@@ -97,9 +99,9 @@ internal class CursedEffigy : GrabbableObject {
     }
     [ClientRpc]
     public void CreateMimicClientRpc(NetworkObjectReference netObjectRef, bool inFactory) {
-        StartCoroutine(waitForMimicEnemySpawn(netObjectRef, inFactory));
+        StartCoroutine(WaitForMimicEnemySpawn(netObjectRef, inFactory));
     }
-    private IEnumerator waitForMimicEnemySpawn(NetworkObjectReference netObjectRef, bool inFactory) {
+    private IEnumerator WaitForMimicEnemySpawn(NetworkObjectReference netObjectRef, bool inFactory) {
         NetworkObject netObject = null;
         float startTime = Time.realtimeSinceStartup;
         yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || netObjectRef.TryGet(out netObject));

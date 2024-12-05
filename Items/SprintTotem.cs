@@ -12,10 +12,12 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 internal class SprintTotem : GrabbableObject {
 
+    #pragma warning disable 0649 // Assigned in Unity Editor
     public AudioClip TotemBreakSound;
     public AudioSource AudioPlayer;
-    public List<MeshRenderer> TotemPieces = new List<MeshRenderer>();
+    public List<MeshRenderer> TotemPieces = [];
     public MeshRenderer TotemCenter;
+    #pragma warning restore 0649
 
     private float TotemSecondsRemaining = 15;
     private float TotemPercentage = 100;
@@ -25,7 +27,7 @@ internal class SprintTotem : GrabbableObject {
     private int StartingScrapValue;
 
     public void Awake() {
-        System.Random ValueRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        System.Random ValueRandom = new(StartOfRound.Instance.randomMapSeed);
         StartingScrapValue = ValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
         StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
         SetScrapValue(StartingScrapValue);

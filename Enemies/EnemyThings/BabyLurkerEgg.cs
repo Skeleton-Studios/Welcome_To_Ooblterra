@@ -1,34 +1,28 @@
 ﻿using GameNetcodeStuff;
-using LethalLib.Modules;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem.XR;
-using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
-using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 using static LethalLib.Modules.Enemies;
 
 namespace Welcome_To_Ooblterra.Things;
 public class BabyLurkerEgg : NetworkBehaviour {
 
-    private System.Random enemyRandom;
-    private GameObject HiveProjectile;
-    public GameObject HiveMesh; 
+    public GameObject HiveMesh;
     public GameObject projectileTemplate;
     public GameObject MapDot;
     public Transform DropTransform;
-    public Transform TraceTransform; 
+    public Transform TraceTransform;
     public AudioClip[] BreakoffSound;
+    public ScanNodeProperties ScanNode;
+
+    private System.Random enemyRandom;
+    private GameObject HiveProjectile;
     private bool EggSpawned = false;
     private bool EggDropped = false;
     private float SecondsUntilNextSpawnAttempt = 15f;
-    public ScanNodeProperties ScanNode;
+    
 
     private void OnTriggerStay(Collider other) { 
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();

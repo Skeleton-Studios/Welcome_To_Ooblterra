@@ -10,7 +10,7 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Enemies;
 public class WTOEnemy : EnemyAI {
     public abstract class BehaviorState {
-        public Vector2 RandomRange = new Vector2(0, 0);
+        public Vector2 RandomRange = new(0, 0);
         public int MyRandomInt = 0;
         public int enemyIndex;
         public abstract void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator);
@@ -39,8 +39,8 @@ public class WTOEnemy : EnemyAI {
     internal bool PrintDebugs = false;
     internal PlayerState MyValidState = PlayerState.Inside;
     internal StateTransition nextTransition;
-    internal List<StateTransition> GlobalTransitions = new List<StateTransition>();
-    internal List<StateTransition> AllTransitions = new List<StateTransition>();
+    internal List<StateTransition> GlobalTransitions = [];
+    internal List<StateTransition> AllTransitions = [];
     internal int WTOEnemyID;
 
     public override string __getTypeName() {
@@ -95,7 +95,7 @@ public class WTOEnemy : EnemyAI {
             if (TransitionToCheck.CanTransitionBeTaken() && base.IsOwner) {
                 RunUpdate = false;
                 nextTransition = TransitionToCheck;
-                TransitionStateServerRpc(nextTransition.ToString(), GenerateNextRandomInt(nextTransition.NextState().RandomRange));
+                TransitionStateServerRpc(nextTransition.ToString(), GenerateNextRandomInt());
                 return;
             }
         }
@@ -170,7 +170,7 @@ public class WTOEnemy : EnemyAI {
         float AngleToTarget = Vector3.Angle(eye.transform.forward, player.gameplayCamera.transform.position - eye.transform.position);
         bool TargetWithinViewCone = AngleToTarget < width;
         bool TargetWithinProxAwareness = DistanceToTarget < proximityAwareness;
-        bool LOSBlocked = (DoLinecast ? Physics.Linecast(eye.transform.position, player.transform.position, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore) : false);
+        bool LOSBlocked = (DoLinecast && Physics.Linecast(eye.transform.position, player.transform.position, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore));
         if (PrintResults) {
             LogMessage($"Target in Distance: {TargetInDistance} ({DistanceToTarget})" +
                 $"Target within view cone: {TargetWithinViewCone} ({AngleToTarget})" +
@@ -205,14 +205,13 @@ public class WTOEnemy : EnemyAI {
         }
         return Result;
     }
+
     internal bool IsPlayerReachable() {
-        if (targetPlayer == null) {
+        if (targetPlayer == null)
+        {
             WTOBase.WTOLogSource.LogError("Player Reach Test has no target player or passed in argument!");
             return false;
         }
-        return IsPlayerReachable(targetPlayer);
-    }
-    internal bool IsPlayerReachable(PlayerControllerB PlayerToCheck) {
         Vector3 Position = RoundManager.Instance.GetNavMeshPosition(targetPlayer.transform.position, RoundManager.Instance.navHit, 2.7f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
             LogMessage("Player Reach Test: No Navmesh position");
@@ -223,18 +222,18 @@ public class WTOEnemy : EnemyAI {
         LogMessage($"Player Reach Test: {HasPath}");
         return HasPath;
     }
-    internal float PlayerDistanceFromShip(PlayerControllerB PlayerToCheck = null) {
-        if(PlayerToCheck == null) {
-            if(targetPlayer == null) {
-                WTOBase.WTOLogSource.LogError("PlayerNearShip check has no target player or passed in argument!");
-                return -1;
-            }
-            PlayerToCheck = targetPlayer;
+
+    internal float PlayerDistanceFromShip() {
+        if (targetPlayer == null)
+        {
+            WTOBase.WTOLogSource.LogError("PlayerNearShip check has no target player or passed in argument!");
+            return -1;
         }
         float DistanceFromShip = Vector3.Distance(targetPlayer.transform.position, StartOfRound.Instance.shipBounds.transform.position);
         LogMessage($"PlayerNearShip check: {DistanceFromShip}");
         return DistanceFromShip;
     }
+
     internal bool PlayerWithinRange(float Range, bool IncludeYAxis = true) {
         //WTOBase.LogToConsole($"Distance from target player: {DistanceFromTargetPlayer(IncludeYAxis)}");
         return DistanceFromTargetPlayer(IncludeYAxis) <= Range;
@@ -250,16 +249,16 @@ public class WTOEnemy : EnemyAI {
         if (IncludeYAxis) {
             return Vector3.Distance(targetPlayer.transform.position, this.transform.position);
         }
-        Vector2 PlayerFlatLocation = new Vector2(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
-        Vector2 EnemyFlatLocation = new Vector2(transform.position.x, transform.position.z);
+        Vector2 PlayerFlatLocation = new(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
+        Vector2 EnemyFlatLocation = new(transform.position.x, transform.position.z);
         return Vector2.Distance(PlayerFlatLocation, EnemyFlatLocation);
     }
     private float DistanceFromTargetPlayer(PlayerControllerB player, bool IncludeYAxis) {
         if (IncludeYAxis) { 
             return Vector3.Distance(player.transform.position, this.transform.position);
         }
-        Vector2 PlayerFlatLocation = new Vector2(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
-        Vector2 EnemyFlatLocation = new Vector2(transform.position.x, transform.position.z);
+        Vector2 PlayerFlatLocation = new(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
+        Vector2 EnemyFlatLocation = new(transform.position.x, transform.position.z);
         return Vector2.Distance(PlayerFlatLocation, EnemyFlatLocation);
     }
     internal bool AnimationIsFinished(string AnimName) {
@@ -269,8 +268,8 @@ public class WTOEnemy : EnemyAI {
         }
         return (creatureAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f);
     }
-    internal int GenerateNextRandomInt(Vector2 Range) {
-        Range = nextTransition.NextState().RandomRange;
+    internal int GenerateNextRandomInt() {
+        Vector2 Range = nextTransition.NextState().RandomRange;
         return enemyRandom.Next((int)Range.x, (int)Range.y);
     }
 

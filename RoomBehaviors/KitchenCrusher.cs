@@ -11,21 +11,22 @@ using System.Collections;
 
 namespace Welcome_To_Ooblterra.Things;
 internal class KitchenCrusher : MonoBehaviour {
-
+#pragma warning disable 0649 // Assigned in Unity Editor
     public Vector3 CrusherStartPos;
     public Vector3 CrusherEndPos;
     public AudioSource CrusherSound;
     public AudioClip SoundToPlay;
     public AudioClip ClickSound;
     public GameObject Crusher;
+#pragma warning restore 0649
 
     private PlayerControllerB victim;
     System.Random CrusherRandom;
     private bool ActivateCrusher;
-    private bool RetractCrusher;
+    private readonly bool RetractCrusher = false;
 
 
-    private float LerpDuration = 0.3f;
+    private readonly float LerpDuration = 0.3f;
     private float timeElapsed;
 
     private void OnTriggerEnter(Collider other) {

@@ -39,7 +39,7 @@ public class Chemical : GrabbableObject {
     public override void Start() {
         base.Start();
         MyRandom = new System.Random();
-        System.Random ScrapValueRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        System.Random ScrapValueRandom = new(StartOfRound.Instance.randomMapSeed);
         int StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
         StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
         SetScrapValue(StartingScrapValue);

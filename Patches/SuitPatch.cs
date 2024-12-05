@@ -19,7 +19,7 @@ internal class SuitPatch {
 
     private const string PosterGameObject = "HangarShip/Plane.001";
 
-    static string[] SuitMaterialNames = new string[] {
+    static readonly string[] SuitMaterialNames = [
         "RedSuit.mat",
         "ProtSuit.mat",
         "YellowSuit.mat",
@@ -27,7 +27,7 @@ internal class SuitPatch {
         "BlueSuit.mat",
         "IndigoSuit.mat",
         "MackSuit.mat"
-    };
+    ];
 
     private static bool SuitsLoaded = false;
 
