@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Unity.Netcode;
+﻿using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Things;
-public class HideSpot : NetworkBehaviour{
+public class HideSpot : NetworkBehaviour
+{
 }

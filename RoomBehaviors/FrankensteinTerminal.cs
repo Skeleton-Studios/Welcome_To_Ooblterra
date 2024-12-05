@@ -1,22 +1,17 @@
 ﻿using GameNetcodeStuff;
-using LethalLib.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Items;
-using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.RoomBehaviors;
 using static Welcome_To_Ooblterra.Items.Chemical;
 
 namespace Welcome_To_Ooblterra.Things;
-public class FrankensteinTerminal : NetworkBehaviour {
+public class FrankensteinTerminal : NetworkBehaviour
+{
 
     private const int NumberOfPoints = 4;
 
@@ -29,12 +24,13 @@ public class FrankensteinTerminal : NetworkBehaviour {
     public AudioClip FailSound;
     public AudioSource Noisemaker;
     public InteractTrigger GuessScript;
-    public InteractTrigger ReviveScript; 
+    public InteractTrigger ReviveScript;
 
     public FrankensteinVisuals Visuals;
 
     private bool ReviveStarted = false;
-    private enum Correctness {
+    private enum Correctness
+    {
         Correct,
         Partial,
         Wrong
@@ -52,36 +48,45 @@ public class FrankensteinTerminal : NetworkBehaviour {
     private int PopulatedChemPoints;
     private static bool MimicSpawned = false;
 
-    private void Start() {
+    private void Start()
+    {
         MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         BodyPoint = FindObjectOfType<FrankensteinBodyPoint>();
         Visuals = FindObjectOfType<FrankensteinVisuals>();
         SetColorList();
     }
-    private void Update() {
-        if (BodyPoint == null) {
+    private void Update()
+    {
+        if (BodyPoint == null)
+        {
             BodyPoint = FindObjectOfType<FrankensteinBodyPoint>();
         }
-        if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
+        if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null)
+        {
             return;
         }
         ManageInteractor(GuessScript);
         ManageInteractor(ReviveScript);
     }
 
-    private void ManageInteractor(InteractTrigger Target) {
-        if (IsUsedUp) {
+    private void ManageInteractor(InteractTrigger Target)
+    {
+        if (IsUsedUp)
+        {
             Target.interactable = false;
             Target.disabledHoverTip = "";
             return;
         }
-        if (Target == ReviveScript && !BodyPoint.HasBody) {
+        if (Target == ReviveScript && !BodyPoint.HasBody)
+        {
             Target.disabledHoverTip = "No Body on Bed!";
             Target.interactable = false;
             return;
         }
-        if (Target == GuessScript) {
-            if(RemainingGuesses <= 0) {
+        if (Target == GuessScript)
+        {
+            if (RemainingGuesses <= 0)
+            {
                 Target.interactable = false;
                 Target.hoverTip = $"No Guesses Remaining!";
                 return;
@@ -92,71 +97,91 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Target.disabledHoverTip = $"[{PopulatedChemPoints}/{NumberOfPoints} Chemicals Placed!]";
     }
 
-    public void GuessIfChemsAreCorrect(PlayerControllerB TriggeringPlayer) {
-        if (IsUsedUp) {
+    public void GuessIfChemsAreCorrect(PlayerControllerB TriggeringPlayer)
+    {
+        if (IsUsedUp)
+        {
             return;
         }
-        
-        if (!CheckAllChemPoints(true)) {
+
+        if (!CheckAllChemPoints(true))
+        {
             return;
         }
-        if (RemainingGuesses <= 0 || !AllowGuesses) {
+        if (RemainingGuesses <= 0 || !AllowGuesses)
+        {
             return;
         }
         AllowGuesses = false;
         Correctness[] LightSetter = CheckCorrectness();
         SetLightsServerRpc(LightSetter);
     }
-    public void TryRevive() {
-        if (IsUsedUp) {
+    public void TryRevive()
+    {
+        if (IsUsedUp)
+        {
             return;
         }
-        if (!CheckAllChemPoints(true)) {
+        if (!CheckAllChemPoints(true))
+        {
             return;
         }
-        if(BodyPoint == null || BodyPoint.PlayerRagdoll == null) {
+        if (BodyPoint == null || BodyPoint.PlayerRagdoll == null)
+        {
             WTOBase.LogToConsole("Problem with body point!!!");
             return;
         }
         SetVariablesServerRpc(BodyPoint.RespawnPos.position, BodyPoint.PlayerRagdoll.bodyID.Value);
         StartSceneServerRpc(CalculateCorrectnessPercentage());
-        foreach(FrankensteinChemPoint ChemPoint in FrankensteinChemPoints) {
+        foreach (FrankensteinChemPoint ChemPoint in FrankensteinChemPoints)
+        {
             ChemPoint.ClearChemical();
         }
         IsUsedUp = true;
     }
-    private Correctness[] CheckCorrectness() {
+    private Correctness[] CheckCorrectness()
+    {
         Correctness[] TotalCorrect = [Correctness.Wrong, Correctness.Wrong, Correctness.Wrong, Correctness.Wrong];
         WTOBase.LogToConsole("BEGIN PRINT CORRECT COLORS");
-        foreach(ChemColor color in CorrectColors) {
+        foreach (ChemColor color in CorrectColors)
+        {
             WTOBase.LogToConsole(color.ToString());
         }
         WTOBase.LogToConsole("END PRINT CORRECT COLORS ; BEGIN PRINT GUESSED COLORS");
-        foreach (ChemColor color in GuessedColorList) {
+        foreach (ChemColor color in GuessedColorList)
+        {
             WTOBase.LogToConsole(color.ToString());
         }
         WTOBase.LogToConsole("END PRINT GUESSED COLORS");
 
-        for (int i = 0; i < NumberOfPoints; i++) {
-            if (CorrectColors[i] == GuessedColorList[i]) {
+        for (int i = 0; i < NumberOfPoints; i++)
+        {
+            if (CorrectColors[i] == GuessedColorList[i])
+            {
                 TotalCorrect[i] = Correctness.Correct;
             }
         }
-        for(int i = 0; i < NumberOfPoints; i++) {
+        for (int i = 0; i < NumberOfPoints; i++)
+        {
             ChemColor ColorBeingChecked = GuessedColorList[i];
-            if (TotalCorrect[i] == Correctness.Correct) {
+            if (TotalCorrect[i] == Correctness.Correct)
+            {
                 continue;
             }
-            if (CorrectColors.Contains(ColorBeingChecked) && TotalCorrect[Array.IndexOf(GuessedColorList, ColorBeingChecked)] == Correctness.Wrong) {
+            if (CorrectColors.Contains(ColorBeingChecked) && TotalCorrect[Array.IndexOf(GuessedColorList, ColorBeingChecked)] == Correctness.Wrong)
+            {
                 TotalCorrect[i] = Correctness.Partial;
             }
         }
         return TotalCorrect;
     }
-    private int CalculateCorrectnessPercentage() {
+    private int CalculateCorrectnessPercentage()
+    {
         int TotalScore = 0;
-        foreach (Correctness CorrectnessValue in CheckCorrectness()) { 
-            switch(CorrectnessValue) {
+        foreach (Correctness CorrectnessValue in CheckCorrectness())
+        {
+            switch (CorrectnessValue)
+            {
                 case Correctness.Correct:
                     TotalScore += 25;
                     break;
@@ -168,29 +193,36 @@ public class FrankensteinTerminal : NetworkBehaviour {
         WTOBase.LogToConsole($"CORRECTNESS SCORE IS {TotalScore}");
         return TotalScore;
     }
-    private void SetColorList() {
+    private void SetColorList()
+    {
         List<ChemColor> AllColors = new((ChemColor[])Enum.GetValues(typeof(ChemColor)));
         ChemColor NextColor;
-        for (int i = 0; i < NumberOfPoints; i++) {
+        for (int i = 0; i < NumberOfPoints; i++)
+        {
             NextColor = AllColors[MyRandom.Next(0, AllColors.Count - 1)];
             CorrectColors[i] = NextColor;
             AllColors.Remove(NextColor);
             WTOBase.LogToConsole($"COLOR NUMBER {i} IS {CorrectColors[i]}");
         }
     }
-    private bool CheckAllChemPoints(bool AssignColors) {
+    private bool CheckAllChemPoints(bool AssignColors)
+    {
         PopulatedChemPoints = 0;
-        for (int i = 0; i < NumberOfPoints; i++) {
+        for (int i = 0; i < NumberOfPoints; i++)
+        {
             FrankensteinChemPoint ChemPoint = FrankensteinChemPoints[i];
-            if (!ChemPoint.hasChemical) {
+            if (!ChemPoint.hasChemical)
+            {
                 Array.Clear(GuessedColorList, 0, 4);
-                if (AssignColors) { 
+                if (AssignColors)
+                {
                     return false;
                 }
                 continue;
             }
             PopulatedChemPoints++;
-            if (AssignColors) { 
+            if (AssignColors)
+            {
                 GuessedColorList[i] = ChemPoint.GetCurrentChemicalColor();
             }
         }
@@ -198,22 +230,28 @@ public class FrankensteinTerminal : NetworkBehaviour {
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void StartSceneServerRpc(int Correctness) {
+    public void StartSceneServerRpc(int Correctness)
+    {
         WTOBase.LogToConsole("Starting visuals on server...");
         StartSceneClientRpc(Correctness);
     }
     [ClientRpc]
-    public void StartSceneClientRpc(int Correctness) {
+    public void StartSceneClientRpc(int Correctness)
+    {
         WTOBase.LogToConsole("Starting visuals on client...");
         StartCoroutine(StartScene(Correctness));
     }
-    IEnumerator StartScene(int Correctness) {
+    IEnumerator StartScene(int Correctness)
+    {
         WTOBase.LogToConsole("Telling Visuals script to start visuals ...");
         Visuals.StartVisuals();
         yield return new WaitForSeconds(7);
-        if (Correctness > 50 ) {
+        if (Correctness > 50)
+        {
             ReviveDeadPlayerServerRpc(PlayerID, SpawnTarget);
-        } else {
+        }
+        else
+        {
             CreateMimicServerRpc(PlayerID, SpawnTarget);
         }
 
@@ -221,19 +259,24 @@ public class FrankensteinTerminal : NetworkBehaviour {
     }
 
     [ServerRpc(RequireOwnership = false)]
-    private void SetLightsServerRpc(Correctness[] Colorset) {
+    private void SetLightsServerRpc(Correctness[] Colorset)
+    {
         SetLightsClientRpc(Colorset);
     }
     [ClientRpc]
-    private void SetLightsClientRpc(Correctness[] Colorset) {
+    private void SetLightsClientRpc(Correctness[] Colorset)
+    {
         RemainingGuesses--;
         StartCoroutine(SetLightsAndWait(Colorset));
     }
-    IEnumerator SetLightsAndWait(Correctness[] Colorset) {
+    IEnumerator SetLightsAndWait(Correctness[] Colorset)
+    {
         SwitchMesh.materials[1] = SwitchGreenMat;
-        for (int i = 0; i < NumberOfPoints; i++) {
+        for (int i = 0; i < NumberOfPoints; i++)
+        {
             WTOBase.LogToConsole($"SLOT {i} is {Colorset[i]}");
-            switch (Colorset[i]) {
+            switch (Colorset[i])
+            {
                 case Correctness.Correct:
                     LightMeshes[i].materials[1].SetColor("_EmissiveColor", new Color(0, 1, 0, 1));
                     break;
@@ -246,7 +289,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
             }
         }
         yield return new WaitForSeconds(4);
-        for (int i = 0; i < NumberOfPoints; i++) {
+        for (int i = 0; i < NumberOfPoints; i++)
+        {
             LightMeshes[i].materials[1].SetColor("_EmissiveColor", new Color(0, 0, 0, 1));
         }
         SwitchMesh.materials[1] = SwitchRedMat;
@@ -254,34 +298,41 @@ public class FrankensteinTerminal : NetworkBehaviour {
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void SetVariablesServerRpc(Vector3 TargetLoc, int iD) {
+    public void SetVariablesServerRpc(Vector3 TargetLoc, int iD)
+    {
         SetVariablesClientRpc(TargetLoc, iD);
     }
 
     [ClientRpc]
-    public void SetVariablesClientRpc(Vector3 Target, int ID) {
+    public void SetVariablesClientRpc(Vector3 Target, int ID)
+    {
         SpawnTarget = Target;
         PlayerID = ID;
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[PlayerID];
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void ReviveDeadPlayerServerRpc(int ID, Vector3 SpawnLoc) {
+    public void ReviveDeadPlayerServerRpc(int ID, Vector3 SpawnLoc)
+    {
         WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on server...");
         ReviveDeadPlayerClientRpc(ID, SpawnLoc);
     }
     [ClientRpc]
-    public void ReviveDeadPlayerClientRpc(int ID, Vector3 SpawnLoc) {
-        if (ReviveStarted) {
+    public void ReviveDeadPlayerClientRpc(int ID, Vector3 SpawnLoc)
+    {
+        if (ReviveStarted)
+        {
             return;
         }
         WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on client...");
         ReviveDeadPlayer(ID, SpawnLoc);
         ReviveStarted = true;
     }
-    public void ReviveDeadPlayer(int ID, Vector3 SpawnLoc) {
+    public void ReviveDeadPlayer(int ID, Vector3 SpawnLoc)
+    {
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
-        if(PlayerToRevive.isPlayerDead == false) {
+        if (PlayerToRevive.isPlayerDead == false)
+        {
             return;
         }
         WTOBase.LogToConsole("DEAD PLAYER INFO:");
@@ -295,7 +346,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
         PlayerToRevive.health = 100;
         PlayerToRevive.disableLookInput = false;
         WTOBase.LogToConsole("Reviving players B");
-        if (PlayerToRevive.isPlayerDead) {
+        if (PlayerToRevive.isPlayerDead)
+        {
             PlayerToRevive.isPlayerDead = false;
             PlayerToRevive.isPlayerControlled = true;
             PlayerToRevive.isInElevator = false;
@@ -329,7 +381,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.health = 100;
             WTOBase.LogToConsole("Reviving players E");
             PlayerToRevive.mapRadarDotAnimator.SetBool("dead", value: false);
-            if (PlayerToRevive.IsOwner) {
+            if (PlayerToRevive.IsOwner)
+            {
                 HUDManager.Instance.gasHelmetAnimator.SetBool("gasEmitting", value: false);
                 PlayerToRevive.hasBegunSpectating = false;
                 HUDManager.Instance.RemoveSpectateUI();
@@ -361,7 +414,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
         }
         */
         WTOBase.LogToConsole("Reviving players G");
-        if(GameNetworkManager.Instance.localPlayerController == PlayerToRevive) {
+        if (GameNetworkManager.Instance.localPlayerController == PlayerToRevive)
+        {
             HUDManager.Instance.HideHUD(hide: false);
             StartOfRound.Instance.SetSpectateCameraToGameOverMode(enableGameOver: false, PlayerToRevive);
             HUDManager.Instance.audioListenerLowPass.enabled = false;
@@ -373,7 +427,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
         PlayerToRevive.health = 100;
         PlayerToRevive.spectatedPlayerScript = null;
         WTOBase.LogToConsole("Reviving players H");
-        if (base.IsServer) {
+        if (base.IsServer)
+        {
             BodyPoint.BodyGO.NetworkObject.Despawn();
         }
         Destroy(BodyPoint.BodyGO);
@@ -383,12 +438,14 @@ public class FrankensteinTerminal : NetworkBehaviour {
     }
 
     [ServerRpc]
-    public void SyncMimicPropertiesServerRpc(NetworkObjectReference MimicNetObject, int SuitID) {
+    public void SyncMimicPropertiesServerRpc(NetworkObjectReference MimicNetObject, int SuitID)
+    {
         SyncMimicPropertiesClientRpc(MimicNetObject, SuitID);
     }
 
     [ClientRpc]
-    public void SyncMimicPropertiesClientRpc(NetworkObjectReference MimicNetObject, int SuitID) {
+    public void SyncMimicPropertiesClientRpc(NetworkObjectReference MimicNetObject, int SuitID)
+    {
         MimicNetObject.TryGet(out NetworkObject netObject);
         MaskedPlayerEnemy Mask = netObject.GetComponent<MaskedPlayerEnemy>();
         Mask.maskTypes[0].SetActive(value: false);
@@ -402,18 +459,21 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     //if fail, spawn a mimic from the player's body
     [ServerRpc(RequireOwnership = false)]
-    public void CreateMimicServerRpc(int ID, Vector3 MimicCreationPoint) {
-        if(MimicSpawned == true) {
+    public void CreateMimicServerRpc(int ID, Vector3 MimicCreationPoint)
+    {
+        if (MimicSpawned == true)
+        {
             return;
         }
         MimicSpawned = true;
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
         WTOBase.LogToConsole("Server creating mimic from Frankenstein");
         Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(MimicCreationPoint, default, 10f);
-        if (!RoundManager.Instance.GotNavMeshPositionResult) {
+        if (!RoundManager.Instance.GotNavMeshPositionResult)
+        {
             WTOBase.LogToConsole("No nav mesh found; no WTOMimic could be created");
             return;
-        } 
+        }
         //const int MimicIndex = 12;
         EnemyType TheMimic = StartOfRound.Instance.levels.First(x => x.PlanetName == "8 Titan").Enemies.First(x => x.enemyType.enemyName == "Masked").enemyType;
         WTOBase.LogToConsole($"Mimic Found: {TheMimic != null}");
@@ -424,7 +484,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
         NetworkObjectReference netObjectRef = RoundManager.Instance.SpawnEnemyGameObject(navMeshPosition, PlayerToRevive.transform.eulerAngles.y, -1, TheMimic);
 
-        if (netObjectRef.TryGet(out var networkObject)) {
+        if (netObjectRef.TryGet(out var networkObject))
+        {
             WTOBase.LogToConsole("Got network object for WTOMimic");
             MaskedPlayerEnemy component = networkObject.GetComponent<MaskedPlayerEnemy>();
             component.SetSuit(PlayerToRevive.currentSuitID);
@@ -443,23 +504,28 @@ public class FrankensteinTerminal : NetworkBehaviour {
         CreateMimicClientRpc(ID, netObjectRef);
     }
     [ClientRpc]
-    public void CreateMimicClientRpc(int ID, NetworkObjectReference netObjectRef) {
-        if (!base.IsServer) {
+    public void CreateMimicClientRpc(int ID, NetworkObjectReference netObjectRef)
+    {
+        if (!base.IsServer)
+        {
             return;
         }
         StartCoroutine(WaitForMimicEnemySpawn(ID, netObjectRef));
     }
-    private IEnumerator WaitForMimicEnemySpawn(int ID, NetworkObjectReference netObjectRef) {
+    private IEnumerator WaitForMimicEnemySpawn(int ID, NetworkObjectReference netObjectRef)
+    {
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
         NetworkObject netObject = null;
         float startTime = Time.realtimeSinceStartup;
         yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || netObjectRef.TryGet(out netObject));
-        if (PlayerToRevive == null || PlayerToRevive.deadBody == null) {
+        if (PlayerToRevive == null || PlayerToRevive.deadBody == null)
+        {
             startTime = Time.realtimeSinceStartup;
             yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || PlayerToRevive.deadBody != null);
         }
         PlayerToRevive.deadBody.DeactivateBody(setActive: false);
-        if (netObject == null) {
+        if (netObject == null)
+        {
             yield break;
         }
         WTOBase.LogToConsole("Got network object for WTOMimic enemy client");
@@ -468,8 +534,9 @@ public class FrankensteinTerminal : NetworkBehaviour {
         component.SetEnemyOutside(false);
         component.SetVisibilityOfMaskedEnemy();
         //This makes it such that the mimic has no visible mask :)
-        if (base.IsServer) {
+        if (base.IsServer)
+        {
             SyncMimicPropertiesServerRpc(netObjectRef, PlayerToRevive.currentSuitID);
-        }        
+        }
     }
 }

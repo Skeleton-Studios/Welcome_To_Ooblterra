@@ -7,7 +7,8 @@ using Welcome_To_Ooblterra.Properties;
 using static LethalLib.Modules.Enemies;
 
 namespace Welcome_To_Ooblterra.Things;
-public class BabyLurkerEgg : NetworkBehaviour {
+public class BabyLurkerEgg : NetworkBehaviour
+{
 
     public GameObject HiveMesh;
     public GameObject projectileTemplate;
@@ -22,68 +23,87 @@ public class BabyLurkerEgg : NetworkBehaviour {
     private bool EggSpawned = false;
     private bool EggDropped = false;
     private float SecondsUntilNextSpawnAttempt = 15f;
-    
 
-    private void OnTriggerStay(Collider other) { 
+
+    private void OnTriggerStay(Collider other)
+    {
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
-        if (other.gameObject.CompareTag("Player") && EggSpawned && !EggDropped) {
-            SpawnProjectileServerRpc((int)victim.actualClientId); 
+        if (other.gameObject.CompareTag("Player") && EggSpawned && !EggDropped)
+        {
+            SpawnProjectileServerRpc((int)victim.actualClientId);
         }
     }
-    private void Start() {
+    private void Start()
+    {
         enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
         ScanNode.creatureScanID = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Baby Lurker").terminalNode.creatureFileID;
         SpawnEgg();
     }
-    private void Update() {
-        if (EggSpawned) {
+    private void Update()
+    {
+        if (EggSpawned)
+        {
             return;
         }
-        if(SecondsUntilNextSpawnAttempt > 0) {
+        if (SecondsUntilNextSpawnAttempt > 0)
+        {
             SecondsUntilNextSpawnAttempt -= Time.deltaTime;
             return;
         }
-        if(enemyRandom.Next(0, 100) < 60){
+        if (enemyRandom.Next(0, 100) < 60)
+        {
             SpawnEggServerRpc();
-        } else {
+        }
+        else
+        {
             SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
         }
     }
 
-    public void SpawnEgg() {
-        if (EggSpawned) {
+    public void SpawnEgg()
+    {
+        if (EggSpawned)
+        {
             return;
         }
         HiveMesh.SetActive(true);
         MapDot.SetActive(true);
-        if (Physics.Linecast(TraceTransform.position, TraceTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
+        if (Physics.Linecast(TraceTransform.position, TraceTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore))
+        {
             HiveMesh.transform.position = HitResult.point;
             HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
             WTOBase.LogToConsole($"Lurker Egg active!");
             EggSpawned = true;
-        } else { 
+        }
+        else
+        {
             WTOBase.LogToConsole($"Lurker Egg Line trace failed!");
         }
 
     }
     [ServerRpc]
-    public void SpawnEggServerRpc() {
+    public void SpawnEggServerRpc()
+    {
         SpawnEggClientRpc();
     }
 
     [ClientRpc]
-    public void SpawnEggClientRpc() {
+    public void SpawnEggClientRpc()
+    {
         SpawnEgg();
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void SpawnProjectileServerRpc(int targetID) {
+    public void SpawnProjectileServerRpc(int targetID)
+    {
         SpawnProjectileClientRpc(targetID);
     }
-    [ClientRpc] 
-    public void SpawnProjectileClientRpc(int targetID){
-        if (EggDropped) {
+    [ClientRpc]
+    public void SpawnProjectileClientRpc(int targetID)
+    {
+        if (EggDropped)
+        {
             return;
         }
         MapDot.SetActive(false);
@@ -92,7 +112,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
         HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;
         EggDropped = true;
-        Destroy(HiveMesh); 
-         
+        Destroy(HiveMesh);
+
     }
 }

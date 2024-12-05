@@ -1,21 +1,16 @@
-﻿using DunGen;
-using GameNetcodeStuff;
-using System;
+﻿using GameNetcodeStuff;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Rendering.HighDefinition.Attributes;
 using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Items;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
-public class BatteryRecepticle : NetworkBehaviour {
+public class BatteryRecepticle : NetworkBehaviour
+{
 
     [InspectorName("Defaults")]
     public NetworkObject parentTo;
@@ -45,41 +40,51 @@ public class BatteryRecepticle : NetworkBehaviour {
     private System.Random MachineRandom;
     private WideDoorway[] Doorways;
 
-    public void Start() {
+    public void Start()
+    {
         scrapShelf = FindFirstObjectByType<ScrapShelf>();
         FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
         WTOBattery[] BatteryList = FindObjectsOfType<WTOBattery>();
         InsertedBattery = BatteryList.First(x => x.HasCharge == false);
         RecepticleHasBattery = true;
         CenterLight.intensity = 0;
-        foreach(MeshRenderer WallLight in WallLights) {
+        foreach (MeshRenderer WallLight in WallLights)
+        {
             WallLight.sharedMaterial = WallLightMat;
         }
         MachineRandom = new();
         SpawnBatteryAtFurthestPoint();
-        foreach (LightComponent NextLight in GameObject.FindObjectsOfType<LightComponent>().Where(x => x.SetColorByDistance == true)) {
+        foreach (LightComponent NextLight in GameObject.FindObjectsOfType<LightComponent>().Where(x => x.SetColorByDistance == true))
+        {
             NextLight.SetColorRelative(this.transform.position);
         }
         Doorways = FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
     }
-    private void Update() {
-        if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
+    private void Update()
+    {
+        if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null)
+        {
             return;
         }
         WallLightMat.SetColor("_EmissiveColor", LightColor);
-        if (RecepticleHasBattery) {
+        if (RecepticleHasBattery)
+        {
             BatteryHitbox.enabled = false;
             triggerScript.interactable = false;
             triggerScript.disabledHoverTip = "";
-            if (InsertedBattery != null && InsertedBattery.isHeld) {
+            if (InsertedBattery != null && InsertedBattery.isHeld)
+            {
                 InsertedBattery = null;
                 RecepticleHasBattery = false;
                 return;
             }
-        } else { 
+        }
+        else
+        {
             BatteryHitbox.enabled = true;
             triggerScript.enabled = true;
-            if (GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is WTOBattery) {
+            if (GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is WTOBattery)
+            {
                 triggerScript.interactable = true;
                 triggerScript.hoverTip = "Insert Battery : [E]";
                 return;
@@ -89,18 +94,22 @@ public class BatteryRecepticle : NetworkBehaviour {
         }
     }
 
-    private void SpawnBatteryAtFurthestPoint() {
-        if (!base.IsServer) {
+    private void SpawnBatteryAtFurthestPoint()
+    {
+        if (!base.IsServer)
+        {
             return;
         }
         List<RandomMapObject> AllRandomSpawnList = [];
         List<RandomMapObject> ViableSpawnlist = [];
         AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
         float MinSpawnRange = 80f;
-        foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab))) {
+        foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab)))
+        {
             float SpawnPointDistance = Vector3.Distance(this.transform.position, BatterySpawn.transform.position);
-            WTOBase.LogToConsole($"BATTERY DISTANCE: {SpawnPointDistance }");
-            if (SpawnPointDistance > MinSpawnRange) {
+            WTOBase.LogToConsole($"BATTERY DISTANCE: {SpawnPointDistance}");
+            if (SpawnPointDistance > MinSpawnRange)
+            {
                 ViableSpawnlist.Add(BatterySpawn);
             }
         }
@@ -110,78 +119,97 @@ public class BatteryRecepticle : NetworkBehaviour {
         NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
     }
 
-    public void TryInsertOrRemoveBattery(PlayerControllerB playerWhoTriggered) {
-        if (RecepticleHasBattery && !InsertedBattery.HasCharge) {
+    public void TryInsertOrRemoveBattery(PlayerControllerB playerWhoTriggered)
+    {
+        if (RecepticleHasBattery && !InsertedBattery.HasCharge)
+        {
             playerWhoTriggered.GrabObjectServerRpc(InsertedBattery.NetworkObject);
             RecepticleHasBattery = false;
             return;
         }
-        if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
+        if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null))
+        {
             return;
         }
         WTOBase.LogToConsole("Placing battery in recepticle");
         Vector3 vector = BatteryTransform.position;
-        if (parentTo != null) {
+        if (parentTo != null)
+        {
             vector = parentTo.transform.InverseTransformPoint(vector);
         }
         InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
-        
+
         RecepticleHasBattery = true;
         WTOBase.LogToConsole("discard held object called from placeobject");
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
         InsertedBattery.transform.rotation = Quaternion.identity;
-        InsertedBattery.transform.Rotate(305, 45, 0, relativeTo:Space.Self);
+        InsertedBattery.transform.Rotate(305, 45, 0, relativeTo: Space.Self);
         //WTOBase.LogToConsole($"BatteryTransform rotation: {BatteryTransform.rotation}; Battery rotation: {InsertedBattery.transform.rotation}");
         InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
-        
-        if (InsertedBattery.HasCharge) {
+
+        if (InsertedBattery.HasCharge)
+        {
             TurnOnPowerServerRpc();
         }
     }
     [ServerRpc(RequireOwnership = false)]
-    public void InsertBatteryServerRpc(NetworkObjectReference grabbableObjectNetObject) {
+    public void InsertBatteryServerRpc(NetworkObjectReference grabbableObjectNetObject)
+    {
         InsertBatteryClientRpc(grabbableObjectNetObject);
     }
     [ClientRpc]
-    public void InsertBatteryClientRpc(NetworkObjectReference grabbableObjectNetObject) {
+    public void InsertBatteryClientRpc(NetworkObjectReference grabbableObjectNetObject)
+    {
         InsertBattery(grabbableObjectNetObject);
     }
-    public void InsertBattery(NetworkObjectReference grabbableObjectNetObject) {
-        if (grabbableObjectNetObject.TryGet(out BatteryNetObj)) {
+    public void InsertBattery(NetworkObjectReference grabbableObjectNetObject)
+    {
+        if (grabbableObjectNetObject.TryGet(out BatteryNetObj))
+        {
             BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
             InsertedBattery = BatteryNetObj.GetComponentInChildren<WTOBattery>();
-        } else {
+        }
+        else
+        {
             WTOBase.WTOLogSource.LogError("BATTERY COULD NOT BE CONVERTED.");
         }
         //WTOBase.LogToConsole($"Attempting to rotate battery... {BatteryNetObj.GetComponentInChildren<GrabbableObject>()}");
         BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.rotation = Quaternion.identity;
         BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.Rotate(305, 45, 0, relativeTo: Space.Self);
         RecepticleHasBattery = true;
-        if (InsertedBattery.HasCharge) {
+        if (InsertedBattery.HasCharge)
+        {
             InsertedBattery.grabbable = false;
-        } else {
+        }
+        else
+        {
             InsertedBattery.grabbable = true;
             InsertedBattery.GetComponent<BoxCollider>().enabled = true;
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void TurnOnPowerServerRpc() {
+    public void TurnOnPowerServerRpc()
+    {
         TurnOnPowerClientRpc();
     }
     [ClientRpc]
-    public void TurnOnPowerClientRpc() {
+    public void TurnOnPowerClientRpc()
+    {
         TurnOnPower();
-    } 
-    public void TurnOnPower() {
-        if (GameNetworkManager.Instance.localPlayerController.isInsideFactory) { 
+    }
+    public void TurnOnPower()
+    {
+        if (GameNetworkManager.Instance.localPlayerController.isInsideFactory)
+        {
             Noisemaker.PlayOneShot(FacilityPowerUp);
         }
         scrapShelf.OpenShelf();
         MachineAmbience.Play();
         Pistons.Play();
         LightComponent[] LightsInLevel = FindObjectsOfType<LightComponent>();
-        foreach (LightComponent light in LightsInLevel) {
+        foreach (LightComponent light in LightsInLevel)
+        {
             light.SetLightColor();
             light.SetLightBrightness(150);
         }
@@ -194,15 +222,18 @@ public class BatteryRecepticle : NetworkBehaviour {
         StartRoomLights.SetCentralRoomWhite();
         BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
         ManageEnemies();
-        foreach(WideDoorway NextDoorway in Doorways) {
+        foreach (WideDoorway NextDoorway in Doorways)
+        {
             NextDoorway.RaiseDoor();
         }
-        
+
     }
 
-    private void ManageEnemies() {
+    private void ManageEnemies()
+    {
         EyeSecAI.BuffedByMachineOn = true;
-        if(OoblGhostAI.GhostList.Count < 1) {
+        if (OoblGhostAI.GhostList.Count < 1)
+        {
             RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);
         }
         RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);

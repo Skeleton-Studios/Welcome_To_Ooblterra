@@ -1,20 +1,12 @@
-﻿using DunGen;
-using GameNetcodeStuff;
-using System;
+﻿using GameNetcodeStuff;
 using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Net.Http.Headers;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
-using Welcome_To_Ooblterra.Things;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace Welcome_To_Ooblterra.Security;
-internal class SpikeTrap : NetworkBehaviour {
+internal class SpikeTrap : NetworkBehaviour
+{
 
 #pragma warning disable 0649 // Assigned in Unity Editor
     public GameObject SpikeMesh;
@@ -31,38 +23,48 @@ internal class SpikeTrap : NetworkBehaviour {
     private float SecondsSinceSpikesActivated;
     private float SecondsUntilCanDamagePlayer;
     private int PlayerDamageAmount = 80;
-    
+
     //anim controls
     private float TimeElapsed;
     private const float MoveTime = 0.2f;
     private readonly Vector3 SpikeRaisePos = new(0, 1.163f, 0);
     private readonly Vector3 SpikeFallPos = new(0, 0, 0);
 
-    public void OnTriggerEnter(Collider other) {
-        if (!SpikesEnabled) {
+    public void OnTriggerEnter(Collider other)
+    {
+        if (!SpikesEnabled)
+        {
             return;
         }
-        if (SpikesActivated) {
+        if (SpikesActivated)
+        {
             return;
         }
-        if (other.gameObject.CompareTag("Player")) {
+        if (other.gameObject.CompareTag("Player"))
+        {
             WTOBase.LogToConsole("Player entered spike trap, calling Raise RPC!");
             RaiseSpikesServerRpc();
         }
     }
-    public void OnTriggerStay(Collider other) {
-        if (AllowDamagePlayer && other.gameObject.CompareTag("Player") && SecondsUntilCanDamagePlayer <= 0) {
+    public void OnTriggerStay(Collider other)
+    {
+        if (AllowDamagePlayer && other.gameObject.CompareTag("Player") && SecondsUntilCanDamagePlayer <= 0)
+        {
             PlayerDamageAmount = StartOfRound.Instance.connectedPlayersAmount <= 0 ? 80 : 100;
             other.GetComponent<PlayerControllerB>().DamagePlayer(PlayerDamageAmount, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
             SecondsUntilCanDamagePlayer = 0.75f;
         }
     }
-    public void Update() {
-        if(SecondsUntilCanDamagePlayer > 0) {
+    public void Update()
+    {
+        if (SecondsUntilCanDamagePlayer > 0)
+        {
             SecondsUntilCanDamagePlayer -= Time.deltaTime;
         }
-        if (SecondsSinceSpikesActivated >= 3f) {
-            if(SpikesActivated == true) {
+        if (SecondsSinceSpikesActivated >= 3f)
+        {
+            if (SpikesActivated == true)
+            {
                 SpikeSoundPlayer.clip = SpikesRetract;
                 SpikeSoundPlayer.Play();
                 TimeElapsed = 0f;
@@ -71,10 +73,12 @@ internal class SpikeTrap : NetworkBehaviour {
             WTOBase.LogToConsole("Lowering Spikes!");
             StartCoroutine(LowerSpikes());
         }
-        if (!SpikesEnabled) {
+        if (!SpikesEnabled)
+        {
             return;
         }
-        if (SpikesActivated) {
+        if (SpikesActivated)
+        {
             WTOBase.LogToConsole("Raising Spikes!");
             StartCoroutine(RaiseSpikes());
             SecondsSinceSpikesActivated += Time.deltaTime;
@@ -82,21 +86,25 @@ internal class SpikeTrap : NetworkBehaviour {
 
     }
 
-    IEnumerator RaiseSpikes() {
+    IEnumerator RaiseSpikes()
+    {
         TimeElapsed += Time.deltaTime;
         SpikeMesh.transform.localPosition = Vector3.Lerp(SpikeFallPos, SpikeRaisePos, TimeElapsed / MoveTime);
-        if (TimeElapsed / MoveTime >= 1) {
+        if (TimeElapsed / MoveTime >= 1)
+        {
             AllowDamagePlayer = true;
             WTOBase.LogToConsole("Finished Raising Spikes");
             StopCoroutine(RaiseSpikes());
         }
         yield return null;
     }
-    IEnumerator LowerSpikes() {
+    IEnumerator LowerSpikes()
+    {
         TimeElapsed += Time.deltaTime;
         WTOBase.LogToConsole($"Current Lerp Position: {TimeElapsed / MoveTime}");
         SpikeMesh.transform.localPosition = Vector3.Lerp(SpikeRaisePos, SpikeFallPos, TimeElapsed / MoveTime);
-        if (TimeElapsed / MoveTime >= 1) {
+        if (TimeElapsed / MoveTime >= 1)
+        {
             AllowDamagePlayer = false;
             WTOBase.LogToConsole("Finished Lowering Spikes");
             StopCoroutine(LowerSpikes());
@@ -106,41 +114,50 @@ internal class SpikeTrap : NetworkBehaviour {
         yield return null;
     }
 
-    public void RecieveToggleSpikes(bool enabled) {
+    public void RecieveToggleSpikes(bool enabled)
+    {
         WTOBase.LogToConsole($"Called toggle spikes with state: {enabled}");
         ToggleSpikesServerRpc(enabled);
         ToggleSpikes(enabled);
     }
     [ServerRpc(RequireOwnership = false)]
-    public void ToggleSpikesServerRpc(bool enabled) {
+    public void ToggleSpikesServerRpc(bool enabled)
+    {
         WTOBase.LogToConsole($"Toggling spikes to {enabled} serverRpc");
         ToggleSpikesClientRpc(enabled);
     }
     [ClientRpc]
-    public void ToggleSpikesClientRpc(bool enabled) {
+    public void ToggleSpikesClientRpc(bool enabled)
+    {
         WTOBase.LogToConsole($"Toggling spikes to {enabled} clientRpc");
-        if (SpikesEnabled != enabled) {
+        if (SpikesEnabled != enabled)
+        {
             ToggleSpikes(enabled);
         }
     }
-    private void ToggleSpikes(bool enabled) {
-        if(enabled == false) { 
+    private void ToggleSpikes(bool enabled)
+    {
+        if (enabled == false)
+        {
             SpikeSoundPlayer.clip = SpikesDisable;
             SpikeSoundPlayer.Play();
         }
         SpikesEnabled = enabled;
         WTOBase.LogToConsole($"SPIKES STATE: {SpikesEnabled}");
-        if (SpikesActivated) {
+        if (SpikesActivated)
+        {
             SecondsSinceSpikesActivated = 5f;
         }
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void RaiseSpikesServerRpc() {
+    public void RaiseSpikesServerRpc()
+    {
         RaiseSpikesClientRpc();
     }
     [ClientRpc]
-    public void RaiseSpikesClientRpc() {
+    public void RaiseSpikesClientRpc()
+    {
         TimeElapsed = 0f;
         SpikeSoundPlayer.clip = SpikesExtend;
         SpikeSoundPlayer.Play();

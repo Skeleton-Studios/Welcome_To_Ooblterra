@@ -2,14 +2,15 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
-using System.Linq;
 
 namespace Welcome_To_Ooblterra.Items;
-internal class CursedEffigy : GrabbableObject {
+internal class CursedEffigy : GrabbableObject
+{
 
 #pragma warning disable 0649 // Assigned in Unity Editor
     public List<AudioClip> AmbientSounds;
@@ -20,13 +21,17 @@ internal class CursedEffigy : GrabbableObject {
     private bool MimicSpawned;
     private PlayerControllerB previousPlayerHeldBy;
 
-    public override void Update() {
+    public override void Update()
+    {
         base.Update();
-        if (previousPlayerHeldBy == null) {
+        if (previousPlayerHeldBy == null)
+        {
             return;
         }
-        if (previousPlayerHeldBy.isPlayerDead) {
-            if (!MimicSpawned && IsOwner) {
+        if (previousPlayerHeldBy.isPlayerDead)
+        {
+            if (!MimicSpawned && IsOwner)
+            {
                 WTOBase.LogToConsole($"Effigy knows that {previousPlayerHeldBy.playerUsername} is dead at position {previousPlayerHeldBy.deadBody.transform.position}");
                 CreateMimicServerRpc(previousPlayerHeldBy.isInsideFactory, previousPlayerHeldBy.deadBody.transform.position);
                 MimicSpawned = true;
@@ -35,24 +40,30 @@ internal class CursedEffigy : GrabbableObject {
         }
     }
 
-    public override void GrabItem() {
+    public override void GrabItem()
+    {
         base.GrabItem();
         SetOwningPlayerServerRpc(Array.IndexOf(StartOfRound.Instance.allPlayerScripts, playerHeldBy));
     }
-    public override void DiscardItem() {
+    public override void DiscardItem()
+    {
         base.DiscardItem();
-        if (!previousPlayerHeldBy.isPlayerDead) {
+        if (!previousPlayerHeldBy.isPlayerDead)
+        {
             SetOwningPlayerServerRpc(-1);
         }
     }
 
     [ServerRpc]
-    public void SetOwningPlayerServerRpc(int OwnerID) {
+    public void SetOwningPlayerServerRpc(int OwnerID)
+    {
         SetOwningPlayerClientRpc(OwnerID);
     }
     [ClientRpc]
-    public void SetOwningPlayerClientRpc(int OwnerID) {
-        if (OwnerID == -1) {
+    public void SetOwningPlayerClientRpc(int OwnerID)
+    {
+        if (OwnerID == -1)
+        {
             previousPlayerHeldBy = null;
             return;
         }
@@ -60,14 +71,17 @@ internal class CursedEffigy : GrabbableObject {
     }
 
     [ServerRpc(RequireOwnership = false)]
-    public void CreateMimicServerRpc(bool inFactory, Vector3 playerPositionAtDeath) {
-        if (previousPlayerHeldBy == null) {
+    public void CreateMimicServerRpc(bool inFactory, Vector3 playerPositionAtDeath)
+    {
+        if (previousPlayerHeldBy == null)
+        {
             WTOBase.LogToConsole("Previousplayerheldby is null so the Ghost Player could not be spawned");
             return;
         }
         WTOBase.LogToConsole($"Server creating Ghost Player from Effigy. Previous Player: {previousPlayerHeldBy.playerUsername}");
         Vector3 MimicSpawnPos = RoundManager.Instance.GetNavMeshPosition(playerPositionAtDeath, default, 10f);
-        if (!RoundManager.Instance.GotNavMeshPositionResult) {
+        if (!RoundManager.Instance.GotNavMeshPositionResult)
+        {
             WTOBase.LogToConsole("No nav mesh found; no Ghost Player could be created");
             return;
         }
@@ -76,7 +90,8 @@ internal class CursedEffigy : GrabbableObject {
 
         NetworkObjectReference MimicNetObject = RoundManager.Instance.SpawnEnemyGameObject(MimicSpawnPos, 0, -1, TheMimic);
 
-        if (MimicNetObject.TryGet(out var networkObject)) {
+        if (MimicNetObject.TryGet(out var networkObject))
+        {
             WTOBase.LogToConsole("Got network object for Ghost Player");
             MaskedPlayerEnemy MimicScript = networkObject.GetComponent<MaskedPlayerEnemy>();
             MimicScript.mimickingPlayer = previousPlayerHeldBy;
@@ -98,19 +113,23 @@ internal class CursedEffigy : GrabbableObject {
         CreateMimicClientRpc(MimicNetObject, inFactory);
     }
     [ClientRpc]
-    public void CreateMimicClientRpc(NetworkObjectReference netObjectRef, bool inFactory) {
+    public void CreateMimicClientRpc(NetworkObjectReference netObjectRef, bool inFactory)
+    {
         StartCoroutine(WaitForMimicEnemySpawn(netObjectRef, inFactory));
     }
-    private IEnumerator WaitForMimicEnemySpawn(NetworkObjectReference netObjectRef, bool inFactory) {
+    private IEnumerator WaitForMimicEnemySpawn(NetworkObjectReference netObjectRef, bool inFactory)
+    {
         NetworkObject netObject = null;
         float startTime = Time.realtimeSinceStartup;
         yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || netObjectRef.TryGet(out netObject));
-        if (previousPlayerHeldBy.deadBody == null) {
+        if (previousPlayerHeldBy.deadBody == null)
+        {
             startTime = Time.realtimeSinceStartup;
             yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || previousPlayerHeldBy.deadBody != null);
         }
         previousPlayerHeldBy.deadBody.DeactivateBody(setActive: false);
-        if (netObject == null) {
+        if (netObject == null)
+        {
             yield break;
         }
         WTOBase.LogToConsole("Got network object for Ghost Player enemy client");
@@ -132,11 +151,13 @@ internal class CursedEffigy : GrabbableObject {
     }
 
     [ServerRpc]
-    private void DestroyEffigyServerRpc() {
+    private void DestroyEffigyServerRpc()
+    {
         DestroyEffigyClientRpc();
     }
     [ClientRpc]
-    private void DestroyEffigyClientRpc() {
+    private void DestroyEffigyClientRpc()
+    {
         DestroyObjectInHand(playerHeldBy);
     }
 

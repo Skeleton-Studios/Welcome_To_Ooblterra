@@ -1,17 +1,9 @@
-﻿using GameNetcodeStuff;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
-
-namespace Welcome_To_Ooblterra.Enemies;
+﻿namespace Welcome_To_Ooblterra.Enemies;
 //Trimming this for now, will add it back later if I have enough time
 
 
-public class SecBotAI : EnemyAI {
+public class SecBotAI : EnemyAI
+{
     /*
     private class Move : BehaviorState {
         public bool MovingToNextPoint;

@@ -1,11 +1,12 @@
 ﻿using System;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.Enemies;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Items;
-internal class OoblCorpsePart : GrabbableObject {
+internal class OoblCorpsePart : GrabbableObject
+{
 
 #pragma warning disable 0649 // Assigned in Unity Editor
     public EnemyType OoblGhostTemplate;
@@ -13,12 +14,14 @@ internal class OoblCorpsePart : GrabbableObject {
 
     private OoblGhostAI MySpawnedGhost = null;
 
-    public override void GrabItem() {
+    public override void GrabItem()
+    {
         base.GrabItem();
         OnGrabItemServerRpc(Array.IndexOf(StartOfRound.Instance.allPlayerScripts, playerHeldBy));
     }
 
-    public override void DiscardItem() {
+    public override void DiscardItem()
+    {
         base.DiscardItem();
         OnDiscardItemServerRpc();
     }
@@ -26,11 +29,11 @@ internal class OoblCorpsePart : GrabbableObject {
     [ServerRpc]
     private void OnGrabItemServerRpc(int clientId)
     {
-        if(isInShipRoom)
+        if (isInShipRoom)
         {
             return;
         }
-        
+
         if (MySpawnedGhost)
         {
             // Change target to the player who most recently grabbed us
@@ -78,13 +81,14 @@ internal class OoblCorpsePart : GrabbableObject {
     }
 
     [ServerRpc]
-    private void DestroyCorpsePartServerRpc() 
+    private void DestroyCorpsePartServerRpc()
     {
         DestroyCorpsePartClientRpc();
     }
 
     [ClientRpc]
-    private void DestroyCorpsePartClientRpc() {
+    private void DestroyCorpsePartClientRpc()
+    {
         WTOBase.LogToConsole($"Destroying: {this}");
         DestroyObjectInHand(playerHeldBy);
     }

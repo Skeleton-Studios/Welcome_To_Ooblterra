@@ -1,16 +1,11 @@
 ﻿using GameNetcodeStuff;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
-using Welcome_To_Ooblterra.Things;
 
 namespace Welcome_To_Ooblterra.Enemies.EnemyThings;
-public class BabyLurkerProjectile : NetworkBehaviour {
+public class BabyLurkerProjectile : NetworkBehaviour
+{
 
     public AudioSource Noisemaker;
     public AudioClip[] ExplodeSounds;
@@ -24,45 +19,54 @@ public class BabyLurkerProjectile : NetworkBehaviour {
     private System.Random ProjectileRandom;
     private bool IsDead = false;
     private bool IsArachnophobiaMode = false;
-    
-    private void OnTriggerEnter(Collider other) {
+
+    private void OnTriggerEnter(Collider other)
+    {
         WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
-        if (other.gameObject.CompareTag("Player") && !IsDead) {
+        if (other.gameObject.CompareTag("Player") && !IsDead)
+        {
             victim.DamagePlayer(15, causeOfDeath: CauseOfDeath.Unknown);
-            
+
         }
-        DestroySelf(); 
+        DestroySelf();
         IsDead = true;
     }
-    
-    private void Start() {
+
+    private void Start()
+    {
         ProjectileRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-        if (IsArachnophobiaMode != IngamePlayerSettings.Instance.unsavedSettings.spiderSafeMode) {
+        if (IsArachnophobiaMode != IngamePlayerSettings.Instance.unsavedSettings.spiderSafeMode)
+        {
             IsArachnophobiaMode = IngamePlayerSettings.Instance.unsavedSettings.spiderSafeMode;
             ArachnophobiaMesh.enabled = IsArachnophobiaMode;
             LurkerMesh.enabled = !IsArachnophobiaMode;
         }
     }
-    private void Update() { 
-        if (!StartAutoDestroy){
+    private void Update()
+    {
+        if (!StartAutoDestroy)
+        {
             return;
         }
         AutoDestroyTime -= Time.deltaTime;
-        if(AutoDestroyTime <= 0f) {
+        if (AutoDestroyTime <= 0f)
+        {
             Destroy(this);
         }
     }
 
-    private void DestroySelf() {
+    private void DestroySelf()
+    {
 
         Noisemaker?.PlayOneShot(ExplodeSounds[ProjectileRandom.Next(0, ExplodeSounds.Length)]);
         ExplodeParticle?.Play();
         GetComponent<Rigidbody>().isKinematic = true;
-        
+
         LurkerMesh.enabled = false;
         ArachnophobiaMesh.enabled = false;
-        if (OwningLurker != null) { 
+        if (OwningLurker != null)
+        {
             OwningLurker.ThrowingSelfAtPlayer = false;
             OwningLurker.KillEnemyOnOwnerClient(true);
         }
