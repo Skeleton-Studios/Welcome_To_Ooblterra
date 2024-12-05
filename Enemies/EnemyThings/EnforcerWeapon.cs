@@ -7,10 +7,10 @@ public class EnforcerWeapon : GrabbableObject {
     public bool isTargetingLaser;
     public bool isLaunchingRocket;
 
-    public void TargetLaser() { 
+    public void TargetLaser(Object target) { 
         
     }
-    public void LaunchRocket() { 
+    public void LaunchRocket(Object target) { 
         
     }
 }

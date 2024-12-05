@@ -21,12 +21,12 @@ internal class OoblGhostAI : WTOEnemy {
     public float GhostInterferenceSeconds = 1.5f;
 
     [Header("Defaults")]
-    #pragma warning disable 0649 // Assigned in Unity Editor
+#pragma warning disable 0649 // Assigned in Unity Editor
     public Material GhostMat;
     public Material GhostTeethMat;
     public SkinnedMeshRenderer GhostRenderer;
-    #pragma warning disable 0649 // Assigned in Unity Editor
-    public SkinnedMeshRenderer GhostArmsRenderer; 
+    public SkinnedMeshRenderer GhostArmsRenderer;
+#pragma warning restore 0649
 
     //STATES
     private class WaitForNextAttack : BehaviorState {
@@ -51,22 +51,7 @@ internal class OoblGhostAI : WTOEnemy {
     private class ChooseTarget : BehaviorState {
 
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            /*
-            List<PlayerControllerB> AllPlayersList = StartOfRound.Instance.allPlayerScripts.ToList();
-            for (int i = 0; i < StartOfRound.Instance.allPlayerScripts.Length; i++) {
-                PlayerControllerB player = StartOfRound.Instance.allPlayerScripts[i];
-                if (!player.isPlayerControlled || player.isPlayerDead) {
-                    AllPlayersList.Remove(player);
-                    continue;
-                }
-                WTOBase.LogToConsole($"GHOST #{GhostList[enemyIndex].WTOEnemyID}: Found Player {StartOfRound.Instance.allPlayerScripts[i].playerUsername}");
-            }
-            if (AllPlayersList != null && AllPlayersList.Count >= 0 && GhostList[enemyIndex].IsOwner) {
-                PlayerControllerB CachedTargetPlayer = GhostList[enemyIndex].FindMostHauntedPlayer(enemyRandom, AllPlayersList);
-                GhostList[enemyIndex].SetGhostTargetServerRpc(Array.IndexOf(StartOfRound.Instance.allPlayerScripts, CachedTargetPlayer));
 
-            }
-            */
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -96,10 +81,7 @@ internal class OoblGhostAI : WTOEnemy {
             GhostList[enemyIndex].StopGhostFade();
             GhostList[enemyIndex].MoveGhostTowardTarget();
             if (GhostList[enemyIndex].PlayerWithinRange(GhostList[enemyIndex].GhostInterferenceRange)) {
-                //GhostList[enemyIndex].ShouldListenForWalkie = true;
-                //if (StartOfRound.Instance.connectedPlayersAmount <= 0 || StartOfRound.Instance.livingPlayers <= 1) {
-                    GhostList[enemyIndex]?.SinglePlayerEvaluateWalkie();
-                //}
+                GhostList[enemyIndex]?.SinglePlayerEvaluateWalkie();
             } else {
                 GhostList[enemyIndex].ShouldListenForWalkie = false;
             }
@@ -188,9 +170,7 @@ internal class OoblGhostAI : WTOEnemy {
     }
 
     public override void Start() {
-        //transform.position = new Vector3(0, -300, 0);
         OoblGhostTerminalInt = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Oobl Ghost").terminalNode.creatureFileID;
-        //GetComponent<AcidWater>().DamageAmount = (int)GhostDamagePerTick;
         base.Start();
         StopGhostFade();
     }

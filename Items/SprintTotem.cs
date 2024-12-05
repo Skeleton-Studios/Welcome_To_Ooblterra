@@ -12,12 +12,12 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 internal class SprintTotem : GrabbableObject {
 
-    #pragma warning disable 0649 // Assigned in Unity Editor
+#pragma warning disable 0649 // Assigned in Unity Editor
     public AudioClip TotemBreakSound;
     public AudioSource AudioPlayer;
     public List<MeshRenderer> TotemPieces = [];
     public MeshRenderer TotemCenter;
-    #pragma warning restore 0649
+#pragma warning restore 0649
 
     private float TotemSecondsRemaining = 15;
     private float TotemPercentage = 100;

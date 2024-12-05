@@ -42,7 +42,6 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         ];
     }
     private class Patrol : BehaviorState {
-        // private bool canMakeNextPoint;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].Awakening = false;
             GallenarmaList[enemyIndex].creatureVoice.clip = null;
@@ -57,16 +56,6 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             if (!GallenarmaList[enemyIndex].RoamLab.inProgress) {
                 GallenarmaList[enemyIndex].StartSearch(GallenarmaList[enemyIndex].transform.position, GallenarmaList[enemyIndex].RoamLab);
             }
-            /*
-            if (GallenarmaList[enemyIndex].IsOwner) {
-                if (!canMakeNextPoint) {
-                canMakeNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[enemyRandom.Next(GallenarmaList[enemyIndex].allAINodes.Length - 1)].transform.position, 15), checkForPath: true);
-                }
-                if(Vector3.Distance(GallenarmaList[enemyIndex].transform.position, GallenarmaList[enemyIndex].destination) < 10) {
-                    canMakeNextPoint = false;
-                }
-            }
-            */
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             GallenarmaList[enemyIndex].StopSearch(GallenarmaList[enemyIndex].RoamLab, clear: false);
