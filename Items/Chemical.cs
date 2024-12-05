@@ -1,20 +1,25 @@
 ﻿using System;
 using System.Collections.Generic;
-using Unity.Netcode;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 using UnityEngine;
+using Unity.Netcode;
+using GameNetcodeStuff;
+using System.Collections;
+using UnityEngine.AI;
 using Welcome_To_Ooblterra.Properties;
+using DunGen;
 
 namespace Welcome_To_Ooblterra.Items;
-public class Chemical : GrabbableObject
-{
+public class Chemical : GrabbableObject {
 
     [InspectorName("Defaults")]
     public MeshRenderer BeakerMesh;
     public List<AudioClip> ShakeSounds;
 
     [HideInInspector]
-    public enum ChemColor
-    {
+    public enum ChemColor {
         Red,
         Orange,
         Yellow,
@@ -31,8 +36,7 @@ public class Chemical : GrabbableObject
     private float ShakeCooldownSeconds = 0;
     private bool IsFull = true;
 
-    public override void Start()
-    {
+    public override void Start() {
         base.Start();
         MyRandom = new System.Random();
         System.Random ScrapValueRandom = new(StartOfRound.Instance.randomMapSeed);
@@ -42,84 +46,65 @@ public class Chemical : GrabbableObject
         ChangeChemColorAndEffect(false);
 
     }
-    public override void Update()
-    {
+    public override void Update() {
         base.Update();
-        if (ShakeCooldownSeconds > 0)
-        {
+        if(ShakeCooldownSeconds > 0) { 
             ShakeCooldownSeconds -= Time.deltaTime;
         }
     }
 
-    public override void EquipItem()
-    {
+    public override void EquipItem() {
         base.EquipItem();
         playerHeldBy.equippedUsableItemQE = true;
     }
-    public override void ItemInteractLeftRight(bool right)
-    {
+    public override void ItemInteractLeftRight(bool right) {
         base.ItemInteractLeftRight(right);
-        if (!right && ShakeCooldownSeconds <= 0 && IsFull)
-        {
+        if (!right && ShakeCooldownSeconds <= 0 && IsFull) {
             ShakeCooldownSeconds = 1.2f;
             playerHeldBy.playerBodyAnimator.SetTrigger("shakeItem");
             ChangeChemColorAndEffect();
         }
     }
 
-    private void ChangeChemColorAndEffect(bool PlayShakeSound = true, bool RandomNextColor = false)
-    {
+    private void ChangeChemColorAndEffect(bool PlayShakeSound = true, bool RandomNextColor = false) {
         int NextColor;
-        if (RandomNextColor)
-        {
+        if (RandomNextColor) {
             NextColor = MyRandom.Next(0, 7);
-        }
-        else
-        {
+        } else { 
             NextColor = GetNextIntOrdered();
         }
         int NextRandomEffect = MyRandom.Next(0, 7);
         WTOBase.LogToConsole($"Next Color Value: {(ChemColor)NextColor}");
         SetColorAndEffectServerRpc(NextColor, NextRandomEffect, PlayShakeSound);
     }
-    private int GetNextRandomInt()
-    {
+    private int GetNextRandomInt() {
         int NextInt = MyRandom.Next(0, 7);
-        if (NextInt != (int)CurrentColor)
-        {
+        if(NextInt != (int)CurrentColor) {
             return NextInt;
         }
         return GetNextRandomInt();
     }
-    private int GetNextIntOrdered()
-    {
+    private int GetNextIntOrdered() {
         int NextInt = (int)CurrentColor;
-        if (CurrentColor == ChemColor.Purple)
-        {
+        if (CurrentColor == ChemColor.Purple) {
             return (int)ChemColor.Red;
         }
         return NextInt + 1;
     }
-    public void EmptyBeaker()
-    {
+    public void EmptyBeaker() {
         SetColorAndEffectServerRpc(7, -1);
     }
-    public ChemColor GetCurrentColor()
-    {
+    public ChemColor GetCurrentColor() {
         return CurrentColor;
     }
-    private void DrinkChemicals()
-    {
-        if (IsFull)
-        {
+    private void DrinkChemicals() {
+        if (IsFull) { 
             RandomChemEffectServerRpc(RandomEffectIndex);
             EmptyBeaker();
         }
     }
-    public static Color GetColorFromEnum(ChemColor inColor)
-    {
-        switch (inColor)
-        {
+    public static Color GetColorFromEnum(ChemColor inColor) {
+        switch(inColor) {
             case ChemColor.Red:
                 return new Color(1, 0, 0);
             case ChemColor.Orange:
@@ -143,20 +128,16 @@ public class Chemical : GrabbableObject
 
 
     [ServerRpc]
-    private void RandomChemEffectServerRpc(int RandomIndex)
-    {
+    private void RandomChemEffectServerRpc(int RandomIndex) {
         RandomChemEffectClientRpc(RandomIndex);
     }
     [ClientRpc]
-    private void RandomChemEffectClientRpc(int RandomIndex)
-    {
+    private void RandomChemEffectClientRpc(int RandomIndex) {
         RandomChemEffect(RandomIndex);
     }
-    private void RandomChemEffect(int RandomIndex)
-    {
+    private void RandomChemEffect(int RandomIndex) {
         IsFull = false;
-        switch (RandomIndex)
-        {
+        switch (RandomIndex) {
             case 0:
                 //Explode
                 break;
@@ -186,26 +167,21 @@ public class Chemical : GrabbableObject
     }
 
     [ServerRpc]
-    private void SetColorAndEffectServerRpc(int color, int effect, bool PlayShakeSound = true)
-    {
+    private void SetColorAndEffectServerRpc(int color, int effect, bool PlayShakeSound = true) {
         SetColorAndEffectClientRpc(color, effect, PlayShakeSound);
     }
     [ClientRpc]
-    private void SetColorAndEffectClientRpc(int color, int effect, bool PlayShakeSound = true)
-    {
+    private void SetColorAndEffectClientRpc(int color, int effect, bool PlayShakeSound = true) {
         SetColorAndEffect(color, effect, PlayShakeSound);
     }
-    private void SetColorAndEffect(int color, int effect, bool PlayShakeSound = true)
-    {
-        if (PlayShakeSound)
-        {
+    private void SetColorAndEffect(int color, int effect, bool PlayShakeSound = true) {
+        if (PlayShakeSound) { 
             GetComponent<AudioSource>().PlayOneShot(ShakeSounds[MyRandom.Next(0, ShakeSounds.Count - 1)]);
         }
         CurrentColor = (ChemColor)Enum.GetValues(typeof(ChemColor)).GetValue(color);
         BeakerMesh.materials[1].SetColor("_BaseColor", GetColorFromEnum(CurrentColor));
         RandomEffectIndex = effect;
-        if (color == 7)
-        {
+        if(color == 7) {
             IsFull = false;
             SetScrapValue(scrapValue / 3);
         }

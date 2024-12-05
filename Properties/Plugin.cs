@@ -1,13 +1,15 @@
 ﻿using BepInEx;
-using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using System.Collections.Generic;
+using Welcome_To_Ooblterra.Patches;
 using System.IO;
-using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using Welcome_To_Ooblterra.Patches;
+using System;
+using UnityEngine.InputSystem;
+using BepInEx.Configuration;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Welcome_To_Ooblterra.Properties;
 
@@ -16,38 +18,33 @@ namespace Welcome_To_Ooblterra.Properties;
     */
 
 [HideInInspector]
-public enum SuitStatus
-{
+public enum SuitStatus {
     Enable,
     Purchase,
     Disable,
     SleepsSpecial
 }
 
-public enum PosterStatus
-{
+public enum PosterStatus {
     ReplaceVanilla,
     AddAsDecor,
     Disable
 }
 
-public enum FootstepEnum
-{
+public enum FootstepEnum { 
     Enable,
     Quiet,
     Disable
 }
 
-public enum TiedToLabEnum
-{
+public enum TiedToLabEnum {
     WTOOnly,
     AppendWTO,
     UseMoonDefault
 }
 
 [BepInPlugin(modGUID, modName, modVersion)]
-public class WTOBase : BaseUnityPlugin
-{
+public class WTOBase : BaseUnityPlugin {
 
     //static Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
     private const string modGUID = "SkullCrusher.WTO";
@@ -64,7 +61,7 @@ public class WTOBase : BaseUnityPlugin
     public static AssetBundle MonsterAssetBundle;
     public const string RootPath = "Assets/Resources/WelcomeToOoblterra/";
 
-
+    
     public static ConfigEntry<bool> WTODebug;
     public static ConfigEntry<bool> WTOCustomSuits;
     public static ConfigEntry<bool> WTOCustomPoster;
@@ -83,20 +80,17 @@ public class WTOBase : BaseUnityPlugin
 
     [HarmonyPatch(typeof(StartOfRound), "Update")]
     [HarmonyPostfix]
-    public static void DebugHelper(StartOfRound __instance)
-    {
+    public static void DebugHelper(StartOfRound __instance) {
 
     }
 
-    void Awake()
-    {
-        /*CONFIG STUFF*/
-        {
+    void Awake() {
+        /*CONFIG STUFF*/{
             WTODebug = Config.Bind("1. Debugging", "Print Debug Strings", false, "Whether or not to write WTO's debug print-strings to the log."); //IMPLEMENTED
             WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED 
             WTOMusic = Config.Bind("2. Accessibility", "Music Volume", 100, "Adjust the volume of 523-Ooblterra's custom Time-Of-Day music. Binds between 0 and 100.");
             WTOCustomSuits = Config.Bind("3. Ship Stuff", "Custom Suit Status", true, "Whether or not to add WTO's custom suits."); //IMPLEMENTED
-            WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status", true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
+            WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status",  true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
             WTOHazardList = Config.Bind("4. Map Hazards", "Custom Hazard List", "SpikeTrap, TeslaCoil, BabyLurkerEgg, BearTrap", "A list of all of WTO's custom hazards to enable. Affects 523-Ooblterra, and also has influence on the settings below."); //IMPLEMENTED
             /*WTOForceOutsideOnly = Config.Bind("5. Modded Content", "Force Configuration settings on 523 Ooblterra", true, "When true, forces 523 Ooblterra to spawn only the enemies/scrap found in its LLL config settings. This prevents custom monsters/scrap from spawning on the moon, unless manually specified.");*/
             //WTOScalePrice = Config.Bind("5. Scrap", "Scale Scrap By Route Price", false, "Changes the value of Ooblterra's scrap to fit relative to the route price set for 523 Ooblterra. Only affects Ooblterra's custom scrap."); //IMPLEMENTED
@@ -111,8 +105,7 @@ public class WTOBase : BaseUnityPlugin
         }
 
         //Load up various things and tell the console we've loaded
-        if (Instance == null)
-        {
+        if (Instance == null) {
             Instance = this;
         }
 
@@ -125,9 +118,9 @@ public class WTOBase : BaseUnityPlugin
         WTOHarmony.PatchAll(typeof(MoonPatch));
         WTOHarmony.PatchAll(typeof(SuitPatch));
         WTOHarmony.PatchAll(typeof(TerminalPatch));
-
+            
         LogToConsole("BEGIN PRINTING LOADED ASSETS");
-        string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");
+        string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
         FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
         string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
         ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
@@ -140,64 +133,50 @@ public class WTOBase : BaseUnityPlugin
         FactoryPatch.Start();
         ItemPatch.Start();
         MonsterPatch.Start();
-
+        
 
         //NetcodeWeaver stuff
         var types = Assembly.GetExecutingAssembly().GetTypes();
-        foreach (var type in types)
-        {
+        foreach (var type in types) {
             var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            foreach (var method in methods)
-            {
+            foreach (var method in methods) {
                 var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
-                if (attributes.Length > 0)
-                {
+                if (attributes.Length > 0) {
                     method.Invoke(null, null);
                 }
             }
         }
     }
-    public void Update()
-    {
+    public void Update() {
 
     }
-    public static T ContextualLoadAsset<T>(AssetBundle Bundle, string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object
-    {
-        if (Application.platform == RuntimePlatform.WindowsEditor)
-        {
+    public static T ContextualLoadAsset <T>(AssetBundle Bundle, string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object {
+        if (Application.platform == RuntimePlatform.WindowsEditor) {
             string PathMinusFileType = PathToAsset.Substring(17);
             PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
-            if (LogLoading)
-            {
+            if (LogLoading) { 
                 LogToConsole($"Loading {PathMinusFileType} from resources folder...", ForcePrint: true);
             }
             return Resources.Load<T>(PathMinusFileType);
-        }
-        else
-        {
+        } else {
             //Some postprocessing on this text to make the readout a little cleaner
             int LengthOfAssetName = PathToAsset.Length - PathToAsset.LastIndexOf("/");
             string CleanAssetName = PathToAsset.Substring(PathToAsset.LastIndexOf("/"), LengthOfAssetName);
-            if (LogLoading)
-            {
-                LogToConsole($"Loading {CleanAssetName} from {Bundle.name}...", ForcePrint: true);
+            if(LogLoading) { 
+                LogToConsole($"Loading {CleanAssetName} from {Bundle.name}...", ForcePrint:true);
             }
             return Bundle.LoadAsset<T>(PathToAsset);
         }
     }
-    public static void LogToConsole(string text, bool AddFlair = true, bool ForcePrint = false)
-    {
-        if (AddFlair)
-        {
+    public static void LogToConsole(string text, bool AddFlair = true, bool ForcePrint = false) {
+        if (AddFlair) { 
             text = "=======" + text + "=======";
         }
-        if (WTODebug.Value || ForcePrint)
-        {
+        if (WTODebug.Value || ForcePrint) {
             WTOLogSource.LogMessage(text);
         }
     }
-    public static List<string> CSVSeperatedStringList(string InputString)
-    {
+    public static List<string> CSVSeperatedStringList(string InputString) {
         List<string> MyStringArray = [];
         InputString = InputString.Replace(" ", "");
         InputString = InputString.ToLower();

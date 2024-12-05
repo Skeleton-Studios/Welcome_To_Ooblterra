@@ -1,18 +1,23 @@
-﻿using GameNetcodeStuff;
+﻿using System;
 using System.Collections.Generic;
+using System.Linq;
+using System.Security.AccessControl;
+using System.Text;
+using System.Threading.Tasks;
+using GameNetcodeStuff;
 using Unity.Netcode;
 using UnityEngine;
+using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
-public class BearTrap : MonoBehaviour, IHittable
-{
+public class BearTrap : MonoBehaviour, IHittable {
 
     public int DamageAmount = 5;
     private float TimeSincePlayerDamaged = 0.5f;
 
     private float SecondsUntilNextRiseAttempt = 200;
-
+    
     public Animator BearTrapAnim;
     //public float BearTrapStartPos;
     //public float BearTrapEndPos;
@@ -23,41 +28,31 @@ public class BearTrap : MonoBehaviour, IHittable
     private int BearTrapRiseChance = 70;
     public AudioClip CloseSound;
 
-    public bool Hit(int force, Vector3 hitDirection, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1)
-    {
-        if (!IsBearTrapClosed)
-        {
+    public bool Hit(int force, Vector3 hitDirection, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
+        if (!IsBearTrapClosed) {
             SetBearTrapOpenState(false);
         }
-        if (IsBearTrapRaised)
-        {
+        if (IsBearTrapRaised) {
             MoveBearTrap(false);
         }
         return true;
     }
 
-    public void OnTriggerEnter(Collider other)
-    {
-        try
-        {
+    public void OnTriggerEnter(Collider other) {
+        try {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
-            if (!PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null)
-            {
+            if (!PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
                 WTOBase.LogToConsole($"Bear Trap: Adding Player {PlayerInRange} to player in range list...");
                 PlayerInRangeList.Add(PlayerInRange);
                 SetBearTrapOpenState(false);
                 GetComponent<AudioSource>().PlayOneShot(CloseSound);
             }
-        }
-        catch { }
+        } catch { }
     }
-    public void OnTriggerExit(Collider other)
-    {
-        try
-        {
+    public void OnTriggerExit(Collider other) {
+        try {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
-            if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null)
-            {
+            if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
                 WTOBase.LogToConsole($"Bear Trap: Removing Player {PlayerInRange} from player in range list...");
                 PlayerInRange.movementSpeed = 4.6f;
                 PlayerInRange.jumpForce = 13;
@@ -65,93 +60,70 @@ public class BearTrap : MonoBehaviour, IHittable
                 MoveBearTrap(false);
                 SetBearTrapOpenState(true);
             }
-        }
-        catch { }
+        } catch { }
     }
 
-    private void OnTriggerStay(Collider other)
-    {
-        if (!other.gameObject.CompareTag("Player"))
-        {
+    private void OnTriggerStay(Collider other) {
+        if (!other.gameObject.CompareTag("Player")) {
             return;
         }
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
-        if (IsBearTrapClosed)
-        {
+        if (IsBearTrapClosed) {
             AcidWater.DamageOverlappingPlayer(victim, 0.5f, ref TimeSincePlayerDamaged, 5);
-            if (victim.health > 1)
-            {
+            if (victim.health > 1) {
                 victim.movementSpeed = 0.4f;
                 victim.jumpForce = 1;
-            }
-            else
-            {
+            } else {
                 victim.jumpForce = 13;
                 victim.movementSpeed = 4.6f;
             }
-        }
+        } 
     }
 
-    private void Start()
-    {
+    private void Start() {
         BearTrapRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
     }
 
-    private void Update()
-    {
-        if (IsBearTrapRaised)
-        {
+    private void Update() {
+        if (IsBearTrapRaised) {
             return;
         }
-        if (SecondsUntilNextRiseAttempt > 0)
-        {
+        if(SecondsUntilNextRiseAttempt > 0) {
             SecondsUntilNextRiseAttempt -= Time.deltaTime;
-        }
-        else
-        {
+        } else { 
             TryBearTrapRise();
         }
     }
 
-    private void TryBearTrapRise()
-    {
-        if (BearTrapRandom.Next(0, 100) > 70)
-        {
+    private void TryBearTrapRise() {
+        if (BearTrapRandom.Next(0, 100) > 70) {
             MoveBearTrapServerRpc(true);
             return;
         }
         SecondsUntilNextRiseAttempt = BearTrapRandom.Next(15, 50);
-        if (BearTrapRiseChance > 0)
-        {
+        if(BearTrapRiseChance > 0) {
             BearTrapRiseChance -= 10;
         }
     }
 
     [ServerRpc]
-    public void MoveBearTrapServerRpc(bool ShouldRaise)
-    {
+    public void MoveBearTrapServerRpc(bool ShouldRaise) {
         MoveBearTrap(ShouldRaise);
     }
 
-    private void MoveBearTrap(bool ShouldRaise)
-    {
+    private void MoveBearTrap(bool ShouldRaise) {
         IsBearTrapRaised = ShouldRaise;
-        if (ShouldRaise)
-        {
+        if (ShouldRaise) {
             SetBearTrapOpenState(true);
             BearTrapAnim.SetBool("IsRaised", true);
-        }
-        else
-        {
+        } else {
             //play animation for bear trap descending
             BearTrapAnim.SetBool("IsRaised", false);
             SecondsUntilNextRiseAttempt = BearTrapRandom.Next(15, 50);
         }
     }
-    private void SetBearTrapOpenState(bool isOpen)
-    {
-        if (isOpen)
-        {
+    private void SetBearTrapOpenState(bool isOpen) {
+        if (isOpen) {
             BearTrapAnim.SetBool("CloseTrap", false);
             IsBearTrapClosed = false;
             return;

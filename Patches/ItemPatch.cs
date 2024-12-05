@@ -1,15 +1,15 @@
 ﻿using HarmonyLib;
-using LethalLevelLoader;
+using UnityEngine;
+using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using LethalLib.Modules;
 using System.Collections.Generic;
-using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
-using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
+using Unity.Netcode;
+using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Patches;
 
-internal class ItemPatch
-{
+internal class ItemPatch {
 
 
     private static AudioClip CachedDiscoBallMusic;
@@ -49,10 +49,8 @@ internal class ItemPatch
     //PATCHES
     [HarmonyPatch(typeof(RoundManager), "SetLockedDoors")]
     [HarmonyPrefix]
-    private static void ReplaceKeys(RoundManager __instance)
-    {
-        if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName)
-        {
+    private static void ReplaceKeys(RoundManager __instance) {
+        if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
             return;
         }
 
@@ -62,19 +60,15 @@ internal class ItemPatch
 
     [HarmonyPatch(typeof(CozyLights), "SetAudio")]
     [HarmonyPrefix]
-    private static bool ReplaceDiscoBall(CozyLights __instance)
-    {
-        if (StartOfRound.Instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName)
-        {
+    private static bool ReplaceDiscoBall(CozyLights __instance) {
+        if (StartOfRound.Instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {
             //set the disco ball music back to the default
-            if (__instance.turnOnAudio != null)
-            {
+            if(__instance.turnOnAudio != null) {
                 __instance.turnOnAudio.clip = CachedDiscoBallMusic;
             }
             return true;
         }
-        if (__instance.turnOnAudio != null)
-        {
+        if (__instance.turnOnAudio != null) {
             __instance.turnOnAudio.clip = OoblterraDiscoMusic;
         }
         return true;
@@ -82,13 +76,10 @@ internal class ItemPatch
 
     [HarmonyPatch(typeof(RoundManager), "SpawnScrapInLevel")]
     [HarmonyPrefix]
-    private static void SetItemsWTO(RoundManager __instance)
-    {
+    private static void SetItemsWTO(RoundManager __instance) {
         string PlanetName = __instance.currentLevel.PlanetName;
-        if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow)
-        {
-            if (MoonsToItemLists.TryGetValue(PlanetName, out List<SpawnableItemWithRarity> ResultItemList))
-            {
+        if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
+            if (MoonsToItemLists.TryGetValue(PlanetName, out List<SpawnableItemWithRarity> ResultItemList)) {
                 __instance.currentLevel.spawnableScrap = ResultItemList;
             }
             return;
@@ -97,12 +88,10 @@ internal class ItemPatch
     }
 
     //METHODS
-    public static void Start()
-    {
+    public static void Start() {
         //Create our custom items
         Item NextItemToProcess;
-        foreach (ItemData MyCustomScrap in ItemList)
-        {
+        foreach (ItemData MyCustomScrap in ItemList) {
             //Load item based on its path 
             NextItemToProcess = WTOBase.ContextualLoadAsset<Item>(ItemBundle, MyCustomScrap.GetItemPath());
             //Register it with LethalLib
@@ -116,21 +105,17 @@ internal class ItemPatch
         NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(ItemBundle, ItemPath + "OoblKey.prefab"));
         CachedDiscoBallMusic = WTOBase.ContextualLoadAsset<AudioClip>(ItemBundle, ItemPath + "Boombox6QuestionMark.ogg", false);
         OoblterraDiscoMusic = WTOBase.ContextualLoadAsset<AudioClip>(ItemBundle, ItemPath + "ooblboombox.ogg", false);
-        if (!MoonsToItemLists.ContainsKey(MoonPatch.MoonFriendlyName))
-        {
+        if (!MoonsToItemLists.ContainsKey(MoonPatch.MoonFriendlyName)) {
             MoonsToItemLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap);
         }
     }
 
-    private static void SetItemStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableItemWithRarity> CurrentMoonItemList, List<SpawnableItemWithRarity> OoblterraItemList)
-    {
+    private static void SetItemStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableItemWithRarity> CurrentMoonItemList, List<SpawnableItemWithRarity> OoblterraItemList) {
         List<SpawnableItemWithRarity> WeightedOoblterraItems = [];
-        foreach (SpawnableItemWithRarity Item in OoblterraItemList)
-        {
+        foreach (SpawnableItemWithRarity Item in OoblterraItemList) {
             WeightedOoblterraItems.Add(new SpawnableItemWithRarity { spawnableItem = Item.spawnableItem, rarity = Item.rarity * WTOBase.WTOWeightScale.Value });
         }
-        switch (TiedToLabState)
-        {
+        switch (TiedToLabState) {
             case TiedToLabEnum.WTOOnly:
                 CurrentMoonItemList = OoblterraItemList;
                 break;

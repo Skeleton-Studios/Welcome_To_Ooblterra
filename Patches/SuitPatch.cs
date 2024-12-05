@@ -1,17 +1,17 @@
 ﻿using HarmonyLib;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches;
-
+    
 /* Modified from AlexCodesGames' AdditionalSuits mod,
     * which gives explicit permission on both the repo and in 
     * the plugin.cs file. Thank you!
     */
-internal class SuitPatch
-{
+internal class SuitPatch {
 
     private const string SuitPath = WTOBase.RootPath + "CustomSuits/";
     private const string BlackSuitPath = WTOBase.RootPath + "CustomSuits/BlackSuits";
@@ -32,15 +32,13 @@ internal class SuitPatch
     private static bool SuitsLoaded = false;
 
     public static Material GhostPlayerSuit;
-
+    
     //PATCHES
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
     [HarmonyPrefix]
-    private static void StartPatch(ref StartOfRound __instance)
-    {
+    private static void StartPatch(ref StartOfRound __instance) {
         GhostPlayerSuit = WTOBase.ContextualLoadAsset<Material>(SuitBundle, SuitPath + "GhostPlayerSuit.mat");
-        if (WTOBase.WTOCustomSuits.Value)
-        {
+        if (WTOBase.WTOCustomSuits.Value) {
             LoadSuits(SuitPath);
         }
         /*
@@ -65,10 +63,8 @@ internal class SuitPatch
     [HarmonyPatch(typeof(RoundManager), "GenerateNewLevelClientRpc")]
     [HarmonyPostfix]
     [HarmonyPriority(0)]
-    private static void PatchPosters(StartOfRound __instance)
-    {
-        if (WTOBase.WTOCustomPoster.Value)
-        {
+    private static void PatchPosters(StartOfRound __instance) {
+        if (WTOBase.WTOCustomPoster.Value){
             ReplacePoster();
         }
         /*
@@ -88,17 +84,14 @@ internal class SuitPatch
     }
 
     //METHODS
-    private static void LoadSuits(string RelevantPath)
-    {
-        if (SuitsLoaded)
-        {
+    private static void LoadSuits(string RelevantPath) {
+        if (SuitsLoaded) {
             WTOBase.LogToConsole("SUITS ALREADY LOADED!");
             return;
         }
         UnlockableItem unlockableItem = StartOfRound.Instance.unlockablesList.unlockables.First(x => x.suitMaterial != null);
         //Create new suits based on the materials
-        foreach (string MatName in SuitMaterialNames)
-        {
+        foreach (string MatName in SuitMaterialNames) {
             UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
             UnlockableSuit newSuit = new();
             newUnlockableItem.suitMaterial = WTOBase.ContextualLoadAsset<Material>(SuitBundle, RelevantPath + MatName);
@@ -110,22 +103,18 @@ internal class SuitPatch
         }
         SuitsLoaded = true;
     }
-    private static void AddSuitPurchaseNode()
-    {
+    private static void AddSuitPurchaseNode() {
 
     }
-    private static void ReplacePoster()
-    {
-        if (GameObject.Find(PosterGameObject) == null)
-        {
+    private static void ReplacePoster() {
+        if (GameObject.Find(PosterGameObject) == null) {
             return;
         }
         Material[] materials = ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials;
         materials[1] = WTOBase.ContextualLoadAsset<Material>(SuitBundle, SuitPath + "Poster.mat");
         ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials = materials;
     }
-    private static void AddPosterShipDeco()
-    {
+    private static void AddPosterShipDeco() {
 
     }
 }

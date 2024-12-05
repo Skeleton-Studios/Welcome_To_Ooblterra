@@ -1,6 +1,16 @@
-﻿namespace Welcome_To_Ooblterra.Enemies;
-public class LurkerAI : WTOEnemy
-{
+﻿using GameNetcodeStuff;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using UnityEngine;
+using Welcome_To_Ooblterra.Properties;
+using Welcome_To_Ooblterra.Things;
+
+namespace Welcome_To_Ooblterra.Enemies;
+public class LurkerAI : WTOEnemy {
     /*
     //BEHAVIOR STATES
     private class Roam : BehaviorState {
