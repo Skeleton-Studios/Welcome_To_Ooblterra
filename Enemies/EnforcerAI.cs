@@ -18,7 +18,7 @@ public class EnforcerAI : WTOEnemy {
     public static int EnforcerAttackDamage = 100;
     public static float ActiveCamoVisibility = 0.025f;
 
-    private static float SecondsUntilNextSound = 15f;
+    private static readonly float SecondsUntilNextSound = 15f;
 
     [Header("Defaults")]
     public SkinnedMeshRenderer[] Meshes;
@@ -28,7 +28,7 @@ public class EnforcerAI : WTOEnemy {
     public AudioClip[] RandomIdleSounds;
     public BoxCollider ScanNode;
 
-    private List<Material> EnforcerMatList = new(); 
+    private readonly List<Material> EnforcerMatList = []; 
 
     //STATES
     private class GoToHidingSpot : BehaviorState {
@@ -63,9 +63,9 @@ public class EnforcerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new FoundHidingSpot()
-        };
+        ];
 
     }
     private class WaitForPlayerToPass : BehaviorState {
@@ -104,10 +104,10 @@ public class EnforcerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new PlayerPassedBy(),
             new PlayerStaringAtUs()
-        };
+        ];
 
     }
     private class StalkPlayer : BehaviorState {
@@ -132,9 +132,9 @@ public class EnforcerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Moving", false);
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new StalkedPlayerSeesUs() 
-        };
+        ];
 
     }
     private class ChasePlayer : BehaviorState {
@@ -149,10 +149,10 @@ public class EnforcerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new PlayerEnteredAttackRange(),
             new LostPlayerDuringChase() 
-        };
+        ];
 
     } 
      
@@ -167,9 +167,9 @@ public class EnforcerAI : WTOEnemy {
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new FinishedScream() 
-        };
+        ];
 
     }
     private class AttackPlayer : BehaviorState {
@@ -191,10 +191,10 @@ public class EnforcerAI : WTOEnemy {
             EnforcerList[enemyIndex].SetAnimBoolOnServerRpc("Attacking", false);
             EnforcerList[enemyIndex].HasAttackedThisCycle = false;  
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new PlayerKilled(),
             new PlayerLeftAttackRange()
-        };
+        ];
 
     }
     private class SearchForPlayer : BehaviorState {
@@ -207,10 +207,10 @@ public class EnforcerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new PlayerNotFoundDuringSearch(),
             new PlayerFoundDuringSearch()
-        };
+        ];
 
     }
 
@@ -310,9 +310,9 @@ public class EnforcerAI : WTOEnemy {
         }
     }
 
-    public static Dictionary<int, EnforcerAI> EnforcerList = new();
+    public static Dictionary<int, EnforcerAI> EnforcerList = [];
     private static int EnforcerID;
-    private List<GameObject> EnforcerHidePoints = new();
+    private List<GameObject> EnforcerHidePoints = [];
     private bool ReachedNextPoint = false;
     private bool EnforcerActiveCamoState = false;
     private GameObject NextHidePoint;
@@ -342,7 +342,7 @@ public class EnforcerAI : WTOEnemy {
         foreach(SkinnedMeshRenderer NextMesh in Meshes) {
             Material[] TempMaterialsArray = new Material[NextMesh.materials.Length];
             for(int i = 0; i < NextMesh.materials.Length; i++) {
-                Material NextMat = new Material(ActiveCamoMaterial);
+                Material NextMat = new(ActiveCamoMaterial);
                 //NextMat.SetFloat("_ACAmount", ActiveCamoVisibility);
                 NextMat.SetTexture("_MainTexture", NextMesh.materials[i].GetTexture("_BaseColorMap"));
                 TempMaterialsArray[i] = NextMat;
@@ -399,7 +399,7 @@ public class EnforcerAI : WTOEnemy {
 
     public void PopulateHidePoints() { 
         if(FindObjectsOfType<EnforcerHidePoint>().Length <= 0){
-            EnforcerHidePoints = GameObject.FindGameObjectsWithTag("AINode").ToList<GameObject>();
+            EnforcerHidePoints = [.. GameObject.FindGameObjectsWithTag("AINode")];
             return;
         }
         foreach (EnforcerHidePoint Hidepoints in FindObjectsOfType<EnforcerHidePoint>()) {

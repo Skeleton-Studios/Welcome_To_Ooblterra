@@ -51,7 +51,7 @@ public class WTOBase : BaseUnityPlugin {
     private const string modName = "Welcome To Ooblterra";
     private const string modVersion = "1.1.0";
 
-    private readonly Harmony WTOHarmony = new Harmony(modGUID);
+    private readonly Harmony WTOHarmony = new(modGUID);
     public static ManualLogSource WTOLogSource;
     public static WTOBase Instance;
 
@@ -177,7 +177,7 @@ public class WTOBase : BaseUnityPlugin {
         }
     }
     public static List<string> CSVSeperatedStringList(string InputString) {
-        List<string> MyStringArray = new();
+        List<string> MyStringArray = [];
         InputString = InputString.Replace(" ", "");
         InputString = InputString.ToLower();
         MyStringArray = InputString.Split(',').ToList<string>();

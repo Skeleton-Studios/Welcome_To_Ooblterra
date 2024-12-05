@@ -7,7 +7,10 @@ using Welcome_To_Ooblterra.Enemies;
 namespace Welcome_To_Ooblterra.Items;
 internal class OoblCorpsePart : GrabbableObject {
 
+#pragma warning disable 0649 // Assigned in Unity Editor
     public EnemyType OoblGhostTemplate;
+#pragma warning restore 0649
+
     private OoblGhostAI MySpawnedGhost = null;
 
     public override void GrabItem() {

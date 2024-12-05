@@ -14,7 +14,7 @@ public class BabyLurkerAI : WTOEnemy {
     public bool ThrowProjectile;
     public int ProjectilesThrown;
     public GameObject projectileTemplate;
-    private float launchVelocity = 700f;
+    private readonly float launchVelocity = 700f;
     public Transform LaunchTransform;
     public static int AttackRange = 5;
     private float JumpCooldownSeconds = 3f;
@@ -37,9 +37,9 @@ public class BabyLurkerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new FoundNearestPlayer()
-        };
+        ];
 
     }
     private class ChasePlayer : BehaviorState {
@@ -53,9 +53,9 @@ public class BabyLurkerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new TargetPlayerIsInLOS()
-        };
+        ];
     }
     private class WaitForAttackCooldown : BehaviorState {
 
@@ -68,10 +68,10 @@ public class BabyLurkerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new CooldownFinished(),
             new PlayerLeftRange()
-        };
+        ];
 
     }
     private class ThrowSelfAtPlayer : BehaviorState {
@@ -91,9 +91,7 @@ public class BabyLurkerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-            //new CooldownStarted()
-        };
+        public override List<StateTransition> transitions { get; set; } = [];
 
     }
 
@@ -141,11 +139,11 @@ public class BabyLurkerAI : WTOEnemy {
 
     private GameObject LiveProjectile;
 
-    public static Dictionary<int, BabyLurkerAI> BabyLurkerList = new();
+    public static Dictionary<int, BabyLurkerAI> BabyLurkerList = [];
     private static int BabyLurkerID;
     public bool ThrowingSelfAtPlayer;
     public GameObject LurkerBody;
-    private List<PlayerControllerB> LivingPlayers = new();
+    private readonly List<PlayerControllerB> LivingPlayers = [];
 
     public override void Start() {
         MyValidState = PlayerState.Inside;

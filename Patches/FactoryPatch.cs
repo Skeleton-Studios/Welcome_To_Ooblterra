@@ -18,14 +18,12 @@ using UnityEngine.Rendering;
 namespace Welcome_To_Ooblterra.Patches;
 internal class FactoryPatch {
 
-    public static EntranceTeleport MainExit;
-    public static EntranceTeleport FireExit;
     private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
     private const string DungeonPath = WTOBase.RootPath + "CustomDungeon/Data/";
     private const string BehaviorPath = WTOBase.RootPath + "CustomDungeon/Behaviors/";
     private const string SecurityPath = WTOBase.RootPath + "CustomDungeon/Security/";
     private const string DoorPath = WTOBase.RootPath + "CustomDungeon/Doors/";
-    public static List<SpawnableMapObject> SecurityList = new();
+    public static List<SpawnableMapObject> SecurityList = [];
     public static ExtendedDungeonFlow OoblDungeonFlow;
 
     //PATCHES 
@@ -42,7 +40,7 @@ internal class FactoryPatch {
         if (__instance.currentLevel.spawnableMapObjects == null || __instance.currentLevel.spawnableMapObjects.Length == 0) {
             return true;
         }
-        System.Random MapHazardRandom = new System.Random(StartOfRound.Instance.randomMapSeed + 587);
+        System.Random MapHazardRandom = new(StartOfRound.Instance.randomMapSeed + 587);
         __instance.mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
         RandomMapObject[] AllRandomSpawnList = UnityEngine.Object.FindObjectsOfType<RandomMapObject>();
         List<string> ValidHazardList = WTOBase.CSVSeperatedStringList(WTOBase.WTOHazardList.Value);
@@ -57,7 +55,7 @@ internal class FactoryPatch {
                 WTOBase.LogToConsole($"Object {__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn.name.ToLower()} not found in valid spawn list!");
                 continue;
             }
-            List<RandomMapObject> ValidRandomSpawnList = new List<RandomMapObject>();
+            List<RandomMapObject> ValidRandomSpawnList = [];
             int MapObjectsToSpawn = (int)__instance.currentLevel.spawnableMapObjects[MapObjectIndex].numberToSpawn.Evaluate((float)MapHazardRandom.NextDouble());
             WTOBase.WTOLogSource.LogInfo($"Attempting to spawn {__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn}; Quantity: {MapObjectsToSpawn}");
             if (__instance.increasedMapHazardSpawnRateIndex == MapObjectIndex) {

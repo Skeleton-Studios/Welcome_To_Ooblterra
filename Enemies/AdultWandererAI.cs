@@ -10,7 +10,7 @@ public class AdultWandererAI : WTOEnemy {
         //BEHAVIOR STATES
     private class Spawn : BehaviorState {
         private int SpawnTimer;
-        private int SpawnTime = 80;
+        private readonly int SpawnTime = 80;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             WTOBase.LogToConsole("SPAWN WANDERER");
             creatureAnimator.SetBool("Spawn", value: true);
@@ -26,13 +26,13 @@ public class AdultWandererAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Spawn", value: false);
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new EvaluateEnemyState()
-        };
+        ];
     }
     private class WaitForTargetLook : BehaviorState {
         private int LookWaitTime = 0;
-        private int LookWaitTimer = 3500;
+        private readonly int LookWaitTimer = 3500;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: false);
         }
@@ -45,9 +45,9 @@ public class AdultWandererAI : WTOEnemy {
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new EvaluatePlayerLook()
-        };
+        ];
 
     }
     private class Attack : BehaviorState {
@@ -77,17 +77,13 @@ public class AdultWandererAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Attacking", value: false);
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new EnemyKilled(),
             new EnemyLeftRange(),
             new EnemyInShipOrFacility()
-        };
+        ];
     }
     private class Roam : BehaviorState {
-        public bool SearchInProgress;
-        public bool investigating;
-        public int investigateTimer;
-        public int TotalInvestigateTime;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             AWandList[enemyIndex].agent.speed = 7f;
             AWandList[enemyIndex].targetPlayer = null;
@@ -104,10 +100,10 @@ public class AdultWandererAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: false);
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new StartInvestigation(),
             new NewPlayerNearBy()
-        };
+        ];
     }
     private class Investigate : BehaviorState {
         public Investigate() {
@@ -126,10 +122,10 @@ public class AdultWandererAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             AWandList[enemyIndex].ReachedNextPoint = false;
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new DoneInvestigating(),
             new NewPlayerNearBy()
-        };
+        ];
 
     }
     private class Chase : BehaviorState {
@@ -143,10 +139,10 @@ public class AdultWandererAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             creatureAnimator.SetBool("Moving", value: false);
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new EnemyInShipOrFacility(),
             new EnemyEnteredRange()
-        };
+        ];
     }
     private class Stunned : BehaviorState {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -161,9 +157,9 @@ public class AdultWandererAI : WTOEnemy {
             creatureAnimator.SetBool("Stunned", value: false);
             AWandList[enemyIndex].agent.speed = 8f;
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new NoLongerStunned()
-        };
+        ];
     }
 
     //STATE TRANSITIONS
@@ -250,7 +246,7 @@ public class AdultWandererAI : WTOEnemy {
             
         public override bool CanTransitionBeTaken() {
                 
-            return AWandList[enemyIndex].stunNormalizedTimer > 0 && !(AWandList[enemyIndex].ActiveState is Stunned);
+            return AWandList[enemyIndex].stunNormalizedTimer > 0 && AWandList[enemyIndex].ActiveState is not Stunned;
         }
         public override BehaviorState NextState() {
             return new Stunned();
@@ -294,12 +290,12 @@ public class AdultWandererAI : WTOEnemy {
     private bool LostPatience = false;
     private float AttackCooldownSeconds = 1.2f;
     public int AttackRange = 7;
-    public static Dictionary<int, AdultWandererAI> AWandList = new Dictionary<int, AdultWandererAI>();
+    public static Dictionary<int, AdultWandererAI> AWandList = [];
     public static int AWandID;
     public AudioClip SpawnSound;
     private float TotalInvestigationSeconds;
     private bool ReachedNextPoint = false;
-    private AISearchRoutine RoamPlanet = new();
+    private readonly AISearchRoutine RoamPlanet = new();
     public BoxCollider AdultBox;
     public CapsuleCollider AdultCapsule;
 

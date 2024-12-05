@@ -1,23 +1,16 @@
 ﻿using HarmonyLib;
-using System;
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
-using Unity.Netcode;
-using System.Runtime.CompilerServices;
-using DunGen.Adapters;
-using System.Runtime.InteropServices.WindowsRuntime;
 using LethalLevelLoader;
 using GameNetcodeStuff;
-using UnityEngine.InputSystem;
 
 namespace Welcome_To_Ooblterra.Patches;
 
 internal class MoonPatch {
 
     public static string MoonFriendlyName;
-    public static SelectableLevel MyNewMoon;
 
     public static Animator OoblFogAnimator;
 
@@ -51,13 +44,13 @@ internal class MoonPatch {
             GrassHitSFX = StartOfRound.Instance.footstepSurfaces[4].hitSurfaceSFX;
         }
         if (OoblFootstepClips == null) {
-            OoblFootstepClips = new AudioClip[] {
+            OoblFootstepClips = [
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP01.wav"),
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP02.wav"),
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP03.wav"),
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP04.wav"),
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
-            };
+            ];
             OoblHitSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
         }
         //MUSIC CACHING AND ARRAY CREATION
@@ -65,14 +58,12 @@ internal class MoonPatch {
             CachedTODMusic = TimeOfDay.Instance.timeOfDayCues;
             CachedAmbientMusic = SoundManager.Instance.DaytimeMusic;
         }
-        if (OoblTODMusic == null) {
-            OoblTODMusic = new AudioClip[4]{
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_StartOfDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_MidDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_LateDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_Night.ogg")
-            };
-        }
+        OoblTODMusic ??= [
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_StartOfDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_MidDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_LateDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_Night.ogg")
+        ];
         //ASSIGNMENT
         if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
             TimeOfDay.Instance.timeOfDayCues = CachedTODMusic; 
@@ -85,7 +76,7 @@ internal class MoonPatch {
         GrassSurfaceRef.clips = OoblFootstepClips;
         GrassSurfaceRef.hitSurfaceSFX = OoblHitSFX;
         TimeOfDay.Instance.timeOfDayCues = OoblTODMusic;
-        SoundManager.Instance.DaytimeMusic = new AudioClip[0];
+        SoundManager.Instance.DaytimeMusic = [];
         ReplaceStoryLogIDs();       
     }
 
@@ -187,7 +178,7 @@ internal class MoonPatch {
         GameObject[] NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
 
         //Build a list of all our Oobltera nodes
-        List<GameObject> CustomNodes = new List<GameObject>();
+        List<GameObject> CustomNodes = [];
         IEnumerable<GameObject> allObjects = GameObject.FindObjectsOfType<GameObject>().Where(obj => obj.name == "OoblOutsideNode");
         foreach (GameObject Object in allObjects) {
                 CustomNodes.Add(Object);

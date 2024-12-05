@@ -12,10 +12,12 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 internal class WideDoorway : NetworkBehaviour {
 
+#pragma warning disable 0649 // Assigned in Unity Editor
     public BoxCollider OverlapTrigger;
     public Transform Doorway;
     public AudioClip CloseSound;
     public AudioSource CloseSoundSource;
+#pragma warning restore 0649
 
     private const float TotalDistanceToTravel = -4;
     private float DistanceToTravelEachTime;
@@ -27,7 +29,7 @@ internal class WideDoorway : NetworkBehaviour {
     private Vector3 DoorStartPosition;
     private Vector3 CurrentDoorPosition;
     private Vector3 TargetDoorPosition;
-    private List<Collider> CurrentColliderList = new();
+    private readonly List<Collider> CurrentColliderList = [];
     private bool ShouldFall;
 
     private int TotalTimesBeforeClose;
