@@ -6,6 +6,7 @@ using UnityEngine.Assertions.Must;
 using System.Runtime.CompilerServices;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
 using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
 public class BabyLurkerAI : WTOEnemy {
@@ -40,7 +41,6 @@ public class BabyLurkerAI : WTOEnemy {
         public override List<StateTransition> transitions { get; set; } = [
             new FoundNearestPlayer()
         ];
-
     }
     private class ChasePlayer : BehaviorState {
 
@@ -144,6 +144,8 @@ public class BabyLurkerAI : WTOEnemy {
     public bool ThrowingSelfAtPlayer;
     public GameObject LurkerBody;
     private readonly List<PlayerControllerB> LivingPlayers = [];
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(BabyLurkerAI), LogSourceType.Enemy);
 
     public override void Start() {
         MyValidState = PlayerState.Inside;

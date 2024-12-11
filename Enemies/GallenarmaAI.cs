@@ -85,7 +85,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 GallenarmaList[enemyIndex].agent.speed = 7f;
                 return;
             }
-            GallenarmaList[enemyIndex].LogMessage("Noise does not have any loudness!");
+            Log.Debug("Noise does not have any loudness!");
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (GallenarmaList[enemyIndex].LatestNoise.Location != CurrentNoise.Location) {
@@ -98,12 +98,12 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
                 GallenarmaList[enemyIndex].agent.speed = 7.5f;
             }
             if (!OnRouteToNextPoint && GallenarmaList[enemyIndex].agent.isOnNavMesh) {
-                GallenarmaList[enemyIndex].LogMessage("Noise was unreachable!");
+                Log.Debug("Noise was unreachable!");
                 if (GallenarmaList[enemyIndex].LatestNoise.Loudness != -1) {
                     NextPoint = GallenarmaList[enemyIndex].LatestNoise.Location;
                 } else {
                     NextPoint = RoundManager.Instance.GetRandomNavMeshPositionInRadius(GallenarmaList[enemyIndex].allAINodes[MyRandomInt].transform.position, 15);
-                    WTOBase.LogToConsole("Gallenarma off to random point!");
+                    Log.Debug("Gallenarma off to random point!");
                 }
                 if (GallenarmaList[enemyIndex].agent.isOnNavMesh) {
                     OnRouteToNextPoint = GallenarmaList[enemyIndex].SetDestinationToPosition(GallenarmaList[enemyIndex].ChooseClosestNodeToPosition(NextPoint).position);
@@ -250,7 +250,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             GallenarmaList[enemyIndex].creatureVoice.loop = true;
             GallenarmaList[enemyIndex].creatureSFX.clip = GallenarmaList[enemyIndex].GallenarmaBeatChest;
             GallenarmaList[enemyIndex].creatureSFX.Play();
-            WTOBase.LogToConsole($"Gallenarma: Setting fear effect on Player {GallenarmaList[enemyIndex].targetPlayer.playerUsername}!");
+            Log.Debug($"Gallenarma: Setting fear effect on Player {GallenarmaList[enemyIndex].targetPlayer.playerUsername}!");
             if (GallenarmaList[enemyIndex].targetPlayer == GameNetworkManager.Instance.localPlayerController) {
                 GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(1f);
             }
@@ -495,6 +495,8 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
     public List<AudioClip> Search = [];
     private float FlinchTimerSeconds = 0f;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(GallenarmaAI), LogSourceType.Enemy);
+
     private struct NoiseInfo(Vector3 position, float loudness)
     {
         public Vector3 Location { get; private set; } = position;
@@ -513,7 +515,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         PrintDebugs = true;
         GallenarmaID++;
         WTOEnemyID = GallenarmaID;
-        LogMessage($"Adding Gallenarma {this} at {GallenarmaID}");
+        Log.Info($"Adding Gallenarma {this} at {GallenarmaID}");
         GallenarmaList.Add(GallenarmaID, this);
         GlobalTransitions.Add(new HitByStunGun());
         base.Start();
@@ -579,7 +581,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
         }
         hearNoiseCooldown = 0.03f;
         float num = Vector3.Distance(base.transform.position, noisePosition);
-        WTOBase.LogToConsole($"Gallenarma '{gameObject.name}': Heard noise! Distance: {num} meters. Location: {noisePosition}");
+        Log.Debug($"Gallenarma '{gameObject.name}': Heard noise! Distance: {num} meters. Location: {noisePosition}");
         if (Physics.Linecast(base.transform.position, noisePosition, 256)) {
             noiseLoudness /= 2f;
         }
@@ -597,7 +599,7 @@ public class GallenarmaAI : WTOEnemy, INoiseListener {
             return;
         }
         if (AttackTimerSeconds <= 0.8f && Vector3.Distance(targetPlayer.transform.position, transform.position) < AttackRange && !HasAttackedThisCycle) {
-            LogMessage("Gallenarma Attacking!");
+            Log.Debug("Gallenarma Attacking!");
             targetPlayer.DamagePlayer(damage, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0, force: ((this.transform.position - targetPlayer.transform.position) * 40f));
             HasAttackedThisCycle = true;
         }

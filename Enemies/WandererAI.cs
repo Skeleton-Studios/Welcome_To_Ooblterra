@@ -18,7 +18,7 @@ public class WandererAI : WTOEnemy {
             WandererList[enemyIndex].ReachedNextPoint = false;
             WandererList[enemyIndex].agent.speed = 0f;
             WandererList[enemyIndex].TotalInvestigationSeconds = MyRandomInt;
-            WandererList[enemyIndex].LogMessage("Investigating for: " + WandererList[enemyIndex].TotalInvestigationSeconds + "s");
+            Log.Debug("Investigating for: " + WandererList[enemyIndex].TotalInvestigationSeconds + "s");
             WandererList[enemyIndex].creatureAnimator.speed = 1f;
             WandererList[enemyIndex].creatureAnimator.SetBool("Investigating", true);
         }
@@ -163,6 +163,8 @@ public class WandererAI : WTOEnemy {
     private bool ReachedNextPoint = false;
     private bool CalledMom;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(WandererAI), LogSourceType.Enemy);
+
     public override void Start() {
         MyValidState = PlayerState.Outside;
         InitialState = new Investigate();
@@ -170,7 +172,7 @@ public class WandererAI : WTOEnemy {
         WandererID++;
         WTOEnemyID = WandererID;
 
-        LogMessage($"Adding Wanderer {this} #{WandererID}");
+        Log.Info($"Adding Wanderer {this} #{WandererID}");
         WandererList.Add(WandererID, this);
         if (!agent.isOnNavMesh) {
             Physics.Raycast(new Ray(new Vector3(0, 0, 0), Vector3.down), out var hit, LayerMask.GetMask("Terrain"));
@@ -217,7 +219,7 @@ public class WandererAI : WTOEnemy {
         if (!RegisteredThreats.Contains(playerWhoHit)) RegisteredThreats.Add(playerWhoHit);
         creatureAnimator.SetTrigger("Hit");
         enemyHP -= force;
-        WTOBase.LogToConsole($"NEW WANDERER HEALTH: {enemyHP}");
+        Log.Debug($"NEW WANDERER HEALTH: {enemyHP}");
         if (enemyHP <= 0 && !isEnemyDead && !CalledMom) {
             int KillerID = (int)playerWhoHit.playerClientId;
             AttemptKillServerRpc(KillerID);
@@ -237,7 +239,7 @@ public class WandererAI : WTOEnemy {
         
     }
     public void KillWandererAndSpawnParent(int KillerID) {
-        WTOBase.LogToConsole($"Spawning Adult Wanderer targeting player ID {KillerID}");
+        Log.Info($"Spawning Adult Wanderer targeting player ID {KillerID}");
         PlayerControllerB Killer = StartOfRound.Instance.allPlayerScripts[KillerID];
         //Spawn Wanderer Corpse
         Item WandererCorpse = ItemPatch.ItemList[5].GetItem();
@@ -245,7 +247,7 @@ public class WandererAI : WTOEnemy {
         NetworkObject ItemNetworkObject = SpawnedItem.GetComponent<NetworkObject>();
         int WandererCorpseValue = (int)(RoundManager.Instance.AnomalyRandom.Next(WandererCorpse.minValue, WandererCorpse.maxValue) * RoundManager.Instance.scrapValueMultiplier);
 
-        if (base.IsServer) {
+        if (IsServer) {
             ItemNetworkObject.Spawn();
         }
         SetCorpseValueServerRpc(ItemNetworkObject, WandererCorpseValue);
@@ -253,11 +255,11 @@ public class WandererAI : WTOEnemy {
         Vector3 AdultSpawnPos = Killer.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), Killer.transform.forward * -1);
         Quaternion AdultSpawnRot = new(0, Quaternion.LookRotation(Killer.transform.position - AdultSpawnPos).y, 0, 1);
         GameObject AdultWanderer = Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
-        if (base.IsServer) { 
+        if (IsServer) { 
             AdultWanderer.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
             AdultWanderer.gameObject.GetComponentInChildren<AdultWandererAI>().SetTargetServerRpc(KillerID);
         }
-        LogMessage("Wanderer dying!");
+        Log.Debug("Wanderer dying!");
         KillEnemyOnOwnerClient();
     }
 

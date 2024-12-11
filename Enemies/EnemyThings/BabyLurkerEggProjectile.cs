@@ -20,13 +20,14 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
     public ParticleSystem ExplodeParticle;
     private System.Random EggRandom;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(BabyLurkerEggProjectile), LogSourceType.Thing);
+
     private void Start() {
         EggRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-
     }
 
     private void OnTriggerEnter(Collider other) {
-        WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
+        Log.Debug($"Collision registered! Collider: {other.gameObject}");
         if (other.GetComponent<BoxCollider>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerProjectile>() != null) {
             return; 
         } 
@@ -38,7 +39,7 @@ public class BabyLurkerEggProjectile : NetworkBehaviour {
         try {
             GetComponent<AudioSource>().PlayOneShot(Splat[EggRandom.Next(0, Splat.Length - 1)]);
         } catch {
-            WTOBase.LogToConsole("Couldn't play splat sound!"); 
+            Log.Error("Couldn't play splat sound!"); 
         }
         GetComponent<Rigidbody>().isKinematic = true;
         StartCoroutine(StartEggExploding());

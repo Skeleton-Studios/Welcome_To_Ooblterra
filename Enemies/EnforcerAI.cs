@@ -2,9 +2,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
 
@@ -46,12 +46,11 @@ public class EnforcerAI : WTOEnemy {
             EnforcerList[enemyIndex].SetActiveCamoState(true);
             EnforcerList[enemyIndex].DetermineNextHidePoint();
             EnforcerList[enemyIndex].creatureSFX.volume = 1f;
-
-
         }
+
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (!EnforcerMovingToHidePoint) {
-                EnforcerList[enemyIndex].LogMessage("Current hide point not valid, choosing another...");
+                Log.Debug("Current hide point not valid, choosing another...");
                 EnforcerList[enemyIndex].DetermineNextHidePoint();
                 NextDestination = RoundManager.Instance.GetRandomNavMeshPositionInRadius(EnforcerList[enemyIndex].NextHidePoint.transform.position, radius: 2);
                 EnforcerMovingToHidePoint = EnforcerList[enemyIndex].SetDestinationToPosition(NextDestination, true);
@@ -79,7 +78,7 @@ public class EnforcerAI : WTOEnemy {
             EnforcerList[enemyIndex].RandomlyPlayIdleSound(SecondsUntilNextSound);
             //if a player enters range, consider them our potential target
             if (EnforcerList[enemyIndex].PotentialTarget != null) {
-                EnforcerList[enemyIndex].LogMessage($"Range check for target player: {EnforcerList[enemyIndex].PotentialTarget.playerUsername}; " +
+                Log.Debug($"Range check for target player: {EnforcerList[enemyIndex].PotentialTarget.playerUsername}; " +
                     $"\nin Range/Enforcer LOS? {EnforcerList[enemyIndex].IsTargetPlayerWithinLOS(EnforcerList[enemyIndex].PotentialTarget, range: (int)RangeForPotentialTarget, width: 180)}; " +
                     $"\nPlayer has LOS to Enforcer? {EnforcerList[enemyIndex].CheckPlayerLOSForEnforcer(EnforcerList[enemyIndex].PotentialTarget)}");
                 
@@ -88,7 +87,7 @@ public class EnforcerAI : WTOEnemy {
                 } else {
                     EnforcerList[enemyIndex].ShouldChasePotentialTarget = !EnforcerList[enemyIndex].IsBeingSeenByPotentialTarget;
                     if (!EnforcerList[enemyIndex].ShouldChasePotentialTarget) {
-                        EnforcerList[enemyIndex].LogMessage($"Player left while looking at us, do not pursue!");
+                        Log.Debug($"Player left while looking at us, do not pursue!");
                         EnforcerList[enemyIndex].PotentialTarget = null;
                     }
                 }
@@ -97,7 +96,7 @@ public class EnforcerAI : WTOEnemy {
                 //set the player in consideration to our potential target if he's in range
                 if (PlayerInConsideration != null && EnforcerList[enemyIndex].PlayerWithinRange(PlayerInConsideration, RangeForPotentialTarget)) {
                     EnforcerList[enemyIndex].PotentialTarget = PlayerInConsideration;
-                    EnforcerList[enemyIndex].LogMessage($"Setting target player: {EnforcerList[enemyIndex].PotentialTarget.playerUsername}");
+                    Log.Debug($"Setting target player: {EnforcerList[enemyIndex].PotentialTarget.playerUsername}");
                 }
             }
         }
@@ -329,13 +328,15 @@ public class EnforcerAI : WTOEnemy {
     private bool HasAttackedThisCycle;
     private float PlayerStareAtTimer = 0f;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(EnforcerAI), LogSourceType.Enemy);
+
     public override void Start() {
         MyValidState = PlayerState.Inside;
         InitialState = new GoToHidingSpot();
         EnforcerID++;
         PrintDebugs = true;
         WTOEnemyID = EnforcerID;
-        LogMessage($"Adding Enforcer {this} #{EnforcerID}");
+        Log.Info($"Adding Enforcer {this} #{EnforcerID}");
         EnforcerList.Add(EnforcerID, this);
         //This might cause a lag spike because im using LINQ 
         PopulateHidePoints();
@@ -362,7 +363,7 @@ public class EnforcerAI : WTOEnemy {
         }
 
         if (ActiveState is ScreamAtPlayer) {
-            LogMessage($"SCREAM SECONDS: {EnforcerScreamSeconds}");
+            Log.Debug($"SCREAM SECONDS: {EnforcerScreamSeconds}");
             MoveTimerValue(ref EnforcerScreamSeconds);
         }
 
@@ -410,7 +411,7 @@ public class EnforcerAI : WTOEnemy {
     public void DetermineNextHidePoint() { 
         if(EnforcerHidePoints == null) {
             PopulateHidePoints();
-            LogMessage($"Hide Point count: {EnforcerHidePoints.Count}");
+            Log.Info($"Hide Point count: {EnforcerHidePoints.Count}");
         }
         NextHidePoint = EnforcerHidePoints[enemyRandom.Next(0, EnforcerHidePoints.Count)];
     } 
@@ -418,7 +419,7 @@ public class EnforcerAI : WTOEnemy {
         while ((timeElapsed / ActiveCamoLerpTime) < 1) { 
             timeElapsed += Time.deltaTime;
             LerpPos = Mathf.Lerp(1, 0, timeElapsed / ActiveCamoLerpTime);
-            LogMessage($"Active Camo at {(1 - LerpPos) * 100}%...");
+            Log.Debug($"Active Camo at {(1 - LerpPos) * 100}%...");
             foreach (Material NextMat in EnforcerMatList) {
                 NextMat.SetFloat("_TextureLerp", LerpPos); 
             }
@@ -430,7 +431,7 @@ public class EnforcerAI : WTOEnemy {
         while ((timeElapsed / ActiveCamoLerpTime) < 1) {
             timeElapsed += Time.deltaTime;
             LerpPos = Mathf.Lerp(0, 1, timeElapsed / ActiveCamoLerpTime);
-            LogMessage($"Active Camo at {(1 - LerpPos) * 100}%...");
+            Log.Debug($"Active Camo at {(1 - LerpPos) * 100}%...");
             foreach (Material NextMat in EnforcerMatList) {
                 NextMat.SetFloat("_TextureLerp", LerpPos);
             }
@@ -449,14 +450,14 @@ public class EnforcerAI : WTOEnemy {
         while (Vector3.Distance(transform.position, LastKnownTargetPlayerPosition) < 0.02f) {
             yield return null;
         }
-        LogMessage("Reached last player location; picking points nearby and searching");
+        Log.Debug("Reached last player location; picking points nearby and searching");
         for(int i = 0; i < enemyRandom.Next(1, 3);) {
             Vector3 NextSearchPoint = RoundManager.Instance.GetRandomNavMeshPositionInRadius(LastKnownTargetPlayerPosition);
             SetDestinationToPosition(NextSearchPoint);
             while (Vector3.Distance(transform.position, NextSearchPoint) < 0.02f) {
                 yield return null;
             }
-            LogMessage($"Reached nearby point #{i}");
+            Log.Debug($"Reached nearby point #{i}");
             //Play animation where eye sweeps
             yield return new WaitForSeconds(EyeSweepAnimSeconds);
             i++;
@@ -481,7 +482,7 @@ public class EnforcerAI : WTOEnemy {
             return;
         }
         if (AttackCooldownSeconds <= 0.8f && Vector3.Distance(targetPlayer.transform.position, transform.position) < 3 && !HasAttackedThisCycle) {
-            LogMessage("Gallenarma Attacking!");
+            Log.Debug("Gallenarma Attacking!");
             targetPlayer.DamagePlayer(damage, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0, force: ((this.transform.position - targetPlayer.transform.position) * 40f));
             HasAttackedThisCycle = true;
         }

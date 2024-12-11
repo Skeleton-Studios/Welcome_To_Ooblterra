@@ -1,9 +1,7 @@
 ﻿using GameNetcodeStuff;
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.Cryptography;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
@@ -154,6 +152,8 @@ internal class OoblGhostAI : WTOEnemy {
 
     private static readonly Dictionary<PlayerControllerB, int> PlayersTimesHaunted = [];
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(OoblGhostAI), LogSourceType.Enemy);
+
     private void Awake()
     {
         // Init vaiables inside Awake so that they are ready when Start is called
@@ -162,7 +162,7 @@ internal class OoblGhostAI : WTOEnemy {
         PrintDebugs = true;
         GhostID++;
         WTOEnemyID = GhostID;
-        LogMessage($"Adding Oobl Ghost {this} #{GhostID}: Awake");
+        Log.Info($"Adding Oobl Ghost {this} #{GhostID}: Awake");
         GhostList.Add(GhostID, this);
         transform.position = new Vector3(0, -1000, 0);
         GhostRenderer.materials = [GhostMat, GhostMat, GhostTeethMat];
@@ -189,7 +189,7 @@ internal class OoblGhostAI : WTOEnemy {
         }
 
         if (ShouldListenForWalkie) {
-            WTOBase.LogToConsole($"HEARING OTHERS THROUGH WALKIE TALKIE: {targetPlayer.PlayerIsHearingOthersThroughWalkieTalkie(targetPlayer)}");
+            Log.Info($"HEARING OTHERS THROUGH WALKIE TALKIE: {targetPlayer.PlayerIsHearingOthersThroughWalkieTalkie(targetPlayer)}");
             if (targetPlayer.PlayerIsHearingOthersThroughWalkieTalkie(targetPlayer) && !ListenForWalkieCrActive) {
                 StartCoroutine("ListenForWalkie");
                 ListenForWalkieCrActive = true;
@@ -263,7 +263,7 @@ internal class OoblGhostAI : WTOEnemy {
         }
 
         if (LinkedCorpsePart.isInShipRoom) {
-            WTOBase.LogToConsole("Corpse dropped in ship!");
+            Log.Debug("Corpse dropped in ship!");
             LinkedCorpsePart = null;
             GhostPickedUpInterference = true;
             KillGhost = true;
@@ -303,7 +303,7 @@ internal class OoblGhostAI : WTOEnemy {
 
     //called when translator used
     public void EvalulateSignalTranslatorUse() {
-        WTOBase.LogToConsole("Ghost Recieved Signal Translator use!");
+        Log.Debug("Ghost Recieved Signal Translator use!");
         if (targetPlayer == null || ActiveState is not GoTowardTarget) {
             return;
         }
@@ -320,7 +320,7 @@ internal class OoblGhostAI : WTOEnemy {
     [ClientRpc]
     public void SetGhostTargetClientRpc(int TargetClientID) {
         targetPlayer = StartOfRound.Instance.allPlayerScripts[TargetClientID];
-        WTOBase.LogToConsole($"GHOST #{WTOEnemyID}: HAUNTING {targetPlayer.playerUsername}");
+        Log.Debug($"GHOST #{WTOEnemyID}: HAUNTING {targetPlayer.playerUsername}");
         if (PlayersTimesHaunted.ContainsKey(targetPlayer)) {
             PlayersTimesHaunted[targetPlayer]++;
         } else {
@@ -341,17 +341,17 @@ internal class OoblGhostAI : WTOEnemy {
 
     IEnumerator ListenForWalkie() {
         yield return new WaitForSeconds(GhostInterferenceSeconds);
-        WTOBase.LogToConsole("Listen Coroutine finished!");
+        Log.Debug("Listen Coroutine finished!");
         GhostPickedUpInterference = true;
     }
 
     IEnumerator FadeGhostCoroutine(bool DestroyGhostAfterFade) {
         timeElapsed += Time.deltaTime;
-        WTOBase.LogToConsole($"Ghost Lerp Position: {timeElapsed / FadeTimeSeconds}");
+        Log.Debug($"Ghost Lerp Position: {timeElapsed / FadeTimeSeconds}");
         TargetFade = Mathf.Lerp(0.6f, 0, timeElapsed / FadeTimeSeconds);
 
         if (timeElapsed / FadeTimeSeconds >= 1) {
-            WTOBase.LogToConsole("Ghost Lerp Finished");
+            Log.Debug("Ghost Lerp Finished");
             HDMaterial.SetAlphaClipping(GhostMat, true);
             HDMaterial.SetAlphaClipping(GhostTeethMat, true);
             ShouldFadeGhost = false;
@@ -359,7 +359,7 @@ internal class OoblGhostAI : WTOEnemy {
             transform.position = new Vector3(0, -1000, 0);
             timeElapsed = 0f;
             if (DestroyGhostAfterFade) {
-                WTOBase.LogToConsole("Corpse part removed; killing enemy!");
+                Log.Debug("Corpse part removed; killing enemy!");
                 KillEnemyOnOwnerClient(true);
             }
             StopCoroutine(FadeGhostCoroutine(DestroyGhostAfterFade));
@@ -393,7 +393,7 @@ internal class OoblGhostAI : WTOEnemy {
 
     [ClientRpc]
     private void ScanOoblGhostClientRpc() {
-        WTOBase.LogToConsole("Scanning Oobl Ghost");
+        Log.Debug("Scanning Oobl Ghost");
         if (!HUDManager.Instance.terminalScript.scannedEnemyIDs.Contains(OoblGhostTerminalInt)) {
             HUDManager.Instance.terminalScript.scannedEnemyIDs.Add(OoblGhostTerminalInt);
             HUDManager.Instance.terminalScript.newlyScannedEnemyIDs.Add(OoblGhostTerminalInt);

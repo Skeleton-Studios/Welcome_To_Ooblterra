@@ -1,13 +1,9 @@
-﻿using DunGen;
-using GameNetcodeStuff;
-using LethalLib.Modules;
+﻿using GameNetcodeStuff;
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.AI;
 using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.Things;
 
@@ -94,7 +90,7 @@ public class EyeSecAI : WTOEnemy {
             EyeSecList[enemyIndex].StartAttackVisuals();
             EyeSecList[enemyIndex].agent.speed = 0f;
             if (EyeSecList[enemyIndex].DoFearEffect) {
-                WTOBase.LogToConsole($"Eyesec: Setting fear effect on Player {EyeSecList[enemyIndex].targetPlayer.playerUsername}!");
+                Log.Debug($"Eyesec: Setting fear effect on Player {EyeSecList[enemyIndex].targetPlayer.playerUsername}!");
                 if (EyeSecList[enemyIndex].targetPlayer == GameNetworkManager.Instance.localPlayerController) {
                     GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(1f);
                 }
@@ -151,7 +147,7 @@ public class EyeSecAI : WTOEnemy {
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             //Animate the eye going down
             EyeSecList[enemyIndex].agent.speed = 0f;
-            EyeSecList[enemyIndex].LogMessage("Eyesec shut down!");
+            Log.Debug("Eyesec shut down!");
             EyeSecList[enemyIndex].creatureAnimator.enabled = true;
             EyeSecList[enemyIndex].SetAnimBoolOnServerRpc("Shutdown", true);
         }
@@ -329,13 +325,15 @@ public class EyeSecAI : WTOEnemy {
 
     public bool BuffedByTeslaCoil;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(EyeSecAI), LogSourceType.Enemy);
+
     public override void Start() {
         InitialState = new Patrol();
         RefreshGrabbableObjectsInMapList();
         PrintDebugs = true;
         EyeSecID++;
         WTOEnemyID = EyeSecID;
-        LogMessage($"Adding EyeSec {this} at {EyeSecID}");
+        Log.Info($"Adding EyeSec {this} at {EyeSecID}");
         EyeSecList.Add(EyeSecID, this);
         base.Start();
         creatureAnimator.enabled = false;
@@ -345,7 +343,7 @@ public class EyeSecAI : WTOEnemy {
         MoveTimerValue(ref ScanCooldownSeconds);
         MoveTimerValue(ref FlashCooldownSeconds);
         MoveTimerValue(ref ShutdownTimerSeconds);
-        if (base.IsOwner) { 
+        if (IsOwner) { 
             SpinWheelServerRpc();
         }
         base.Update();
@@ -373,7 +371,7 @@ public class EyeSecAI : WTOEnemy {
         if (!PlayerCanBeTargeted(victim)) {
             return;
         }
-        LogMessage("Player found, trying to scan him...");
+        Log.Debug("Player found, trying to scan him...");
         ChangeOwnershipOfEnemy(victim.actualClientId);
         if (IsDeepScan) {
             CheckPlayerDeepScan(victim);
@@ -384,7 +382,7 @@ public class EyeSecAI : WTOEnemy {
     private void CheckPlayerWhenScanned(PlayerControllerB Player) {
         if (grabbableObjectsInMap.Contains(Player.currentlyHeldObjectServer)) {
             //if it is...
-            LogMessage("Player is guilty!");
+            Log.Debug("Player is guilty!");
             
             ScanFinished = true;
             SetTargetServerRpc((int)Player.playerClientId);
@@ -395,7 +393,7 @@ public class EyeSecAI : WTOEnemy {
         //iterate over every slot in the player's inventory 
         for(int i = 0; i < Player.ItemSlots.Count(); i++) {
             if (grabbableObjectsInMap.Contains(Player.ItemSlots[i])) {
-                LogMessage("Player is guilty!");
+                Log.Debug("Player is guilty!");
                 
                 ScanFinished = true;
                 SetTargetServerRpc((int)Player.playerClientId);
@@ -440,8 +438,7 @@ public class EyeSecAI : WTOEnemy {
             WalkieTalkie.TransmitOneShotAudio(creatureVoice, flashSFX);
             StunGrenadeItem.StunExplosion(transform.position, affectAudio: false, 2f, 4f, 2f);
         } catch (Exception e) {
-            WTOBase.LogToConsole("EyeSec could not stun flash! Error listed: ");
-            WTOBase.WTOLogSource.LogError(e);
+            Log.Error($"EyeSec could not stun flash! Error listed: {e}");
         }
     }
     public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
@@ -449,7 +446,7 @@ public class EyeSecAI : WTOEnemy {
         base.HitEnemy(force, playerWhoHit, playHitSFX);
         SetTargetServerRpc((int)playerWhoHit.playerClientId);
         ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
-        LogMessage("Player hit us!");
+        Log.Debug("Player hit us!");
         if(ActiveState is ShutDown || ActiveState is Attack || ActiveState is MoveToAttackPosition) {
             return;
         }
@@ -459,7 +456,7 @@ public class EyeSecAI : WTOEnemy {
     [ServerRpc]
     internal void SetScannerBoolOnServerRpc(string name, bool state) {
         if (IsServer) {
-            LogMessage("Changing anim!");
+            Log.Debug("Changing anim!");
             ScanAnim.SetBool(name, state);
         }
     }

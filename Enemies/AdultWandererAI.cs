@@ -1,6 +1,5 @@
 ﻿using GameNetcodeStuff;
 using System.Collections.Generic;
-using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
@@ -12,7 +11,7 @@ public class AdultWandererAI : WTOEnemy {
         private int SpawnTimer;
         private readonly int SpawnTime = 80;
         public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-            WTOBase.LogToConsole("SPAWN WANDERER");
+            Log.Info("SPAWN WANDERER");
             creatureAnimator.SetBool("Spawn", value: true);
             AWandList[enemyIndex].creatureSFX.PlayOneShot(AWandList[enemyIndex].SpawnSound);
         }
@@ -299,12 +298,14 @@ public class AdultWandererAI : WTOEnemy {
     public BoxCollider AdultBox;
     public CapsuleCollider AdultCapsule;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(AdultWandererAI), LogSourceType.Enemy);
+
     public override void Start() {
         InitialState = new Spawn();
         AWandID++;
         WTOEnemyID = AWandID;
         PrintDebugs = true;
-        LogMessage($"Adding Adult Wanderer {this} #{AWandID}");
+        Log.Info($"Adding Adult Wanderer {this} #{AWandID}");
         AWandList.Add(AWandID, this);
         MyValidState = PlayerState.Outside;
         enemyHP = 10;
@@ -316,7 +317,7 @@ public class AdultWandererAI : WTOEnemy {
         base.Update();
     }
     private void MeleeAttackPlayer(PlayerControllerB Target) {
-        LogMessage("Attacking player!");
+        Log.Info("Attacking player!");
         Target.DamagePlayer(40, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
         if (Target == GameNetworkManager.Instance.localPlayerController) {
             GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(1f);
@@ -335,14 +336,14 @@ public class AdultWandererAI : WTOEnemy {
         }
         base.HitEnemy(force, playerWhoHit, playHitSFX);
         enemyHP -= force;
-        LogMessage("Adult Wanderer HP remaining: " + enemyHP);
+        Log.Debug("Adult Wanderer HP remaining: " + enemyHP);
         creatureAnimator.SetTrigger("Hit");
         if (enemyHP <= 0) {   
             isEnemyDead = true;
             creatureAnimator.SetTrigger("Killed");
             creatureVoice.Stop();
-            GameObject.Destroy(AdultBox);
-            GameObject.Destroy(AdultCapsule);
+            Destroy(AdultBox);
+            Destroy(AdultCapsule);
             if (IsOwner) {
                 KillEnemyOnOwnerClient();
             }
