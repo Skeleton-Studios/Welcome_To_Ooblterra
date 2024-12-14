@@ -24,6 +24,7 @@ internal class OoblGhostAI : WTOEnemy {
     public Material GhostTeethMat;
     public SkinnedMeshRenderer GhostRenderer;
     public SkinnedMeshRenderer GhostArmsRenderer;
+    public AudioClip StartupSound;
 #pragma warning restore 0649
 
     //STATES
@@ -137,7 +138,7 @@ internal class OoblGhostAI : WTOEnemy {
     public static Dictionary<int, OoblGhostAI> GhostList = [];
     private static int GhostID;
     private float SecondsUntilGhostWillAttack;
-    public AudioClip StartupSound;
+    
     public bool GhostPickedUpInterference = false;
     private bool ShouldFadeGhost = false;
     private bool ShouldListenForWalkie;

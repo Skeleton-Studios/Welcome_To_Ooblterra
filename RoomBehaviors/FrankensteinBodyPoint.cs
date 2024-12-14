@@ -1,10 +1,4 @@
 ﻿using GameNetcodeStuff;
-using LethalLib.Modules;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
@@ -25,6 +19,8 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
     public RagdollGrabbableObject PlayerRagdoll;
     public Transform RespawnPos;
     public bool HasBody;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(FrankensteinBodyPoint), LogSourceType.Room);
 
     private void Update() {
         if (NetworkManager.Singleton == null) {
@@ -56,7 +52,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         PutObjectOnTableServerRpc(player.currentlyHeldObjectServer.gameObject.GetComponent<NetworkObject>());
         player.DiscardHeldObject(placeObject: true, TableBodyContainer, vector, matchRotationOfParent: false);
 
-        WTOBase.LogToConsole("Body placed on frankenstein point");
+        Log.Info("Body placed on frankenstein point");
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -64,7 +60,7 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
         if (grabbableObjectNetObject.TryGet(out lastObjectAddedToTable)) {
                 PutObjectOnTableClientRpc(grabbableObjectNetObject);
         } else {
-            WTOBase.WTOLogSource.LogError("ServerRpc: Could not find networkobject in the object that was placed on table.");
+            Log.Error("ServerRpc: Could not find networkobject in the object that was placed on table.");
         }
     }
     [ClientRpc]
@@ -75,14 +71,14 @@ public class FrankensteinBodyPoint : NetworkBehaviour {
             try {
                 PlayerRagdoll = BodyGO as RagdollGrabbableObject;
             } catch {
-                WTOBase.LogToConsole("Body is not a Ragdoll?!?");
+                Log.Error("Body is not a Ragdoll?!?");
             }
             HasBody = true;
             if (PlayerRagdoll != null) {
-                WTOBase.LogToConsole($"Player Body ID is {PlayerRagdoll.bodyID.Value}");
+                Log.Debug($"Player Body ID is {PlayerRagdoll.bodyID.Value}");
             }
         } else {
-            WTOBase.WTOLogSource.LogError("ClientRpc: Could not find networkobject in the object that was placed on table.");
+            Log.Error("ClientRpc: Could not find networkobject in the object that was placed on table.");
         }
     }
 }

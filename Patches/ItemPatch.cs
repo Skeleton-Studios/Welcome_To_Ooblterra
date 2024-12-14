@@ -4,7 +4,6 @@ using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using LethalLib.Modules;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
-using Unity.Netcode;
 using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Patches;

@@ -1,15 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using UnityEngine;
-using Unity.Netcode;
-using GameNetcodeStuff;
-using System.Collections;
-using UnityEngine.AI;
+﻿using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
-using DunGen;
 
 namespace Welcome_To_Ooblterra.Items;
 public class WTOBattery : GrabbableObject {
@@ -19,16 +9,18 @@ public class WTOBattery : GrabbableObject {
     public Material EmptyMaterial;
     public ScanNodeProperties ScanNode;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(WTOBattery), LogSourceType.Item);
+
     public override void Start() {
         base.Start();
         //int StartingScrapValue;
-        System.Random ScrapValueRandom = new(StartOfRound.Instance.randomMapSeed);
+        // System.Random ScrapValueRandom = new(StartOfRound.Instance.randomMapSeed);
         if(ScanNode == null) {
             ScanNode = base.gameObject.GetComponentInChildren<ScanNodeProperties>();
         }
-        WTOBase.WTOLogSource.LogMessage($"Battery value: {scrapValue}");
+        Log.Info($"Battery value: {scrapValue}");
         if (scrapValue < 100) {
-            WTOBase.LogToConsole("Setting Battery State to Drained");
+            Log.Info("Setting Battery State to Drained");
             ScanNode.headerText = "Drained Battery";
             HasCharge = false;
             mainObjectRenderer.SetMaterials([EmptyMaterial]);
@@ -39,7 +31,7 @@ public class WTOBattery : GrabbableObject {
             */ 
             insertedBattery.charge = 100;
         } else {
-            WTOBase.LogToConsole("Setting Battery State to Charged");
+            Log.Info("Setting Battery State to Charged");
             ScanNode.headerText = "Charged Battery";
             mainObjectRenderer.SetMaterials([ChargedMaterial]);
             HasCharge = true;

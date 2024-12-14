@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.Things;
@@ -24,6 +18,8 @@ public class FrankensteinVisuals : MonoBehaviour {
     private bool AnimStopped;
     private System.Random MyRandom;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(FrankensteinVisuals), LogSourceType.Room);
+
     private void Start() {
         MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
     }
@@ -34,7 +30,7 @@ public class FrankensteinVisuals : MonoBehaviour {
     }
 
     public void StartVisuals() {
-        WTOBase.LogToConsole("Visuals script starting coroutine ...");
+        Log.Debug("Visuals script starting coroutine ...");
         ShouldAnimate = true;
     }
     IEnumerator VisualsHandler() {

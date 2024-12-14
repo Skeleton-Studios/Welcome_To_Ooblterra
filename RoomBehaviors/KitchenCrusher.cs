@@ -1,13 +1,6 @@
 ﻿using GameNetcodeStuff;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 using Welcome_To_Ooblterra.Properties;
-using System.Collections;
 
 namespace Welcome_To_Ooblterra.Things;
 internal class KitchenCrusher : MonoBehaviour {
@@ -25,19 +18,20 @@ internal class KitchenCrusher : MonoBehaviour {
     private bool ActivateCrusher;
     private readonly bool RetractCrusher = false;
 
-
     private readonly float LerpDuration = 0.3f;
     private float timeElapsed;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(KitchenCrusher), LogSourceType.Room);
 
     private void OnTriggerEnter(Collider other) {
         if (!other.gameObject.CompareTag("Player")) {
             return;
         }
         victim = other.gameObject.GetComponent<PlayerControllerB>();
-        WTOBase.LogToConsole("Player colliding");
+        Log.Debug("Player colliding");
         if (CrusherRandom.Next(1, 100) > 45) {
             if(ActivateCrusher == false) {
-                WTOBase.LogToConsole("activate crusher!");    
+                Log.Debug("activate crusher!");    
                 ActivateCrusher = true;
                 CrusherSound.PlayOneShot(SoundToPlay);
             }

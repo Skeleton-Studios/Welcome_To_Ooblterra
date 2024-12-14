@@ -1,13 +1,9 @@
 ﻿using HarmonyLib;
 using LethalLevelLoader;
-using System;
-using Unity.IO.LowLevel.Unsafe;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
-using UnityEditor;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 
 namespace Welcome_To_Ooblterra.Patches;
     
@@ -17,6 +13,8 @@ internal class TerminalPatch {
     private const string TerminalPath = WTOBase.RootPath + "CustomTerminal/";
     private static List<TerminalKeyword> KeywordList;
     private static List<TerminalNode> NodeList = [];
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(TerminalPatch), LogSourceType.Generic);
 
     [HarmonyPatch(typeof(StartOfRound), "Start")]
     [HarmonyPostfix]
@@ -50,7 +48,7 @@ internal class TerminalPatch {
             GameObject.FindObjectOfType<Terminal>().logEntryFiles.First(x => x.creatureName == NodeList[0].creatureName);
             return;
         } catch {
-            WTOBase.LogToConsole("WTO Story logs not found in list. Attempting to add...");
+            Log.Info("WTO Story logs not found in list. Attempting to add...");
         }
         //Grab the last index of this list
         int NextIndex = GameObject.FindObjectOfType<Terminal>().logEntryFiles.Count;
@@ -70,7 +68,7 @@ internal class TerminalPatch {
             }
         }
         for (int i = 0; i < NodeList.Count; i++) {
-            WTOBase.LogToConsole($"nextIndex = {NextIndex}");
+            Log.Debug($"nextIndex = {NextIndex}");
             KeywordList[i].defaultVerb = ViewKeyword;
             NodeList[i].storyLogFileID = NextIndex;
             GameObject.FindObjectOfType<Terminal>().logEntryFiles.Add(NodeList[i]);
@@ -84,7 +82,7 @@ internal class TerminalPatch {
             ViewKeyword.AddCompatibleNoun(KeywordList[i], NodeList[i]);
             NextIndex++;
         }
-        GameObject.FindObjectOfType<Terminal>().terminalNodes.allKeywords = GameObject.FindObjectOfType<Terminal>().terminalNodes.allKeywords.Concat(KeywordList).ToArray();
-        WTOBase.LogToConsole("END ADD WTO STORY LOGS!");
+        GameObject.FindObjectOfType<Terminal>().terminalNodes.allKeywords = [..GameObject.FindObjectOfType<Terminal>().terminalNodes.allKeywords, ..KeywordList];
+        Log.Info("END ADD WTO STORY LOGS!");
     }
 }

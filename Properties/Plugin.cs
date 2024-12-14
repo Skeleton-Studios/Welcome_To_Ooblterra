@@ -54,7 +54,8 @@ public enum LogSourceType
     Generic,
     Enemy,
     Item,
-    Thing
+    Thing,
+    Room
 }
 
 [BepInPlugin(modGUID, modName, modVersion)]

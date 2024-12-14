@@ -31,6 +31,7 @@ internal class MoonPatch {
     private static SpawnableMapObject[] CachedSpawnableMapObjects;
     public static ExtendedLevel OoblterraExtendedLevel;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(MoonPatch), LogSourceType.Generic);
 
     //PATCHES
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
@@ -87,13 +88,13 @@ internal class MoonPatch {
             return; 
         }
         OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
-        WTOBase.LogToConsole($"Fog animator found : {OoblFogAnimator != null}");
+        Log.Debug($"Fog animator found : {OoblFogAnimator != null}");
         if (TimeOfDay.Instance.sunAnimator == OoblFogAnimator){
-            WTOBase.LogToConsole($"Sun Animator IS fog animator, supposedly");
+            Log.Debug($"Sun Animator IS fog animator, supposedly");
             return;
         }
         TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
-        WTOBase.LogToConsole($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
+        Log.Debug($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
         TimeOfDay.Instance.playDelayedMusicCoroutine = null;
     }
 
@@ -166,11 +167,11 @@ internal class MoonPatch {
     public static void Start() {
         OoblterraExtendedLevel = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPath + "OoblterraExtendedLevel.asset");
         MoonFriendlyName = OoblterraExtendedLevel.SelectableLevel.PlanetName;
-        WTOBase.LogToConsole($"Ooblterra Found: {OoblterraExtendedLevel != null}");
+        Log.Info($"Ooblterra Found: {OoblterraExtendedLevel != null}");
         PatchedContent.RegisterExtendedLevel(OoblterraExtendedLevel);
         CachedSpawnableMapObjects = OoblterraExtendedLevel.SelectableLevel.spawnableMapObjects;
         foreach (SpawnableItemWithRarity Hazard in MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap) {
-            WTOBase.LogToConsole($"{Hazard.spawnableItem.name}"); 
+            Log.Info($"{Hazard.spawnableItem.name}"); 
         }
     }
     private static void MoveNavNodesToNewPositions() {
@@ -183,7 +184,7 @@ internal class MoonPatch {
         foreach (GameObject Object in allObjects) {
                 CustomNodes.Add(Object);
         }
-        WTOBase.LogToConsole("Outside nav points: " + CustomNodes.Count().ToString());
+        Log.Info("Outside nav points: " + CustomNodes.Count().ToString());
 
         //Put outside nav nodes at the location of our ooblterra nodes. Destroy any extraneous ones
         for (int i = 0; i < NavNodes.Count(); i++) {

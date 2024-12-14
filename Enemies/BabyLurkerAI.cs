@@ -31,7 +31,7 @@ public class BabyLurkerAI : WTOEnemy {
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (BabyLurkerList[enemyIndex].targetPlayer == null) {
-                BabyLurkerList[enemyIndex].LogMessage($"Attempting to find nearest player...");
+                Log.Debug($"Attempting to find nearest player...");
                 BabyLurkerList[enemyIndex].targetPlayer = BabyLurkerList[enemyIndex].FindNearestPlayer();
             }
         }
@@ -155,7 +155,7 @@ public class BabyLurkerAI : WTOEnemy {
         WTOEnemyID = BabyLurkerID;
         agent.speed = 7f;
         //SetTargetServerRpc((int)StartOfRound.Instance.allPlayerScripts[0].playerClientId);
-        LogMessage($"Adding BabyLurker {this} #{BabyLurkerID}");
+        Log.Info($"Adding BabyLurker {this} #{BabyLurkerID}");
         BabyLurkerList.Add(BabyLurkerID, this); 
         base.Start();
         
@@ -180,9 +180,9 @@ public class BabyLurkerAI : WTOEnemy {
             //set target to random player
             if(LivingPlayers.Count > 0) {
                 targetPlayer = LivingPlayers[enemyRandom.Next(0, LivingPlayers.Count)];
-                LogMessage($"setting new baby lurker target! {targetPlayer.playerUsername}");
+                Log.Debug($"setting new baby lurker target! {targetPlayer.playerUsername}");
             } else {
-                LogMessage("No target for baby lurkers!");
+                Log.Warning("No target for baby lurkers!");
             }
         }
     }

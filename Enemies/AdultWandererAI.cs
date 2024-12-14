@@ -65,7 +65,7 @@ public class AdultWandererAI : WTOEnemy {
                     creatureAnimator.SetBool("Attacking", value: true);
                 }
                 if(AWandList[enemyIndex].AttackCooldownSeconds <= 0.76f && !HasAttacked) {
-                    AWandList[enemyIndex].LogMessage($"Attacking Player {AWandList[enemyIndex].targetPlayer}");
+                    Log.Info($"Attacking Player {AWandList[enemyIndex].targetPlayer}");
                     AWandList[enemyIndex].MeleeAttackPlayer(AWandList[enemyIndex].targetPlayer);
                     HasAttacked = true;
                 }

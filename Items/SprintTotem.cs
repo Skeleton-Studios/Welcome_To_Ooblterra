@@ -1,10 +1,5 @@
-﻿using JetBrains.Annotations;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
@@ -25,6 +20,8 @@ internal class SprintTotem : GrabbableObject {
     private int TotemPiecesRemaining = 6;
     private bool DoOnce;
     private int StartingScrapValue;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(SprintTotem), LogSourceType.Item);
 
     public void Awake() {
         System.Random ValueRandom = new(StartOfRound.Instance.randomMapSeed);
@@ -68,7 +65,7 @@ internal class SprintTotem : GrabbableObject {
         TotemSecondsRemaining -= Time.deltaTime;
         TotemPercentage = TotemSecondsRemaining / 15;
         DesiredTotemPieces = (int)Math.Ceiling(TotemPercentage * 6);
-        WTOBase.LogToConsole($"Seconds Remaining: {TotemSecondsRemaining} || Percentage: {TotemPercentage * 100} || Desired Totem Pieces: {DesiredTotemPieces}");
+        Log.Debug($"Seconds Remaining: {TotemSecondsRemaining} || Percentage: {TotemPercentage * 100} || Desired Totem Pieces: {DesiredTotemPieces}");
         if (DesiredTotemPieces <= 0) {
             AudioPlayer.PlayOneShot(TotemBreakSound);
             DestroyTotemServerRpc();
