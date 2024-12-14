@@ -1,32 +1,23 @@
-﻿using System.Linq;
-using Unity.Netcode;
+﻿using Unity.Netcode;
 using UnityEngine;
-using LethalLib.Modules;
 using HarmonyLib;
 using Welcome_To_Ooblterra.Properties;
-using static LethalLib.Modules.Dungeon;
-using DunGen.Graph;
-using LethalLib.Extras;
-using GameNetcodeStuff;
 using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
-using System;
 using System.Collections.Generic;
-using UnityEngine.AI;
 using LethalLevelLoader;
-using UnityEngine.Rendering;
 
 namespace Welcome_To_Ooblterra.Patches;
 internal class FactoryPatch {
 
-    public static EntranceTeleport MainExit;
-    public static EntranceTeleport FireExit;
     private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
     private const string DungeonPath = WTOBase.RootPath + "CustomDungeon/Data/";
     private const string BehaviorPath = WTOBase.RootPath + "CustomDungeon/Behaviors/";
     private const string SecurityPath = WTOBase.RootPath + "CustomDungeon/Security/";
     private const string DoorPath = WTOBase.RootPath + "CustomDungeon/Doors/";
-    public static List<SpawnableMapObject> SecurityList = new();
+    public static List<SpawnableMapObject> SecurityList = [];
     public static ExtendedDungeonFlow OoblDungeonFlow;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(FactoryPatch), LogSourceType.Generic);
 
     //PATCHES 
     [HarmonyPatch(typeof(RoundManager), "SpawnMapObjects")]
@@ -42,9 +33,9 @@ internal class FactoryPatch {
         if (__instance.currentLevel.spawnableMapObjects == null || __instance.currentLevel.spawnableMapObjects.Length == 0) {
             return true;
         }
-        System.Random MapHazardRandom = new System.Random(StartOfRound.Instance.randomMapSeed + 587);
+        System.Random MapHazardRandom = new(StartOfRound.Instance.randomMapSeed + 587);
         __instance.mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
-        RandomMapObject[] AllRandomSpawnList = UnityEngine.Object.FindObjectsOfType<RandomMapObject>();
+        RandomMapObject[] AllRandomSpawnList = Object.FindObjectsOfType<RandomMapObject>();
         List<string> ValidHazardList = WTOBase.CSVSeperatedStringList(WTOBase.WTOHazardList.Value);
         if(WTOBase.WTOForceHazards.Value != TiedToLabEnum.WTOOnly) {
             foreach(SpawnableMapObject MapObj in __instance.currentLevel.spawnableMapObjects) {
@@ -54,10 +45,10 @@ internal class FactoryPatch {
         for (int MapObjectIndex = 0; MapObjectIndex < __instance.currentLevel.spawnableMapObjects.Length; MapObjectIndex++) {
             //Check if the map object is allowed to spawn :)
             if (!ValidHazardList.Contains(__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn.name.ToLower())){
-                WTOBase.LogToConsole($"Object {__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn.name.ToLower()} not found in valid spawn list!");
+                Log.Error($"Object {__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn.name.ToLower()} not found in valid spawn list!");
                 continue;
             }
-            List<RandomMapObject> ValidRandomSpawnList = new List<RandomMapObject>();
+            List<RandomMapObject> ValidRandomSpawnList = [];
             int MapObjectsToSpawn = (int)__instance.currentLevel.spawnableMapObjects[MapObjectIndex].numberToSpawn.Evaluate((float)MapHazardRandom.NextDouble());
             WTOBase.WTOLogSource.LogInfo($"Attempting to spawn {__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn}; Quantity: {MapObjectsToSpawn}");
             if (__instance.increasedMapHazardSpawnRateIndex == MapObjectIndex) {
@@ -88,7 +79,7 @@ internal class FactoryPatch {
                 }
                 RandomMapObject RandomSpawn = ValidRandomSpawnList[MapHazardRandom.Next(0, ValidRandomSpawnList.Count)];
                 Vector3 SpawnPos = RandomSpawn.transform.position;
-                GameObject NewHazard = UnityEngine.Object.Instantiate(__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn, SpawnPos, RandomSpawn.transform.rotation, __instance.mapPropsContainer.transform);
+                GameObject NewHazard = Object.Instantiate(__instance.currentLevel.spawnableMapObjects[MapObjectIndex].prefabToSpawn, SpawnPos, RandomSpawn.transform.rotation, __instance.mapPropsContainer.transform);
                 NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
                 WTOBase.WTOLogSource.LogInfo($"Spawned new {NewHazard}"); 
                 ValidRandomSpawnList.Remove(RandomSpawn);

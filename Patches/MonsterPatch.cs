@@ -1,30 +1,27 @@
 ﻿using HarmonyLib;
 using LethalLevelLoader;
-using LethalLib;
 using System.Collections.Generic;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches;
 internal class MonsterPatch {
 
-    public static List<SpawnableEnemyWithRarity> InsideEnemies = new List<SpawnableEnemyWithRarity>();
-    public static List<SpawnableEnemyWithRarity> OutsideEnemies = new List<SpawnableEnemyWithRarity>();
-    public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new List<SpawnableEnemyWithRarity>();
-    public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new List<SpawnableEnemyWithRarity>();
+    public static List<SpawnableEnemyWithRarity> InsideEnemies = [];
+    public static List<SpawnableEnemyWithRarity> OutsideEnemies = [];
+    public static List<SpawnableEnemyWithRarity> DaytimeEnemies = [];
+    public static List<SpawnableEnemyWithRarity> AdultWandererContainer = [];
 
     private static readonly AssetBundle EnemyBundle = WTOBase.MonsterAssetBundle;
     private const string EnemyPath = WTOBase.RootPath + "CustomEnemies/";
-    private static bool EnemiesInList; 
     public const bool ShouldDebugEnemies = true;
 
-    private static Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToInsideSpawnLists = new();
-    private static Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToOutsideSpawnLists = new();
-    private static Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToDaytimeSpawnLists = new();
+    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToInsideSpawnLists = [];
+    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToOutsideSpawnLists = [];
+    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToDaytimeSpawnLists = [];
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(MonsterPatch), LogSourceType.Generic);
 
     /*
     [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
@@ -83,7 +80,7 @@ internal class MonsterPatch {
         if(__instance is not WTOEnemy || __instance.stunnedByPlayer == null){
             return;
         }
-        WTOBase.LogToConsole($"Enemy: {__instance.GetType()} STUNNED BY: {__instance.stunnedByPlayer}; Switching ownership...");
+        Log.Info($"Enemy: {__instance.GetType()} STUNNED BY: {__instance.stunnedByPlayer}; Switching ownership...");
         __instance.ChangeOwnershipOfEnemy(__instance.stunnedByPlayer.actualClientId);
     }
 
@@ -155,30 +152,30 @@ internal class MonsterPatch {
             MoonsToDaytimeSpawnLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.DaytimeEnemies);
         }
     }
+
     public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity, LethalLib.Modules.Enemies.SpawnType SpawnType, string InfoName = null, string KeywordName = null) {
+        string EnemyFolderName = EnemyName.Remove(EnemyName.Length - 6, 6) + "/";
+        TerminalNode EnemyInfo = null;
+        TerminalKeyword EnemyKeyword = null;
 
-    string EnemyFolderName = EnemyName.Remove(EnemyName.Length - 6, 6) + "/";
-    TerminalNode EnemyInfo = null;
-    TerminalKeyword EnemyKeyword = null;
+        EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyBundle, EnemyPath + EnemyFolderName + EnemyName);
+        EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
 
-    EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyBundle, EnemyPath + EnemyFolderName + EnemyName);
-    EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
+        if (InfoName != null) {
+            EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyBundle, EnemyPath + EnemyFolderName + InfoName);
+        }
+        if (KeywordName != null) {
+            EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyBundle, EnemyPath + EnemyFolderName + KeywordName);
+        }
 
-    if (InfoName != null) {
-        EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyBundle, EnemyPath + EnemyFolderName + InfoName);
+        LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
+        LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
+        EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
+        Log.Info("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
     }
-    if (KeywordName != null) {
-        EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyBundle, EnemyPath + EnemyFolderName + KeywordName);
-    }
-
-    LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
-    LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
-    EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
-    WTOBase.LogToConsole("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
-}
 
     private static void SetMonsterStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableEnemyWithRarity> CurrentMoonEnemyList, List<SpawnableEnemyWithRarity> OoblterraEnemyList) {
-        List<SpawnableEnemyWithRarity> WeightedOoblterraEnemies = new();
+        List<SpawnableEnemyWithRarity> WeightedOoblterraEnemies = [];
         foreach(SpawnableEnemyWithRarity Enemy in OoblterraEnemyList) {
             WeightedOoblterraEnemies.Add(new SpawnableEnemyWithRarity { enemyType = Enemy.enemyType, rarity = Enemy.rarity * WTOBase.WTOWeightScale.Value });
         }

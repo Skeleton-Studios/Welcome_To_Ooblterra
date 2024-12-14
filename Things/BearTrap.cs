@@ -1,13 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using GameNetcodeStuff;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things;
@@ -24,9 +18,11 @@ public class BearTrap : MonoBehaviour, IHittable {
     public bool IsBearTrapRaised = false;
     public System.Random BearTrapRandom;
     public bool IsBearTrapClosed;
-    private List<PlayerControllerB> PlayerInRangeList = new();
+    private readonly List<PlayerControllerB> PlayerInRangeList = [];
     private int BearTrapRiseChance = 70;
     public AudioClip CloseSound;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(BearTrap), LogSourceType.Thing);
 
     public bool Hit(int force, Vector3 hitDirection, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
         if (!IsBearTrapClosed) {
@@ -42,7 +38,7 @@ public class BearTrap : MonoBehaviour, IHittable {
         try {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             if (!PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
-                WTOBase.LogToConsole($"Bear Trap: Adding Player {PlayerInRange} to player in range list...");
+                Log.Debug($"Bear Trap: Adding Player {PlayerInRange} to player in range list...");
                 PlayerInRangeList.Add(PlayerInRange);
                 SetBearTrapOpenState(false);
                 GetComponent<AudioSource>().PlayOneShot(CloseSound);
@@ -53,7 +49,7 @@ public class BearTrap : MonoBehaviour, IHittable {
         try {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
-                WTOBase.LogToConsole($"Bear Trap: Removing Player {PlayerInRange} from player in range list...");
+                Log.Debug($"Bear Trap: Removing Player {PlayerInRange} from player in range list...");
                 PlayerInRange.movementSpeed = 4.6f;
                 PlayerInRange.jumpForce = 13;
                 PlayerInRangeList.Remove(PlayerInRange);

@@ -1,16 +1,10 @@
 ﻿using GameNetcodeStuff;
-using LethalLib.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Items;
-using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.RoomBehaviors;
 using static Welcome_To_Ooblterra.Items.Chemical;
@@ -40,9 +34,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
         Wrong
     }
 
-    private bool AnimStarted;
-    private ChemColor[] GuessedColorList = new ChemColor[NumberOfPoints];
-    private ChemColor[] CorrectColors = new ChemColor[NumberOfPoints];
+    private readonly ChemColor[] GuessedColorList = new ChemColor[NumberOfPoints];
+    private readonly ChemColor[] CorrectColors = new ChemColor[NumberOfPoints];
     private PlayerControllerB PlayerToRevive;
     private Vector3 SpawnTarget;
     private int PlayerID;
@@ -52,6 +45,8 @@ public class FrankensteinTerminal : NetworkBehaviour {
     private bool IsUsedUp = false;
     private int PopulatedChemPoints;
     private static bool MimicSpawned = false;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(FrankensteinTerminal), LogSourceType.Room);
 
     private void Start() {
         MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
@@ -116,7 +111,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             return;
         }
         if(BodyPoint == null || BodyPoint.PlayerRagdoll == null) {
-            WTOBase.LogToConsole("Problem with body point!!!");
+            Log.Error("Problem with body point!!!");
             return;
         }
         SetVariablesServerRpc(BodyPoint.RespawnPos.position, BodyPoint.PlayerRagdoll.bodyID.Value);
@@ -127,16 +122,16 @@ public class FrankensteinTerminal : NetworkBehaviour {
         IsUsedUp = true;
     }
     private Correctness[] CheckCorrectness() {
-        Correctness[] TotalCorrect = { Correctness.Wrong, Correctness.Wrong, Correctness.Wrong, Correctness.Wrong };
-        WTOBase.LogToConsole("BEGIN PRINT CORRECT COLORS");
+        Correctness[] TotalCorrect = [Correctness.Wrong, Correctness.Wrong, Correctness.Wrong, Correctness.Wrong];
+        Log.Debug("BEGIN PRINT CORRECT COLORS");
         foreach(ChemColor color in CorrectColors) {
-            WTOBase.LogToConsole(color.ToString());
+            Log.Debug(color.ToString());
         }
-        WTOBase.LogToConsole("END PRINT CORRECT COLORS ; BEGIN PRINT GUESSED COLORS");
+        Log.Debug("END PRINT CORRECT COLORS ; BEGIN PRINT GUESSED COLORS");
         foreach (ChemColor color in GuessedColorList) {
-            WTOBase.LogToConsole(color.ToString());
+            Log.Debug(color.ToString());
         }
-        WTOBase.LogToConsole("END PRINT GUESSED COLORS");
+        Log.Debug("END PRINT GUESSED COLORS");
 
         for (int i = 0; i < NumberOfPoints; i++) {
             if (CorrectColors[i] == GuessedColorList[i]) {
@@ -166,17 +161,17 @@ public class FrankensteinTerminal : NetworkBehaviour {
                     break;
             }
         }
-        WTOBase.LogToConsole($"CORRECTNESS SCORE IS {TotalScore}");
+        Log.Info($"CORRECTNESS SCORE IS {TotalScore}");
         return TotalScore;
     }
     private void SetColorList() {
-        List<ChemColor> AllColors = new List<ChemColor>((ChemColor[])Enum.GetValues(typeof(ChemColor)));
+        List<ChemColor> AllColors = new((ChemColor[])Enum.GetValues(typeof(ChemColor)));
         ChemColor NextColor;
         for (int i = 0; i < NumberOfPoints; i++) {
             NextColor = AllColors[MyRandom.Next(0, AllColors.Count - 1)];
             CorrectColors[i] = NextColor;
             AllColors.Remove(NextColor);
-            WTOBase.LogToConsole($"COLOR NUMBER {i} IS {CorrectColors[i]}");
+            Log.Debug($"COLOR NUMBER {i} IS {CorrectColors[i]}");
         }
     }
     private bool CheckAllChemPoints(bool AssignColors) {
@@ -200,19 +195,17 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     [ServerRpc(RequireOwnership = false)]
     public void StartSceneServerRpc(int Correctness) {
-        WTOBase.LogToConsole("Starting visuals on server...");
+        Log.Debug("Starting visuals on server...");
         StartSceneClientRpc(Correctness);
     }
     [ClientRpc]
     public void StartSceneClientRpc(int Correctness) {
-        WTOBase.LogToConsole("Starting visuals on client...");
+        Log.Debug("Starting visuals on client...");
         StartCoroutine(StartScene(Correctness));
     }
     IEnumerator StartScene(int Correctness) {
-        if (!AnimStarted) {
-            WTOBase.LogToConsole("Telling Visuals script to start visuals ...");
-            Visuals.StartVisuals();
-        }
+        Log.Debug("Telling Visuals script to start visuals ...");
+        Visuals.StartVisuals();
         yield return new WaitForSeconds(7);
         if (Correctness > 50 ) {
             ReviveDeadPlayerServerRpc(PlayerID, SpawnTarget);
@@ -235,7 +228,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
     IEnumerator SetLightsAndWait(Correctness[] Colorset) {
         SwitchMesh.materials[1] = SwitchGreenMat;
         for (int i = 0; i < NumberOfPoints; i++) {
-            WTOBase.LogToConsole($"SLOT {i} is {Colorset[i]}");
+            Log.Debug($"SLOT {i} is {Colorset[i]}");
             switch (Colorset[i]) {
                 case Correctness.Correct:
                     LightMeshes[i].materials[1].SetColor("_EmissiveColor", new Color(0, 1, 0, 1));
@@ -270,7 +263,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     [ServerRpc(RequireOwnership = false)]
     public void ReviveDeadPlayerServerRpc(int ID, Vector3 SpawnLoc) {
-        WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on server...");
+        Log.Debug($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on server...");
         ReviveDeadPlayerClientRpc(ID, SpawnLoc);
     }
     [ClientRpc]
@@ -278,7 +271,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
         if (ReviveStarted) {
             return;
         }
-        WTOBase.LogToConsole($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on client...");
+        Log.Debug($"Reviving dead player {StartOfRound.Instance.allPlayerScripts[ID].playerUsername} on client...");
         ReviveDeadPlayer(ID, SpawnLoc);
         ReviveStarted = true;
     }
@@ -287,17 +280,17 @@ public class FrankensteinTerminal : NetworkBehaviour {
         if(PlayerToRevive.isPlayerDead == false) {
             return;
         }
-        WTOBase.LogToConsole("DEAD PLAYER INFO:");
-        WTOBase.LogToConsole($"PLAYER Name: {StartOfRound.Instance.allPlayerScripts[ID].playerUsername}");
-        WTOBase.LogToConsole($"PLAYER SCRIPT: {StartOfRound.Instance.allPlayerScripts[ID]}");
-        WTOBase.LogToConsole("Reviving players A");
+        Log.Debug("DEAD PLAYER INFO:");
+        Log.Debug($"PLAYER Name: {StartOfRound.Instance.allPlayerScripts[ID].playerUsername}");
+        Log.Debug($"PLAYER SCRIPT: {StartOfRound.Instance.allPlayerScripts[ID]}");
+        Log.Debug("Reviving players A");
         PlayerToRevive.ResetPlayerBloodObjects(PlayerToRevive.isPlayerDead);
         PlayerToRevive.isClimbingLadder = false;
         PlayerToRevive.ResetZAndXRotation();
         PlayerToRevive.thisController.enabled = true;
         PlayerToRevive.health = 100;
         PlayerToRevive.disableLookInput = false;
-        WTOBase.LogToConsole("Reviving players B");
+        Log.Debug("Reviving players B");
         if (PlayerToRevive.isPlayerDead) {
             PlayerToRevive.isPlayerDead = false;
             PlayerToRevive.isPlayerControlled = true;
@@ -311,12 +304,10 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.DisablePlayerModel(StartOfRound.Instance.allPlayerObjects[ID], enable: true, disableLocalArms: true);
             PlayerToRevive.helmetLight.enabled = false;
             PlayerToRevive.SetNightVisionEnabled(PlayerToRevive == StartOfRound.Instance.localPlayerController);
-            WTOBase.LogToConsole("Reviving players C");
+            Log.Debug("Reviving players C");
             PlayerToRevive.Crouch(crouch: false);
             PlayerToRevive.criticallyInjured = false;
-            if (PlayerToRevive.playerBodyAnimator != null) {
-                PlayerToRevive.playerBodyAnimator.SetBool("Limp", value: false);
-            }
+            PlayerToRevive.playerBodyAnimator?.SetBool("Limp", value: false);
             PlayerToRevive.bleedingHeavily = false;
             PlayerToRevive.activatingItem = false;
             PlayerToRevive.twoHanded = false;
@@ -325,14 +316,14 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.inAnimationWithEnemy = null;
             PlayerToRevive.holdingWalkieTalkie = false;
             PlayerToRevive.speakingToWalkieTalkie = false;
-            WTOBase.LogToConsole("Reviving players D");
+            Log.Debug("Reviving players D");
             PlayerToRevive.isSinking = false;
             PlayerToRevive.isUnderwater = false;
             PlayerToRevive.sinkingValue = 0f;
             PlayerToRevive.statusEffectAudio.Stop();
             PlayerToRevive.DisableJetpackControlsLocally();
             PlayerToRevive.health = 100;
-            WTOBase.LogToConsole("Reviving players E");
+            Log.Debug("Reviving players E");
             PlayerToRevive.mapRadarDotAnimator.SetBool("dead", value: false);
             if (PlayerToRevive.IsOwner) {
                 HUDManager.Instance.gasHelmetAnimator.SetBool("gasEmitting", value: false);
@@ -342,10 +333,10 @@ public class FrankensteinTerminal : NetworkBehaviour {
                 PlayerToRevive.hinderedMultiplier = 1f;
                 PlayerToRevive.isMovementHindered = 0;
                 PlayerToRevive.sourcesCausingSinking = 0;
-                WTOBase.LogToConsole("Reviving players E2");
+                Log.Debug("Reviving players E2");
             }
         }
-        WTOBase.LogToConsole("Reviving players F");
+        Log.Debug("Reviving players F");
         SoundManager.Instance.earsRingingTimer = 0f;
         PlayerToRevive.voiceMuffledByEnemy = false;
         SoundManager.Instance.playerVoicePitchTargets[PlayerID] = 1f;
@@ -365,7 +356,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
             PlayerToRevive.currentVoiceChatIngameSettings.voiceAudio.GetComponent<OccludeAudio>().overridingLowPass = false;
         }
         */
-        WTOBase.LogToConsole("Reviving players G");
+        Log.Debug("Reviving players G");
         if(GameNetworkManager.Instance.localPlayerController == PlayerToRevive) {
             HUDManager.Instance.HideHUD(hide: false);
             StartOfRound.Instance.SetSpectateCameraToGameOverMode(enableGameOver: false, PlayerToRevive);
@@ -377,13 +368,13 @@ public class FrankensteinTerminal : NetworkBehaviour {
         PlayerToRevive.playerBodyAnimator.SetBool("Limp", value: false);
         PlayerToRevive.health = 100;
         PlayerToRevive.spectatedPlayerScript = null;
-        WTOBase.LogToConsole("Reviving players H");
+        Log.Debug("Reviving players H");
         if (base.IsServer) {
             BodyPoint.BodyGO.NetworkObject.Despawn();
         }
         Destroy(BodyPoint.BodyGO);
         StartOfRound.Instance.livingPlayers += 1;
-        WTOBase.LogToConsole($"New living player count: {StartOfRound.Instance.livingPlayers}");
+        Log.Debug($"New living player count: {StartOfRound.Instance.livingPlayers}");
         StartOfRound.Instance.allPlayersDead = false;
     }
 
@@ -394,8 +385,7 @@ public class FrankensteinTerminal : NetworkBehaviour {
 
     [ClientRpc]
     public void SyncMimicPropertiesClientRpc(NetworkObjectReference MimicNetObject, int SuitID) {
-        NetworkObject netObject = null;
-        MimicNetObject.TryGet(out netObject);
+        MimicNetObject.TryGet(out NetworkObject netObject);
         MaskedPlayerEnemy Mask = netObject.GetComponent<MaskedPlayerEnemy>();
         Mask.maskTypes[0].SetActive(value: false);
         Mask.maskTypes[1].SetActive(value: false);
@@ -414,24 +404,24 @@ public class FrankensteinTerminal : NetworkBehaviour {
         }
         MimicSpawned = true;
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
-        WTOBase.LogToConsole("Server creating mimic from Frankenstein");
+        Log.Info("Server creating mimic from Frankenstein");
         Vector3 navMeshPosition = RoundManager.Instance.GetNavMeshPosition(MimicCreationPoint, default, 10f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
-            WTOBase.LogToConsole("No nav mesh found; no WTOMimic could be created");
+            Log.Error("No nav mesh found; no WTOMimic could be created");
             return;
         } 
         //const int MimicIndex = 12;
         EnemyType TheMimic = StartOfRound.Instance.levels.First(x => x.PlanetName == "8 Titan").Enemies.First(x => x.enemyType.enemyName == "Masked").enemyType;
-        WTOBase.LogToConsole($"Mimic Found: {TheMimic != null}");
+        Log.Debug($"Mimic Found: {TheMimic != null}");
 
-        WTOBase.LogToConsole($"NAVMESHPOS: {navMeshPosition}");
-        WTOBase.LogToConsole($"PLAYER: {PlayerToRevive.playerUsername}");
-        WTOBase.LogToConsole($"MIMIC: {TheMimic}");
+        Log.Debug($"NAVMESHPOS: {navMeshPosition}");
+        Log.Debug($"PLAYER: {PlayerToRevive.playerUsername}");
+        Log.Debug($"MIMIC: {TheMimic}");
 
         NetworkObjectReference netObjectRef = RoundManager.Instance.SpawnEnemyGameObject(navMeshPosition, PlayerToRevive.transform.eulerAngles.y, -1, TheMimic);
 
         if (netObjectRef.TryGet(out var networkObject)) {
-            WTOBase.LogToConsole("Got network object for WTOMimic");
+            Log.Debug("Got network object for WTOMimic");
             MaskedPlayerEnemy component = networkObject.GetComponent<MaskedPlayerEnemy>();
             component.SetSuit(PlayerToRevive.currentSuitID);
             component.mimickingPlayer = PlayerToRevive;
@@ -450,12 +440,12 @@ public class FrankensteinTerminal : NetworkBehaviour {
     }
     [ClientRpc]
     public void CreateMimicClientRpc(int ID, NetworkObjectReference netObjectRef) {
-        if (!base.IsServer) {
+        if (!IsServer) {
             return;
         }
-        StartCoroutine(waitForMimicEnemySpawn(ID, netObjectRef));
+        StartCoroutine(WaitForMimicEnemySpawn(ID, netObjectRef));
     }
-    private IEnumerator waitForMimicEnemySpawn(int ID, NetworkObjectReference netObjectRef) {
+    private IEnumerator WaitForMimicEnemySpawn(int ID, NetworkObjectReference netObjectRef) {
         PlayerToRevive = StartOfRound.Instance.allPlayerScripts[ID];
         NetworkObject netObject = null;
         float startTime = Time.realtimeSinceStartup;
@@ -468,13 +458,13 @@ public class FrankensteinTerminal : NetworkBehaviour {
         if (netObject == null) {
             yield break;
         }
-        WTOBase.LogToConsole("Got network object for WTOMimic enemy client");
+        Log.Debug("Got network object for WTOMimic enemy client");
         MaskedPlayerEnemy component = netObject.GetComponent<MaskedPlayerEnemy>();
         component.mimickingPlayer = PlayerToRevive;
         component.SetEnemyOutside(false);
         component.SetVisibilityOfMaskedEnemy();
         //This makes it such that the mimic has no visible mask :)
-        if (base.IsServer) {
+        if (IsServer) {
             SyncMimicPropertiesServerRpc(netObjectRef, PlayerToRevive.currentSuitID);
         }        
     }

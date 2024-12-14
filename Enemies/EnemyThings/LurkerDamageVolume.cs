@@ -8,7 +8,10 @@ using UnityEngine;
 
 namespace Welcome_To_Ooblterra.Enemies.EnemyThings {
     internal class LurkerDamageVolume : MonoBehaviour {
+#pragma warning disable 0649 // Assigned in Unity Editor
         public BabyLurkerAI OwningLurker;
+#pragma warning restore 0649
+
         private bool CanDamagePlayer;
         private float TimeTillDamage = 3f;
         private void Update() {

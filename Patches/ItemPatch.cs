@@ -4,7 +4,6 @@ using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
 using LethalLib.Modules;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
-using Unity.Netcode;
 using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Patches;
@@ -14,14 +13,12 @@ internal class ItemPatch {
 
     private static AudioClip CachedDiscoBallMusic;
     private static AudioClip OoblterraDiscoMusic;
-    public class ItemData {
-        private string AssetName;
-        private int Rarity;
+    public class ItemData(string name, int rarity)
+    {
+        private readonly string AssetName = ItemPath + name;
+        private readonly int Rarity = rarity;
         private Item Itemref;
-        public ItemData(string name, int rarity) {
-            AssetName = ItemPath + name;
-            Rarity = rarity;
-        }
+
         public string GetItemPath() { return AssetName; }
         public int GetRarity() { return Rarity; }
         public void SetItem(Item ItemToSet) { Itemref = ItemToSet; }
@@ -31,22 +28,22 @@ internal class ItemPatch {
     private static readonly AssetBundle ItemBundle = WTOBase.ItemAssetBundle;
     private const string ItemPath = WTOBase.RootPath + "CustomItems/";
 
-    private static Dictionary<string, List<SpawnableItemWithRarity>> MoonsToItemLists = new();
+    private static readonly Dictionary<string, List<SpawnableItemWithRarity>> MoonsToItemLists = [];
 
     //This array stores all our custom items
-    public static ItemData[] ItemList = new ItemData[] {
-        new ItemData("AlienCrate.asset", 30),
-        new ItemData("FiveSixShovel.asset", 10),
-        new ItemData("HandCrystal.asset", 30),
-        new ItemData("OoblCorpse.asset", 5),
-        new ItemData("StatueSmall.asset", 40),
-        new ItemData("WandCorpse.asset", 5),
-        new ItemData("WandFeed.asset", 20),
-        new ItemData("SprintTotem.asset", 25),
-        new ItemData("CursedTotem.asset", 20),
-        new ItemData("Chems.asset", 0),
-        new ItemData("Battery.asset", 0)
-    };
+    public static ItemData[] ItemList = [
+        new("AlienCrate.asset", 30),
+        new("FiveSixShovel.asset", 10),
+        new("HandCrystal.asset", 30),
+        new("OoblCorpse.asset", 5),
+        new("StatueSmall.asset", 40),
+        new("WandCorpse.asset", 5),
+        new("WandFeed.asset", 20),
+        new("SprintTotem.asset", 25),
+        new("CursedTotem.asset", 20),
+        new("Chems.asset", 0),
+        new("Battery.asset", 0)
+    ];
 
     //PATCHES
     [HarmonyPatch(typeof(RoundManager), "SetLockedDoors")]
@@ -113,7 +110,7 @@ internal class ItemPatch {
     }
 
     private static void SetItemStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableItemWithRarity> CurrentMoonItemList, List<SpawnableItemWithRarity> OoblterraItemList) {
-        List<SpawnableItemWithRarity> WeightedOoblterraItems = new();
+        List<SpawnableItemWithRarity> WeightedOoblterraItems = [];
         foreach (SpawnableItemWithRarity Item in OoblterraItemList) {
             WeightedOoblterraItems.Add(new SpawnableItemWithRarity { spawnableItem = Item.spawnableItem, rarity = Item.rarity * WTOBase.WTOWeightScale.Value });
         }

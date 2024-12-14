@@ -1,34 +1,29 @@
 ﻿using GameNetcodeStuff;
-using LethalLib.Modules;
-using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.InputSystem.XR;
-using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
-using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 using static LethalLib.Modules.Enemies;
 
 namespace Welcome_To_Ooblterra.Things;
 public class BabyLurkerEgg : NetworkBehaviour {
 
-    private System.Random enemyRandom;
-    private GameObject HiveProjectile;
-    public GameObject HiveMesh; 
+    public GameObject HiveMesh;
     public GameObject projectileTemplate;
     public GameObject MapDot;
     public Transform DropTransform;
-    public Transform TraceTransform; 
+    public Transform TraceTransform;
     public AudioClip[] BreakoffSound;
+    public ScanNodeProperties ScanNode;
+
+    private System.Random enemyRandom;
+    private GameObject HiveProjectile;
     private bool EggSpawned = false;
     private bool EggDropped = false;
     private float SecondsUntilNextSpawnAttempt = 15f;
-    public ScanNodeProperties ScanNode;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(BabyLurkerEgg), LogSourceType.Thing);
 
     private void OnTriggerStay(Collider other) { 
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
@@ -66,10 +61,10 @@ public class BabyLurkerEgg : NetworkBehaviour {
         if (Physics.Linecast(TraceTransform.position, TraceTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
             HiveMesh.transform.position = HitResult.point;
             HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
-            WTOBase.LogToConsole($"Lurker Egg active!");
+            Log.Info("Lurker Egg active!");
             EggSpawned = true;
-        } else { 
-            WTOBase.LogToConsole($"Lurker Egg Line trace failed!");
+        } else {
+            Log.Warning("Lurker Egg Line trace failed!");
         }
 
     }
@@ -94,7 +89,7 @@ public class BabyLurkerEgg : NetworkBehaviour {
         }
         MapDot.SetActive(false);
         GetComponent<AudioSource>()?.PlayOneShot(BreakoffSound[enemyRandom.Next(0, BreakoffSound.Length)]);
-        WTOBase.LogToConsole($"Lurker egg projectile being spawned!");
+        Log.Info("Lurker egg projectile being spawned!");
         HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
         HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;
         EggDropped = true;
