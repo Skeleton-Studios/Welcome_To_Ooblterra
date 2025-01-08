@@ -1,10 +1,6 @@
-﻿using GameNetcodeStuff;
-using System;
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
@@ -12,10 +8,12 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 internal class WideDoorway : NetworkBehaviour {
 
+#pragma warning disable 0649 // Assigned in Unity Editor
     public BoxCollider OverlapTrigger;
     public Transform Doorway;
     public AudioClip CloseSound;
     public AudioSource CloseSoundSource;
+#pragma warning restore 0649
 
     private const float TotalDistanceToTravel = -4;
     private float DistanceToTravelEachTime;
@@ -27,11 +25,13 @@ internal class WideDoorway : NetworkBehaviour {
     private Vector3 DoorStartPosition;
     private Vector3 CurrentDoorPosition;
     private Vector3 TargetDoorPosition;
-    private List<Collider> CurrentColliderList = new();
+    private readonly List<Collider> CurrentColliderList = [];
     private bool ShouldFall;
 
     private int TotalTimesBeforeClose;
-    private System.Random MyRandom; 
+    private System.Random MyRandom;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(WideDoorway), LogSourceType.Thing);
 
     private void Start() {
         MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
@@ -69,7 +69,7 @@ internal class WideDoorway : NetworkBehaviour {
             return;
         }
         CurrentColliderList.Add(other);
-        WTOBase.LogToConsole("Doorway Trigger Entered!");
+        Log.Debug("Doorway Trigger Entered!");
         StopCoroutine(CloseDoor());
         SetDoorVariables();
         ShouldFall = true;
@@ -86,7 +86,7 @@ internal class WideDoorway : NetworkBehaviour {
     }
     IEnumerator CloseDoor() {
         timeElapsed += Time.deltaTime;
-        WTOBase.LogToConsole($"Current Lerp Position: {timeElapsed / CloseTime}");
+        Log.Debug($"Current Lerp Position: {timeElapsed / CloseTime}");
         Doorway.transform.position = Vector3.Lerp(CurrentDoorPosition, TargetDoorPosition, timeElapsed / CloseTime);
         if (timeElapsed / CloseTime >= 1) {
             ShouldFall = false;

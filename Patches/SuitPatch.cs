@@ -1,6 +1,5 @@
 ﻿using HarmonyLib;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
@@ -19,7 +18,7 @@ internal class SuitPatch {
 
     private const string PosterGameObject = "HangarShip/Plane.001";
 
-    static string[] SuitMaterialNames = new string[] {
+    static readonly string[] SuitMaterialNames = [
         "RedSuit.mat",
         "ProtSuit.mat",
         "YellowSuit.mat",
@@ -27,12 +26,14 @@ internal class SuitPatch {
         "BlueSuit.mat",
         "IndigoSuit.mat",
         "MackSuit.mat"
-    };
+    ];
 
     private static bool SuitsLoaded = false;
 
     public static Material GhostPlayerSuit;
-    
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(SuitPatch), LogSourceType.Generic);
+
     //PATCHES
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
     [HarmonyPrefix]
@@ -86,7 +87,7 @@ internal class SuitPatch {
     //METHODS
     private static void LoadSuits(string RelevantPath) {
         if (SuitsLoaded) {
-            WTOBase.LogToConsole("SUITS ALREADY LOADED!");
+            Log.Warning("SUITS ALREADY LOADED!");
             return;
         }
         UnlockableItem unlockableItem = StartOfRound.Instance.unlockablesList.unlockables.First(x => x.suitMaterial != null);

@@ -6,6 +6,7 @@ using UnityEngine.Assertions.Must;
 using System.Runtime.CompilerServices;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
 using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
 public class BabyLurkerAI : WTOEnemy {
@@ -14,7 +15,7 @@ public class BabyLurkerAI : WTOEnemy {
     public bool ThrowProjectile;
     public int ProjectilesThrown;
     public GameObject projectileTemplate;
-    private float launchVelocity = 700f;
+    private readonly float launchVelocity = 700f;
     public Transform LaunchTransform;
     public static int AttackRange = 5;
     private float JumpCooldownSeconds = 3f;
@@ -30,17 +31,16 @@ public class BabyLurkerAI : WTOEnemy {
         }
         public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
             if (BabyLurkerList[enemyIndex].targetPlayer == null) {
-                BabyLurkerList[enemyIndex].LogMessage($"Attempting to find nearest player...");
+                Log.Debug($"Attempting to find nearest player...");
                 BabyLurkerList[enemyIndex].targetPlayer = BabyLurkerList[enemyIndex].FindNearestPlayer();
             }
         }
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new FoundNearestPlayer()
-        };
-
+        ];
     }
     private class ChasePlayer : BehaviorState {
 
@@ -53,9 +53,9 @@ public class BabyLurkerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new TargetPlayerIsInLOS()
-        };
+        ];
     }
     private class WaitForAttackCooldown : BehaviorState {
 
@@ -68,10 +68,10 @@ public class BabyLurkerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
+        public override List<StateTransition> transitions { get; set; } = [
             new CooldownFinished(),
             new PlayerLeftRange()
-        };
+        ];
 
     }
     private class ThrowSelfAtPlayer : BehaviorState {
@@ -91,9 +91,7 @@ public class BabyLurkerAI : WTOEnemy {
         public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
         }
-        public override List<StateTransition> transitions { get; set; } = new List<StateTransition> {
-            //new CooldownStarted()
-        };
+        public override List<StateTransition> transitions { get; set; } = [];
 
     }
 
@@ -141,11 +139,13 @@ public class BabyLurkerAI : WTOEnemy {
 
     private GameObject LiveProjectile;
 
-    public static Dictionary<int, BabyLurkerAI> BabyLurkerList = new();
+    public static Dictionary<int, BabyLurkerAI> BabyLurkerList = [];
     private static int BabyLurkerID;
     public bool ThrowingSelfAtPlayer;
     public GameObject LurkerBody;
-    private List<PlayerControllerB> LivingPlayers = new();
+    private readonly List<PlayerControllerB> LivingPlayers = [];
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(BabyLurkerAI), LogSourceType.Enemy);
 
     public override void Start() {
         MyValidState = PlayerState.Inside;
@@ -155,7 +155,7 @@ public class BabyLurkerAI : WTOEnemy {
         WTOEnemyID = BabyLurkerID;
         agent.speed = 7f;
         //SetTargetServerRpc((int)StartOfRound.Instance.allPlayerScripts[0].playerClientId);
-        LogMessage($"Adding BabyLurker {this} #{BabyLurkerID}");
+        Log.Info($"Adding BabyLurker {this} #{BabyLurkerID}");
         BabyLurkerList.Add(BabyLurkerID, this); 
         base.Start();
         
@@ -180,9 +180,9 @@ public class BabyLurkerAI : WTOEnemy {
             //set target to random player
             if(LivingPlayers.Count > 0) {
                 targetPlayer = LivingPlayers[enemyRandom.Next(0, LivingPlayers.Count)];
-                LogMessage($"setting new baby lurker target! {targetPlayer.playerUsername}");
+                Log.Debug($"setting new baby lurker target! {targetPlayer.playerUsername}");
             } else {
-                LogMessage("No target for baby lurkers!");
+                Log.Warning("No target for baby lurkers!");
             }
         }
     }

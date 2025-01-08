@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -16,8 +13,8 @@ public class ScrapShelf : NetworkBehaviour {
 
     public void Start() {
         List<SpawnableItemWithRarity> RandomScrapTypes = StartOfRound.Instance.currentLevel.spawnableScrap;
-        List<SpawnableItemWithRarity> OneHanded = new();
-        List<SpawnableItemWithRarity> TwoHanded = new();
+        List<SpawnableItemWithRarity> OneHanded = [];
+        List<SpawnableItemWithRarity> TwoHanded = [];
         ShelfRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         foreach(SpawnableItemWithRarity spawnableItem in RandomScrapTypes) {
             if (spawnableItem.spawnableItem.twoHanded) {
@@ -66,9 +63,7 @@ public class ScrapShelf : NetworkBehaviour {
     public void SetScrapValueClientRpc(NetworkObjectReference ScrapToSet, int ScrapValue) {
         ScrapToSet.TryGet(out var ScrapNetworkobject);
         GrabbableObject NextScrap = ScrapNetworkobject.GetComponent<GrabbableObject>();
-        if (NextScrap != null) {
-            NextScrap.SetScrapValue(ScrapValue);
-        }
+        NextScrap?.SetScrapValue(ScrapValue);
     }
 }
 

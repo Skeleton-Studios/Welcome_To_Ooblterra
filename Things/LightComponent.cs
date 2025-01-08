@@ -1,10 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using TMPro;
-using UnityEngine;
+﻿using UnityEngine;
 using Welcome_To_Ooblterra.Items;
 
 namespace Welcome_To_Ooblterra.Things;
@@ -28,9 +22,7 @@ public class LightComponent : MonoBehaviour {
     private static int LightOnChance = -1;
 
     private void Start() {
-        if(LightRandom == null) { 
-            LightRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-        }
+        LightRandom ??= new System.Random(StartOfRound.Instance.randomMapSeed);
         if(LightOnChance == -1) {
             int NextChance = LightRandom.Next(4, 8);
             LightOnChance = NextChance * 10;
@@ -82,10 +74,10 @@ public class LightComponent : MonoBehaviour {
         //if (!SetColorByDistance) {
             return;
         //}
-        float DistanceToMachine = Vector3.Distance(MachineLocation, this.transform.position);
-        float NormalizedDistance = DistanceToMachine/ MaxDistance;
-        NormalizedDistance = Mathf.Clamp(NormalizedDistance, 0, 1);
-        SetLightColor(Color.Lerp(CloseColor, FarColor, NormalizedDistance)); 
+        // float DistanceToMachine = Vector3.Distance(MachineLocation, this.transform.position);
+        // float NormalizedDistance = DistanceToMachine/ MaxDistance;
+        // NormalizedDistance = Mathf.Clamp(NormalizedDistance, 0, 1);
+        // SetLightColor(Color.Lerp(CloseColor, FarColor, NormalizedDistance)); 
     }
 }
 

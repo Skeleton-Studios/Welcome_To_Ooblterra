@@ -1,23 +1,16 @@
 ﻿using HarmonyLib;
-using System;
 using UnityEngine;
 using System.Linq;
 using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
-using Unity.Netcode;
-using System.Runtime.CompilerServices;
-using DunGen.Adapters;
-using System.Runtime.InteropServices.WindowsRuntime;
 using LethalLevelLoader;
 using GameNetcodeStuff;
-using UnityEngine.InputSystem;
 
 namespace Welcome_To_Ooblterra.Patches;
 
 internal class MoonPatch {
 
     public static string MoonFriendlyName;
-    public static SelectableLevel MyNewMoon;
 
     public static Animator OoblFogAnimator;
 
@@ -38,6 +31,7 @@ internal class MoonPatch {
     private static SpawnableMapObject[] CachedSpawnableMapObjects;
     public static ExtendedLevel OoblterraExtendedLevel;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(MoonPatch), LogSourceType.Generic);
 
     //PATCHES
     [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
@@ -51,13 +45,13 @@ internal class MoonPatch {
             GrassHitSFX = StartOfRound.Instance.footstepSurfaces[4].hitSurfaceSFX;
         }
         if (OoblFootstepClips == null) {
-            OoblFootstepClips = new AudioClip[] {
+            OoblFootstepClips = [
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP01.wav"),
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP02.wav"),
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP03.wav"),
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP04.wav"),
                 WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
-            };
+            ];
             OoblHitSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
         }
         //MUSIC CACHING AND ARRAY CREATION
@@ -65,14 +59,12 @@ internal class MoonPatch {
             CachedTODMusic = TimeOfDay.Instance.timeOfDayCues;
             CachedAmbientMusic = SoundManager.Instance.DaytimeMusic;
         }
-        if (OoblTODMusic == null) {
-            OoblTODMusic = new AudioClip[4]{
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_StartOfDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_MidDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_LateDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_Night.ogg")
-            };
-        }
+        OoblTODMusic ??= [
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_StartOfDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_MidDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_LateDay.ogg"),
+            WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_Night.ogg")
+        ];
         //ASSIGNMENT
         if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
             TimeOfDay.Instance.timeOfDayCues = CachedTODMusic; 
@@ -85,7 +77,7 @@ internal class MoonPatch {
         GrassSurfaceRef.clips = OoblFootstepClips;
         GrassSurfaceRef.hitSurfaceSFX = OoblHitSFX;
         TimeOfDay.Instance.timeOfDayCues = OoblTODMusic;
-        SoundManager.Instance.DaytimeMusic = new AudioClip[0];
+        SoundManager.Instance.DaytimeMusic = [];
         ReplaceStoryLogIDs();       
     }
 
@@ -96,13 +88,13 @@ internal class MoonPatch {
             return; 
         }
         OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
-        WTOBase.LogToConsole($"Fog animator found : {OoblFogAnimator != null}");
+        Log.Debug($"Fog animator found : {OoblFogAnimator != null}");
         if (TimeOfDay.Instance.sunAnimator == OoblFogAnimator){
-            WTOBase.LogToConsole($"Sun Animator IS fog animator, supposedly");
+            Log.Debug($"Sun Animator IS fog animator, supposedly");
             return;
         }
         TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
-        WTOBase.LogToConsole($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
+        Log.Debug($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
         TimeOfDay.Instance.playDelayedMusicCoroutine = null;
     }
 
@@ -175,11 +167,11 @@ internal class MoonPatch {
     public static void Start() {
         OoblterraExtendedLevel = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPath + "OoblterraExtendedLevel.asset");
         MoonFriendlyName = OoblterraExtendedLevel.SelectableLevel.PlanetName;
-        WTOBase.LogToConsole($"Ooblterra Found: {OoblterraExtendedLevel != null}");
+        Log.Info($"Ooblterra Found: {OoblterraExtendedLevel != null}");
         PatchedContent.RegisterExtendedLevel(OoblterraExtendedLevel);
         CachedSpawnableMapObjects = OoblterraExtendedLevel.SelectableLevel.spawnableMapObjects;
         foreach (SpawnableItemWithRarity Hazard in MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap) {
-            WTOBase.LogToConsole($"{Hazard.spawnableItem.name}"); 
+            Log.Info($"{Hazard.spawnableItem.name}"); 
         }
     }
     private static void MoveNavNodesToNewPositions() {
@@ -187,12 +179,12 @@ internal class MoonPatch {
         GameObject[] NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");
 
         //Build a list of all our Oobltera nodes
-        List<GameObject> CustomNodes = new List<GameObject>();
+        List<GameObject> CustomNodes = [];
         IEnumerable<GameObject> allObjects = GameObject.FindObjectsOfType<GameObject>().Where(obj => obj.name == "OoblOutsideNode");
         foreach (GameObject Object in allObjects) {
                 CustomNodes.Add(Object);
         }
-        WTOBase.LogToConsole("Outside nav points: " + CustomNodes.Count().ToString());
+        Log.Info("Outside nav points: " + CustomNodes.Count().ToString());
 
         //Put outside nav nodes at the location of our ooblterra nodes. Destroy any extraneous ones
         for (int i = 0; i < NavNodes.Count(); i++) {

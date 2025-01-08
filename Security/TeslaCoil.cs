@@ -1,5 +1,4 @@
 ﻿using GameNetcodeStuff;
-using LethalLib.Modules;
 using System.Collections.Generic;
 using System.Linq;
 using Unity.Netcode;
@@ -10,8 +9,9 @@ using Welcome_To_Ooblterra.Properties;
 namespace Welcome_To_Ooblterra.Things;
 internal class TeslaCoil : NetworkBehaviour {
 
+#pragma warning disable 0649 // Assigned in Unity Editor
     public BoxCollider RangeBox;
-    public GameObject SmallRing;
+    public GameObject SmallRing; 
     public GameObject MediumRing;
     public GameObject LargeRing;
     public AudioSource StaticNoiseMaker;
@@ -25,14 +25,18 @@ internal class TeslaCoil : NetworkBehaviour {
     public MeshRenderer[] Emissives;
     public Animator TeslaCoilAnim;
 
+    readonly WalkieTalkie NowYoureOnWalkies;
+#pragma warning restore 0649
+
     [HideInInspector]
     private bool TeslaCoilOn = true;
     private bool AttemptedFireShotgun = false;
 
-    private List<PlayerControllerB> PlayerInRangeList = new();
-    private List<WalkieTalkie> WalkiesToReEnable = new();
-    private List<FlashlightItem> FlashLightsToReEnable = new();
-    WalkieTalkie NowYoureOnWalkies;
+    private readonly List<PlayerControllerB> PlayerInRangeList = [];
+    private readonly List<WalkieTalkie> WalkiesToReEnable = [];
+    private readonly List<FlashlightItem> FlashLightsToReEnable = [];
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(TeslaCoil), LogSourceType.Room);
 
     public void OnTriggerEnter(Collider other) {
         try {
@@ -43,7 +47,7 @@ internal class TeslaCoil : NetworkBehaviour {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             
             if (!PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null){
-                WTOBase.LogToConsole($"Adding Player {PlayerInRange} to player in range list...");
+                Log.Debug($"Adding Player {PlayerInRange} to player in range list...");
                 PlayerInRangeList.Add(PlayerInRange);
             }
         } catch {}
@@ -60,7 +64,7 @@ internal class TeslaCoil : NetworkBehaviour {
         try {
             PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
             if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
-                WTOBase.LogToConsole($"Removing Player {PlayerInRange} from player in range list...");
+                Log.Debug($"Removing Player {PlayerInRange} from player in range list...");
                 ReEnableEquipment(PlayerInRange);
                 PlayerInRangeList.Remove(PlayerInRange);
             }

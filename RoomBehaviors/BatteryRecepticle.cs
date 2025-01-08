@@ -1,14 +1,8 @@
-﻿using DunGen;
-using GameNetcodeStuff;
-using System;
+﻿using GameNetcodeStuff;
 using System.Collections.Generic;
 using System.Linq;
-using System.Security.AccessControl;
-using System.Text;
-using System.Threading.Tasks;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Rendering.HighDefinition.Attributes;
 using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Items;
 using Welcome_To_Ooblterra.Patches;
@@ -44,6 +38,8 @@ public class BatteryRecepticle : NetworkBehaviour {
     public MeshRenderer MachineMesh;
     private System.Random MachineRandom;
     private WideDoorway[] Doorways;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(BatteryRecepticle), LogSourceType.Room);
 
     public void Start() {
         scrapShelf = FindFirstObjectByType<ScrapShelf>();
@@ -90,21 +86,21 @@ public class BatteryRecepticle : NetworkBehaviour {
     }
 
     private void SpawnBatteryAtFurthestPoint() {
-        if (!base.IsServer) {
+        if (!IsServer) {
             return;
         }
-        List<RandomMapObject> AllRandomSpawnList = new();
-        List<RandomMapObject> ViableSpawnlist = new();
+        List<RandomMapObject> AllRandomSpawnList = [];
+        List<RandomMapObject> ViableSpawnlist = [];
         AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
         float MinSpawnRange = 80f;
         foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab))) {
             float SpawnPointDistance = Vector3.Distance(this.transform.position, BatterySpawn.transform.position);
-            WTOBase.LogToConsole($"BATTERY DISTANCE: {SpawnPointDistance }");
+            Log.Debug($"BATTERY DISTANCE: {SpawnPointDistance }");
             if (SpawnPointDistance > MinSpawnRange) {
                 ViableSpawnlist.Add(BatterySpawn);
             }
         }
-        WTOBase.LogToConsole($"Viable Battery Spawns: {ViableSpawnlist.Count}");
+        Log.Debug($"Viable Battery Spawns: {ViableSpawnlist.Count}");
         RandomMapObject ChosenSpawn = ViableSpawnlist[MachineRandom.Next(0, ViableSpawnlist.Count)];
         GameObject NewHazard = Instantiate(BatteryPrefab, ChosenSpawn.transform.position, ChosenSpawn.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
         NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
@@ -119,7 +115,7 @@ public class BatteryRecepticle : NetworkBehaviour {
         if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
             return;
         }
-        WTOBase.LogToConsole("Placing battery in recepticle");
+        Log.Info("Placing battery in recepticle");
         Vector3 vector = BatteryTransform.position;
         if (parentTo != null) {
             vector = parentTo.transform.InverseTransformPoint(vector);
@@ -127,7 +123,6 @@ public class BatteryRecepticle : NetworkBehaviour {
         InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
         
         RecepticleHasBattery = true;
-        WTOBase.LogToConsole("discard held object called from placeobject");
         playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
         InsertedBattery.transform.rotation = Quaternion.identity;
         InsertedBattery.transform.Rotate(305, 45, 0, relativeTo:Space.Self);
@@ -151,7 +146,7 @@ public class BatteryRecepticle : NetworkBehaviour {
             BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
             InsertedBattery = BatteryNetObj.GetComponentInChildren<WTOBattery>();
         } else {
-            WTOBase.WTOLogSource.LogError("BATTERY COULD NOT BE CONVERTED.");
+            Log.Error("BATTERY COULD NOT BE CONVERTED.");
         }
         //WTOBase.LogToConsole($"Attempting to rotate battery... {BatteryNetObj.GetComponentInChildren<GrabbableObject>()}");
         BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.rotation = Quaternion.identity;

@@ -10,13 +10,17 @@ using System.Linq;
 
 namespace Welcome_To_Ooblterra.Items;
 internal class CursedEffigy : GrabbableObject {
-    
+
+#pragma warning disable 0649 // Assigned in Unity Editor
     public List<AudioClip> AmbientSounds;
     public AudioSource AudioPlayer;
     public EnemyType TheMimic;
+#pragma warning restore 0649
 
     private bool MimicSpawned;
     private PlayerControllerB previousPlayerHeldBy;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(CursedEffigy), LogSourceType.Item);
 
     public override void Update() {
         base.Update();
@@ -25,7 +29,7 @@ internal class CursedEffigy : GrabbableObject {
         }
         if (previousPlayerHeldBy.isPlayerDead) {
             if (!MimicSpawned && IsOwner) {
-                WTOBase.LogToConsole($"Effigy knows that {previousPlayerHeldBy.playerUsername} is dead at position {previousPlayerHeldBy.deadBody.transform.position}");
+                Log.Info($"Effigy knows that {previousPlayerHeldBy.playerUsername} is dead at position {previousPlayerHeldBy.deadBody.transform.position}");
                 CreateMimicServerRpc(previousPlayerHeldBy.isInsideFactory, previousPlayerHeldBy.deadBody.transform.position);
                 MimicSpawned = true;
                 DestroyEffigyServerRpc();
@@ -60,22 +64,22 @@ internal class CursedEffigy : GrabbableObject {
     [ServerRpc(RequireOwnership = false)]
     public void CreateMimicServerRpc(bool inFactory, Vector3 playerPositionAtDeath) {
         if (previousPlayerHeldBy == null) {
-            WTOBase.LogToConsole("Previousplayerheldby is null so the Ghost Player could not be spawned");
+            Log.Error("Previousplayerheldby is null so the Ghost Player could not be spawned");
             return;
         }
-        WTOBase.LogToConsole($"Server creating Ghost Player from Effigy. Previous Player: {previousPlayerHeldBy.playerUsername}");
+        Log.Info($"Server creating Ghost Player from Effigy. Previous Player: {previousPlayerHeldBy.playerUsername}");
         Vector3 MimicSpawnPos = RoundManager.Instance.GetNavMeshPosition(playerPositionAtDeath, default, 10f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
-            WTOBase.LogToConsole("No nav mesh found; no Ghost Player could be created");
+            Log.Error("No nav mesh found; no Ghost Player could be created");
             return;
         }
         TheMimic = StartOfRound.Instance.levels.First(x => x.PlanetName == "8 Titan").Enemies.First(x => x.enemyType.enemyName == "Masked").enemyType;
-        WTOBase.LogToConsole($"Masked Enemy Type Found: {TheMimic != null}");
+        Log.Debug($"Masked Enemy Type Found: {TheMimic != null}");
 
         NetworkObjectReference MimicNetObject = RoundManager.Instance.SpawnEnemyGameObject(MimicSpawnPos, 0, -1, TheMimic);
 
         if (MimicNetObject.TryGet(out var networkObject)) {
-            WTOBase.LogToConsole("Got network object for Ghost Player");
+            Log.Debug("Got network object for Ghost Player");
             MaskedPlayerEnemy MimicScript = networkObject.GetComponent<MaskedPlayerEnemy>();
             MimicScript.mimickingPlayer = previousPlayerHeldBy;
             Material suitMaterial = SuitPatch.GhostPlayerSuit;
@@ -97,9 +101,9 @@ internal class CursedEffigy : GrabbableObject {
     }
     [ClientRpc]
     public void CreateMimicClientRpc(NetworkObjectReference netObjectRef, bool inFactory) {
-        StartCoroutine(waitForMimicEnemySpawn(netObjectRef, inFactory));
+        StartCoroutine(WaitForMimicEnemySpawn(netObjectRef, inFactory));
     }
-    private IEnumerator waitForMimicEnemySpawn(NetworkObjectReference netObjectRef, bool inFactory) {
+    private IEnumerator WaitForMimicEnemySpawn(NetworkObjectReference netObjectRef, bool inFactory) {
         NetworkObject netObject = null;
         float startTime = Time.realtimeSinceStartup;
         yield return new WaitUntil(() => Time.realtimeSinceStartup - startTime > 20f || netObjectRef.TryGet(out netObject));
@@ -111,7 +115,7 @@ internal class CursedEffigy : GrabbableObject {
         if (netObject == null) {
             yield break;
         }
-        WTOBase.LogToConsole("Got network object for Ghost Player enemy client");
+        Log.Debug("Got network object for Ghost Player enemy client");
         MaskedPlayerEnemy MimicReference = netObject.GetComponent<MaskedPlayerEnemy>();
         MimicReference.mimickingPlayer = previousPlayerHeldBy;
         Material suitMaterial = SuitPatch.GhostPlayerSuit;

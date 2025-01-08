@@ -1,15 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 using Unity.Netcode;
-using GameNetcodeStuff;
-using System.Collections;
-using UnityEngine.AI;
 using Welcome_To_Ooblterra.Properties;
-using DunGen;
 
 namespace Welcome_To_Ooblterra.Items;
 public class Chemical : GrabbableObject {
@@ -36,10 +29,12 @@ public class Chemical : GrabbableObject {
     private float ShakeCooldownSeconds = 0;
     private bool IsFull = true;
 
+    private static readonly WTOBase.WTOLogger Log = new(typeof(Chemical), LogSourceType.Item);
+
     public override void Start() {
         base.Start();
         MyRandom = new System.Random();
-        System.Random ScrapValueRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+        System.Random ScrapValueRandom = new(StartOfRound.Instance.randomMapSeed);
         int StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
         StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
         SetScrapValue(StartingScrapValue);
@@ -74,7 +69,7 @@ public class Chemical : GrabbableObject {
             NextColor = GetNextIntOrdered();
         }
         int NextRandomEffect = MyRandom.Next(0, 7);
-        WTOBase.LogToConsole($"Next Color Value: {(ChemColor)NextColor}");
+        Log.Info($"Next Color Value: {(ChemColor)NextColor}");
         SetColorAndEffectServerRpc(NextColor, NextRandomEffect, PlayShakeSound);
     }
     private int GetNextRandomInt() {
@@ -104,26 +99,18 @@ public class Chemical : GrabbableObject {
         }
     }
     public static Color GetColorFromEnum(ChemColor inColor) {
-        switch(inColor) {
-            case ChemColor.Red:
-                return new Color(1, 0, 0);
-            case ChemColor.Orange:
-                return new Color(1, 0.4f, 0);
-            case ChemColor.Yellow:
-                return new Color(1, 1, 0);
-            case ChemColor.Green:
-                return new Color(0, 1, 0);
-            case ChemColor.Blue:
-                return new Color(0, 1, 1);
-            case ChemColor.Indigo:
-                return new Color(0, 0, 1);
-            case ChemColor.Purple:
-                return new Color(1, 0, 1);
-            case ChemColor.Clear:
-                return new Color(0, 0, 0, 0);
-            default:
-                return new Color(1, 1, 1);
-        }
+        return inColor switch
+        {
+            ChemColor.Red => new Color(1, 0, 0),
+            ChemColor.Orange => new Color(1, 0.4f, 0),
+            ChemColor.Yellow => new Color(1, 1, 0),
+            ChemColor.Green => new Color(0, 1, 0),
+            ChemColor.Blue => new Color(0, 1, 1),
+            ChemColor.Indigo => new Color(0, 0, 1),
+            ChemColor.Purple => new Color(1, 0, 1),
+            ChemColor.Clear => new Color(0, 0, 0, 0),
+            _ => new Color(1, 1, 1),
+        };
     }
 
 

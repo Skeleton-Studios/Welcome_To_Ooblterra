@@ -4,13 +4,12 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.AI;
-using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies;
 public class WTOEnemy : EnemyAI {
     public abstract class BehaviorState {
-        public Vector2 RandomRange = new Vector2(0, 0);
+        public Vector2 RandomRange = new(0, 0);
         public int MyRandomInt = 0;
         public int enemyIndex;
         public abstract void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator);
@@ -39,9 +38,11 @@ public class WTOEnemy : EnemyAI {
     internal bool PrintDebugs = false;
     internal PlayerState MyValidState = PlayerState.Inside;
     internal StateTransition nextTransition;
-    internal List<StateTransition> GlobalTransitions = new List<StateTransition>();
-    internal List<StateTransition> AllTransitions = new List<StateTransition>();
+    internal List<StateTransition> GlobalTransitions = [];
+    internal List<StateTransition> AllTransitions = [];
     internal int WTOEnemyID;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(WTOEnemy), LogSourceType.Enemy);
 
     public override string __getTypeName() {
         return GetType().Name;
@@ -65,7 +66,7 @@ public class WTOEnemy : EnemyAI {
             }
         //Debug to make sure that the agent is actually on the navmesh
             if (!agent.isOnNavMesh && base.IsOwner) {
-                WTOBase.LogToConsole("CREATURE " + this.__getTypeName() + " WAS NOT PLACED ON NAVMESH, DESTROYING...");
+                Log.Error("CREATURE " + __getTypeName() + " WAS NOT PLACED ON NAVMESH, DESTROYING...");
                 KillEnemyOnOwnerClient();
             }
         //Fix for the animator sometimes deciding to just not work
@@ -95,7 +96,7 @@ public class WTOEnemy : EnemyAI {
             if (TransitionToCheck.CanTransitionBeTaken() && base.IsOwner) {
                 RunUpdate = false;
                 nextTransition = TransitionToCheck;
-                TransitionStateServerRpc(nextTransition.ToString(), GenerateNextRandomInt(nextTransition.NextState().RandomRange));
+                TransitionStateServerRpc(nextTransition.ToString(), GenerateNextRandomInt());
                 return;
             }
         }
@@ -105,11 +106,6 @@ public class WTOEnemy : EnemyAI {
         }
     }
 
-    internal void LogMessage(string message) {
-        if (PrintDebugs && MonsterPatch.ShouldDebugEnemies) {
-            WTOBase.LogToConsole(message);
-        }
-    }
     internal bool PlayerCanBeTargeted(PlayerControllerB myPlayer) {
         return (GetPlayerState(myPlayer) == MyValidState);
     }
@@ -170,9 +166,9 @@ public class WTOEnemy : EnemyAI {
         float AngleToTarget = Vector3.Angle(eye.transform.forward, player.gameplayCamera.transform.position - eye.transform.position);
         bool TargetWithinViewCone = AngleToTarget < width;
         bool TargetWithinProxAwareness = DistanceToTarget < proximityAwareness;
-        bool LOSBlocked = (DoLinecast ? Physics.Linecast(eye.transform.position, player.transform.position, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore) : false);
+        bool LOSBlocked = (DoLinecast && Physics.Linecast(eye.transform.position, player.transform.position, StartOfRound.Instance.collidersRoomDefaultAndFoliage, QueryTriggerInteraction.Ignore));
         if (PrintResults) {
-            LogMessage($"Target in Distance: {TargetInDistance} ({DistanceToTarget})" +
+            Log.Debug($"Target in Distance: {TargetInDistance} ({DistanceToTarget})" +
                 $"Target within view cone: {TargetWithinViewCone} ({AngleToTarget})" +
                 $"LOSBlocked: {LOSBlocked}");
         }
@@ -180,7 +176,7 @@ public class WTOEnemy : EnemyAI {
     }
     public bool IsTargetPlayerWithinLOS(int range = 45, float width = 60, int proximityAwareness = -1, bool DoLinecast = true, bool PrintResults = false) {
         if(targetPlayer == null) {
-            LogMessage($"{this.__getTypeName()} called Target Player LOS check called with null target player; returning false!");
+            Log.Error($"{__getTypeName()} called Target Player LOS check called with null target player; returning false!");
             return false;
         }
         return IsTargetPlayerWithinLOS(targetPlayer, range, width, proximityAwareness, DoLinecast, PrintResults);
@@ -201,40 +197,39 @@ public class WTOEnemy : EnemyAI {
         }
         
         if(Result == null) {
-            LogMessage($"There is somehow no closest player. get fucked");
+            Log.Error($"There is somehow no closest player. get fucked");
         }
         return Result;
     }
+
     internal bool IsPlayerReachable() {
-        if (targetPlayer == null) {
+        if (targetPlayer == null)
+        {
             WTOBase.WTOLogSource.LogError("Player Reach Test has no target player or passed in argument!");
             return false;
         }
-        return IsPlayerReachable(targetPlayer);
-    }
-    internal bool IsPlayerReachable(PlayerControllerB PlayerToCheck) {
         Vector3 Position = RoundManager.Instance.GetNavMeshPosition(targetPlayer.transform.position, RoundManager.Instance.navHit, 2.7f);
         if (!RoundManager.Instance.GotNavMeshPositionResult) {
-            LogMessage("Player Reach Test: No Navmesh position");
+            Log.Error("Player Reach Test: No Navmesh position");
             return false; 
         }
         agent.CalculatePath(Position, agent.path);
         bool HasPath = (agent.path.status == NavMeshPathStatus.PathComplete);
-        LogMessage($"Player Reach Test: {HasPath}");
+        Log.Debug($"Player Reach Test: {HasPath}");
         return HasPath;
     }
-    internal float PlayerDistanceFromShip(PlayerControllerB PlayerToCheck = null) {
-        if(PlayerToCheck == null) {
-            if(targetPlayer == null) {
-                WTOBase.WTOLogSource.LogError("PlayerNearShip check has no target player or passed in argument!");
-                return -1;
-            }
-            PlayerToCheck = targetPlayer;
+
+    internal float PlayerDistanceFromShip() {
+        if (targetPlayer == null)
+        {
+            Log.Error("PlayerNearShip check has no target player or passed in argument!");
+            return -1;
         }
         float DistanceFromShip = Vector3.Distance(targetPlayer.transform.position, StartOfRound.Instance.shipBounds.transform.position);
-        LogMessage($"PlayerNearShip check: {DistanceFromShip}");
+        Log.Debug($"PlayerNearShip check: {DistanceFromShip}");
         return DistanceFromShip;
     }
+
     internal bool PlayerWithinRange(float Range, bool IncludeYAxis = true) {
         //WTOBase.LogToConsole($"Distance from target player: {DistanceFromTargetPlayer(IncludeYAxis)}");
         return DistanceFromTargetPlayer(IncludeYAxis) <= Range;
@@ -244,33 +239,33 @@ public class WTOEnemy : EnemyAI {
     }
     private float DistanceFromTargetPlayer(bool IncludeYAxis) {
         if (targetPlayer == null) {
-            WTOBase.WTOLogSource.LogError($"{this} attempted DistanceFromTargetPlayer with null target; returning -1!");
+            Log.Error($"{this} attempted DistanceFromTargetPlayer with null target; returning -1!");
             return -1f;
         }
         if (IncludeYAxis) {
             return Vector3.Distance(targetPlayer.transform.position, this.transform.position);
         }
-        Vector2 PlayerFlatLocation = new Vector2(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
-        Vector2 EnemyFlatLocation = new Vector2(transform.position.x, transform.position.z);
+        Vector2 PlayerFlatLocation = new(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
+        Vector2 EnemyFlatLocation = new(transform.position.x, transform.position.z);
         return Vector2.Distance(PlayerFlatLocation, EnemyFlatLocation);
     }
     private float DistanceFromTargetPlayer(PlayerControllerB player, bool IncludeYAxis) {
         if (IncludeYAxis) { 
             return Vector3.Distance(player.transform.position, this.transform.position);
         }
-        Vector2 PlayerFlatLocation = new Vector2(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
-        Vector2 EnemyFlatLocation = new Vector2(transform.position.x, transform.position.z);
+        Vector2 PlayerFlatLocation = new(targetPlayer.transform.position.x, targetPlayer.transform.position.z);
+        Vector2 EnemyFlatLocation = new(transform.position.x, transform.position.z);
         return Vector2.Distance(PlayerFlatLocation, EnemyFlatLocation);
     }
     internal bool AnimationIsFinished(string AnimName) {
         if (!creatureAnimator.GetCurrentAnimatorStateInfo(0).IsName(AnimName)) {
-            LogMessage(__getTypeName() + ": Checking for animation " + AnimName + ", but current animation is " + creatureAnimator.GetCurrentAnimatorClipInfo(0)[0].clip.name);
+            Log.Warning(__getTypeName() + ": Checking for animation " + AnimName + ", but current animation is " + creatureAnimator.GetCurrentAnimatorClipInfo(0)[0].clip.name);
             return true;
         }
         return (creatureAnimator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1f);
     }
-    internal int GenerateNextRandomInt(Vector2 Range) {
-        Range = nextTransition.NextState().RandomRange;
+    internal int GenerateNextRandomInt() {
+        Vector2 Range = nextTransition.NextState().RandomRange;
         return enemyRandom.Next((int)Range.x, (int)Range.y);
     }
 
@@ -305,18 +300,18 @@ public class WTOEnemy : EnemyAI {
         }
         //LogMessage(StateName);
         var statename = ActiveState == null ? "null" : $"{ActiveState}";
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Exiting:  {statename}");
+        Log.Debug($"{__getTypeName()} #{WTOEnemyID} is Exiting:  {statename}");
         ActiveState?.OnStateExit(WTOEnemyID, enemyRandom, creatureAnimator);
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Transitioning via:  {LocalNextTransition}");
+        Log.Debug($"{__getTypeName()} #{WTOEnemyID} is Transitioning via:  {LocalNextTransition}");
         ActiveState = LocalNextTransition.NextState();
         ActiveState.MyRandomInt = RandomInt;
         ActiveState.enemyIndex = WTOEnemyID;
-        LogMessage($"{__getTypeName()} #{WTOEnemyID} is Entering:  {ActiveState}");
+        Log.Debug($"{__getTypeName()} #{WTOEnemyID} is Entering:  {ActiveState}");
         ActiveState.OnStateEntered(WTOEnemyID, enemyRandom, creatureAnimator);
 
         //Debug Prints 
         StartOfRound.Instance.ClientPlayerList.TryGetValue(NetworkManager.Singleton.LocalClientId, out var value);
-        LogMessage($"CREATURE: {enemyType.name} #{WTOEnemyID} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
+        Log.Debug($"CREATURE: {enemyType.name} #{WTOEnemyID} STATE: {ActiveState} ON PLAYER: #{value} ({StartOfRound.Instance.allPlayerScripts[value].playerUsername})");
     }
 
     [ServerRpc]
@@ -327,14 +322,14 @@ public class WTOEnemy : EnemyAI {
     internal void SetTargetClientRpc(int PlayerID) {
         if(PlayerID == -1) {
             targetPlayer = null;
-            LogMessage($"Clearing target on {this}");
+            Log.Debug($"Clearing target on {this}");
             return;
         }
         if (StartOfRound.Instance.allPlayerScripts[PlayerID] == null) {
-            LogMessage($"Index invalid! {this}");
+            Log.Debug($"Index invalid! {this}");
             return;
         }
         targetPlayer = StartOfRound.Instance.allPlayerScripts[PlayerID];
-        LogMessage($"{this} setting target to: {targetPlayer.playerUsername}");
+        Log.Debug($"{this} setting target to: {targetPlayer.playerUsername}");
     }
 }

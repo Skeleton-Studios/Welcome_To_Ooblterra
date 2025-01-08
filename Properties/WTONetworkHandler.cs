@@ -1,14 +1,12 @@
 ﻿using System;
 using Unity.Netcode;
-using UnityEngine;
-using Object = UnityEngine.Object;
 
 
 namespace Welcome_To_Ooblterra;
 internal class WTONetworkHandler : NetworkBehaviour {
     public static WTONetworkHandler Instance { get; private set; }
 
-    public static event Action<String> LevelEvent;
+    public static event Action<string> LevelEvent;
 
     public override void OnNetworkSpawn() {
         LevelEvent = null;
@@ -23,5 +21,4 @@ internal class WTONetworkHandler : NetworkBehaviour {
     public void EventClientRpc(string eventName) {
         LevelEvent?.Invoke(eventName); // If the event has subscribers (does not equal null), invoke the event
     }
-
 }

@@ -7,8 +7,13 @@ using Welcome_To_Ooblterra.Enemies;
 namespace Welcome_To_Ooblterra.Items;
 internal class OoblCorpsePart : GrabbableObject {
 
+#pragma warning disable 0649 // Assigned in Unity Editor
     public EnemyType OoblGhostTemplate;
+#pragma warning restore 0649
+
     private OoblGhostAI MySpawnedGhost = null;
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(OoblCorpsePart), LogSourceType.Item);
 
     public override void GrabItem() {
         base.GrabItem();
@@ -36,7 +41,7 @@ internal class OoblCorpsePart : GrabbableObject {
             return;
         }
 
-        WTOBase.LogToConsole("Spawning Oobl Ghost");
+        Log.Info("Spawning Oobl Ghost");
         NetworkObjectReference NextGhost = RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -700, 0), 0, 1, OoblGhostTemplate);
         if (NextGhost.TryGet(out NetworkObject GhostNetObject))
         {
@@ -47,7 +52,7 @@ internal class OoblCorpsePart : GrabbableObject {
         }
         else
         {
-            WTOBase.LogToConsole("Could not link this corpse part to the Oobl Ghost!");
+            Log.Error("Could not link this corpse part to the Oobl Ghost!");
         }
     }
 
@@ -82,7 +87,7 @@ internal class OoblCorpsePart : GrabbableObject {
 
     [ClientRpc]
     private void DestroyCorpsePartClientRpc() {
-        WTOBase.LogToConsole($"Destroying: {this}");
+        Log.Info($"Destroying: {this}");
         DestroyObjectInHand(playerHeldBy);
     }
 }

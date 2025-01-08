@@ -24,9 +24,11 @@ public class BabyLurkerProjectile : NetworkBehaviour {
     private System.Random ProjectileRandom;
     private bool IsDead = false;
     private bool IsArachnophobiaMode = false;
-    
+
+    private static readonly WTOBase.WTOLogger Log = new(typeof(BabyLurkerProjectile), LogSourceType.Thing);
+
     private void OnTriggerEnter(Collider other) {
-        WTOBase.LogToConsole($"Collision registered! Collider: {other.gameObject}");
+        Log.Debug($"Collision registered! Collider: {other.gameObject}");
         PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
         if (other.gameObject.CompareTag("Player") && !IsDead) {
             victim.DamagePlayer(15, causeOfDeath: CauseOfDeath.Unknown);
