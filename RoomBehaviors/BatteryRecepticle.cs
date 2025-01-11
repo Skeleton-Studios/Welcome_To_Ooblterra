@@ -8,199 +8,201 @@ using Welcome_To_Ooblterra.Items;
 using Welcome_To_Ooblterra.Patches;
 using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra.Things;
-public class BatteryRecepticle : NetworkBehaviour {
+namespace Welcome_To_Ooblterra.Things
+{
+    public class BatteryRecepticle : NetworkBehaviour {
 
-    [InspectorName("Defaults")]
-    public NetworkObject parentTo;
-    public NetworkObject BatteryNetObj;
-    public InteractTrigger triggerScript;
-    public Transform BatteryTransform;
-    public BoxCollider BatteryHitbox;
+        [InspectorName("Defaults")]
+        public NetworkObject parentTo;
+        public NetworkObject BatteryNetObj;
+        public InteractTrigger triggerScript;
+        public Transform BatteryTransform;
+        public BoxCollider BatteryHitbox;
 
-    private WTOBattery InsertedBattery;
-    private bool RecepticleHasBattery;
+        private WTOBattery InsertedBattery;
+        private bool RecepticleHasBattery;
 
-    public Animator MachineAnimator;
-    public AudioSource Noisemaker;
-    public AudioClip FacilityPowerUp;
-    public AudioSource Pistons;
-    public AudioSource MachineAmbience;
-    public MeshRenderer[] WallLights;
-    public Material WallLightMat;
-    public Color LightColor;
-    public Light CenterLight;
-    private ScrapShelf scrapShelf;
-    public GameObject BatteryPrefab;
+        public Animator MachineAnimator;
+        public AudioSource Noisemaker;
+        public AudioClip FacilityPowerUp;
+        public AudioSource Pistons;
+        public AudioSource MachineAmbience;
+        public MeshRenderer[] WallLights;
+        public Material WallLightMat;
+        public Color LightColor;
+        public Light CenterLight;
+        private ScrapShelf scrapShelf;
+        public GameObject BatteryPrefab;
 
-    public Material FrontConsoleMaterial;
-    public Material SideConsoleMaterial;
-    public MeshRenderer MachineMesh;
-    private System.Random MachineRandom;
-    private WideDoorway[] Doorways;
+        public Material FrontConsoleMaterial;
+        public Material SideConsoleMaterial;
+        public MeshRenderer MachineMesh;
+        private System.Random MachineRandom;
+        private WideDoorway[] Doorways;
 
-    private static readonly WTOBase.WTOLogger Log = new(typeof(BatteryRecepticle), LogSourceType.Room);
+        private static readonly WTOBase.WTOLogger Log = new(typeof(BatteryRecepticle), LogSourceType.Room);
 
-    public void Start() {
-        scrapShelf = FindFirstObjectByType<ScrapShelf>();
-        FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
-        WTOBattery[] BatteryList = FindObjectsOfType<WTOBattery>();
-        InsertedBattery = BatteryList.First(x => x.HasCharge == false);
-        RecepticleHasBattery = true;
-        CenterLight.intensity = 0;
-        foreach(MeshRenderer WallLight in WallLights) {
-            WallLight.sharedMaterial = WallLightMat;
+        public void Start() {
+            scrapShelf = FindFirstObjectByType<ScrapShelf>();
+            FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
+            WTOBattery[] BatteryList = FindObjectsOfType<WTOBattery>();
+            InsertedBattery = BatteryList.First(x => x.HasCharge == false);
+            RecepticleHasBattery = true;
+            CenterLight.intensity = 0;
+            foreach(MeshRenderer WallLight in WallLights) {
+                WallLight.sharedMaterial = WallLightMat;
+            }
+            MachineRandom = new();
+            SpawnBatteryAtFurthestPoint();
+            foreach (LightComponent NextLight in GameObject.FindObjectsOfType<LightComponent>().Where(x => x.SetColorByDistance == true)) {
+                NextLight.SetColorRelative(this.transform.position);
+            }
+            Doorways = FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
         }
-        MachineRandom = new();
-        SpawnBatteryAtFurthestPoint();
-        foreach (LightComponent NextLight in GameObject.FindObjectsOfType<LightComponent>().Where(x => x.SetColorByDistance == true)) {
-            NextLight.SetColorRelative(this.transform.position);
+        private void Update() {
+            if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
+                return;
+            }
+            WallLightMat.SetColor("_EmissiveColor", LightColor);
+            if (RecepticleHasBattery) {
+                BatteryHitbox.enabled = false;
+                triggerScript.interactable = false;
+                triggerScript.disabledHoverTip = "";
+                if (InsertedBattery != null && InsertedBattery.isHeld) {
+                    InsertedBattery = null;
+                    RecepticleHasBattery = false;
+                    return;
+                }
+            } else { 
+                BatteryHitbox.enabled = true;
+                triggerScript.enabled = true;
+                if (GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is WTOBattery) {
+                    triggerScript.interactable = true;
+                    triggerScript.hoverTip = "Insert Battery : [E]";
+                    return;
+                }
+                triggerScript.interactable = false;
+                triggerScript.disabledHoverTip = "[Requires Battery]";
+            }
         }
-        Doorways = FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
-    }
-    private void Update() {
-        if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
-            return;
+
+        private void SpawnBatteryAtFurthestPoint() {
+            if (!IsServer) {
+                return;
+            }
+            List<RandomMapObject> AllRandomSpawnList = new();
+            List<RandomMapObject> ViableSpawnlist = new();
+            AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
+            float MinSpawnRange = 80f;
+            foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab))) {
+                float SpawnPointDistance = Vector3.Distance(this.transform.position, BatterySpawn.transform.position);
+                Log.Debug($"BATTERY DISTANCE: {SpawnPointDistance }");
+                if (SpawnPointDistance > MinSpawnRange) {
+                    ViableSpawnlist.Add(BatterySpawn);
+                }
+            }
+            Log.Debug($"Viable Battery Spawns: {ViableSpawnlist.Count}");
+            RandomMapObject ChosenSpawn = ViableSpawnlist[MachineRandom.Next(0, ViableSpawnlist.Count)];
+            GameObject NewHazard = Instantiate(BatteryPrefab, ChosenSpawn.transform.position, ChosenSpawn.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
+            NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
         }
-        WallLightMat.SetColor("_EmissiveColor", LightColor);
-        if (RecepticleHasBattery) {
-            BatteryHitbox.enabled = false;
-            triggerScript.interactable = false;
-            triggerScript.disabledHoverTip = "";
-            if (InsertedBattery != null && InsertedBattery.isHeld) {
-                InsertedBattery = null;
+
+        public void TryInsertOrRemoveBattery(PlayerControllerB playerWhoTriggered) {
+            if (RecepticleHasBattery && !InsertedBattery.HasCharge) {
+                playerWhoTriggered.GrabObjectServerRpc(InsertedBattery.NetworkObject);
                 RecepticleHasBattery = false;
                 return;
             }
-        } else { 
-            BatteryHitbox.enabled = true;
-            triggerScript.enabled = true;
-            if (GameNetworkManager.Instance.localPlayerController.currentlyHeldObjectServer is WTOBattery) {
-                triggerScript.interactable = true;
-                triggerScript.hoverTip = "Insert Battery : [E]";
+            if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
                 return;
             }
-            triggerScript.interactable = false;
-            triggerScript.disabledHoverTip = "[Requires Battery]";
-        }
-    }
-
-    private void SpawnBatteryAtFurthestPoint() {
-        if (!IsServer) {
-            return;
-        }
-        List<RandomMapObject> AllRandomSpawnList = [];
-        List<RandomMapObject> ViableSpawnlist = [];
-        AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
-        float MinSpawnRange = 80f;
-        foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(BatteryPrefab))) {
-            float SpawnPointDistance = Vector3.Distance(this.transform.position, BatterySpawn.transform.position);
-            Log.Debug($"BATTERY DISTANCE: {SpawnPointDistance }");
-            if (SpawnPointDistance > MinSpawnRange) {
-                ViableSpawnlist.Add(BatterySpawn);
+            Log.Info("Placing battery in recepticle");
+            Vector3 vector = BatteryTransform.position;
+            if (parentTo != null) {
+                vector = parentTo.transform.InverseTransformPoint(vector);
+            }
+            InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
+        
+            RecepticleHasBattery = true;
+            playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
+            InsertedBattery.transform.rotation = Quaternion.identity;
+            InsertedBattery.transform.Rotate(305, 45, 0, relativeTo:Space.Self);
+            //WTOBase.LogToConsole($"BatteryTransform rotation: {BatteryTransform.rotation}; Battery rotation: {InsertedBattery.transform.rotation}");
+            InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
+        
+            if (InsertedBattery.HasCharge) {
+                TurnOnPowerServerRpc();
             }
         }
-        Log.Debug($"Viable Battery Spawns: {ViableSpawnlist.Count}");
-        RandomMapObject ChosenSpawn = ViableSpawnlist[MachineRandom.Next(0, ViableSpawnlist.Count)];
-        GameObject NewHazard = Instantiate(BatteryPrefab, ChosenSpawn.transform.position, ChosenSpawn.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
-        NewHazard.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
-    }
+        [ServerRpc(RequireOwnership = false)]
+        public void InsertBatteryServerRpc(NetworkObjectReference grabbableObjectNetObject) {
+            InsertBatteryClientRpc(grabbableObjectNetObject);
+        }
+        [ClientRpc]
+        public void InsertBatteryClientRpc(NetworkObjectReference grabbableObjectNetObject) {
+            InsertBattery(grabbableObjectNetObject);
+        }
+        public void InsertBattery(NetworkObjectReference grabbableObjectNetObject) {
+            if (grabbableObjectNetObject.TryGet(out BatteryNetObj)) {
+                BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
+                InsertedBattery = BatteryNetObj.GetComponentInChildren<WTOBattery>();
+            } else {
+                Log.Error("BATTERY COULD NOT BE CONVERTED.");
+            }
+            //WTOBase.LogToConsole($"Attempting to rotate battery... {BatteryNetObj.GetComponentInChildren<GrabbableObject>()}");
+            BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.rotation = Quaternion.identity;
+            BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.Rotate(305, 45, 0, relativeTo: Space.Self);
+            RecepticleHasBattery = true;
+            if (InsertedBattery.HasCharge) {
+                InsertedBattery.grabbable = false;
+            } else {
+                InsertedBattery.grabbable = true;
+                InsertedBattery.GetComponent<BoxCollider>().enabled = true;
+            }
+        }
 
-    public void TryInsertOrRemoveBattery(PlayerControllerB playerWhoTriggered) {
-        if (RecepticleHasBattery && !InsertedBattery.HasCharge) {
-            playerWhoTriggered.GrabObjectServerRpc(InsertedBattery.NetworkObject);
-            RecepticleHasBattery = false;
-            return;
+        [ServerRpc(RequireOwnership = false)]
+        public void TurnOnPowerServerRpc() {
+            TurnOnPowerClientRpc();
         }
-        if (!playerWhoTriggered.isHoldingObject || !(playerWhoTriggered.currentlyHeldObjectServer != null)) {
-            return;
-        }
-        Log.Info("Placing battery in recepticle");
-        Vector3 vector = BatteryTransform.position;
-        if (parentTo != null) {
-            vector = parentTo.transform.InverseTransformPoint(vector);
-        }
-        InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
+        [ClientRpc]
+        public void TurnOnPowerClientRpc() {
+            TurnOnPower();
+        } 
+        public void TurnOnPower() {
+            if (GameNetworkManager.Instance.localPlayerController.isInsideFactory) { 
+                Noisemaker.PlayOneShot(FacilityPowerUp);
+            }
+            scrapShelf.OpenShelf();
+            MachineAmbience.Play();
+            Pistons.Play();
+            LightComponent[] LightsInLevel = FindObjectsOfType<LightComponent>();
+            foreach (LightComponent light in LightsInLevel) {
+                light.SetLightColor();
+                light.SetLightBrightness(150);
+            }
+            Material[] NewMachineMaterials = MachineMesh.materials;
+            NewMachineMaterials[2] = SideConsoleMaterial;
+            NewMachineMaterials[11] = FrontConsoleMaterial;
+            MachineMesh.materials = NewMachineMaterials;
+            MachineAnimator.SetTrigger("PowerOn");
+            StartRoomLight StartRoomLights = FindObjectOfType<StartRoomLight>();
+            StartRoomLights.SetCentralRoomWhite();
+            BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
+            ManageEnemies();
+            foreach(WideDoorway NextDoorway in Doorways) {
+                NextDoorway.RaiseDoor();
+            }
         
-        RecepticleHasBattery = true;
-        playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
-        InsertedBattery.transform.rotation = Quaternion.identity;
-        InsertedBattery.transform.Rotate(305, 45, 0, relativeTo:Space.Self);
-        //WTOBase.LogToConsole($"BatteryTransform rotation: {BatteryTransform.rotation}; Battery rotation: {InsertedBattery.transform.rotation}");
-        InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
-        
-        if (InsertedBattery.HasCharge) {
-            TurnOnPowerServerRpc();
         }
-    }
-    [ServerRpc(RequireOwnership = false)]
-    public void InsertBatteryServerRpc(NetworkObjectReference grabbableObjectNetObject) {
-        InsertBatteryClientRpc(grabbableObjectNetObject);
-    }
-    [ClientRpc]
-    public void InsertBatteryClientRpc(NetworkObjectReference grabbableObjectNetObject) {
-        InsertBattery(grabbableObjectNetObject);
-    }
-    public void InsertBattery(NetworkObjectReference grabbableObjectNetObject) {
-        if (grabbableObjectNetObject.TryGet(out BatteryNetObj)) {
-            BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
-            InsertedBattery = BatteryNetObj.GetComponentInChildren<WTOBattery>();
-        } else {
-            Log.Error("BATTERY COULD NOT BE CONVERTED.");
-        }
-        //WTOBase.LogToConsole($"Attempting to rotate battery... {BatteryNetObj.GetComponentInChildren<GrabbableObject>()}");
-        BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.rotation = Quaternion.identity;
-        BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.Rotate(305, 45, 0, relativeTo: Space.Self);
-        RecepticleHasBattery = true;
-        if (InsertedBattery.HasCharge) {
-            InsertedBattery.grabbable = false;
-        } else {
-            InsertedBattery.grabbable = true;
-            InsertedBattery.GetComponent<BoxCollider>().enabled = true;
-        }
-    }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void TurnOnPowerServerRpc() {
-        TurnOnPowerClientRpc();
-    }
-    [ClientRpc]
-    public void TurnOnPowerClientRpc() {
-        TurnOnPower();
-    } 
-    public void TurnOnPower() {
-        if (GameNetworkManager.Instance.localPlayerController.isInsideFactory) { 
-            Noisemaker.PlayOneShot(FacilityPowerUp);
-        }
-        scrapShelf.OpenShelf();
-        MachineAmbience.Play();
-        Pistons.Play();
-        LightComponent[] LightsInLevel = FindObjectsOfType<LightComponent>();
-        foreach (LightComponent light in LightsInLevel) {
-            light.SetLightColor();
-            light.SetLightBrightness(150);
-        }
-        Material[] NewMachineMaterials = MachineMesh.materials;
-        NewMachineMaterials[2] = SideConsoleMaterial;
-        NewMachineMaterials[11] = FrontConsoleMaterial;
-        MachineMesh.materials = NewMachineMaterials;
-        MachineAnimator.SetTrigger("PowerOn");
-        StartRoomLight StartRoomLights = FindObjectOfType<StartRoomLight>();
-        StartRoomLights.SetCentralRoomWhite();
-        BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().grabbable = false;
-        ManageEnemies();
-        foreach(WideDoorway NextDoorway in Doorways) {
-            NextDoorway.RaiseDoor();
-        }
-        
-    }
-
-    private void ManageEnemies() {
-        EyeSecAI.BuffedByMachineOn = true;
-        if(OoblGhostAI.GhostList.Count < 1) {
+        private void ManageEnemies() {
+            EyeSecAI.BuffedByMachineOn = true;
+            if(OoblGhostAI.GhostList.Count < 1) {
+                RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);
+            }
             RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);
         }
-        RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);
-    }
 
+    }
 }

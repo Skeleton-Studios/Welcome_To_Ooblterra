@@ -9,256 +9,266 @@ using BepInEx.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Welcome_To_Ooblterra.Properties;
-
-/* S/O to Minx, whose tutorial provided a great starting point.
-    * Wouldn'tve had any of this code without it, thank you!
-    */
-
-[HideInInspector]
-public enum SuitStatus {
-    Enable,
-    Purchase,
-    Disable,
-    SleepsSpecial
-}
-
-public enum PosterStatus {
-    ReplaceVanilla,
-    AddAsDecor,
-    Disable
-}
-
-public enum FootstepEnum { 
-    Enable,
-    Quiet,
-    Disable
-}
-
-public enum TiedToLabEnum {
-    WTOOnly,
-    AppendWTO,
-    UseMoonDefault
-}
-
-public enum LogType
+namespace Welcome_To_Ooblterra.Properties
 {
-    Debug,
-    Info,
-    Warning,
-    Error
-}
+    /* S/O to Minx, whose tutorial provided a great starting point.
+        * Wouldn'tve had any of this code without it, thank you!
+        */
 
-public enum LogSourceType
-{
-    Generic,
-    Enemy,
-    Item,
-    Thing,
-    Room
-}
+    [HideInInspector]
+    public enum SuitStatus {
+        Enable,
+        Purchase,
+        Disable,
+        SleepsSpecial
+    }
 
-[BepInPlugin(modGUID, modName, modVersion)]
-public class WTOBase : BaseUnityPlugin {
+    public enum PosterStatus {
+        ReplaceVanilla,
+        AddAsDecor,
+        Disable
+    }
 
-    public class WTOLogger(System.Type Type, LogSourceType SourceType = LogSourceType.Generic)
+    public enum FootstepEnum { 
+        Enable,
+        Quiet,
+        Disable
+    }
+
+    public enum TiedToLabEnum {
+        WTOOnly,
+        AppendWTO,
+        UseMoonDefault
+    }
+
+    public enum LogType
     {
-        public void Debug(string text, bool AddFlair = true, bool ForcePrint = false)
-        {
-            LogToConsole(Type, SourceType, LogType.Debug, text, AddFlair, ForcePrint);
-        }
-
-        public void Info(string text, bool AddFlair = true, bool ForcePrint = false)
-        {
-            LogToConsole(Type, SourceType, LogType.Info, text, AddFlair, ForcePrint);
-        }
-
-        public void Warning(string text, bool AddFlair = true, bool ForcePrint = false)
-        {
-            LogToConsole(Type, SourceType, LogType.Warning, text, AddFlair, ForcePrint);
-        }
-
-        public void Error(string text, bool AddFlair = true, bool ForcePrint = false)
-        {
-            LogToConsole(Type, SourceType, LogType.Error, text, AddFlair, ForcePrint);
-        }
+        Debug,
+        Info,
+        Warning,
+        Error
     }
 
-    //static Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
-    private const string modGUID = "SkullCrusher.WTO";
-    private const string modName = "Welcome To Ooblterra";
-    private const string modVersion = "1.1.0";
-
-    private readonly Harmony WTOHarmony = new(modGUID);
-    public static ManualLogSource WTOLogSource;
-    public static WTOBase Instance;
-
-    public static AssetBundle LevelAssetBundle;
-    public static AssetBundle ItemAssetBundle;
-    public static AssetBundle FactoryAssetBundle;
-    public static AssetBundle MonsterAssetBundle;
-    public const string RootPath = "Assets/Resources/WelcomeToOoblterra/";
-
-    public static ConfigEntry<bool> WTODebug;
-    public static ConfigEntry<bool> WTOCustomSuits;
-    public static ConfigEntry<bool> WTOCustomPoster;
-    public static ConfigEntry<bool> WTOScalePrice;
-    public static ConfigEntry<string> WTOHazardList;
-    public static ConfigEntry<string> WTOHazardMoonList;
-    public static ConfigEntry<int> WTOFootsteps;
-    public static ConfigEntry<int> WTOMusic;
-    public static ConfigEntry<TiedToLabEnum> WTOForceHazards;
-    public static ConfigEntry<TiedToLabEnum> WTOForceInsideMonsters;
-    public static ConfigEntry<TiedToLabEnum> WTOForceOutsideMonsters;
-    public static ConfigEntry<TiedToLabEnum> WTOForceDaytimeMonsters;
-    public static ConfigEntry<TiedToLabEnum> WTOForceScrap;
-    public static ConfigEntry<bool> WTOForceOutsideOnly;
-    public static ConfigEntry<int> WTOWeightScale;
-
-    public static ConfigEntry<bool> WTOLogging_Debug;
-    public static ConfigEntry<bool> WTOLogging_Info;
-    public static ConfigEntry<bool> WTOLogging_Warning;
-    public static ConfigEntry<bool> WTOLogging_Error;
-    public static ConfigEntry<string> WTOLogging_Filter;
-
-    private static readonly WTOLogger Log = new (typeof(WTOBase));
-
-    [HarmonyPatch(typeof(StartOfRound), "Update")]
-    [HarmonyPostfix]
-    public static void DebugHelper(StartOfRound __instance) {
-
+    public enum LogSourceType
+    {
+        Generic,
+        Enemy,
+        Item,
+        Thing,
+        Room
     }
 
-    void Awake() {
-        /*CONFIG STUFF*/{
-            WTODebug = Config.Bind("1. Debugging", "Print Debug Strings", false, "Whether or not to write WTO's debug print-strings to the log."); //IMPLEMENTED
-            WTOLogging_Debug = Config.Bind("1. Debugging", "Log Level Debug Messages", false, "Whether or not to write debug messages to the log. These are the lowest, most spammy logs.");
-            WTOLogging_Info = Config.Bind("1. Debugging", "Log Level Info Messages", true, "Whether or not to write info messages to the log. General info logs that shouldn't be printed too often.");
-            WTOLogging_Warning = Config.Bind("1. Debugging", "Log Level Warning Messages", true, "Whether or not to write warning messages to the log. Warnings that are potentially errors or misconfigurations.");
-            WTOLogging_Error = Config.Bind("1. Debugging", "Log Level Error Messages", true, "Whether or not to write error messages to the log. Errors that represent genuine problems that should not be happening.");
-            WTOLogging_Filter = Config.Bind("1. Debugging", "Log Filter", "WTO", "The filter to apply to the log. Only messages that match this RegEx filter will be printed. If empty, all messages will be printed. This is applied to the final log string, including class name.");
-            WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED 
-            WTOMusic = Config.Bind("2. Accessibility", "Music Volume", 100, "Adjust the volume of 523-Ooblterra's custom Time-Of-Day music. Binds between 0 and 100.");
-            WTOCustomSuits = Config.Bind("3. Ship Stuff", "Custom Suit Status", true, "Whether or not to add WTO's custom suits."); //IMPLEMENTED
-            WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status",  true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
-            WTOHazardList = Config.Bind("4. Map Hazards", "Custom Hazard List", "SpikeTrap, TeslaCoil, BabyLurkerEgg, BearTrap", "A list of all of WTO's custom hazards to enable. Affects 523-Ooblterra, and also has influence on the settings below."); //IMPLEMENTED
-            /*WTOForceOutsideOnly = Config.Bind("5. Modded Content", "Force Configuration settings on 523 Ooblterra", true, "When true, forces 523 Ooblterra to spawn only the enemies/scrap found in its LLL config settings. This prevents custom monsters/scrap from spawning on the moon, unless manually specified.");*/
-            //WTOScalePrice = Config.Bind("5. Scrap", "Scale Scrap By Route Price", false, "Changes the value of Ooblterra's scrap to fit relative to the route price set for 523 Ooblterra. Only affects Ooblterra's custom scrap."); //IMPLEMENTED
-            WTOForceHazards = Config.Bind("5. Modpack Controls", "Bind WTO Hazards to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own hazards, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOForceInsideMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Inside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own inside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOForceOutsideMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Outside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's outside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOForceDaytimeMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Daytime Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's daytime enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOForceScrap = Config.Bind("5. Modpack Controls", "Bind WTO Scrap to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own scrap, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-            WTOWeightScale = Config.Bind("5. Modpack Controls", "WTOAppend Weight Scale", 1, "For any setting configured to WTOAppend above, this setting multiplies that thing's weight before appending it to list."); //IMPLEMENTED
+    [BepInPlugin(modGUID, modName, modVersion)]
+    public class WTOBase : BaseUnityPlugin {
+
+        public class WTOLogger
+        {
+            public readonly System.Type Type;
+            public readonly LogSourceType SourceType;
+            
+            public WTOLogger(System.Type Type, LogSourceType SourceType = LogSourceType.Generic)
+            {
+                this.Type = Type;
+                this.SourceType = SourceType;
+            }
+
+            public void Debug(string text, bool AddFlair = true, bool ForcePrint = false)
+            {
+                LogToConsole(Type, SourceType, LogType.Debug, text, AddFlair, ForcePrint);
+            }
+
+            public void Info(string text, bool AddFlair = true, bool ForcePrint = false)
+            {
+                LogToConsole(Type, SourceType, LogType.Info, text, AddFlair, ForcePrint);
+            }
+
+            public void Warning(string text, bool AddFlair = true, bool ForcePrint = false)
+            {
+                LogToConsole(Type, SourceType, LogType.Warning, text, AddFlair, ForcePrint);
+            }
+
+            public void Error(string text, bool AddFlair = true, bool ForcePrint = false)
+            {
+                LogToConsole(Type, SourceType, LogType.Error, text, AddFlair, ForcePrint);
+            }
         }
 
-        //Load up various things and tell the console we've loaded
-        if (Instance == null) {
-            Instance = this;
+        //static Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
+        private const string modGUID = "SkullCrusher.WTO";
+        private const string modName = "Welcome To Ooblterra";
+        private const string modVersion = "1.1.0";
+
+        private readonly Harmony WTOHarmony = new(modGUID);
+        public static ManualLogSource WTOLogSource;
+        public static WTOBase Instance;
+
+        public static AssetBundle LevelAssetBundle;
+        public static AssetBundle ItemAssetBundle;
+        public static AssetBundle FactoryAssetBundle;
+        public static AssetBundle MonsterAssetBundle;
+        public const string RootPath = "Assets/Resources/WelcomeToOoblterra/";
+
+        public static ConfigEntry<bool> WTODebug;
+        public static ConfigEntry<bool> WTOCustomSuits;
+        public static ConfigEntry<bool> WTOCustomPoster;
+        public static ConfigEntry<bool> WTOScalePrice;
+        public static ConfigEntry<string> WTOHazardList;
+        public static ConfigEntry<string> WTOHazardMoonList;
+        public static ConfigEntry<int> WTOFootsteps;
+        public static ConfigEntry<int> WTOMusic;
+        public static ConfigEntry<TiedToLabEnum> WTOForceHazards;
+        public static ConfigEntry<TiedToLabEnum> WTOForceInsideMonsters;
+        public static ConfigEntry<TiedToLabEnum> WTOForceOutsideMonsters;
+        public static ConfigEntry<TiedToLabEnum> WTOForceDaytimeMonsters;
+        public static ConfigEntry<TiedToLabEnum> WTOForceScrap;
+        public static ConfigEntry<bool> WTOForceOutsideOnly;
+        public static ConfigEntry<int> WTOWeightScale;
+
+        public static ConfigEntry<bool> WTOLogging_Debug;
+        public static ConfigEntry<bool> WTOLogging_Info;
+        public static ConfigEntry<bool> WTOLogging_Warning;
+        public static ConfigEntry<bool> WTOLogging_Error;
+        public static ConfigEntry<string> WTOLogging_Filter;
+
+        private static readonly WTOLogger Log = new (typeof(WTOBase));
+
+        [HarmonyPatch(typeof(StartOfRound), "Update")]
+        [HarmonyPostfix]
+        public static void DebugHelper(StartOfRound __instance) {
+
         }
 
-        WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
+        void Awake() {
+            /*CONFIG STUFF*/{
+                WTODebug = Config.Bind("1. Debugging", "Print Debug Strings", false, "Whether or not to write WTO's debug print-strings to the log."); //IMPLEMENTED
+                WTOLogging_Debug = Config.Bind("1. Debugging", "Log Level Debug Messages", false, "Whether or not to write debug messages to the log. These are the lowest, most spammy logs.");
+                WTOLogging_Info = Config.Bind("1. Debugging", "Log Level Info Messages", true, "Whether or not to write info messages to the log. General info logs that shouldn't be printed too often.");
+                WTOLogging_Warning = Config.Bind("1. Debugging", "Log Level Warning Messages", true, "Whether or not to write warning messages to the log. Warnings that are potentially errors or misconfigurations.");
+                WTOLogging_Error = Config.Bind("1. Debugging", "Log Level Error Messages", true, "Whether or not to write error messages to the log. Errors that represent genuine problems that should not be happening.");
+                WTOLogging_Filter = Config.Bind("1. Debugging", "Log Filter", "WTO", "The filter to apply to the log. Only messages that match this RegEx filter will be printed. If empty, all messages will be printed. This is applied to the final log string, including class name.");
+                WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED 
+                WTOMusic = Config.Bind("2. Accessibility", "Music Volume", 100, "Adjust the volume of 523-Ooblterra's custom Time-Of-Day music. Binds between 0 and 100.");
+                WTOCustomSuits = Config.Bind("3. Ship Stuff", "Custom Suit Status", true, "Whether or not to add WTO's custom suits."); //IMPLEMENTED
+                WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status",  true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
+                WTOHazardList = Config.Bind("4. Map Hazards", "Custom Hazard List", "SpikeTrap, TeslaCoil, BabyLurkerEgg, BearTrap", "A list of all of WTO's custom hazards to enable. Affects 523-Ooblterra, and also has influence on the settings below."); //IMPLEMENTED
+                /*WTOForceOutsideOnly = Config.Bind("5. Modded Content", "Force Configuration settings on 523 Ooblterra", true, "When true, forces 523 Ooblterra to spawn only the enemies/scrap found in its LLL config settings. This prevents custom monsters/scrap from spawning on the moon, unless manually specified.");*/
+                //WTOScalePrice = Config.Bind("5. Scrap", "Scale Scrap By Route Price", false, "Changes the value of Ooblterra's scrap to fit relative to the route price set for 523 Ooblterra. Only affects Ooblterra's custom scrap."); //IMPLEMENTED
+                WTOForceHazards = Config.Bind("5. Modpack Controls", "Bind WTO Hazards to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own hazards, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+                WTOForceInsideMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Inside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own inside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+                WTOForceOutsideMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Outside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's outside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+                WTOForceDaytimeMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Daytime Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's daytime enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+                WTOForceScrap = Config.Bind("5. Modpack Controls", "Bind WTO Scrap to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own scrap, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
+                WTOWeightScale = Config.Bind("5. Modpack Controls", "WTOAppend Weight Scale", 1, "For any setting configured to WTOAppend above, this setting multiplies that thing's weight before appending it to list."); //IMPLEMENTED
+            }
 
-        WTOHarmony.PatchAll(typeof(WTOBase));
-        WTOHarmony.PatchAll(typeof(FactoryPatch));
-        WTOHarmony.PatchAll(typeof(ItemPatch));
-        WTOHarmony.PatchAll(typeof(MonsterPatch));
-        WTOHarmony.PatchAll(typeof(MoonPatch));
-        WTOHarmony.PatchAll(typeof(SuitPatch));
-        WTOHarmony.PatchAll(typeof(TerminalPatch));
+            //Load up various things and tell the console we've loaded
+            if (Instance == null) {
+                Instance = this;
+            }
 
-        Log.Info("BEGIN PRINTING LOADED ASSETS");
-        string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
-        FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-        string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
-        ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
-        string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
-        LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
-        string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
-        MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
+            WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
 
-        MoonPatch.Start();
-        FactoryPatch.Start();
-        ItemPatch.Start();
-        MonsterPatch.Start();
+            WTOHarmony.PatchAll(typeof(WTOBase));
+            WTOHarmony.PatchAll(typeof(FactoryPatch));
+            WTOHarmony.PatchAll(typeof(ItemPatch));
+            WTOHarmony.PatchAll(typeof(MonsterPatch));
+            WTOHarmony.PatchAll(typeof(MoonPatch));
+            WTOHarmony.PatchAll(typeof(SuitPatch));
+            WTOHarmony.PatchAll(typeof(TerminalPatch));
+
+            Log.Info("BEGIN PRINTING LOADED ASSETS");
+            string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
+            FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
+            string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
+            ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
+            string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
+            LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
+            string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
+            MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
+
+            MoonPatch.Start();
+            FactoryPatch.Start();
+            ItemPatch.Start();
+            MonsterPatch.Start();
         
 
-        //NetcodeWeaver stuff
-        var types = Assembly.GetExecutingAssembly().GetTypes();
-        foreach (var type in types) {
-            var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-            foreach (var method in methods) {
-                var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
-                if (attributes.Length > 0) {
-                    method.Invoke(null, null);
+            //NetcodeWeaver stuff
+            var types = Assembly.GetExecutingAssembly().GetTypes();
+            foreach (var type in types) {
+                var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+                foreach (var method in methods) {
+                    var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
+                    if (attributes.Length > 0) {
+                        method.Invoke(null, null);
+                    }
                 }
             }
         }
-    }
 
-    public void Update() {
+        public void Update() {
 
-    }
-
-    public static T ContextualLoadAsset <T>(AssetBundle Bundle, string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object {
-        if (Application.platform == RuntimePlatform.WindowsEditor) {
-            string PathMinusFileType = PathToAsset.Substring(17);
-            PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
-            if (LogLoading) {
-                Log.Info($"Loading {PathMinusFileType} from resources folder...", ForcePrint: true);
-            }
-            return Resources.Load<T>(PathMinusFileType);
-        } else {
-            //Some postprocessing on this text to make the readout a little cleaner
-            int LengthOfAssetName = PathToAsset.Length - PathToAsset.LastIndexOf("/");
-            string CleanAssetName = PathToAsset.Substring(PathToAsset.LastIndexOf("/"), LengthOfAssetName);
-            if(LogLoading) {
-                Log.Info($"Loading {CleanAssetName} from {Bundle.name}...", ForcePrint:true);
-            }
-            return Bundle.LoadAsset<T>(PathToAsset);
         }
-    }
 
-    private static void LogToConsole(System.Type LogClassType, LogSourceType SourceType, LogType logType, string text, bool AddFlair = true, bool ForcePrint = false) {
-        // Handle enable / disable of specific log types, in addition to force print and debug mode
-        if (!ForcePrint)
-        {
-            bool enabled = logType switch
+        public static T ContextualLoadAsset <T>(AssetBundle Bundle, string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object {
+            if (Application.platform == RuntimePlatform.WindowsEditor) {
+                string PathMinusFileType = PathToAsset.Substring(17);
+                PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
+                if (LogLoading) {
+                    Log.Info($"Loading {PathMinusFileType} from resources folder...", ForcePrint: true);
+                }
+                return Resources.Load<T>(PathMinusFileType);
+            } else {
+                //Some postprocessing on this text to make the readout a little cleaner
+                int LengthOfAssetName = PathToAsset.Length - PathToAsset.LastIndexOf("/");
+                string CleanAssetName = PathToAsset.Substring(PathToAsset.LastIndexOf("/"), LengthOfAssetName);
+                if(LogLoading) {
+                    Log.Info($"Loading {CleanAssetName} from {Bundle.name}...", ForcePrint:true);
+                }
+                return Bundle.LoadAsset<T>(PathToAsset);
+            }
+        }
+
+        private static void LogToConsole(System.Type LogClassType, LogSourceType SourceType, LogType logType, string text, bool AddFlair = true, bool ForcePrint = false) {
+            // Handle enable / disable of specific log types, in addition to force print and debug mode
+            if (!ForcePrint)
             {
-                LogType.Debug => WTOLogging_Debug.Value,
-                LogType.Info => WTOLogging_Info.Value,
-                LogType.Warning => WTOLogging_Warning.Value,
-                LogType.Error => WTOLogging_Error.Value,
-                _ => true
-            };
+                bool enabled = logType switch
+                {
+                    LogType.Debug => WTOLogging_Debug.Value,
+                    LogType.Info => WTOLogging_Info.Value,
+                    LogType.Warning => WTOLogging_Warning.Value,
+                    LogType.Error => WTOLogging_Error.Value,
+                    _ => true
+                };
 
-            if (!WTODebug.Value || !enabled)
+                if (!WTODebug.Value || !enabled)
+                {
+                    return;
+                }
+            }
+
+            // TODO: Use SourceType to filter logs if necessary.
+
+            text = $"[{LogClassType.Name}]: {text}";
+
+            if (AddFlair) { 
+                text = $"======={text}=======";
+            }
+
+            // Log as appropriate type for debug, info, warning etc.
+            switch(logType)
             {
-                return;
+                case LogType.Debug: WTOLogSource.LogDebug(text); break;
+                case LogType.Info: WTOLogSource.LogInfo(text); break;
+                case LogType.Warning: WTOLogSource.LogWarning(text); break;
+                case LogType.Error: WTOLogSource.LogError(text); break;
+                default: WTOLogSource.LogMessage(text); break;
             }
         }
 
-        // TODO: Use SourceType to filter logs if necessary.
-
-        text = $"[{LogClassType.Name}]: {text}";
-
-        if (AddFlair) { 
-            text = $"======={text}=======";
-        }
-
-        // Log as appropriate type for debug, info, warning etc.
-        switch(logType)
-        {
-            case LogType.Debug: WTOLogSource.LogDebug(text); break;
-            case LogType.Info: WTOLogSource.LogInfo(text); break;
-            case LogType.Warning: WTOLogSource.LogWarning(text); break;
-            case LogType.Error: WTOLogSource.LogError(text); break;
-            default: WTOLogSource.LogMessage(text); break;
+        public static List<string> CSVSeperatedStringList(string InputString) {
+            return new(InputString.Replace(" ", "").ToLower().Split(','));
         }
     }
 
-    public static List<string> CSVSeperatedStringList(string InputString) {
-        return [.. InputString.Replace(" ", "").ToLower().Split(',')]; ;
-    }
 }
-

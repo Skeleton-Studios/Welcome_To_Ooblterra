@@ -4,124 +4,126 @@ using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra.Things;
-internal class SprintTotem : GrabbableObject {
+namespace Welcome_To_Ooblterra.Things
+{
+    internal class SprintTotem : GrabbableObject {
 
 #pragma warning disable 0649 // Assigned in Unity Editor
-    public AudioClip TotemBreakSound;
-    public AudioSource AudioPlayer;
-    public List<MeshRenderer> TotemPieces = [];
-    public MeshRenderer TotemCenter;
+        public AudioClip TotemBreakSound;
+        public AudioSource AudioPlayer;
+        public List<MeshRenderer> TotemPieces = new();
+        public MeshRenderer TotemCenter;
 #pragma warning restore 0649
 
-    private float TotemSecondsRemaining = 15;
-    private float TotemPercentage = 100;
-    private int DesiredTotemPieces;
-    private int TotemPiecesRemaining = 6;
-    private bool DoOnce;
-    private int StartingScrapValue;
+        private float TotemSecondsRemaining = 15;
+        private float TotemPercentage = 100;
+        private int DesiredTotemPieces;
+        private int TotemPiecesRemaining = 6;
+        private bool DoOnce;
+        private int StartingScrapValue;
 
-    private static readonly WTOBase.WTOLogger Log = new(typeof(SprintTotem), LogSourceType.Item);
+        private static readonly WTOBase.WTOLogger Log = new(typeof(SprintTotem), LogSourceType.Item);
 
-    public void Awake() {
-        System.Random ValueRandom = new(StartOfRound.Instance.randomMapSeed);
-        StartingScrapValue = ValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
-        StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
-        SetScrapValue(StartingScrapValue);
-    }
-    public override void Update() {
-        base.Update();
-        if (!isPocketed && isHeld && playerHeldBy.isSprinting) {
-            SetPlayerSpeedAndStamina();
-            ReduceTotemPercentage();
-            DoOnce = true;
+        public void Awake() {
+            System.Random ValueRandom = new(StartOfRound.Instance.randomMapSeed);
+            StartingScrapValue = ValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
+            StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
+            SetScrapValue(StartingScrapValue);
         }
-        if (!DoOnce) {
-            return;
-        }
-        if (isPocketed) {
-            if (playerHeldBy.isSprinting) {
-                playerHeldBy.sprintMultiplier = 2.25f;
-            } else { 
-                playerHeldBy.sprintMultiplier = 1f;
+        public override void Update() {
+            base.Update();
+            if (!isPocketed && isHeld && playerHeldBy.isSprinting) {
+                SetPlayerSpeedAndStamina();
+                ReduceTotemPercentage();
+                DoOnce = true;
             }
-            DoOnce = false;
+            if (!DoOnce) {
+                return;
+            }
+            if (isPocketed) {
+                if (playerHeldBy.isSprinting) {
+                    playerHeldBy.sprintMultiplier = 2.25f;
+                } else { 
+                    playerHeldBy.sprintMultiplier = 1f;
+                }
+                DoOnce = false;
+            }
         }
-    }
 
-    public override void DiscardItem() {
-        base.DiscardItem();
-        SyncSecondsServerRpc(TotemSecondsRemaining);
-    }
-
-    private void SetPlayerSpeedAndStamina() {
-        if(playerHeldBy == null) {
-            return;
+        public override void DiscardItem() {
+            base.DiscardItem();
+            SyncSecondsServerRpc(TotemSecondsRemaining);
         }
-        playerHeldBy.sprintMultiplier = 3f;
-        playerHeldBy.sprintMeter = 1f;
-    }
-    private void ReduceTotemPercentage() {
-        TotemSecondsRemaining -= Time.deltaTime;
-        TotemPercentage = TotemSecondsRemaining / 15;
-        DesiredTotemPieces = (int)Math.Ceiling(TotemPercentage * 6);
-        Log.Debug($"Seconds Remaining: {TotemSecondsRemaining} || Percentage: {TotemPercentage * 100} || Desired Totem Pieces: {DesiredTotemPieces}");
-        if (DesiredTotemPieces <= 0) {
-            AudioPlayer.PlayOneShot(TotemBreakSound);
-            DestroyTotemServerRpc();
-            return;
+
+        private void SetPlayerSpeedAndStamina() {
+            if(playerHeldBy == null) {
+                return;
+            }
+            playerHeldBy.sprintMultiplier = 3f;
+            playerHeldBy.sprintMeter = 1f;
         }
-        if(DesiredTotemPieces != TotemPiecesRemaining){
-            TotemPiecesRemaining = DesiredTotemPieces;
-            UpdateTotemServerRpc(MakeNewTotemValue());
+        private void ReduceTotemPercentage() {
+            TotemSecondsRemaining -= Time.deltaTime;
+            TotemPercentage = TotemSecondsRemaining / 15;
+            DesiredTotemPieces = (int)Math.Ceiling(TotemPercentage * 6);
+            Log.Debug($"Seconds Remaining: {TotemSecondsRemaining} || Percentage: {TotemPercentage * 100} || Desired Totem Pieces: {DesiredTotemPieces}");
+            if (DesiredTotemPieces <= 0) {
+                AudioPlayer.PlayOneShot(TotemBreakSound);
+                DestroyTotemServerRpc();
+                return;
+            }
+            if(DesiredTotemPieces != TotemPiecesRemaining){
+                TotemPiecesRemaining = DesiredTotemPieces;
+                UpdateTotemServerRpc(MakeNewTotemValue());
+            }
         }
-    }
-    private int MakeNewTotemValue() {
-        return scrapValue - (StartingScrapValue / 6);
-    }
-    private void DestroyNextTotemSegment(bool silent) {
-        if (!silent) {
-            AudioPlayer.PlayOneShot(TotemBreakSound);
+        private int MakeNewTotemValue() {
+            return scrapValue - (StartingScrapValue / 6);
         }
-        Destroy(TotemPieces[TotemPieces.Count - 1]);
-        TotemPieces.Remove(TotemPieces[TotemPieces.Count - 1]);
-    }
+        private void DestroyNextTotemSegment(bool silent) {
+            if (!silent) {
+                AudioPlayer.PlayOneShot(TotemBreakSound);
+            }
+            Destroy(TotemPieces[TotemPieces.Count - 1]);
+            TotemPieces.Remove(TotemPieces[TotemPieces.Count - 1]);
+        }
 
 
-    [ServerRpc]
-    private void UpdateTotemServerRpc(int TotemValue) {
-        UpdateTotemClientRpc(TotemValue);
-    }
-    [ClientRpc]
-    private void UpdateTotemClientRpc(int TotemValue) {
-        UpdateTotem(TotemValue);
-    }
-    private void UpdateTotem(int TotemValue) {
-        SetScrapValue(TotemValue);
-        DestroyNextTotemSegment(false);
-    }
+        [ServerRpc]
+        private void UpdateTotemServerRpc(int TotemValue) {
+            UpdateTotemClientRpc(TotemValue);
+        }
+        [ClientRpc]
+        private void UpdateTotemClientRpc(int TotemValue) {
+            UpdateTotem(TotemValue);
+        }
+        private void UpdateTotem(int TotemValue) {
+            SetScrapValue(TotemValue);
+            DestroyNextTotemSegment(false);
+        }
 
-    [ServerRpc]
-    private void SyncSecondsServerRpc(float NewSeconds) {
-        SyncSecondsClientRpc(NewSeconds);
-    }
-    [ClientRpc]
-    private void SyncSecondsClientRpc(float NewSeconds) {
-        SyncSeconds(NewSeconds);
-    }
-    private void SyncSeconds(float NewSeconds) {
-        TotemSecondsRemaining = NewSeconds;
-    }
+        [ServerRpc]
+        private void SyncSecondsServerRpc(float NewSeconds) {
+            SyncSecondsClientRpc(NewSeconds);
+        }
+        [ClientRpc]
+        private void SyncSecondsClientRpc(float NewSeconds) {
+            SyncSeconds(NewSeconds);
+        }
+        private void SyncSeconds(float NewSeconds) {
+            TotemSecondsRemaining = NewSeconds;
+        }
 
-    [ServerRpc]
-    private void DestroyTotemServerRpc() {
-        DestroyTotemClientRpc();
-    }
-    [ClientRpc]
-    private void DestroyTotemClientRpc() {
-        DestroyTotem();
-    }
-    private void DestroyTotem() {
-        DestroyObjectInHand(playerHeldBy);
+        [ServerRpc]
+        private void DestroyTotemServerRpc() {
+            DestroyTotemClientRpc();
+        }
+        [ClientRpc]
+        private void DestroyTotemClientRpc() {
+            DestroyTotem();
+        }
+        private void DestroyTotem() {
+            DestroyObjectInHand(playerHeldBy);
+        }
     }
 }

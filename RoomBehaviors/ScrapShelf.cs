@@ -3,67 +3,69 @@ using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
 
-namespace Welcome_To_Ooblterra.Things;
-public class ScrapShelf : NetworkBehaviour {
+namespace Welcome_To_Ooblterra.Things
+{
+    public class ScrapShelf : NetworkBehaviour {
 
-    public Transform[] ScrapSpawnPoints;
-    public Animator ShelfOpener;
-    public AudioSource ShelfSFX;
-    System.Random ShelfRandom;
+        public Transform[] ScrapSpawnPoints;
+        public Animator ShelfOpener;
+        public AudioSource ShelfSFX;
+        System.Random ShelfRandom;
 
-    public void Start() {
-        List<SpawnableItemWithRarity> RandomScrapTypes = StartOfRound.Instance.currentLevel.spawnableScrap;
-        List<SpawnableItemWithRarity> OneHanded = [];
-        List<SpawnableItemWithRarity> TwoHanded = [];
-        ShelfRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-        foreach(SpawnableItemWithRarity spawnableItem in RandomScrapTypes) {
-            if (spawnableItem.spawnableItem.twoHanded) {
-                TwoHanded.Add(spawnableItem);
-            } else {
-                OneHanded.Add(spawnableItem);
-            }
-        }
-        foreach (Transform SpawnLocation in ScrapSpawnPoints) {
-            //get a random object from the scrap pool
-            if (base.IsServer) {
-                SpawnableItemWithRarity ScrapToSpawn;
-                if (ShelfRandom.Next(0, 100) < 80) {
-                     ScrapToSpawn = TwoHanded[ShelfRandom.Next(0, TwoHanded.Count)];
+        public void Start() {
+            List<SpawnableItemWithRarity> RandomScrapTypes = StartOfRound.Instance.currentLevel.spawnableScrap;
+            List<SpawnableItemWithRarity> OneHanded = new();
+            List<SpawnableItemWithRarity> TwoHanded = new();
+            ShelfRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+            foreach(SpawnableItemWithRarity spawnableItem in RandomScrapTypes) {
+                if (spawnableItem.spawnableItem.twoHanded) {
+                    TwoHanded.Add(spawnableItem);
                 } else {
-                     ScrapToSpawn = OneHanded[ShelfRandom.Next(0, TwoHanded.Count)];
+                    OneHanded.Add(spawnableItem);
                 }
-                //Instantiate it at our current scrap spawn point 
-                GameObject SpawnedScrap = Instantiate(ScrapToSpawn.spawnableItem.spawnPrefab, SpawnLocation.transform.position, SpawnLocation.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
-                //set its scrap value 
-                GrabbableObject ScrapGrabbableObject = SpawnedScrap.GetComponent<GrabbableObject>();
-                int ScrapValue = ShelfRandom.Next(ScrapGrabbableObject.itemProperties.minValue, ScrapGrabbableObject.itemProperties.maxValue);
-                ScrapValue = (int)Math.Round(ScrapValue * 0.4);
-                //Spawn it
-                NetworkObject ScrapNetworkObject = SpawnedScrap.GetComponent<NetworkObject>();
-                ScrapNetworkObject.Spawn(destroyWithScene: true);
-                RoundManager.Instance.spawnedSyncedObjects.Add(SpawnedScrap);
-                SetScrapValueServerRpc(ScrapNetworkObject, ScrapValue);
+            }
+            foreach (Transform SpawnLocation in ScrapSpawnPoints) {
+                //get a random object from the scrap pool
+                if (base.IsServer) {
+                    SpawnableItemWithRarity ScrapToSpawn;
+                    if (ShelfRandom.Next(0, 100) < 80) {
+                         ScrapToSpawn = TwoHanded[ShelfRandom.Next(0, TwoHanded.Count)];
+                    } else {
+                         ScrapToSpawn = OneHanded[ShelfRandom.Next(0, TwoHanded.Count)];
+                    }
+                    //Instantiate it at our current scrap spawn point 
+                    GameObject SpawnedScrap = Instantiate(ScrapToSpawn.spawnableItem.spawnPrefab, SpawnLocation.transform.position, SpawnLocation.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
+                    //set its scrap value 
+                    GrabbableObject ScrapGrabbableObject = SpawnedScrap.GetComponent<GrabbableObject>();
+                    int ScrapValue = ShelfRandom.Next(ScrapGrabbableObject.itemProperties.minValue, ScrapGrabbableObject.itemProperties.maxValue);
+                    ScrapValue = (int)Math.Round(ScrapValue * 0.4);
+                    //Spawn it
+                    NetworkObject ScrapNetworkObject = SpawnedScrap.GetComponent<NetworkObject>();
+                    ScrapNetworkObject.Spawn(destroyWithScene: true);
+                    RoundManager.Instance.spawnedSyncedObjects.Add(SpawnedScrap);
+                    SetScrapValueServerRpc(ScrapNetworkObject, ScrapValue);
+                }
             }
         }
-    }
 
-    public void OpenShelf() {
-        ShelfOpener.SetTrigger("Open");
-        if (GameNetworkManager.Instance.localPlayerController.isInsideFactory) {
-            ShelfSFX.Play();
-        }
+        public void OpenShelf() {
+            ShelfOpener.SetTrigger("Open");
+            if (GameNetworkManager.Instance.localPlayerController.isInsideFactory) {
+                ShelfSFX.Play();
+            }
         
+        }
+
+        [ServerRpc]
+        public void SetScrapValueServerRpc(NetworkObjectReference ScrapToSet, int ScrapValue) {
+            SetScrapValueClientRpc(ScrapToSet,ScrapValue);
+        }
+        [ClientRpc]
+        public void SetScrapValueClientRpc(NetworkObjectReference ScrapToSet, int ScrapValue) {
+            ScrapToSet.TryGet(out var ScrapNetworkobject);
+            GrabbableObject NextScrap = ScrapNetworkobject.GetComponent<GrabbableObject>();
+            NextScrap?.SetScrapValue(ScrapValue);
+        }
     }
 
-    [ServerRpc]
-    public void SetScrapValueServerRpc(NetworkObjectReference ScrapToSet, int ScrapValue) {
-        SetScrapValueClientRpc(ScrapToSet,ScrapValue);
-    }
-    [ClientRpc]
-    public void SetScrapValueClientRpc(NetworkObjectReference ScrapToSet, int ScrapValue) {
-        ScrapToSet.TryGet(out var ScrapNetworkobject);
-        GrabbableObject NextScrap = ScrapNetworkobject.GetComponent<GrabbableObject>();
-        NextScrap?.SetScrapValue(ScrapValue);
-    }
 }
-
