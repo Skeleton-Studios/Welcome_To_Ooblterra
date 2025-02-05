@@ -186,6 +186,84 @@ namespace Welcome_To_Ooblterra.Properties
             string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
             MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
 
+            string HierarchyString(GameObject x)
+            {
+                string s = x.name;
+                while (x.transform.parent != null)
+                {
+                    x = x.transform.parent.gameObject;
+                    s = x.name + "/" + s;
+                }
+                return s;
+            }
+
+            void PrintReference(Object o)
+            {
+                if(o == null)
+                {
+                    return;
+                }
+
+                if (o is GameObject)
+                {
+                    GameObject g = (GameObject)o;
+                    foreach (Component c in g.GetComponents(typeof(Component)))
+                    {
+                        PrintReference(c);
+                    }
+                    for(int i = 0; i < g.transform.childCount; i++)
+                    {
+                        PrintReference(g.transform.GetChild(i).gameObject);
+                    }
+                }
+                else if (o is MeshFilter)
+                {
+                    MeshFilter f = (MeshFilter)o;
+                    if(f.sharedMesh == null)
+                    {
+                        return;
+                    }
+                    var str = HierarchyString(f.gameObject);
+                    Log.Info(str + ": " + f.sharedMesh.name);
+
+                }
+                else if (o is MeshRenderer)
+                {
+                    MeshRenderer meshRenderer = (MeshRenderer)o;
+                    var str = HierarchyString(meshRenderer.gameObject);
+                    for (int i = 0; i < meshRenderer.materials.Length; i++)
+                    {
+                        Log.Info(str + " - " + i.ToString() + ": " + meshRenderer.materials[i].name);
+                    }
+                }
+                else if(o is AudioSource)
+                {
+                    AudioSource audioSource = (AudioSource)o;
+                    var str = HierarchyString(audioSource.gameObject);
+                    if (audioSource.clip != null)
+                    {
+                        Log.Info(str + ": " + audioSource.clip.name);
+                    }
+                    if(audioSource.outputAudioMixerGroup != null)
+                    {
+                        Log.Info(str + ": " + audioSource.outputAudioMixerGroup.name);
+                    }
+                }
+            }
+
+            void PrintReferences(Object[] bundle)
+            {
+                foreach (Object o in bundle)
+                {
+                    PrintReference(o);
+                }
+            }
+
+            // PrintReferences(FactoryAssetBundle.LoadAllAssets());
+            // PrintReferences(ItemAssetBundle.LoadAllAssets());
+            // PrintReferences(LevelAssetBundle.LoadAllAssets());
+            // PrintReferences(MonsterAssetBundle.LoadAllAssets());
+
             MoonPatch.Start();
             FactoryPatch.Start();
             ItemPatch.Start();
