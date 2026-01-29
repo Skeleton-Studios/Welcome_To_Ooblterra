@@ -1,274 +1,108 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{8EF012DE-DAC8-42A5-B383-0C7886F684AE}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>Welcome_To_Ooblterra</RootNamespace>
-    <AssemblyName>Welcome_To_Ooblterra</AssemblyName>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>false</Deterministic>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>portable</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>preview</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <LangVersion>preview</LangVersion>
-  </PropertyGroup>
-  <PropertyGroup>
-    <BepInExPath>..\WelcomeToOoblterra\Assets\BepInEx\BepInEx\</BepInExPath>
-    <DepsPath>..\NetcodePatcher-2.4.0\deps\</DepsPath>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="AsmResolver">
-      <Version>5.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="AsmResolver.DotNet">
-      <Version>5.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="AsmResolver.PE">
-      <Version>5.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="AsmResolver.PE.File">
-      <Version>5.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="All" />
-    <PackageReference Include="BepInEx.AssemblyPublicizer">
-      <Version>0.4.1</Version>
-    </PackageReference>
-    <PackageReference Include="Microsoft.Bcl.AsyncInterfaces">
-      <Version>6.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Buffers">
-      <Version>4.5.1</Version>
-    </PackageReference>
-    <PackageReference Include="System.Memory">
-      <Version>4.5.4</Version>
-    </PackageReference>
-    <PackageReference Include="System.Numerics.Vectors">
-      <Version>4.5.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe">
-      <Version>6.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Text.Encodings.Web">
-      <Version>6.0.0</Version>
-    </PackageReference>
-    <PackageReference Include="System.Text.Json">
-      <Version>6.0.10</Version>
-    </PackageReference>
-    <PackageReference Include="System.Threading.Tasks.Extensions">
-      <Version>4.5.4</Version>
-    </PackageReference>
-    <PackageReference Include="System.ValueTuple">
-      <Version>4.5.0</Version>
-    </PackageReference>
+<Project Sdk="Microsoft.NET.Sdk">
 
-    <Reference Include="0Harmony">
-      <HintPath>$(BepInExPath)core\0Harmony.dll</HintPath>
-    </Reference>
-      <Reference Include="BepInEx">
-      <HintPath>$(BepInExPath)core\BepInEx.dll</HintPath>
-    </Reference>
-    <Reference Include="LethalLib, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(BepInExPath)plugins\Evaisa-LethalLib\LethalLib\LethalLib.dll</HintPath>
-    </Reference>
-    <Reference Include="LethalLevelLoader, Version=1.1.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(BepInExPath)plugins\IAmBatby-LethalLevelLoader\LethalLevelLoader.dll</HintPath>
-    </Reference>
+    <!-- BepInEx Properties -->
+    <PropertyGroup>
+        <AssemblyName>Welcome_To_Ooblterra</AssemblyName>
+        <Product>Welcome_To_Ooblterra</Product>
+        <!-- Change to whatever version you're currently on. -->
+        <Version>1.0.0</Version>
+    </PropertyGroup>
 
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Numerics" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Net.Http" />
-    <Reference Include="System.Xml" />
-      <Reference Include="Assembly-CSharp" Publicize="true">
-      <HintPath>$(DepsPath)Assembly-CSharp.dll</HintPath>
-      <Private>false</Private>
-    </Reference>
-    <Reference Include="Unity.AI.Navigation, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)Unity.AI.Navigation.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Animation.Rigging, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)Unity.Animation.Rigging.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.InputSystem, Version=1.7.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)Unity.InputSystem.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.Netcode.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)Unity.Netcode.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipelines.Core.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)Unity.RenderPipelines.Core.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipelines.Core.ShaderLibrary">
-      <HintPath>$(DepsPath)Unity.RenderPipelines.Core.ShaderLibrary.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipelines.HighDefinition.Config.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)Unity.RenderPipelines.HighDefinition.Config.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.RenderPipelines.HighDefinition.Runtime, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)Unity.RenderPipelines.HighDefinition.Runtime.dll</HintPath>
-    </Reference>
-    <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)Unity.TextMeshPro.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>$(DepsPath)UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AIModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.AIModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AnimationModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.AnimationModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.AssetBundleModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AudioModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.AudioModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>$(DepsPath)UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.ImageConversionModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.ImageConversionModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.JSONSerializeModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.JSONSerializeModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.ParticleSystemModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.ParticleSystemModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.PhysicsModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.PhysicsModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.TerrainModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.TerrainModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UnityWebRequestAssetBundleModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.UnityWebRequestAssetBundleModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UnityWebRequestAudioModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.UnityWebRequestAudioModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UnityWebRequestModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.UnityWebRequestModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UnityWebRequestTextureModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.UnityWebRequestTextureModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UnityWebRequestWWWModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>$(DepsPath)UnityEngine.UnityWebRequestWWWModule.dll</HintPath>
-    </Reference>
-  </ItemGroup>
+    <!-- Project Properties -->
+    <PropertyGroup>
+        <TargetFramework>netstandard2.1</TargetFramework>
+        <RootNamespace>CRLib._ModTemplate</RootNamespace>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <LangVersion>latest</LangVersion>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Include="Enemies\AdultWandererAI.cs" />
-    <Compile Include="Enemies\EnemyThings\BabyLurkerEggProjectile.cs" />
-    <Compile Include="Enemies\EnemyThings\BabyLurkerProjectile.cs" />
-    <Compile Include="Enemies\EnemyThings\EnforcerHidePoint.cs" />
-    <Compile Include="Enemies\EnemyThings\LurkerDamageVolume.cs" />
-    <Compile Include="Enemies\OoblGhostAI.cs" />
-    <Compile Include="Enemies\SecBotAI.cs" />
-    <Compile Include="Enemies\EyeSecAI.cs" />
-    <Compile Include="Enemies\WTOEnemy.cs" />
-    <Compile Include="Items\OoblCorpsePart.cs" />
-    <Compile Include="Items\WTOBattery.cs" />
-    <Compile Include="Items\Chemical.cs" />
-    <Compile Include="Items\CursedEffigy.cs" />
-    <Compile Include="Properties\WTONetworkHandler.cs" />
-    <Compile Include="Enemies\EnemyThings\BabyLurkerEgg.cs" />
-    <Compile Include="Enemies\EnforcerAI.cs" />
-    <Compile Include="Enemies\GallenarmaAI.cs" />
-    <Compile Include="Enemies\BabyLurkerAI.cs" />
-    <Compile Include="Enemies\LurkerAI.cs" />
-    <Compile Include="RoomBehaviors\BatteryRecepticle.cs" />
-    <Compile Include="RoomBehaviors\FrankensteinVisuals.cs" />
-    <Compile Include="RoomBehaviors\ScrapShelf.cs" />
-    <Compile Include="Security\SpikeTrap.cs" />
-    <Compile Include="Things\AcidWater.cs" />
-    <Compile Include="Patches\ItemPatch.cs" />
-    <Compile Include="Patches\TerminalPatch.cs" />
-    <Compile Include="Enemies\WandererAI.cs" />
-    <Compile Include="Patches\FactoryPatch.cs" />
-    <Compile Include="Patches\MonsterPatch.cs" />
-    <Compile Include="Patches\MoonPatch.cs" />
-    <Compile Include="Properties\Plugin.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Patches\SuitPatch.cs" />
-    <Compile Include="Enemies\EnemyThings\EyeSecLaser.cs" />
-    <Compile Include="RoomBehaviors\FrankensteinChemPoint.cs" />
-    <Compile Include="RoomBehaviors\KitchenCrusher.cs" />
-    <Compile Include="Enemies\EnemyThings\EnforcerWeapon.cs" />
-    <Compile Include="Enemies\EnemyThings\EyeSecScanner.cs" />
-    <Compile Include="RoomBehaviors\FrankensteinTerminal.cs" />
-    <Compile Include="RoomBehaviors\FrankensteinBodyPoint.cs" />
-    <Compile Include="RoomBehaviors\HideSpot.cs" />
-    <Compile Include="Items\SprintTotem.cs" />
-    <Compile Include="Things\BearTrap.cs" />
-    <Compile Include="Things\BlinkingMonitors.cs" />
-    <Compile Include="Things\LightComponent.cs" />
-    <Compile Include="Security\TeslaCoil.cs" />
-    <Compile Include="Things\StartRoomLight.cs" />
-    <Compile Include="Things\WideDoorway.cs" />
-  </ItemGroup>
-  <ItemGroup>
-    <WCFMetadata Include="Connected Services\" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
-  </ItemGroup>
-  <PropertyGroup>
-    <LangVersion>latest</LangVersion>
-  </PropertyGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+    <!-- Enable Nullable for better IDE null-checking -->
+    <PropertyGroup>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <PropertyGroup>
+        <PluginsDirectory>.\plugins\</PluginsDirectory>
+        <!-- If running with Unity project, this will be a valid path to the project's plugin directory. If not, this folder does not exist -->
+        <UnityPluginsDirectory>..\WelcomeToOoblterra73\Assets\LethalCompany\Mods\plugins\</UnityPluginsDirectory>
+    </PropertyGroup>
+
+    <!-- Set NuGet Sources -->
+    <PropertyGroup>
+        <RestoreAdditionalProjectSources>
+            https://api.nuget.org/v3/index.json;
+            https://nuget.bepinex.dev/v3/index.json;
+            https://nuget.windows10ce.com/nuget/v3/index.json <!-- This source lets you reference mods from thunderstore if they aren't on NuGet -->
+        </RestoreAdditionalProjectSources>
+    </PropertyGroup>
+
+    <!-- Disable Publicizer Warnings -->
+    <PropertyGroup>
+        <NoWarn>$(NoWarn);CS0436</NoWarn>
+    </PropertyGroup>
+
+    <!-- Embed Debug Symbols for Easier Debugging -->
+    <PropertyGroup>
+        <DebugSymbols>true</DebugSymbols>
+        <DebugType>embedded</DebugType>
+        <!--
+        Trim the project path to prevent players from potentially
+        viewing Private Information in stack traces.
+        -->
+        <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
+    </PropertyGroup>
+
+    <!-- Primary Package References - BepInEx -->
+    <ItemGroup>
+        <PackageReference Include="BepInEx.Analyzers" Version="1.*" PrivateAssets="all"/>
+        <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all"/>
+        <PackageReference Include="BepInEx.Core" Version="5.*" PrivateAssets="all"/>
+        <PackageReference Include="BepInEx.PluginInfoProps" Version="2.*" PrivateAssets="all"/>
+        <PackageReference Include="LethalCompany.GameLibs.Steam" Version="*-*" PrivateAssets="all"/>
+        <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <!-- References to dependencies -->
+    <ItemGroup>
+        <Reference Include="LethalLib">
+            <HintPath>$(PluginsDirectory)Evaisa-LethalLib\LethalLib\LethalLib.dll</HintPath>
+        </Reference>
+        <Reference Include="LethalLevelLoader">
+            <HintPath>$(PluginsDirectory)IAmBatby-LethalLevelLoader\LethalLevelLoader.dll</HintPath>
+        </Reference>
+        <Reference Include="MMHOOK_Assembly-CSharp">
+            <HintPath>$(PluginsDirectory)MMHOOK\MMHOOK_Assembly-CSharp.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+
+    <ItemGroup Condition="'$(TargetFramework.TrimEnd(`0123456789`))' == 'net'">
+        <PackageReference Include="Microsoft.NETFramework.ReferenceAssemblies" Version="1.0.2" PrivateAssets="all"/>
+    </ItemGroup>
+
+    <!-- Netcode Patcher Post-Build Event for command line -->
+    <Sdk Name="Evaisa.NetcodePatcher.MSBuild" Version="4.4.1" />
+    <PropertyGroup>
+        <NetcodePatcherUnityVersion>2022.3.62</NetcodePatcherUnityVersion>
+        <NetcodePatcherNetcodeVersion>1.12.0</NetcodePatcherNetcodeVersion>
+        <NetcodePatcherTransportVersion>1.0.0</NetcodePatcherTransportVersion>
+    </PropertyGroup>
+    <ItemGroup>
+        <NetcodePatch Include="$(TargetPath)" />
+    </ItemGroup>
+
+    <!-- Netcode patch to run in visual studio builds -->
+    <PropertyGroup>
+        <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);NCP0001</MSBuildWarningsAsMessages>
+    </PropertyGroup>
+
+    <Target Name="LegacyNetcodePatch" AfterTargets="NetcodePatch" Condition="'$(MSBuildRuntimeType)' != 'Core'">
+        <!-- run the CLI patcher only for MSBuilds that cannot load the dependencies -->
+        <Exec Command="netcode-patch -nv 1.5.2 &quot;$(TargetPath)&quot; @(ReferencePathWithRefAssemblies->'&quot;%(Identity)&quot;', ' ')"/>
+    </Target>
+
+    <!-- After build, copy assembly to Unity project for testing if running as submodule of Unity project -->
+    <Target Condition="Exists('$(UnityPluginsDirectory)')" Name="CopyToUnity" DependsOnTargets="NetcodePatch" AfterTargets="PostBuildEvent">
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(UnityPluginsDirectory)Welcome_To_Ooblterra"/>
+    </Target>
+
 </Project>
