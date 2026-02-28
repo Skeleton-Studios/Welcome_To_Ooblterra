@@ -249,6 +249,11 @@ namespace Welcome_To_Ooblterra.Properties
                         Log.Info(str + ": " + audioSource.outputAudioMixerGroup.name);
                     }
                 }
+                else
+                {
+                    var str = o.name;
+                    Log.Info(str + ": " + o.GetType().ToString());
+                }
             }
 
             void PrintReferences(Object[] bundle)
@@ -259,10 +264,10 @@ namespace Welcome_To_Ooblterra.Properties
                 }
             }
 
-            // PrintReferences(FactoryAssetBundle.LoadAllAssets());
-            // PrintReferences(ItemAssetBundle.LoadAllAssets());
-            // PrintReferences(LevelAssetBundle.LoadAllAssets());
-            // PrintReferences(MonsterAssetBundle.LoadAllAssets());
+            //PrintReferences(FactoryAssetBundle.LoadAllAssets());
+            //PrintReferences(ItemAssetBundle.LoadAllAssets());
+            PrintReferences(LevelAssetBundle.LoadAllAssets());
+            //PrintReferences(MonsterAssetBundle.LoadAllAssets());
 
             MoonPatch.Start();
             FactoryPatch.Start();
