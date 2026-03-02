@@ -14,8 +14,7 @@ namespace Welcome_To_Ooblterra.Patches
 
         public static Animator OoblFogAnimator;
 
-        public static readonly AssetBundle LevelBundle = WTOBase.LevelAssetBundle;
-        public const string MoonPath = WTOBase.RootPath + "CustomMoon/";
+        public const string MoonPath = "CustomMoon/";
 
         private static FootstepSurface GrassSurfaceRef;
     
@@ -46,13 +45,13 @@ namespace Welcome_To_Ooblterra.Patches
             }
             if (OoblFootstepClips == null) {
                 OoblFootstepClips = new AudioClip[] {
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP01.wav"),
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP02.wav"),
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP03.wav"),
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP04.wav"),
-                    WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLESTEP05.wav")
+                    WTOBase.ContextualLoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP01.wav"),
+                    WTOBase.ContextualLoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP02.wav"),
+                    WTOBase.ContextualLoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP03.wav"),
+                    WTOBase.ContextualLoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP04.wav"),
+                    WTOBase.ContextualLoadAsset<AudioClip>(FootstepPath + "TENTACLESTEP05.wav")
                 };
-                OoblHitSFX = WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, FootstepPath + "TENTACLE_Fall.wav");
+                OoblHitSFX = WTOBase.ContextualLoadAsset<AudioClip>(FootstepPath + "TENTACLE_Fall.wav");
             }
             //MUSIC CACHING AND ARRAY CREATION
             if (CachedTODMusic == null) { 
@@ -60,10 +59,10 @@ namespace Welcome_To_Ooblterra.Patches
                 CachedAmbientMusic = SoundManager.Instance.DaytimeMusic;
             }
             OoblTODMusic ??= new AudioClip[] {
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_StartOfDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_MidDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_LateDay.ogg"),
-                WTOBase.ContextualLoadAsset<AudioClip>(LevelBundle, MoonPath + "Oobl_Night.ogg")
+                WTOBase.ContextualLoadAsset<AudioClip>(MoonPath + "Oobl_StartOfDay.ogg"),
+                WTOBase.ContextualLoadAsset<AudioClip>(MoonPath + "Oobl_MidDay.ogg"),
+                WTOBase.ContextualLoadAsset<AudioClip>(MoonPath + "Oobl_LateDay.ogg"),
+                WTOBase.ContextualLoadAsset<AudioClip>(MoonPath + "Oobl_Night.ogg")
             };
             //ASSIGNMENT
             if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
@@ -165,7 +164,7 @@ namespace Welcome_To_Ooblterra.Patches
 
         //METHODS
         public static void Start() {
-            OoblterraExtendedLevel = WTOBase.ContextualLoadAsset<ExtendedLevel>(LevelBundle, MoonPath + "OoblterraExtendedLevel.asset");
+            OoblterraExtendedLevel = WTOBase.ContextualLoadAsset<ExtendedLevel>(MoonPath + "OoblterraExtendedLevel.asset");
             MoonFriendlyName = OoblterraExtendedLevel.SelectableLevel.PlanetName;
             Log.Info($"Ooblterra Found: {OoblterraExtendedLevel != null}");
             PatchedContent.RegisterExtendedLevel(OoblterraExtendedLevel);

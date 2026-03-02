@@ -5,7 +5,7 @@
         <AssemblyName>Welcome_To_Ooblterra</AssemblyName>
         <Product>Welcome_To_Ooblterra</Product>
         <!-- Change to whatever version you're currently on. -->
-        <Version>1.0.0</Version>
+        <Version>3.0.0</Version>
     </PropertyGroup>
 
     <!-- Project Properties -->

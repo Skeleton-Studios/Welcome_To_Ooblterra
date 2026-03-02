@@ -7,7 +7,6 @@ using System.Reflection;
 using UnityEngine;
 using BepInEx.Configuration;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Welcome_To_Ooblterra.Properties
 {
@@ -92,21 +91,27 @@ namespace Welcome_To_Ooblterra.Properties
                 LogToConsole(Type, SourceType, LogType.Error, text, AddFlair, ForcePrint);
             }
         }
+        
+        private class AssetBundleLoadException(string message) : System.Exception(message)
+        {
+        }
 
-        //static Version version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version;
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
-        private const string modVersion = "1.1.0";
+        private const string modVersion = "3.0.0";
 
         private readonly Harmony WTOHarmony = new(modGUID);
         public static ManualLogSource WTOLogSource;
         public static WTOBase Instance;
 
-        public static AssetBundle LevelAssetBundle;
-        public static AssetBundle ItemAssetBundle;
-        public static AssetBundle FactoryAssetBundle;
-        public static AssetBundle MonsterAssetBundle;
-        public const string RootPath = "Assets/Resources/WelcomeToOoblterra/";
+        private static AssetBundle ContentAssetBundle;
+        private static readonly string[] RootPaths = [
+            "Assets/Resources/WelcomeToOoblterra/",
+            "Assets/WelcomeToOoblterra/",
+            "WelcomeToOoblterra/",
+            ""
+        ];
+        private static string resolvedRootPath = "";
 
         public static ConfigEntry<bool> WTODebug;
         public static ConfigEntry<bool> WTOCustomSuits;
@@ -138,8 +143,10 @@ namespace Welcome_To_Ooblterra.Properties
 
         }
 
-        void Awake() {
-            /*CONFIG STUFF*/{
+        void Awake()
+        {
+            /*CONFIG STUFF*/
+            {
                 WTODebug = Config.Bind("1. Debugging", "Print Debug Strings", false, "Whether or not to write WTO's debug print-strings to the log."); //IMPLEMENTED
                 WTOLogging_Debug = Config.Bind("1. Debugging", "Log Level Debug Messages", false, "Whether or not to write debug messages to the log. These are the lowest, most spammy logs.");
                 WTOLogging_Info = Config.Bind("1. Debugging", "Log Level Info Messages", true, "Whether or not to write info messages to the log. General info logs that shouldn't be printed too often.");
@@ -149,7 +156,7 @@ namespace Welcome_To_Ooblterra.Properties
                 WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED 
                 WTOMusic = Config.Bind("2. Accessibility", "Music Volume", 100, "Adjust the volume of 523-Ooblterra's custom Time-Of-Day music. Binds between 0 and 100.");
                 WTOCustomSuits = Config.Bind("3. Ship Stuff", "Custom Suit Status", true, "Whether or not to add WTO's custom suits."); //IMPLEMENTED
-                WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status",  true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
+                WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status", true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
                 WTOHazardList = Config.Bind("4. Map Hazards", "Custom Hazard List", "SpikeTrap, TeslaCoil, BabyLurkerEgg, BearTrap", "A list of all of WTO's custom hazards to enable. Affects 523-Ooblterra, and also has influence on the settings below."); //IMPLEMENTED
                 /*WTOForceOutsideOnly = Config.Bind("5. Modded Content", "Force Configuration settings on 523 Ooblterra", true, "When true, forces 523 Ooblterra to spawn only the enemies/scrap found in its LLL config settings. This prevents custom monsters/scrap from spawning on the moon, unless manually specified.");*/
                 //WTOScalePrice = Config.Bind("5. Scrap", "Scale Scrap By Route Price", false, "Changes the value of Ooblterra's scrap to fit relative to the route price set for 523 Ooblterra. Only affects Ooblterra's custom scrap."); //IMPLEMENTED
@@ -162,11 +169,26 @@ namespace Welcome_To_Ooblterra.Properties
             }
 
             //Load up various things and tell the console we've loaded
-            if (Instance == null) {
+            if (Instance == null)
+            {
                 Instance = this;
             }
 
             WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
+
+            try
+            {
+                LoadWelcomeToOoblterra();
+            }
+            catch (System.Exception ex)
+            {
+                Log.Error($"Failed to load Welcome To Ooblterra. If you have the time, please report this error on our GitHub repository https://github.com/Skeleton-Studios/Welcome_To_Ooblterra/issues : {ex.Message}");
+            }
+        }
+
+        private void LoadWelcomeToOoblterra()
+        {
+            Log.Info("Loading - Start!");
 
             WTOHarmony.PatchAll(typeof(WTOBase));
             WTOHarmony.PatchAll(typeof(FactoryPatch));
@@ -176,16 +198,55 @@ namespace Welcome_To_Ooblterra.Properties
             WTOHarmony.PatchAll(typeof(SuitPatch));
             WTOHarmony.PatchAll(typeof(TerminalPatch));
 
-            Log.Info("BEGIN PRINTING LOADED ASSETS");
-            string FactoryBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customdungeon");             
-            FactoryAssetBundle = AssetBundle.LoadFromFile(FactoryBundlePath);
-            string ItemBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customitems");
-            ItemAssetBundle = AssetBundle.LoadFromFile(ItemBundlePath);
-            string LevelBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "custommoon");
-            LevelAssetBundle = AssetBundle.LoadFromFile(LevelBundlePath);
-            string MonsterBundlePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "customenemies");
-            MonsterAssetBundle = AssetBundle.LoadFromFile(MonsterBundlePath);
+            Log.Info("Harmony Patches applied! Loading asset bundle...");
 
+            LoadAssetBundle();
+
+            Log.Info("Asset bundle loaded! Reading assets and registering objects...");
+
+            MoonPatch.Start();
+            FactoryPatch.Start();
+            ItemPatch.Start();
+            MonsterPatch.Start();
+
+            Log.Info("Assets read successfully! Applying netcode runtime init...");
+
+            //NetcodeWeaver stuff
+            var types = Assembly.GetExecutingAssembly().GetTypes();
+            foreach (var type in types)
+            {
+                var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
+                foreach (var method in methods)
+                {
+                    var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
+                    if (attributes.Length > 0)
+                    {
+                        method.Invoke(null, null);
+                    }
+                }
+            }
+
+            Log.Info("Runtime init applied! Welcome To Ooblterra successfully loaded");
+        }
+
+        private void LoadAssetBundle()
+        {
+            string baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string fullPath = Path.Combine(baseDir, "content");
+            if (!File.Exists(fullPath))
+            {
+                throw new FileNotFoundException($"Asset bundle not found at path: {fullPath}");
+            }
+            ContentAssetBundle = AssetBundle.LoadFromFile(fullPath);
+
+            if (!ContentAssetBundle)
+            {
+                throw new AssetBundleLoadException($"Failed to load asset bundle from path: {fullPath}");
+            }
+        }
+
+        private static void PrintReferences(IEnumerable<Object> objects)
+        {
             string HierarchyString(GameObject x)
             {
                 string s = x.name;
@@ -199,7 +260,7 @@ namespace Welcome_To_Ooblterra.Properties
 
             void PrintReference(Object o)
             {
-                if(o == null)
+                if (o == null)
                 {
                     return;
                 }
@@ -211,7 +272,7 @@ namespace Welcome_To_Ooblterra.Properties
                     {
                         PrintReference(c);
                     }
-                    for(int i = 0; i < g.transform.childCount; i++)
+                    for (int i = 0; i < g.transform.childCount; i++)
                     {
                         PrintReference(g.transform.GetChild(i).gameObject);
                     }
@@ -219,7 +280,7 @@ namespace Welcome_To_Ooblterra.Properties
                 else if (o is MeshFilter)
                 {
                     MeshFilter f = (MeshFilter)o;
-                    if(f.sharedMesh == null)
+                    if (f.sharedMesh == null)
                     {
                         return;
                     }
@@ -236,7 +297,7 @@ namespace Welcome_To_Ooblterra.Properties
                         Log.Info(str + " - " + i.ToString() + ": " + meshRenderer.materials[i].name);
                     }
                 }
-                else if(o is AudioSource)
+                else if (o is AudioSource)
                 {
                     AudioSource audioSource = (AudioSource)o;
                     var str = HierarchyString(audioSource.gameObject);
@@ -244,7 +305,7 @@ namespace Welcome_To_Ooblterra.Properties
                     {
                         Log.Info(str + ": " + audioSource.clip.name);
                     }
-                    if(audioSource.outputAudioMixerGroup != null)
+                    if (audioSource.outputAudioMixerGroup != null)
                     {
                         Log.Info(str + ": " + audioSource.outputAudioMixerGroup.name);
                     }
@@ -256,35 +317,9 @@ namespace Welcome_To_Ooblterra.Properties
                 }
             }
 
-            void PrintReferences(Object[] bundle)
+            foreach (Object o in objects)
             {
-                foreach (Object o in bundle)
-                {
-                    PrintReference(o);
-                }
-            }
-
-            //PrintReferences(FactoryAssetBundle.LoadAllAssets());
-            //PrintReferences(ItemAssetBundle.LoadAllAssets());
-            PrintReferences(LevelAssetBundle.LoadAllAssets());
-            //PrintReferences(MonsterAssetBundle.LoadAllAssets());
-
-            MoonPatch.Start();
-            FactoryPatch.Start();
-            ItemPatch.Start();
-            MonsterPatch.Start();
-        
-
-            //NetcodeWeaver stuff
-            var types = Assembly.GetExecutingAssembly().GetTypes();
-            foreach (var type in types) {
-                var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-                foreach (var method in methods) {
-                    var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
-                    if (attributes.Length > 0) {
-                        method.Invoke(null, null);
-                    }
-                }
+                PrintReference(o);
             }
         }
 
@@ -292,7 +327,31 @@ namespace Welcome_To_Ooblterra.Properties
 
         }
 
-        public static T ContextualLoadAsset <T>(AssetBundle Bundle, string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object {
+        private static string ResolveRootPath(string pathToAsset)
+        {
+            // Need to identify what the root path was when this asset bundle was build. It can change depending on where
+            // the files were in unity. First, try some known ones, then do a brute force check.
+            foreach (string rootPath in RootPaths) {
+                var fullPath = Path.Join(rootPath, pathToAsset).ToLower();
+                if (ContentAssetBundle.Contains(fullPath)) {
+                    Log.Info($"Resolved asset bundle root path: {rootPath}");
+                    return rootPath;
+                }
+            }
+
+            // Failed to find using known root paths, so do a brute force check of all asset names in the bundle to see if we can find the target asset and work backwards from there.
+            foreach (var name in ContentAssetBundle.GetAllAssetNames()) {
+                var lowerName = name.ToLower();
+                if (lowerName.EndsWith(pathToAsset.ToLower())) {
+                    return name[..^pathToAsset.Length];
+                }
+            }
+
+            Log.Error($"Could not resolve asset bundle root path using target {pathToAsset}. This will most likely cause asset loading to fail.");
+            return "";
+        }
+
+        public static T ContextualLoadAsset <T>(string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object {
             if (Application.platform == RuntimePlatform.WindowsEditor) {
                 string PathMinusFileType = PathToAsset.Substring(17);
                 PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
@@ -301,13 +360,23 @@ namespace Welcome_To_Ooblterra.Properties
                 }
                 return Resources.Load<T>(PathMinusFileType);
             } else {
-                //Some postprocessing on this text to make the readout a little cleaner
-                int LengthOfAssetName = PathToAsset.Length - PathToAsset.LastIndexOf("/");
-                string CleanAssetName = PathToAsset.Substring(PathToAsset.LastIndexOf("/"), LengthOfAssetName);
                 if(LogLoading) {
-                    Log.Info($"Loading {CleanAssetName} from {Bundle.name}...", ForcePrint:true);
+                    Log.Info($"Loading {PathToAsset}...", ForcePrint:true);
                 }
-                return Bundle.LoadAsset<T>(PathToAsset);
+
+                if(!ContentAssetBundle)
+                {
+                    throw new AssetBundleLoadException($"Cannot load {PathToAsset} because ContentAssetBundle is not loaded yet.");
+                }
+
+                if(resolvedRootPath == "")
+                {
+                    resolvedRootPath = ResolveRootPath(PathToAsset);
+                }
+
+                PathToAsset = Path.Join(resolvedRootPath, PathToAsset);
+
+                return ContentAssetBundle.LoadAsset<T>(PathToAsset) ?? throw new AssetBundleLoadException($"Failed to load asset at path {PathToAsset}. Asset was null after loading.");
             }
         }
 

@@ -12,9 +12,8 @@ namespace Welcome_To_Ooblterra.Patches
         */
     internal class SuitPatch {
 
-        private const string SuitPath = WTOBase.RootPath + "CustomSuits/";
-        private const string BlackSuitPath = WTOBase.RootPath + "CustomSuits/BlackSuits";
-        private static readonly AssetBundle SuitBundle = WTOBase.ItemAssetBundle;
+        private const string SuitPath = "CustomSuits/";
+        private const string BlackSuitPath = "CustomSuits/BlackSuits";
 
         private const string PosterGameObject = "HangarShip/Plane.001";
 
@@ -38,7 +37,7 @@ namespace Welcome_To_Ooblterra.Patches
         [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
         [HarmonyPrefix]
         private static void StartPatch(ref StartOfRound __instance) {
-            GhostPlayerSuit = WTOBase.ContextualLoadAsset<Material>(SuitBundle, SuitPath + "GhostPlayerSuit.mat");
+            GhostPlayerSuit = WTOBase.ContextualLoadAsset<Material>(SuitPath + "GhostPlayerSuit.mat");
             if (WTOBase.WTOCustomSuits.Value) {
                 LoadSuits(SuitPath);
             }
@@ -95,7 +94,7 @@ namespace Welcome_To_Ooblterra.Patches
             foreach (string MatName in SuitMaterialNames) {
                 UnlockableItem newUnlockableItem = JsonUtility.FromJson<UnlockableItem>(JsonUtility.ToJson(unlockableItem));
                 UnlockableSuit newSuit = new();
-                newUnlockableItem.suitMaterial = WTOBase.ContextualLoadAsset<Material>(SuitBundle, RelevantPath + MatName);
+                newUnlockableItem.suitMaterial = WTOBase.ContextualLoadAsset<Material>(RelevantPath + MatName);
                 //prepare and set name
                 String SuitName = MatName.Substring(0, MatName.Length - 4);
                 newUnlockableItem.unlockableName = SuitName;
@@ -112,7 +111,7 @@ namespace Welcome_To_Ooblterra.Patches
                 return;
             }
             Material[] materials = ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials;
-            materials[1] = WTOBase.ContextualLoadAsset<Material>(SuitBundle, SuitPath + "Poster.mat");
+            materials[1] = WTOBase.ContextualLoadAsset<Material>(SuitPath + "Poster.mat");
             ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials = materials;
         }
         private static void AddPosterShipDeco() {

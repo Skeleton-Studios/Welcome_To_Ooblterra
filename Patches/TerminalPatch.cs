@@ -10,7 +10,7 @@ namespace Welcome_To_Ooblterra.Patches
     internal class TerminalPatch {
 
         public static Dictionary<int, int> LogDictionary = new();
-        private const string TerminalPath = WTOBase.RootPath + "CustomTerminal/";
+        private const string TerminalPath = "CustomTerminal/";
         private static List<TerminalKeyword> KeywordList;
         private static List<TerminalNode> NodeList = new();
 
@@ -27,21 +27,21 @@ namespace Welcome_To_Ooblterra.Patches
         private static void LoadLogKeywords(){
             KeywordList = new() 
             {
-                WTOBase.ContextualLoadAsset<TerminalKeyword>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile1Keyword.asset"),
-                WTOBase.ContextualLoadAsset<TerminalKeyword>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile2Keyword.asset"),
-                WTOBase.ContextualLoadAsset<TerminalKeyword>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile3Keyword.asset"),
-                WTOBase.ContextualLoadAsset<TerminalKeyword>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile4Keyword.asset"),
-                WTOBase.ContextualLoadAsset<TerminalKeyword>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile5Keyword.asset")
+                WTOBase.ContextualLoadAsset<TerminalKeyword>(TerminalPath + "WTOLogFile1Keyword.asset"),
+                WTOBase.ContextualLoadAsset<TerminalKeyword>(TerminalPath + "WTOLogFile2Keyword.asset"),
+                WTOBase.ContextualLoadAsset<TerminalKeyword>(TerminalPath + "WTOLogFile3Keyword.asset"),
+                WTOBase.ContextualLoadAsset<TerminalKeyword>(TerminalPath + "WTOLogFile4Keyword.asset"),
+                WTOBase.ContextualLoadAsset<TerminalKeyword>(TerminalPath + "WTOLogFile5Keyword.asset")
             };
         }
         private static void LoadLogNodes() {
             NodeList = new()
             {
-                WTOBase.ContextualLoadAsset<TerminalNode>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile1.asset"),
-                WTOBase.ContextualLoadAsset<TerminalNode>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile2.asset"),
-                WTOBase.ContextualLoadAsset<TerminalNode>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile3.asset"),
-                WTOBase.ContextualLoadAsset<TerminalNode>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile4.asset"),
-                WTOBase.ContextualLoadAsset<TerminalNode>(MoonPatch.LevelBundle, TerminalPath + "WTOLogFile5.asset")
+                WTOBase.ContextualLoadAsset<TerminalNode>(TerminalPath + "WTOLogFile1.asset"),
+                WTOBase.ContextualLoadAsset<TerminalNode>(TerminalPath + "WTOLogFile2.asset"),
+                WTOBase.ContextualLoadAsset<TerminalNode>(TerminalPath + "WTOLogFile3.asset"),
+                WTOBase.ContextualLoadAsset<TerminalNode>(TerminalPath + "WTOLogFile4.asset"),
+                WTOBase.ContextualLoadAsset<TerminalNode>(TerminalPath + "WTOLogFile5.asset")
             };
         }
 

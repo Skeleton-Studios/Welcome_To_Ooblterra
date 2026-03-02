@@ -14,8 +14,7 @@ namespace Welcome_To_Ooblterra.Patches
         public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new();
         public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new();
 
-        private static readonly AssetBundle EnemyBundle = WTOBase.MonsterAssetBundle;
-        private const string EnemyPath = WTOBase.RootPath + "CustomEnemies/";
+        private const string EnemyPath = "CustomEnemies/";
         public const bool ShouldDebugEnemies = true;
 
         private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToInsideSpawnLists = new();
@@ -159,14 +158,14 @@ namespace Welcome_To_Ooblterra.Patches
             TerminalNode EnemyInfo = null;
             TerminalKeyword EnemyKeyword = null;
 
-            EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyBundle, EnemyPath + EnemyFolderName + EnemyName);
+            EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyPath + EnemyFolderName + EnemyName);
             EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
 
             if (InfoName != null) {
-                EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyBundle, EnemyPath + EnemyFolderName + InfoName);
+                EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyPath + EnemyFolderName + InfoName);
             }
             if (KeywordName != null) {
-                EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyBundle, EnemyPath + EnemyFolderName + KeywordName);
+                EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyPath + EnemyFolderName + KeywordName);
             }
 
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);

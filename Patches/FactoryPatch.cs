@@ -10,11 +10,10 @@ namespace Welcome_To_Ooblterra.Patches
 {
     internal class FactoryPatch {
 
-        private static readonly AssetBundle FactoryBundle = WTOBase.FactoryAssetBundle;
-        private const string DungeonPath = WTOBase.RootPath + "CustomDungeon/Data/";
-        private const string BehaviorPath = WTOBase.RootPath + "CustomDungeon/Behaviors/";
-        private const string SecurityPath = WTOBase.RootPath + "CustomDungeon/Security/";
-        private const string DoorPath = WTOBase.RootPath + "CustomDungeon/Doors/";
+        private const string DungeonPath = "CustomDungeon/Data/";
+        private const string BehaviorPath = "CustomDungeon/Behaviors/";
+        private const string SecurityPath = "CustomDungeon/Security/";
+        private const string DoorPath = "CustomDungeon/Doors/";
         public static List<SpawnableMapObject> SecurityList = new();
         public static ExtendedDungeonFlow OoblDungeonFlow;
 
@@ -92,16 +91,16 @@ namespace Welcome_To_Ooblterra.Patches
         //METHODS
         public static void Start() {
 
-            OoblDungeonFlow = WTOBase.ContextualLoadAsset<ExtendedDungeonFlow>(FactoryBundle, DungeonPath + "OoblLabExtendedDungeonFlow.asset");
+            OoblDungeonFlow = WTOBase.ContextualLoadAsset<ExtendedDungeonFlow>(DungeonPath + "OoblLabExtendedDungeonFlow.asset");
             //OoblDungeonFlow.manualPlanetNameReferenceList.Clear();
             //OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
             PatchedContent.RegisterExtendedDungeonFlow(OoblDungeonFlow);
         
 
-            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, BehaviorPath + "ChargedBattery.prefab"));
-            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "TeslaCoil.prefab"));
-            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "SpikeTrap.prefab"));
-            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(FactoryBundle, SecurityPath + "BabyLurkerEgg.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(BehaviorPath + "ChargedBattery.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "SpikeTrap.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "BabyLurkerEgg.prefab"));
         
         }
     }
