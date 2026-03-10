@@ -1,12 +1,15 @@
 ﻿using BepInEx;
+using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using Welcome_To_Ooblterra.Patches;
+using LethalLevelLoader;
+using System.Collections;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using UnityEngine;
-using BepInEx.Configuration;
-using System.Collections.Generic;
+using Welcome_To_Ooblterra.Patches;
 
 namespace Welcome_To_Ooblterra.Properties
 {
@@ -128,6 +131,7 @@ namespace Welcome_To_Ooblterra.Properties
         public static ConfigEntry<TiedToLabEnum> WTOForceScrap;
         public static ConfigEntry<bool> WTOForceOutsideOnly;
         public static ConfigEntry<int> WTOWeightScale;
+        public static ConfigEntry<bool> WTOTestRoom;
 
         public static ConfigEntry<bool> WTOLogging_Debug;
         public static ConfigEntry<bool> WTOLogging_Info;
@@ -136,12 +140,6 @@ namespace Welcome_To_Ooblterra.Properties
         public static ConfigEntry<string> WTOLogging_Filter;
 
         private static readonly WTOLogger Log = new (typeof(WTOBase));
-
-        [HarmonyPatch(typeof(StartOfRound), "Update")]
-        [HarmonyPostfix]
-        public static void DebugHelper(StartOfRound __instance) {
-
-        }
 
         void Awake()
         {
@@ -166,6 +164,7 @@ namespace Welcome_To_Ooblterra.Properties
                 WTOForceDaytimeMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Daytime Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's daytime enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
                 WTOForceScrap = Config.Bind("5. Modpack Controls", "Bind WTO Scrap to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own scrap, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
                 WTOWeightScale = Config.Bind("5. Modpack Controls", "WTOAppend Weight Scale", 1, "For any setting configured to WTOAppend above, this setting multiplies that thing's weight before appending it to list."); //IMPLEMENTED
+                WTOTestRoom = Config.Bind("6. Testing", "Enable Test Room Teleporter", false, "Whether or not to enable the test room teleporter in Ooblterra. This spawns a teleporter outside of the ship and spawns the test room.");
             }
 
             //Load up various things and tell the console we've loaded
@@ -176,6 +175,8 @@ namespace Welcome_To_Ooblterra.Properties
 
             WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
 
+            FixLLLLoadingFreeze();
+
             try
             {
                 LoadWelcomeToOoblterra();
@@ -183,6 +184,144 @@ namespace Welcome_To_Ooblterra.Properties
             catch (System.Exception ex)
             {
                 Log.Error($"Failed to load Welcome To Ooblterra. If you have the time, please report this error on our GitHub repository https://github.com/Skeleton-Studios/Welcome_To_Ooblterra/issues : {ex.Message}");
+            }
+        }
+
+        private void FixLLLLoadingFreeze()
+        {
+            Assembly assembly = Assembly.GetAssembly(typeof(LethalLevelLoader.AssetBundleLoader));
+
+            System.Type AssetBundleLoaderType = assembly.GetType("LethalLevelLoader.AssetBundles.AssetBundleLoader");
+            if (AssetBundleLoaderType == null)
+            {
+                Log.Warning("Could not find LethalLevelLoader.AssetBundles.AssetBundleLoader type");
+                return;
+            }
+
+            PropertyInfo AllowLoadingProperty = AssetBundleLoaderType.GetProperty("AllowLoading", BindingFlags.Static | BindingFlags.NonPublic);
+            if(AllowLoadingProperty == null)
+            {
+                Log.Warning("Could not find AllowLoading field in AssetBundleLoader");
+                return;
+            }
+
+            bool AllowLoading = (bool)AllowLoadingProperty.GetValue(null);
+
+            if(AllowLoading)
+            {
+                // This can't be in the errored state, so we don't need to do anything.
+                Log.Info("AllowLoading is already true, so AssetBundleLoader is not in a stuck state. No need to apply fix.");
+                return;
+            }
+
+            // Next, get the "Instance" field value, which is an instance of the inner AssetBundleLoader class, 
+            // and get Instance.AssetBundleInfos List
+
+            PropertyInfo InstanceProperty = AssetBundleLoaderType.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public);
+            if(InstanceProperty == null)
+            {
+                Log.Warning("Could not find Instance field in AssetBundleLoader");
+                return;
+            }
+
+            object AssetBundleLoaderInstance = InstanceProperty.GetValue(null);
+
+            FieldInfo AssetBundleInfosField = AssetBundleLoaderType.GetField("AssetBundleInfos", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if(AssetBundleInfosField == null)
+            {
+                Log.Warning("Could not find AssetBundleInfos field in AssetBundleLoader");
+                return;
+            }
+            
+            // This type is luckily public
+            List<LethalLevelLoader.AssetBundles.AssetBundleInfo> AssetBundleInfos = (List<LethalLevelLoader.AssetBundles.AssetBundleInfo>)AssetBundleInfosField.GetValue(AssetBundleLoaderInstance);
+
+            if(AssetBundleInfos.Count == 0)
+            {
+                // If there's none, then im not sure how we're in this state.
+                Log.Info("AssetBundleInfos list is empty, so AssetBundleLoader is not in a stuck state. No need to apply fix.");
+                return;
+            }
+
+            // Next, get the internal static knownSceneBundles dictionary
+            FieldInfo fieldInfo = AssetBundleLoaderType.GetField("knownSceneBundles", BindingFlags.Static | BindingFlags.NonPublic);
+
+            if (fieldInfo == null)
+            {
+                Log.Warning("Could not find knownSceneBundles field in AssetBundleLoader");
+                return;
+            }
+    
+            Dictionary<string, LethalLevelLoader.AssetBundles.LethalBundleManifest> knownSceneBundles = (Dictionary<string, LethalLevelLoader.AssetBundles.LethalBundleManifest>)fieldInfo.GetValue(null);
+
+            bool allSceneBundlesAreKnownAndSkipped = true;
+            foreach (var info in AssetBundleInfos)
+            {
+                if (!knownSceneBundles.TryGetValue(info.AssetBundleFileName, out var bundleManifest))
+                {
+                    // Does not exist in knownSceneBundles, so this will hit TryLoadBundle path which is OK
+                    allSceneBundlesAreKnownAndSkipped = false;
+                    break;
+                }
+
+                if(bundleManifest.timestamp != File.GetLastWriteTime(info.AssetBundleFilePath).Ticks)
+                {
+                    // This will trigger TryLoadBundle path which is OK.
+                    allSceneBundlesAreKnownAndSkipped = false;
+                    break;
+                }
+            }
+
+            if(!allSceneBundlesAreKnownAndSkipped)
+            {
+                // TryLoadBundle will have been called
+                Log.Info("Not all scene bundles are known and skipped, so AssetBundleLoader is not in a stuck state. No need to apply fix.");
+                return;
+            }
+
+            // Now, check if all bundles have hasInitialized private member set to true,
+            // And also check the activeLoadRequest private member is not null
+            FieldInfo hasInitializedField = typeof(LethalLevelLoader.AssetBundles.AssetBundleInfo).GetField("hasInitialized", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (hasInitializedField == null) {
+                Log.Warning("Could not find hasInitialized field in AssetBundleInfo");
+                return;
+            }
+
+            FieldInfo activeLoadRequestField = typeof(LethalLevelLoader.AssetBundles.AssetBundleInfo).GetField("activeLoadRequest", BindingFlags.Instance | BindingFlags.NonPublic);
+            if (activeLoadRequestField == null) {
+                Log.Warning("Could not find activeLoadRequest field in AssetBundleInfo");
+                return;
+            }
+
+            foreach (var info in AssetBundleInfos) {
+                bool hasInitialized = (bool)hasInitializedField.GetValue(info);
+                object activeLoadRequest = activeLoadRequestField.GetValue(info);
+                if (!hasInitialized || activeLoadRequest != null) {
+                    // Not sure what to make of this really - let's presume it's fine
+                    return;
+                }
+            }
+
+            FieldInfo requestedBundleCountField = AssetBundleLoaderType.GetField("requestedBundleCount", BindingFlags.Static | BindingFlags.NonPublic);
+            if (requestedBundleCountField == null) {
+                Log.Warning("Could not find requestedBundleCount field in AssetBundleLoader");
+                return;
+            }
+
+            FieldInfo processedBundleCount = AssetBundleLoaderType.GetField("processedBundleCount", BindingFlags.Static | BindingFlags.NonPublic);
+            if (processedBundleCount == null) {
+                Log.Warning("Could not find processedBundleCount field in AssetBundleLoader");
+                return;
+            }
+
+            Log.Info("AssetBundleLoader appears to be in a stuck state where all bundles are being skipped due to being known, but they have not been marked as initialized. Attempting to fix by marking all bundles as initialized and triggering load.");
+
+            requestedBundleCountField.SetValue(AssetBundleLoaderInstance, AssetBundleInfos.Count);
+            processedBundleCount.SetValue(AssetBundleLoaderInstance, 0);
+
+            foreach(var info in AssetBundleInfos) {
+                info.TryLoadBundle();
             }
         }
 
