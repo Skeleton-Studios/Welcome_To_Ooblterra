@@ -84,6 +84,16 @@ namespace Welcome_To_Ooblterra.Patches
             __instance.ChangeOwnershipOfEnemy(__instance.stunnedByPlayer.actualClientId);
         }
 
+        [HarmonyPatch(typeof(EnemyAI), nameof(EnemyAI.SetClientCalculatingAI))]
+        [HarmonyPrefix]
+        private static bool PreventGhostAgentEnable(EnemyAI __instance, bool enable) {
+            if (__instance is OoblGhostAI) {
+                __instance.isClientCalculatingAI = enable;
+                return false;
+            }
+            return true;
+        }
+
         [HarmonyPatch(typeof(HUDManager), "UseSignalTranslatorClientRpc")]
         [HarmonyPostfix]
         private static void TellAllGhostsOfSignalTransmission() {

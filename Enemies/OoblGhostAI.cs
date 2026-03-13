@@ -13,6 +13,8 @@ namespace Welcome_To_Ooblterra.Enemies
 {
     internal class OoblGhostAI : WTOEnemy {
 
+        internal override bool RequiresNavMesh => false;
+
         [Header("Balance Constants")]
         public float GhostInterferenceRange = 10f; 
         public float OoblGhostSpeed = 7f;

@@ -42,6 +42,7 @@ namespace Welcome_To_Ooblterra.Enemies
         internal List<StateTransition> GlobalTransitions = new();
         internal List<StateTransition> AllTransitions = new();
         internal int WTOEnemyID;
+        internal virtual bool RequiresNavMesh => true;
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(WTOEnemy), LogSourceType.Enemy);
 
@@ -67,7 +68,7 @@ namespace Welcome_To_Ooblterra.Enemies
                     MyValidState = PlayerState.Inside;
                 }
             //Debug to make sure that the agent is actually on the navmesh
-                if (!agent.isOnNavMesh && base.IsOwner) {
+                if (RequiresNavMesh && !agent.isOnNavMesh && base.IsOwner) {
                     Log.Error("CREATURE " + getTypeName() + " WAS NOT PLACED ON NAVMESH, DESTROYING...");
                     KillEnemyOnOwnerClient();
                 }
