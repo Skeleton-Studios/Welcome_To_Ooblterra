@@ -45,6 +45,9 @@
         <PathMap>$([System.IO.Path]::GetFullPath('$(MSBuildThisFileDirectory)'))=./</PathMap>
     </PropertyGroup>
 
+    <!-- Import user-local properties (e.g. R2ModmanPath). This file should not be committed to source control. -->
+    <Import Project="$(MSBuildProjectFullPath).user" Condition="Exists('$(MSBuildProjectFullPath).user')" />
+
     <ItemGroup>
         <!-- Tool required for allowing access to private members in the lethal company dll -->
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all"/>
@@ -96,6 +99,11 @@
     <!-- After build, copy assembly to Unity project for testing if running as submodule of Unity project -->
     <Target Condition="Exists('$(UnityPluginsDirectory)')" Name="CopyToUnity" DependsOnTargets="NetcodePatch" AfterTargets="PostBuildEvent">
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(UnityPluginsDirectory)Welcome_To_Ooblterra"/>
+    </Target>
+
+    <!-- After build, copy assembly to r2modman profile path if R2ModmanPath is set in .csproj.user -->
+    <Target Condition="'$(R2ModmanPath)' != ''" Name="CopyToR2Modman" DependsOnTargets="NetcodePatch" AfterTargets="CopyToUnity">
+        <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(R2ModmanPath)"/>
     </Target>
 
 </Project>
