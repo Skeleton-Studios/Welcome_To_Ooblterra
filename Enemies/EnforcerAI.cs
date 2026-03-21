@@ -313,7 +313,6 @@ namespace Welcome_To_Ooblterra.Enemies
         private static int EnforcerID;
         private List<GameObject> EnforcerHidePoints = new();
         private bool ReachedNextPoint = false;
-        private bool EnforcerActiveCamoState = false;
         private GameObject NextHidePoint;
         private PlayerControllerB PotentialTarget;
         private bool IsBeingSeenByPotentialTarget;
@@ -356,6 +355,8 @@ namespace Welcome_To_Ooblterra.Enemies
         public override void Update() {
             base.Update();
             MoveTimerValue(ref AttackCooldownSeconds);
+            UpdateActiveCamo();
+
             if (IsBeingSeenByPotentialTarget) {
                 PlayerStareAtTimer += Time.deltaTime;
             } else { 
@@ -377,33 +378,37 @@ namespace Welcome_To_Ooblterra.Enemies
             } else {
                 EnforcerSeesPlayer = false;
             }
-
         }
 
-        float timeElapsed = 0f;
-        float LerpPos = 0f;
+        private float activeCamoTarget = 0f;
+        private float activeCamoCurrent = 0f;
+
         public void SetActiveCamoState(bool SetCamoOn) {
-            if(EnforcerActiveCamoState == SetCamoOn) {
+            activeCamoTarget = SetCamoOn ? 0f : 1f;
+            ScanNode.enabled = !SetCamoOn;
+        }
+
+        private void UpdateActiveCamo()
+        {
+            if(activeCamoCurrent == activeCamoTarget) {
                 return;
             }
-            timeElapsed = 0f;
-            LerpPos = 0f;
-            EnforcerActiveCamoState = SetCamoOn; 
-            if (EnforcerActiveCamoState) { 
-                ScanNode.enabled = false;
-                StartCoroutine(StartActiveCamo());
-            } else {
-                ScanNode.enabled = true;
-                StartCoroutine(StopActiveCamo());
+
+            activeCamoCurrent = Mathf.MoveTowards(activeCamoCurrent, activeCamoTarget, Time.deltaTime / ActiveCamoLerpTime);
+            Log.Debug($"Active Camo at {activeCamoCurrent * 100}%...");
+            foreach (Material NextMat in EnforcerMatList)
+            {
+                NextMat.SetFloat("_TextureLerp", activeCamoCurrent);
             }
         }
 
-        public void PopulateHidePoints() { 
-            if(FindObjectsOfType<EnforcerHidePoint>().Length <= 0){
+        public void PopulateHidePoints() {
+            var hidePoints = FindObjectsOfType<EnforcerHidePoint>();
+            if (hidePoints.Length <= 0){
                 EnforcerHidePoints = new(GameObject.FindGameObjectsWithTag("AINode"));
                 return;
             }
-            foreach (EnforcerHidePoint Hidepoints in FindObjectsOfType<EnforcerHidePoint>()) {
+            foreach (EnforcerHidePoint Hidepoints in hidePoints) {
                 EnforcerHidePoints.Add(Hidepoints.gameObject);
             }
 
@@ -414,30 +419,6 @@ namespace Welcome_To_Ooblterra.Enemies
                 Log.Info($"Hide Point count: {EnforcerHidePoints.Count}");
             }
             NextHidePoint = EnforcerHidePoints[enemyRandom.Next(0, EnforcerHidePoints.Count)];
-        } 
-        IEnumerator StartActiveCamo() {
-            while ((timeElapsed / ActiveCamoLerpTime) < 1) { 
-                timeElapsed += Time.deltaTime;
-                LerpPos = Mathf.Lerp(1, 0, timeElapsed / ActiveCamoLerpTime);
-                Log.Debug($"Active Camo at {(1 - LerpPos) * 100}%...");
-                foreach (Material NextMat in EnforcerMatList) {
-                    NextMat.SetFloat("_TextureLerp", LerpPos); 
-                }
-            }
-            EnforcerActiveCamoState = true; 
-            yield return null;
-        }
-        IEnumerator StopActiveCamo() {
-            while ((timeElapsed / ActiveCamoLerpTime) < 1) {
-                timeElapsed += Time.deltaTime;
-                LerpPos = Mathf.Lerp(0, 1, timeElapsed / ActiveCamoLerpTime);
-                Log.Debug($"Active Camo at {(1 - LerpPos) * 100}%...");
-                foreach (Material NextMat in EnforcerMatList) {
-                    NextMat.SetFloat("_TextureLerp", LerpPos);
-                }
-            }
-            EnforcerActiveCamoState = false;
-            yield return null;
         }
 
         private bool CheckPlayerLOSForEnforcer(PlayerControllerB player, int range = 45, float width = 60) {
