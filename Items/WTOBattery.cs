@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using Unity.Netcode;
+using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Items
@@ -41,6 +42,25 @@ namespace Welcome_To_Ooblterra.Items
                 */
             }
             SetScrapValue(scrapValue); 
+        }
+
+        public override void OnPlaceObject()
+        {
+            base.OnPlaceObject();
+
+            if(transform.parent == null || !transform.parent.TryGetComponent(out NetworkObject possibleRecepticleTransform)) {
+                return;
+            }
+
+            if(possibleRecepticleTransform.name.StartsWith("BatteryRecepticleTransform"))
+            {
+                // To avoid the rotation changing due to dropped item logic in base LC, we set the
+                // parentObject here to be the recepticle.
+                // This will get cleared by the base LC code when the Battery is picked up.
+                Log.Info("Battery placed in recepticle, setting parent object to recepticle transform.");
+                parentObject = possibleRecepticleTransform.transform;
+                PlayDropSFX();
+            }
         }
     }
 }

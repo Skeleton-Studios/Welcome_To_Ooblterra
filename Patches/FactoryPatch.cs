@@ -98,6 +98,7 @@ namespace Welcome_To_Ooblterra.Patches
         
 
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(BehaviorPath + "ChargedBattery.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(BehaviorPath + "BatteryRecepticleTransform.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "SpikeTrap.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "BabyLurkerEgg.prefab"));

@@ -13,7 +13,6 @@ namespace Welcome_To_Ooblterra.Things
     public class BatteryRecepticle : NetworkBehaviour {
 
         [InspectorName("Defaults")]
-        public NetworkObject parentTo;
         public NetworkObject BatteryNetObj;
         public InteractTrigger triggerScript;
         public Transform BatteryTransform;
@@ -33,6 +32,12 @@ namespace Welcome_To_Ooblterra.Things
         public Light CenterLight;
         private ScrapShelf scrapShelf;
         public GameObject BatteryPrefab;
+
+        // LethalCompany needs an object to parent parent the battery to when it's inserted by the player, 
+        // and this object needs a NetworkObject.
+        // We can't use the root of this machine for this, as we want to parent and match the parent rotation.
+        public GameObject BatteryRecepticleTransformPrefab;
+        private NetworkObject SpawnedBatteryRecepticleTransform;
 
         public Material FrontConsoleMaterial;
         public Material SideConsoleMaterial;
@@ -58,7 +63,11 @@ namespace Welcome_To_Ooblterra.Things
                 NextLight.SetColorRelative(this.transform.position);
             }
             Doorways = FindObjectsByType<WideDoorway>(FindObjectsSortMode.None);
+
+            SpawnBatteryRecepticleTransform();
         }
+
+
         private void Update() {
             if (GameNetworkManager.Instance == null || GameNetworkManager.Instance.localPlayerController == null) {
                 return;
@@ -84,6 +93,15 @@ namespace Welcome_To_Ooblterra.Things
                 triggerScript.interactable = false;
                 triggerScript.disabledHoverTip = "[Requires Battery]";
             }
+        }
+
+        private void SpawnBatteryRecepticleTransform() {
+            if (!IsServer) {
+                return;
+            }
+            GameObject BatteryRecepticleTransform = Instantiate(BatteryRecepticleTransformPrefab, BatteryTransform.position, BatteryTransform.rotation, transform);
+            SpawnedBatteryRecepticleTransform = BatteryRecepticleTransform.GetComponent<NetworkObject>();
+            SpawnedBatteryRecepticleTransform.Spawn(destroyWithScene: true);
         }
 
         private void SpawnBatteryAtFurthestPoint() {
@@ -117,41 +135,36 @@ namespace Welcome_To_Ooblterra.Things
                 return;
             }
             Log.Info("Placing battery in recepticle");
-            Vector3 vector = BatteryTransform.position;
-            if (parentTo != null) {
-                vector = parentTo.transform.InverseTransformPoint(vector);
-            }
             InsertedBattery = (WTOBattery)playerWhoTriggered.currentlyHeldObjectServer;
         
             RecepticleHasBattery = true;
-            playerWhoTriggered.DiscardHeldObject(placeObject: true, parentTo, vector);
-            InsertedBattery.transform.rotation = Quaternion.identity;
-            InsertedBattery.transform.Rotate(305, 45, 0, relativeTo:Space.Self);
-            //WTOBase.LogToConsole($"BatteryTransform rotation: {BatteryTransform.rotation}; Battery rotation: {InsertedBattery.transform.rotation}");
-            InsertBatteryServerRpc(InsertedBattery.gameObject.GetComponent<NetworkObject>());
+            playerWhoTriggered.DiscardHeldObject(placeObject: true, SpawnedBatteryRecepticleTransform);
+
+            InsertBatteryServerRpc(InsertedBattery.GetComponent<NetworkObject>());
         
             if (InsertedBattery.HasCharge) {
                 TurnOnPowerServerRpc();
             }
         }
+
         [ServerRpc(RequireOwnership = false)]
         public void InsertBatteryServerRpc(NetworkObjectReference grabbableObjectNetObject) {
             InsertBatteryClientRpc(grabbableObjectNetObject);
         }
+
         [ClientRpc]
         public void InsertBatteryClientRpc(NetworkObjectReference grabbableObjectNetObject) {
             InsertBattery(grabbableObjectNetObject);
         }
+
         public void InsertBattery(NetworkObjectReference grabbableObjectNetObject) {
             if (grabbableObjectNetObject.TryGet(out BatteryNetObj)) {
-                BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>().EnablePhysics(enable: false);
+                GrabbableObject batteryGrabbable = BatteryNetObj.gameObject.GetComponentInChildren<GrabbableObject>();
+                batteryGrabbable.EnablePhysics(enable: false);
                 InsertedBattery = BatteryNetObj.GetComponentInChildren<WTOBattery>();
             } else {
                 Log.Error("BATTERY COULD NOT BE CONVERTED.");
             }
-            //WTOBase.LogToConsole($"Attempting to rotate battery... {BatteryNetObj.GetComponentInChildren<GrabbableObject>()}");
-            BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.rotation = Quaternion.identity;
-            BatteryNetObj.GetComponentInChildren<GrabbableObject>().transform.Rotate(305, 45, 0, relativeTo: Space.Self);
             RecepticleHasBattery = true;
             if (InsertedBattery.HasCharge) {
                 InsertedBattery.grabbable = false;
