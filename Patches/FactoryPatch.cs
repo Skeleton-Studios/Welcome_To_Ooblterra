@@ -14,6 +14,7 @@ namespace Welcome_To_Ooblterra.Patches
         private const string BehaviorPath = "CustomDungeon/Behaviors/";
         private const string SecurityPath = "CustomDungeon/Security/";
         private const string DoorPath = "CustomDungeon/Doors/";
+        private const string EmptyPrefabsPath = "CustomDungeon/Rooms/EMPTY.PREFABS/";
         public static List<SpawnableMapObject> SecurityList = new();
         public static ExtendedDungeonFlow OoblDungeonFlow;
 
@@ -102,6 +103,16 @@ namespace Welcome_To_Ooblterra.Patches
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "SpikeTrap.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "BabyLurkerEgg.prefab"));
+
+            // Without adding these as network objects and registering them here, this causes an exception in the LC code:
+            // [Info   : Unity Log] Exception! Unable to sync spawned objects on host; System.NullReferenceException: Object reference not set to an instance of an object
+            // at (wrapper dynamic-method) RoundManager.DMD<RoundManager::SpawnSyncedProps>(RoundManager)
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "EntranceTeleportA.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "EntranceTeleportB.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "Landmine.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "SpikeRoofTrapHazard.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "Turret.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "VentEntrance.prefab"));
         
         }
     }

@@ -117,15 +117,68 @@ namespace Welcome_To_Ooblterra.Patches
         }
         [HarmonyPatch(typeof(RoundManager), "SpawnRandomOutsideEnemy")]
         [HarmonyPrefix]
-        private static void SetOutsideEnemiesWTO(RoundManager __instance) {
-            string PlanetName = __instance.currentLevel.PlanetName;
-            if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
-                if (MoonsToOutsideSpawnLists.TryGetValue(PlanetName, out List<SpawnableEnemyWithRarity> OutsideEnemyList)) {
-                    __instance.currentLevel.OutsideEnemies = OutsideEnemyList;
+        private static void SetOutsideEnemiesWTO(RoundManager __instance, GameObject[] spawnPoints, float timeUpToCurrentHour) {
+            Log.Info("Called SetOutsideEnemiesWTO");
+            /*
+            var methods = Harmony.GetAllPatchedMethods();
+            foreach(var method in methods) {
+                Log.Info("Patched Method: " + method.Name);
+                try
+                {
+                    var patches = Harmony.GetPatchInfo(method);
+                    if (patches != null)
+                    {
+                        static void PrintPatch(string type, Patch patch)
+                        {
+                            Log.Info($"{type} from {patch.owner}: {patch.PatchMethod.Name}");
+                        }
+
+                        foreach (var patch in patches.Prefixes)
+                        {
+                            PrintPatch("Prefix", patch);
+                        }
+                        foreach (var patch in patches.Postfixes)
+                        {
+                            PrintPatch("Postfix", patch);
+                        }
+                        foreach (var patch in patches.Transpilers)
+                        {
+                            PrintPatch("Transpiler", patch);
+                        }
+                        foreach (var patch in patches.Finalizers)
+                        {
+                            PrintPatch("Finalizer", patch);
+                        }
+                        foreach (var patch in patches.ILManipulators)
+                        {
+                            PrintPatch("ILManipulator", patch);
+                        }
+                    }
                 }
-                return;
+                catch (System.Exception e)
+                {
+                    Log.Error("Error while logging patches: " + e);
+                }
+            }*/
+            try
+            {
+                string PlanetName = __instance.currentLevel.PlanetName;
+                if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow)
+                {
+                    if (MoonsToOutsideSpawnLists.TryGetValue(PlanetName, out List<SpawnableEnemyWithRarity> OutsideEnemyList))
+                    {
+                        __instance.currentLevel.OutsideEnemies = OutsideEnemyList;
+                    }
+                    Log.Info("Called SetOutsideEnemiesWTO success");
+                    return;
+                }
+                SetMonsterStuff(WTOBase.WTOForceOutsideMonsters.Value, ref __instance.currentLevel.OutsideEnemies, MoonsToOutsideSpawnLists[MoonPatch.MoonFriendlyName]);
+                Log.Info("Called SetOutsideEnemiesWTO success");
             }
-            SetMonsterStuff(WTOBase.WTOForceOutsideMonsters.Value, ref __instance.currentLevel.OutsideEnemies, MoonsToOutsideSpawnLists[MoonPatch.MoonFriendlyName]);
+            catch(System.Exception e)
+            {
+                Log.Error("Error in SetOutsideEnemiesWTO: " + e);
+            } 
         }
         [HarmonyPatch(typeof(RoundManager), "SpawnRandomDaytimeEnemy")]
         [HarmonyPrefix]
