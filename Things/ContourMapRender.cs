@@ -1,61 +1,29 @@
 ﻿using System.IO;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
-using UnityEngine.Rendering;
 using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things
 {
     public class ContourMapRender : MonoBehaviour
     {
-        private const int TextureSize = 2048;
-        private const float OrthographicSize = 120f;
-        private const float NearClip = 0.3f;
-        private const float FarClip = 1000f;
+        [SerializeField]
+        private Vector3 contourMin = new(-200, 150, -150);
 
-        private Camera mapCamera;
-        private RenderTexture renderTexture;
-        private RenderTexture depthColourRT;
-        private CommandBuffer depthCopyCmd;
+        [SerializeField]
+        private Vector3 contourMax = new(100, 150, 180);
+
+        private const float MapPixelSize = 0.7f; // each map pixel represents this many world units
+
+        [SerializeField]
+        private LayerMask raycastMask = Physics.AllLayers;
+
+        [SerializeField]
+        private MeshCollider[] enableColliders = [];
+
+        [SerializeField]
+        private Collider[] disableColliders = [];
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(ContourMapRender), LogSourceType.Thing);
-
-        private void Awake()
-        {
-            mapCamera = GetComponent<Camera>();
-            if (mapCamera == null)
-            {
-                Log.Error("ContourMapRender requires a Camera component on the same GameObject.");
-                return;
-            }
-
-            renderTexture = new RenderTexture(TextureSize, TextureSize, 32, RenderTextureFormat.Depth)
-            {
-                name = "WTOMapRenderTexture",
-                depthStencilFormat = GraphicsFormat.D32_SFloat
-            };
-            renderTexture.Create();
-
-            depthColourRT = new RenderTexture(TextureSize, TextureSize, 0, RenderTextureFormat.RFloat)
-            {
-                name = "WTODepthColourRT"
-            };
-            depthColourRT.Create();
-
-            mapCamera.orthographic = true;
-            mapCamera.orthographicSize = OrthographicSize;
-            mapCamera.nearClipPlane = NearClip;
-            mapCamera.farClipPlane = FarClip;
-            mapCamera.targetTexture = renderTexture;
-            mapCamera.depthTextureMode = DepthTextureMode.Depth;
-            mapCamera.enabled = false;
-
-            // Attach a command buffer to the map camera that copies its own depth
-            // buffer into the readable colour RT after rendering completes.
-            depthCopyCmd = new CommandBuffer { name = "WTO Depth Copy" };
-            depthCopyCmd.Blit(BuiltinRenderTextureType.Depth, depthColourRT);
-            mapCamera.AddCommandBuffer(CameraEvent.AfterEverything, depthCopyCmd);
-        }
 
         private void Start()
         {
@@ -63,62 +31,88 @@ namespace Welcome_To_Ooblterra.Things
         }
 
         /// <summary>
-        /// Call this to capture the depth map and write it to disk.
+        /// Captures depth by raycasting once per output pixel and writes an EXR map to disk.
         /// </summary>
         public void CaptureDepthMap()
         {
-            if (mapCamera == null || renderTexture == null || depthColourRT == null)
+            PrepareCollidersForRaycast();
+
+            try
             {
-                Log.Error("Cannot capture depth map: camera or render textures are not initialised.");
-                return;
+                int textureWidth = Mathf.CeilToInt((contourMax.x - contourMin.x) / MapPixelSize);
+                int textureHeight = Mathf.CeilToInt((contourMax.z - contourMin.z) / MapPixelSize);
+                Texture2D depthTexture = new Texture2D(textureWidth, textureHeight, TextureFormat.RFloat, false);
+                Color[] pixels = new Color[textureWidth * textureHeight];
+
+                for (int y = 0; y < textureHeight; y++)
+                {
+                    float v = 1f - ((float)y / (textureHeight - 1));
+
+                    for (int x = 0; x < textureWidth; x++)
+                    {
+                        float u = (float)x / (textureWidth - 1);
+
+                        Ray ray = new(new Vector3(x * MapPixelSize + contourMin.x, contourMin.y, v * (contourMax.z - contourMin.z) + contourMin.z), Vector3.down);
+
+                        float depthValue = 1000f;
+                        if (Physics.Raycast(ray, out RaycastHit hit, 1000f, raycastMask, QueryTriggerInteraction.Ignore))
+                        {
+                            depthValue = Vector3.Dot(hit.point - ray.origin, Vector3.down);
+                        }
+
+                        int pixelIndex = ((textureHeight - 1 - y) * textureWidth) + x;
+                        pixels[pixelIndex] = new Color(depthValue, 0f, 0f, 1f);
+                    }
+
+                    if ((y & 127) == 0)
+                    {
+                        Log.Info($"Contour depth capture progress: {y}/{textureHeight} rows");
+                    }
+                }
+
+                depthTexture.SetPixels(pixels);
+                depthTexture.Apply(false, false);
+
+                byte[] exrData = depthTexture.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat);
+                UnityEngine.Object.Destroy(depthTexture);
+
+                string outputDir = Path.Combine(Application.persistentDataPath, "WTO");
+                Directory.CreateDirectory(outputDir);
+                string outputPath = Path.Combine(outputDir, "ContourDepthMap.exr");
+
+                File.WriteAllBytes(outputPath, exrData);
+                Log.Info($"Depth map saved to {outputPath}");
             }
-
-            // Render the scene. The attached CommandBuffer will automatically copy
-            // this camera's depth buffer into depthColourRT after rendering.
-            mapCamera.Render();
-
-            // Read back the depth data into a Texture2D.
-            RenderTexture previousActive = RenderTexture.active;
-            RenderTexture.active = depthColourRT;
-
-            Texture2D depthReadback = new Texture2D(TextureSize, TextureSize, TextureFormat.RFloat, false);
-            depthReadback.ReadPixels(new Rect(0, 0, TextureSize, TextureSize), 0, 0);
-            depthReadback.Apply();
-
-            RenderTexture.active = previousActive;
-
-            // Encode as EXR (32-bit float) to preserve full depth precision.
-            byte[] exrData = depthReadback.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat);
-            UnityEngine.Object.Destroy(depthReadback);
-
-            string outputDir = Path.Combine(Application.persistentDataPath, "WTO");
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, "ContourDepthMap.exr");
-
-            File.WriteAllBytes(outputPath, exrData);
-            Log.Info($"Depth map saved to {outputPath}");
+            finally
+            {
+                RestoreColliders();
+            }
         }
 
-        private void OnDestroy()
+        private void PrepareCollidersForRaycast()
         {
-            if (depthCopyCmd != null)
+            foreach(var col in enableColliders)
             {
-                if (mapCamera != null)
-                {
-                    mapCamera.RemoveCommandBuffer(CameraEvent.AfterEverything, depthCopyCmd);
-                }
-                depthCopyCmd.Release();
+                col.enabled = true;
             }
-            if (depthColourRT != null)
+            foreach(var col in disableColliders)
             {
-                depthColourRT.Release();
-                UnityEngine.Object.Destroy(depthColourRT);
+                col.enabled = false;
             }
-            if (renderTexture != null)
+            Physics.SyncTransforms();
+        }
+
+        private void RestoreColliders()
+        {
+            foreach(var col in enableColliders)
             {
-                renderTexture.Release();
-                UnityEngine.Object.Destroy(renderTexture);
+                col.enabled = false;
             }
+            foreach(var col in disableColliders)
+            {
+                col.enabled = true;
+            }
+            Physics.SyncTransforms();
         }
     }
 }
