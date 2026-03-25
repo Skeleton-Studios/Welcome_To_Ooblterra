@@ -1,10 +1,14 @@
-﻿using HarmonyLib;
-using UnityEngine;
-using System.Linq;
-using System.Collections.Generic;
-using Welcome_To_Ooblterra.Properties;
+﻿using GameNetcodeStuff;
+using HarmonyLib;
 using LethalLevelLoader;
-using GameNetcodeStuff;
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using Unity.Netcode;
+using UnityEngine;
+using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Patches
 {
@@ -33,7 +37,7 @@ namespace Welcome_To_Ooblterra.Patches
         private static readonly WTOBase.WTOLogger Log = new(typeof(MoonPatch), LogSourceType.Generic);
 
         //PATCHES
-        [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.SceneManager_OnLoadComplete1))]
         [HarmonyPostfix] 
         private static void ManageNav(StartOfRound __instance) {
             //FOOTSTEP CACHING AND ARRAY CREATION
@@ -80,7 +84,7 @@ namespace Welcome_To_Ooblterra.Patches
             ReplaceStoryLogIDs();       
         }
 
-        [HarmonyPatch(typeof(StartOfRound), "OnShipLandedMiscEvents")]
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.OnShipLandedMiscEvents))]
         [HarmonyPostfix]
         private static void SetFogTies(StartOfRound __instance) { 
             if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
@@ -97,7 +101,7 @@ namespace Welcome_To_Ooblterra.Patches
             TimeOfDay.Instance.playDelayedMusicCoroutine = null;
         }
 
-        [HarmonyPatch(typeof(TimeOfDay), "SetInsideLightingDimness")]
+        [HarmonyPatch(typeof(TimeOfDay), nameof(TimeOfDay.SetInsideLightingDimness))]
         [HarmonyPrefix]
         private static void SpoofLightValues(TimeOfDay __instance) {
             if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
@@ -110,7 +114,7 @@ namespace Welcome_To_Ooblterra.Patches
             timeOfDay.sunDirect = Direct;
         }
 
-        [HarmonyPatch(typeof(PlayerControllerB), "PlayFootstepSound")]
+        [HarmonyPatch(typeof(PlayerControllerB), nameof(PlayerControllerB.PlayFootstepSound))]
         [HarmonyPrefix]
         private static void PatchFootstepSound(PlayerControllerB __instance) {
             if(StartOfRound.Instance.currentLevel.PlanetName != MoonFriendlyName || __instance.currentFootstepSurfaceIndex != 4) {
@@ -121,7 +125,7 @@ namespace Welcome_To_Ooblterra.Patches
             __instance.movementAudio.volume = ((BoundFootstepSound / 100f) * 0.447f);
         }
 
-        [HarmonyPatch(typeof(RoundManager), "SpawnOutsideHazards")]
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnOutsideHazards))]
         [HarmonyPrefix]
         private static bool WTOSpawnOutsideObjects(RoundManager __instance) {
             if (__instance.currentLevel.PlanetName != MoonFriendlyName) {
@@ -135,7 +139,7 @@ namespace Welcome_To_Ooblterra.Patches
             return true;
         }
 
-        [HarmonyPatch(typeof(TimeOfDay), "Start")]
+        [HarmonyPatch(typeof(TimeOfDay), nameof(TimeOfDay.Start))]
         [HarmonyPrefix]
         private static bool AdjustTODMusic(TimeOfDay __instance) {
             if (RoundManager.Instance.currentLevel.PlanetName != MoonFriendlyName) {
@@ -162,6 +166,78 @@ namespace Welcome_To_Ooblterra.Patches
             __instance.SetScrapValue(FinalScrapValue);
         }*/
 
+        [HarmonyPatch(typeof(StartMatchLever), nameof(StartMatchLever.Start))]
+        [HarmonyPrefix]
+        private static void AutoRouteToOoblterra(StartMatchLever __instance) {
+            // applied to StartMatchLevel since this will appear when the ship loads in.
+            // if we are set to autoroute, change the level to ooblterra.
+            if (WTOBase.WTOAutoRoute.Value && StartOfRound.Instance.IsServer)
+            {
+                StartOfRound.Instance.StartCoroutine(RouteToOoblterraOnceLLLIsLoaded(__instance));
+            }
+        }
+
+        private static Func<bool> GetIsLLLReadyFunc()
+        {
+            Assembly assembly = Assembly.GetAssembly(typeof(LethalLevelLoader.AssetBundleLoader));
+
+            System.Type NetworkBundleManagerType = assembly.GetType("LethalLevelLoader.NetworkBundleManager");
+
+            if (NetworkBundleManagerType == null)
+            {
+                Log.Warning("Could not find LethalLevelLoader.NetworkBundleManager type");
+                return () => true;
+            }
+
+            PropertyInfo InstanceProperty = NetworkBundleManagerType.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public);
+            if (InstanceProperty == null)
+            {
+                Log.Warning("Could not find Instance field in NetworkBundleManager");
+                return () => true;
+            }
+
+            object NetworkBundleManagerInstance = InstanceProperty.GetValue(null);
+
+            FieldInfo AllowedToLoadLevelField = NetworkBundleManagerType.GetField("allowedToLoadLevel", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (AllowedToLoadLevelField == null)
+            {
+                Log.Warning("Could not find allowedToLoadLevel field in NetworkBundleManager");
+                return () => true;
+            }
+
+            NetworkVariable<bool> allowedToLoadLevel = AllowedToLoadLevelField.GetValue(NetworkBundleManagerInstance) as NetworkVariable<bool>;
+
+            return () =>
+            {
+                try
+                {
+                    return allowedToLoadLevel.Value;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"Exception while trying to get allowedToLoadLevel value: {ex}");
+                    return true;
+                }
+            };
+        }
+
+        private static IEnumerator RouteToOoblterraOnceLLLIsLoaded(StartMatchLever startMatchLever)
+        {
+            Log.Info("Waiting for LLL to finish loading before routing to Ooblterra...");
+            yield return new WaitUntil(GetIsLLLReadyFunc());
+
+            Log.Info("LLL finished loading, routing to Ooblterra...");
+            StartOfRound.Instance.ChangeLevel(OoblterraExtendedLevel.SelectableLevel.levelID);
+            StartOfRound.Instance.ArriveAtLevel();
+
+            Log.Info("Pulling lever to start match...");
+            startMatchLever.leverHasBeenPulled = true;
+            startMatchLever.leverAnimatorObject.SetBool("pullLever", true);
+            startMatchLever.triggerScript.interactable = false;
+            startMatchLever.PullLever();
+        }
+
         //METHODS
         public static void Start() {
             OoblterraExtendedLevel = WTOBase.ContextualLoadAsset<ExtendedLevel>(MoonPath + "OoblterraExtendedLevel.asset");
@@ -173,6 +249,7 @@ namespace Welcome_To_Ooblterra.Patches
                 Log.Info($"{Hazard.spawnableItem.name}"); 
             }
         }
+
         private static void MoveNavNodesToNewPositions() {
             //Get a list of all outside navigation nodes
             GameObject[] NavNodes = GameObject.FindGameObjectsWithTag("OutsideAINode");

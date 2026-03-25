@@ -7,6 +7,11 @@ using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things
 {
+    /// <summary>
+    /// Responsible for managing the teleport that allows players to enter the test room.
+    /// The teleporter is managed by the WTOTestRoom config option. If true, a prot statue exists
+    /// near the ship that the player can jump on to teleport to the test room.
+    /// </summary>
     public class TestRoomTeleport : MonoBehaviour
     {
         // Set to True for the teleporter that's in the actual level.

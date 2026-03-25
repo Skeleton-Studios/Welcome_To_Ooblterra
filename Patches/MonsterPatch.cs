@@ -23,58 +23,7 @@ namespace Welcome_To_Ooblterra.Patches
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(MonsterPatch), LogSourceType.Generic);
 
-        /*
-        [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
-        [HarmonyPrefix]
-        private static void AddMonstersToDebug(QuickMenuManager __instance) {
-            if (EnemiesInList) {
-                return;
-            }
-            var testLevel = __instance.testAllEnemiesLevel;
-            var firstEnemy = testLevel.Enemies.FirstOrDefault(); //Grab all of the test enemies 
-            if (firstEnemy == null) { //check to see if the list of enemies actually exists
-                WTOBase.LogToConsole("Failed to get first enemy for debug list!");
-                return;
-            }
-            
-            var enemies = testLevel.Enemies;
-            var outsideEnemies = testLevel.OutsideEnemies;
-            var daytimeEnemies = testLevel.DaytimeEnemies;
-
-            enemies.Clear();
-            foreach(SpawnableEnemyWithRarity InsideEnemy in InsideEnemies) { 
-                if (!enemies.Contains(InsideEnemy)){
-                    enemies.Add(new SpawnableEnemyWithRarity {
-                        enemyType = InsideEnemy.enemyType,
-                        rarity = InsideEnemy.rarity
-                    });
-                    WTOBase.LogToConsole("Added " + InsideEnemy.enemyType.name + "To debug list");
-                }
-            } 
-         
-            daytimeEnemies.Clear(); 
-            foreach (SpawnableEnemyWithRarity DaytimeEnemy in DaytimeEnemies) {
-                if (!daytimeEnemies.Contains(DaytimeEnemy)){
-                    daytimeEnemies.Add(new SpawnableEnemyWithRarity {
-                        enemyType = DaytimeEnemy.enemyType,
-                        rarity = DaytimeEnemy.rarity
-                    });
-                    WTOBase.LogToConsole("Added " + DaytimeEnemy.enemyType.name + "To debug list");
-                }
-            }
-
-            outsideEnemies.Clear();
-            outsideEnemies.Add(new SpawnableEnemyWithRarity {
-                enemyType = AdultWandererContainer[0].enemyType,
-                rarity = AdultWandererContainer[0].rarity
-            });
-            WTOBase.LogToConsole("Added " + AdultWandererContainer[0].enemyType.name + "To debug list");
-
-            EnemiesInList = true;
-        }
-        */
-
-        [HarmonyPatch(typeof(EnemyAI), "SetEnemyStunned")]
+        [HarmonyPatch(typeof(EnemyAI), nameof(EnemyAI.SetEnemyStunned))]
         [HarmonyPostfix]
         private static void SetOwnershipToStunningPlayer(EnemyAI __instance) { 
             if(__instance is not WTOEnemy || __instance.stunnedByPlayer == null){
@@ -87,6 +36,12 @@ namespace Welcome_To_Ooblterra.Patches
         [HarmonyPatch(typeof(EnemyAI), nameof(EnemyAI.SetClientCalculatingAI))]
         [HarmonyPrefix]
         private static bool PreventGhostAgentEnable(EnemyAI __instance, bool enable) {
+            // Fix for OoblGhostAI re-enabling the nav agent each frame.
+            // This would cause a huge number of errors to be printed in the console.
+            // The ghost does not even use the nav agent anyway
+            // The base code for this simply calls
+            // isClientCalculatingAI = enable
+            // navAgent.enabled = enable.
             if (__instance is OoblGhostAI) {
                 __instance.isClientCalculatingAI = enable;
                 return false;
@@ -94,7 +49,7 @@ namespace Welcome_To_Ooblterra.Patches
             return true;
         }
 
-        [HarmonyPatch(typeof(HUDManager), "UseSignalTranslatorClientRpc")]
+        [HarmonyPatch(typeof(HUDManager), nameof(HUDManager.UseSignalTranslatorClientRpc))]
         [HarmonyPostfix]
         private static void TellAllGhostsOfSignalTransmission() {
             OoblGhostAI[] Ghosts = GameObject.FindObjectsOfType<OoblGhostAI>();
@@ -103,7 +58,7 @@ namespace Welcome_To_Ooblterra.Patches
             }
         }
 
-        [HarmonyPatch(typeof(RoundManager), "AssignRandomEnemyToVent")]
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.AssignRandomEnemyToVent))]
         [HarmonyPrefix]
         private static void SetInsideEnemiesWTO(RoundManager __instance) {
             string PlanetName = __instance.currentLevel.PlanetName;
@@ -115,53 +70,10 @@ namespace Welcome_To_Ooblterra.Patches
             }
             SetMonsterStuff(WTOBase.WTOForceInsideMonsters.Value, ref __instance.currentLevel.Enemies, MoonsToInsideSpawnLists[MoonPatch.MoonFriendlyName]);
         }
-        [HarmonyPatch(typeof(RoundManager), "SpawnRandomOutsideEnemy")]
+
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnRandomOutsideEnemy))]
         [HarmonyPrefix]
         private static void SetOutsideEnemiesWTO(RoundManager __instance, GameObject[] spawnPoints, float timeUpToCurrentHour) {
-            Log.Info("Called SetOutsideEnemiesWTO");
-            /*
-            var methods = Harmony.GetAllPatchedMethods();
-            foreach(var method in methods) {
-                Log.Info("Patched Method: " + method.Name);
-                try
-                {
-                    var patches = Harmony.GetPatchInfo(method);
-                    if (patches != null)
-                    {
-                        static void PrintPatch(string type, Patch patch)
-                        {
-                            Log.Info($"{type} from {patch.owner}: {patch.PatchMethod.Name}");
-                        }
-
-                        foreach (var patch in patches.Prefixes)
-                        {
-                            PrintPatch("Prefix", patch);
-                        }
-                        foreach (var patch in patches.Postfixes)
-                        {
-                            PrintPatch("Postfix", patch);
-                        }
-                        foreach (var patch in patches.Transpilers)
-                        {
-                            PrintPatch("Transpiler", patch);
-                        }
-                        foreach (var patch in patches.Finalizers)
-                        {
-                            PrintPatch("Finalizer", patch);
-                        }
-                        foreach (var patch in patches.ILManipulators)
-                        {
-                            PrintPatch("ILManipulator", patch);
-                        }
-                    }
-                }
-                catch (System.Exception e)
-                {
-                    Log.Error("Error while logging patches: " + e);
-                }
-            }*/
-            try
-            {
                 string PlanetName = __instance.currentLevel.PlanetName;
                 if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow)
                 {
@@ -169,18 +81,12 @@ namespace Welcome_To_Ooblterra.Patches
                     {
                         __instance.currentLevel.OutsideEnemies = OutsideEnemyList;
                     }
-                    Log.Info("Called SetOutsideEnemiesWTO success");
                     return;
                 }
                 SetMonsterStuff(WTOBase.WTOForceOutsideMonsters.Value, ref __instance.currentLevel.OutsideEnemies, MoonsToOutsideSpawnLists[MoonPatch.MoonFriendlyName]);
-                Log.Info("Called SetOutsideEnemiesWTO success");
-            }
-            catch(System.Exception e)
-            {
-                Log.Error("Error in SetOutsideEnemiesWTO: " + e);
-            } 
         }
-        [HarmonyPatch(typeof(RoundManager), "SpawnRandomDaytimeEnemy")]
+
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnRandomDaytimeEnemy))]
         [HarmonyPrefix]
         private static void SetDaytimeEnemiesWTO(RoundManager __instance) {
             string PlanetName = __instance.currentLevel.PlanetName;
