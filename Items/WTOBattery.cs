@@ -49,6 +49,7 @@ namespace Welcome_To_Ooblterra.Items
             base.OnPlaceObject();
 
             if(transform.parent == null || !transform.parent.TryGetComponent(out NetworkObject possibleRecepticleTransform)) {
+                Log.Info("Battery placed, but not in a recepticle transform. Ignoring.");
                 return;
             }
 

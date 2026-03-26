@@ -1,6 +1,7 @@
 ﻿using GameNetcodeStuff;
 using HarmonyLib;
 using LethalLevelLoader;
+using LethalLib.Modules;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -9,6 +10,7 @@ using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
+using LethalLib.Modules;
 
 namespace Welcome_To_Ooblterra.Patches
 {

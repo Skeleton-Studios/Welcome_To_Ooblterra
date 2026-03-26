@@ -22,7 +22,7 @@ namespace Welcome_To_Ooblterra.Things
         private static int LightOnChance = -1;
 
         private void Start() {
-            LightRandom ??= new System.Random(StartOfRound.Instance.randomMapSeed);
+            LightRandom ??= new System.Random(StartOfRound.Instance?.randomMapSeed ?? 0);
             if(LightOnChance == -1) {
                 int NextChance = LightRandom.Next(4, 8);
                 LightOnChance = NextChance * 10;

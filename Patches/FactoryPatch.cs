@@ -97,9 +97,11 @@ namespace Welcome_To_Ooblterra.Patches
             //OoblDungeonFlow.manualPlanetNameReferenceList.Add(new StringWithRarity("523 Ooblterra", 300));
             PatchedContent.RegisterExtendedDungeonFlow(OoblDungeonFlow);
         
-
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(BehaviorPath + "ChargedBattery.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(BehaviorPath + "DrainedBattery.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(BehaviorPath + "ScrapShelf.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(BehaviorPath + "BatteryRecepticleTransform.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(BehaviorPath + "OoblShutter.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "TeslaCoil.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "SpikeTrap.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(SecurityPath + "BabyLurkerEgg.prefab"));
@@ -113,7 +115,9 @@ namespace Welcome_To_Ooblterra.Patches
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "SpikeRoofTrapHazard.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "Turret.prefab"));
             NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(EmptyPrefabsPath + "VentEntrance.prefab"));
-        
+
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>("CustomDungeon/TestRoom.prefab"));
+            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>("CustomDungeon/TestRoomTeleport.prefab"));
         }
     }
 }

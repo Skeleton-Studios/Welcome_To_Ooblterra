@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Patches;
 
@@ -534,6 +535,14 @@ namespace Welcome_To_Ooblterra.Properties
 
         public static List<string> CSVSeperatedStringList(string InputString) {
             return new(InputString.Replace(" ", "").ToLower().Split(','));
+        }
+
+        public static ClientRpcSendParams AllClientsButSender(ServerRpcParams rpcParams)
+        {
+            return new ClientRpcSendParams
+            {
+                TargetClientIds = [.. from id in NetworkManager.Singleton.ConnectedClientsIds where id != rpcParams.Receive.SenderClientId select id]
+            };
         }
 
         private static void PrintReferences(IEnumerable<Object> objects)

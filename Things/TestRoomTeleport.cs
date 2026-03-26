@@ -12,7 +12,7 @@ namespace Welcome_To_Ooblterra.Things
     /// The teleporter is managed by the WTOTestRoom config option. If true, a prot statue exists
     /// near the ship that the player can jump on to teleport to the test room.
     /// </summary>
-    public class TestRoomTeleport : MonoBehaviour
+    public class TestRoomTeleport : NetworkBehaviour
     {
         // Set to True for the teleporter that's in the actual level.
         // The other one exists inside of the Prefab for the test room.
@@ -26,68 +26,107 @@ namespace Welcome_To_Ooblterra.Things
 
         public void OnTriggerEnter(Collider other)
         {
-            if (other.gameObject.TryGetComponent<PlayerControllerB>(out var playerControllerB))
+            if(!IsClient || !other.gameObject.TryGetComponent<PlayerControllerB>(out var playerControllerB))
             {
-                playerControllerB.TeleportPlayer(target);
+                return;
             }
+
+            // Tell server when a client touches us
+            OnTriggerEnterServerRpc(playerControllerB);
         }
 
         void Start()
         {
-            if (WTOBase.WTOTestRoom.Value)
-            {
-                if (IsLevelTeleporter)
-                {
-                    GameObject TestRoomPrefab = WTOBase.ContextualLoadAsset<GameObject>("CustomDungeon/TestRoom.prefab");
-                    spawnedTestRoom = Instantiate(TestRoomPrefab, new Vector3(500, 500, 500), Quaternion.identity);
-
-                    if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-                    {
-                        foreach (var netObj in spawnedTestRoom.GetComponentsInChildren<NetworkObject>(includeInactive: true))
-                        {
-                            netObj.Spawn(destroyWithScene: true);
-                        }
-
-                        var mapPropsContainer = GameObject.FindGameObjectWithTag("MapPropsContainer");
-                        foreach (var syncedObj in spawnedTestRoom.GetComponentsInChildren<SpawnSyncedObject>(includeInactive: true))
-                        {
-                            GameObject gameObject = Instantiate(syncedObj.spawnPrefab, syncedObj.transform.position, syncedObj.transform.rotation, mapPropsContainer.transform);
-                            if (gameObject != null)
-                            {
-                                if(gameObject.TryGetComponent<NetworkObject>(out var netObj)) 
-                                {
-                                    netObj.Spawn(destroyWithScene: true);
-                                }
-                                else
-                                {
-                                    Log.Warning($"Spawned object {gameObject.name} does not have a NetworkObject component and cannot be synced across the network.");
-                                    Log.Warning($"Spawned from sync object prefab: {syncedObj.spawnPrefab.name}");
-                                }
-                                spawnedSyncedObjects.Add(gameObject);
-                            }
-                        }
-                    }
-
-                    for (int i = 0; i < spawnedTestRoom.transform.childCount; i++)
-                    {
-                        if(spawnedTestRoom.transform.GetChild(i).TryGetComponent<TestRoomTeleport>(out var returnTeleport))
-                        {
-                            target = returnTeleport.transform.position + (Vector3.up * 3) + (Vector3.forward * 3);
-                            returnTeleport.target = transform.position + (Vector3.up * 3) + (Vector3.forward * 3);
-                            break;
-                        }
-                    }
-                }
-            }
-            else
+            if (!WTOBase.WTOTestRoom.Value)
             {
                 // Disappear if not in test room mode
                 Destroy(gameObject);
             }
         }
 
-        void OnDestroy()
+        public override void OnNetworkSpawn()
         {
+            base.OnNetworkSpawn();
+
+            if(!IsServer)
+            {
+                return;
+            }
+
+            // On being spawned, if this is the teleport that's inside the test room prefab,
+            // we want to link it back out to the teleport on the main moon.
+            if(!IsLevelTeleporter)
+            {
+                // Find the main teleporter and link to it
+                TestRoom testRoom = FindObjectOfType<TestRoom>();
+                if(testRoom == null)
+                {
+                    Log.Error("Failed to find TestRoom in scene on spawn of TestRoomTeleport. This should never happen.");
+                    return;
+                }
+                target = testRoom.GetReturnTeleporterTargetPosition();
+            }
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        void OnTriggerEnterServerRpc(NetworkBehaviourReference playerControllerReference)
+        { 
+            // Do all test room spawning logic on server.
+            // Only spawn and teleport the client after they touch.
+            if(!playerControllerReference.TryGet(out var playerControllerB) || playerControllerB == null)
+            {
+                Log.Warning("Failed to get player controller reference in OnTriggerEnterServerRpc");
+                return;
+            }
+
+            if (IsLevelTeleporter)
+            {
+                MaybeSpawnTestRoom();
+            }
+
+            // Tell the specific client that touched us to teleport to the test room
+            OnTeleportPlayerClientRpc(target, playerControllerB, new ClientRpcParams
+            {
+                Send = new ClientRpcSendParams
+                {
+                    TargetClientIds = [ playerControllerB.OwnerClientId ]
+                }
+            });
+        }
+
+        [ClientRpc]
+        void OnTeleportPlayerClientRpc(Vector3 targetPosition, NetworkBehaviourReference playerControllerReference, ClientRpcParams rpcParams = default)
+        {
+            if (!playerControllerReference.TryGet(out var playerControllerB) || playerControllerB == null)
+            {
+                Log.Warning("Failed to get player controller reference in OnTeleportPlayerClientRpc");
+                return;
+            }
+
+            (playerControllerB as PlayerControllerB).TeleportPlayer(targetPosition);
+        }
+
+        void MaybeSpawnTestRoom()
+        {
+            if(spawnedTestRoom != null)
+            {
+                return;
+            }
+
+            GameObject TestRoomPrefab = WTOBase.ContextualLoadAsset<GameObject>("CustomDungeon/TestRoom.prefab");
+            spawnedTestRoom = Instantiate(TestRoomPrefab, new Vector3(500, 500, 500), Quaternion.identity);
+
+            TestRoom testRoom = spawnedTestRoom.GetComponent<TestRoom>();
+            target = testRoom.AttachMoonTeleporter(this);
+            Log.Info("Spawned test room at " + spawnedTestRoom.transform.position + " and set moon teleport target to " + target);
+
+            spawnedTestRoom.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+        }
+
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
+
             if (spawnedTestRoom != null)
             {
                 Destroy(spawnedTestRoom);
