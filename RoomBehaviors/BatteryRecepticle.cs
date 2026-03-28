@@ -321,7 +321,14 @@ namespace Welcome_To_Ooblterra.Things
             if (IsClient)
             {
                 // If client is calling, then set immediately and use server to broadcast to all
-                UpdateInsertedBatteryStateOnClient(battery);
+                try
+                {
+                    UpdateInsertedBatteryStateOnClient(battery);
+                }
+                catch (System.Exception ex)
+                {
+                    Log.Error("Error in SetInsertedBattery when client is calling: " + ex);
+                }
                 InsertBatteryServerRpc(referenceToSend, battery == null);
             }
             else
@@ -363,12 +370,6 @@ namespace Welcome_To_Ooblterra.Things
         private void ManageEnemies() 
         {
             EyeSecAI.BuffedByMachineOn = true;
-            if(OoblGhostAI.GhostList.Count < 1) 
-            {
-                RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);
-            }
-            RoundManager.Instance.SpawnEnemyGameObject(new Vector3(0, -1000, 0), 0, 1, MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Oobl Ghost").enemyType);
         }
-
     }
 }
