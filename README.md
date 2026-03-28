@@ -9,6 +9,7 @@ Please feel free to create bug reports here for any bugs you might find when pla
 If you want to build the mod .dll for yourself, follow these steps:
 
 1. Create an R2Modman profile that contains [Welcome To Ooblterra](https://thunderstore.io/c/lethal-company/p/Skeleton_Studios/Welcome_To_Ooblterra/) and ensure it downloads all dependencies.
+
 2. Build the mod using dotnet or Visual Studio: 
 ```powershell
 dotnet restore
@@ -16,13 +17,15 @@ dotnet tool restore
 dotnet clean -c Debug # or Release
 dotnet build -c Debug # or Release
 ```
+
 3. Copy the mod to your R2Modman profile
 ```powershell
 cp bin/Debug/netstandard2.1/Welcome_To_Ooblterra.dll your_r2modman_profile_path\BepInEx\plugins\Skeleton_Studios-Welcome_To_Ooblterra\Welcome_To_Ooblterra.dll
 ```
 (replace Debug with Release if applicable)
 
-# TODO: finish readme
+You can also create a `Welcome_To_Ooblterra.csproj.user` file (use the `Welcome_To_Ooblterra.csproj.user.example` file as a base) and specify the R2Modman path in there.
+This will automatically copy the built dll each time you build the project
 
 4. Launch the game
 
@@ -53,3 +56,5 @@ Badhamknibbs - Programming (Custom interior assistance)
 AlexCodesGames - Programming (Code for custom suits has been lightly adapted from AdditionalSuits)
 
 Bizzlemip - Programming (custom moon code has been heavily adapted from MoonAPI)
+
+Deelon - Programming
