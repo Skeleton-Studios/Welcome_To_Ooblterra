@@ -5,187 +5,157 @@ using UnityEngine;
 using Welcome_To_Ooblterra.Enemies;
 using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra.Patches;
-internal class MonsterPatch {
+namespace Welcome_To_Ooblterra.Patches
+{
+    internal class MonsterPatch {
 
-    public static List<SpawnableEnemyWithRarity> InsideEnemies = [];
-    public static List<SpawnableEnemyWithRarity> OutsideEnemies = [];
-    public static List<SpawnableEnemyWithRarity> DaytimeEnemies = [];
-    public static List<SpawnableEnemyWithRarity> AdultWandererContainer = [];
+        public static List<SpawnableEnemyWithRarity> InsideEnemies = new();
+        public static List<SpawnableEnemyWithRarity> OutsideEnemies = new();
+        public static List<SpawnableEnemyWithRarity> DaytimeEnemies = new();
+        public static List<SpawnableEnemyWithRarity> AdultWandererContainer = new();
 
-    private static readonly AssetBundle EnemyBundle = WTOBase.MonsterAssetBundle;
-    private const string EnemyPath = WTOBase.RootPath + "CustomEnemies/";
-    public const bool ShouldDebugEnemies = true;
+        private const string EnemyPath = "CustomEnemies/";
+        public const bool ShouldDebugEnemies = true;
 
-    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToInsideSpawnLists = [];
-    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToOutsideSpawnLists = [];
-    private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToDaytimeSpawnLists = [];
+        private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToInsideSpawnLists = new();
+        private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToOutsideSpawnLists = new();
+        private static readonly Dictionary<string, List<SpawnableEnemyWithRarity>> MoonsToDaytimeSpawnLists = new();
 
-    private static readonly WTOBase.WTOLogger Log = new(typeof(MonsterPatch), LogSourceType.Generic);
+        private static readonly WTOBase.WTOLogger Log = new(typeof(MonsterPatch), LogSourceType.Generic);
 
-    /*
-    [HarmonyPatch(typeof(QuickMenuManager), "Debug_SetEnemyDropdownOptions")]
-    [HarmonyPrefix]
-    private static void AddMonstersToDebug(QuickMenuManager __instance) {
-        if (EnemiesInList) {
-            return;
-        }
-        var testLevel = __instance.testAllEnemiesLevel;
-        var firstEnemy = testLevel.Enemies.FirstOrDefault(); //Grab all of the test enemies 
-        if (firstEnemy == null) { //check to see if the list of enemies actually exists
-            WTOBase.LogToConsole("Failed to get first enemy for debug list!");
-            return;
-        }
-            
-        var enemies = testLevel.Enemies;
-        var outsideEnemies = testLevel.OutsideEnemies;
-        var daytimeEnemies = testLevel.DaytimeEnemies;
-
-        enemies.Clear();
-        foreach(SpawnableEnemyWithRarity InsideEnemy in InsideEnemies) { 
-            if (!enemies.Contains(InsideEnemy)){
-                enemies.Add(new SpawnableEnemyWithRarity {
-                    enemyType = InsideEnemy.enemyType,
-                    rarity = InsideEnemy.rarity
-                });
-                WTOBase.LogToConsole("Added " + InsideEnemy.enemyType.name + "To debug list");
+        [HarmonyPatch(typeof(EnemyAI), nameof(EnemyAI.SetEnemyStunned))]
+        [HarmonyPostfix]
+        private static void SetOwnershipToStunningPlayer(EnemyAI __instance) { 
+            if(__instance is not WTOEnemy || __instance.stunnedByPlayer == null){
+                return;
             }
-        } 
-         
-        daytimeEnemies.Clear(); 
-        foreach (SpawnableEnemyWithRarity DaytimeEnemy in DaytimeEnemies) {
-            if (!daytimeEnemies.Contains(DaytimeEnemy)){
-                daytimeEnemies.Add(new SpawnableEnemyWithRarity {
-                    enemyType = DaytimeEnemy.enemyType,
-                    rarity = DaytimeEnemy.rarity
-                });
-                WTOBase.LogToConsole("Added " + DaytimeEnemy.enemyType.name + "To debug list");
+            Log.Info($"Enemy: {__instance.GetType()} STUNNED BY: {__instance.stunnedByPlayer}; Switching ownership...");
+            __instance.ChangeOwnershipOfEnemy(__instance.stunnedByPlayer.actualClientId);
+        }
+
+        [HarmonyPatch(typeof(EnemyAI), nameof(EnemyAI.SetClientCalculatingAI))]
+        [HarmonyPrefix]
+        private static bool PreventGhostAgentEnable(EnemyAI __instance, bool enable) {
+            // Fix for OoblGhostAI re-enabling the nav agent each frame.
+            // This would cause a huge number of errors to be printed in the console.
+            // The ghost does not even use the nav agent anyway
+            // The base code for this simply calls
+            // isClientCalculatingAI = enable
+            // navAgent.enabled = enable.
+            if (__instance is OoblGhostAI) {
+                __instance.isClientCalculatingAI = enable;
+                return false;
+            }
+            return true;
+        }
+
+        [HarmonyPatch(typeof(HUDManager), nameof(HUDManager.UseSignalTranslatorClientRpc))]
+        [HarmonyPostfix]
+        private static void TellAllGhostsOfSignalTransmission() {
+            OoblGhostAI[] Ghosts = GameObject.FindObjectsOfType<OoblGhostAI>();
+            foreach(OoblGhostAI Ghost in Ghosts) {
+                Ghost.EvalulateSignalTranslatorUse();
             }
         }
 
-        outsideEnemies.Clear();
-        outsideEnemies.Add(new SpawnableEnemyWithRarity {
-            enemyType = AdultWandererContainer[0].enemyType,
-            rarity = AdultWandererContainer[0].rarity
-        });
-        WTOBase.LogToConsole("Added " + AdultWandererContainer[0].enemyType.name + "To debug list");
-
-        EnemiesInList = true;
-    }
-    */
-
-    [HarmonyPatch(typeof(EnemyAI), "SetEnemyStunned")]
-    [HarmonyPostfix]
-    private static void SetOwnershipToStunningPlayer(EnemyAI __instance) { 
-        if(__instance is not WTOEnemy || __instance.stunnedByPlayer == null){
-            return;
-        }
-        Log.Info($"Enemy: {__instance.GetType()} STUNNED BY: {__instance.stunnedByPlayer}; Switching ownership...");
-        __instance.ChangeOwnershipOfEnemy(__instance.stunnedByPlayer.actualClientId);
-    }
-
-    [HarmonyPatch(typeof(HUDManager), "UseSignalTranslatorClientRpc")]
-    [HarmonyPostfix]
-    private static void TellAllGhostsOfSignalTransmission() {
-        OoblGhostAI[] Ghosts = GameObject.FindObjectsOfType<OoblGhostAI>();
-        foreach(OoblGhostAI Ghost in Ghosts) {
-            Ghost.EvalulateSignalTranslatorUse();
-        }
-    }
-
-    [HarmonyPatch(typeof(RoundManager), "AssignRandomEnemyToVent")]
-    [HarmonyPrefix]
-    private static void SetInsideEnemiesWTO(RoundManager __instance) {
-        string PlanetName = __instance.currentLevel.PlanetName;
-        if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
-            if (MoonsToInsideSpawnLists.TryGetValue(PlanetName, out List<SpawnableEnemyWithRarity> ResultEnemyList)) {
-                __instance.currentLevel.Enemies = ResultEnemyList;
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.AssignRandomEnemyToVent))]
+        [HarmonyPrefix]
+        private static void SetInsideEnemiesWTO(RoundManager __instance) {
+            string PlanetName = __instance.currentLevel.PlanetName;
+            if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
+                if (MoonsToInsideSpawnLists.TryGetValue(PlanetName, out List<SpawnableEnemyWithRarity> ResultEnemyList)) {
+                    __instance.currentLevel.Enemies = ResultEnemyList;
+                }
+                return;
             }
-            return;
+            SetMonsterStuff(WTOBase.WTOForceInsideMonsters.Value, ref __instance.currentLevel.Enemies, MoonsToInsideSpawnLists[MoonPatch.MoonFriendlyName]);
         }
-        SetMonsterStuff(WTOBase.WTOForceInsideMonsters.Value, ref __instance.currentLevel.Enemies, MoonsToInsideSpawnLists[MoonPatch.MoonFriendlyName]);
-    }
-    [HarmonyPatch(typeof(RoundManager), "SpawnRandomOutsideEnemy")]
-    [HarmonyPrefix]
-    private static void SetOutsideEnemiesWTO(RoundManager __instance) {
-        string PlanetName = __instance.currentLevel.PlanetName;
-        if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
-            if (MoonsToOutsideSpawnLists.TryGetValue(PlanetName, out List<SpawnableEnemyWithRarity> OutsideEnemyList)) {
-                __instance.currentLevel.OutsideEnemies = OutsideEnemyList;
+
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnRandomOutsideEnemy))]
+        [HarmonyPrefix]
+        private static void SetOutsideEnemiesWTO(RoundManager __instance, GameObject[] spawnPoints, float timeUpToCurrentHour) {
+                string PlanetName = __instance.currentLevel.PlanetName;
+                if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow)
+                {
+                    if (MoonsToOutsideSpawnLists.TryGetValue(PlanetName, out List<SpawnableEnemyWithRarity> OutsideEnemyList))
+                    {
+                        __instance.currentLevel.OutsideEnemies = OutsideEnemyList;
+                    }
+                    return;
+                }
+                SetMonsterStuff(WTOBase.WTOForceOutsideMonsters.Value, ref __instance.currentLevel.OutsideEnemies, MoonsToOutsideSpawnLists[MoonPatch.MoonFriendlyName]);
+        }
+
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnRandomDaytimeEnemy))]
+        [HarmonyPrefix]
+        private static void SetDaytimeEnemiesWTO(RoundManager __instance) {
+            string PlanetName = __instance.currentLevel.PlanetName;
+            if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
+                if (MoonsToDaytimeSpawnLists.TryGetValue(PlanetName, out List<SpawnableEnemyWithRarity> DaytimeEnemyList)) {
+                    __instance.currentLevel.OutsideEnemies = DaytimeEnemyList;
+                }
+                return;
             }
-            return;
+            SetMonsterStuff(WTOBase.WTOForceDaytimeMonsters.Value, ref __instance.currentLevel.DaytimeEnemies, MoonsToDaytimeSpawnLists[MoonPatch.MoonFriendlyName]);
         }
-        SetMonsterStuff(WTOBase.WTOForceOutsideMonsters.Value, ref __instance.currentLevel.OutsideEnemies, MoonsToOutsideSpawnLists[MoonPatch.MoonFriendlyName]);
-    }
-    [HarmonyPatch(typeof(RoundManager), "SpawnRandomDaytimeEnemy")]
-    [HarmonyPrefix]
-    private static void SetDaytimeEnemiesWTO(RoundManager __instance) {
-        string PlanetName = __instance.currentLevel.PlanetName;
-        if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow) {
-            if (MoonsToDaytimeSpawnLists.TryGetValue(PlanetName, out List<SpawnableEnemyWithRarity> DaytimeEnemyList)) {
-                __instance.currentLevel.OutsideEnemies = DaytimeEnemyList;
+
+
+        //METHODS 
+        public static void Start() {
+            CreateEnemy("Wanderer.asset", DaytimeEnemies, 50, LethalLib.Modules.Enemies.SpawnType.Daytime, "WandererTerminal.asset", "WandererKeyword.asset");
+            CreateEnemy("AdultWanderer.asset", AdultWandererContainer, 0, LethalLib.Modules.Enemies.SpawnType.Outside, "AdultWandererTerminal.asset", "AdultWandererKeyword.asset");
+            CreateEnemy("Gallenarma.asset", InsideEnemies, 30, LethalLib.Modules.Enemies.SpawnType.Default, "GallenTerminal.asset", "GallenKeyword.asset");
+            CreateEnemy("EyeSecurity.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "EyeSecTerminal.asset", "EyeSecKeyword.asset");
+            //CreateEnemy("Lurker.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "LurkerTerminal.asset", "LurkerKeyword.asset");
+            CreateEnemy("OoblGhost.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "OoblGhostTerminal.asset", "OoblGhostKeyword.asset");
+            CreateEnemy("Enforcer.asset", InsideEnemies, 10, LethalLib.Modules.Enemies.SpawnType.Default, "EnforcerTerminal.asset", "EnforcerKeyword.asset");
+            CreateEnemy("BabyLurker.asset", InsideEnemies, 10, LethalLib.Modules.Enemies.SpawnType.Default, "BabyLurkerTerminal.asset", "BabyLurkerKeyword.asset");
+            CreateEnemy("GhostPlayer.asset", OutsideEnemies, 10, LethalLib.Modules.Enemies.SpawnType.Outside);
+            if (!MoonsToInsideSpawnLists.ContainsKey(MoonPatch.MoonFriendlyName)) {
+                MoonsToInsideSpawnLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.Enemies);
             }
-            return;
-        }
-        SetMonsterStuff(WTOBase.WTOForceDaytimeMonsters.Value, ref __instance.currentLevel.DaytimeEnemies, MoonsToDaytimeSpawnLists[MoonPatch.MoonFriendlyName]);
-    }
-
-
-    //METHODS 
-    public static void Start() {
-        CreateEnemy("Wanderer.asset", DaytimeEnemies, 50, LethalLib.Modules.Enemies.SpawnType.Daytime, "WandererTerminal.asset", "WandererKeyword.asset");
-        CreateEnemy("AdultWanderer.asset", AdultWandererContainer, 0, LethalLib.Modules.Enemies.SpawnType.Outside, "AdultWandererTerminal.asset", "AdultWandererKeyword.asset");
-        CreateEnemy("Gallenarma.asset", InsideEnemies, 30, LethalLib.Modules.Enemies.SpawnType.Default, "GallenTerminal.asset", "GallenKeyword.asset");
-        CreateEnemy("EyeSecurity.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "EyeSecTerminal.asset", "EyeSecKeyword.asset");
-        //CreateEnemy("Lurker.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "LurkerTerminal.asset", "LurkerKeyword.asset");
-        CreateEnemy("OoblGhost.asset", InsideEnemies, 20, LethalLib.Modules.Enemies.SpawnType.Default, "OoblGhostTerminal.asset", "OoblGhostKeyword.asset");
-        CreateEnemy("Enforcer.asset", InsideEnemies, 10, LethalLib.Modules.Enemies.SpawnType.Default, "EnforcerTerminal.asset", "EnforcerKeyword.asset");
-        CreateEnemy("BabyLurker.asset", InsideEnemies, 10, LethalLib.Modules.Enemies.SpawnType.Default, "BabyLurkerTerminal.asset", "BabyLurkerKeyword.asset");
-        CreateEnemy("GhostPlayer.asset", OutsideEnemies, 10, LethalLib.Modules.Enemies.SpawnType.Outside);
-        if (!MoonsToInsideSpawnLists.ContainsKey(MoonPatch.MoonFriendlyName)) {
-            MoonsToInsideSpawnLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.Enemies);
-        }
-        if (!MoonsToOutsideSpawnLists.ContainsKey(MoonPatch.MoonFriendlyName)) {
-            MoonsToOutsideSpawnLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.OutsideEnemies);
-        }
-        if (!MoonsToDaytimeSpawnLists.ContainsKey(MoonPatch.MoonFriendlyName)) {
-            MoonsToDaytimeSpawnLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.DaytimeEnemies);
-        }
-    }
-
-    public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity, LethalLib.Modules.Enemies.SpawnType SpawnType, string InfoName = null, string KeywordName = null) {
-        string EnemyFolderName = EnemyName.Remove(EnemyName.Length - 6, 6) + "/";
-        TerminalNode EnemyInfo = null;
-        TerminalKeyword EnemyKeyword = null;
-
-        EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyBundle, EnemyPath + EnemyFolderName + EnemyName);
-        EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
-
-        if (InfoName != null) {
-            EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyBundle, EnemyPath + EnemyFolderName + InfoName);
-        }
-        if (KeywordName != null) {
-            EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyBundle, EnemyPath + EnemyFolderName + KeywordName);
+            if (!MoonsToOutsideSpawnLists.ContainsKey(MoonPatch.MoonFriendlyName)) {
+                MoonsToOutsideSpawnLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.OutsideEnemies);
+            }
+            if (!MoonsToDaytimeSpawnLists.ContainsKey(MoonPatch.MoonFriendlyName)) {
+                MoonsToDaytimeSpawnLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.DaytimeEnemies);
+            }
         }
 
-        LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
-        LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
-        EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
-        Log.Info("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
-    }
+        public static void CreateEnemy(string EnemyName, List<SpawnableEnemyWithRarity> EnemyList, int rarity, LethalLib.Modules.Enemies.SpawnType SpawnType, string InfoName = null, string KeywordName = null) {
+            string EnemyFolderName = EnemyName.Remove(EnemyName.Length - 6, 6) + "/";
+            TerminalNode EnemyInfo = null;
+            TerminalKeyword EnemyKeyword = null;
 
-    private static void SetMonsterStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableEnemyWithRarity> CurrentMoonEnemyList, List<SpawnableEnemyWithRarity> OoblterraEnemyList) {
-        List<SpawnableEnemyWithRarity> WeightedOoblterraEnemies = [];
-        foreach(SpawnableEnemyWithRarity Enemy in OoblterraEnemyList) {
-            WeightedOoblterraEnemies.Add(new SpawnableEnemyWithRarity { enemyType = Enemy.enemyType, rarity = Enemy.rarity * WTOBase.WTOWeightScale.Value });
+            EnemyType EnemyType = WTOBase.ContextualLoadAsset<EnemyType>(EnemyPath + EnemyFolderName + EnemyName);
+            EnemyType.enemyPrefab.GetComponent<EnemyAI>().debugEnemyAI = false;
+
+            if (InfoName != null) {
+                EnemyInfo = WTOBase.ContextualLoadAsset<TerminalNode>(EnemyPath + EnemyFolderName + InfoName);
+            }
+            if (KeywordName != null) {
+                EnemyKeyword = WTOBase.ContextualLoadAsset<TerminalKeyword>(EnemyPath + EnemyFolderName + KeywordName);
+            }
+
+            LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
+            LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
+            EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
+            Log.Info("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
         }
-        switch (TiedToLabState) {
-            case TiedToLabEnum.WTOOnly:
-                CurrentMoonEnemyList = OoblterraEnemyList;
-                break;
-            case TiedToLabEnum.AppendWTO:
-                CurrentMoonEnemyList.AddRange(WeightedOoblterraEnemies);
-                break;
+
+        private static void SetMonsterStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableEnemyWithRarity> CurrentMoonEnemyList, List<SpawnableEnemyWithRarity> OoblterraEnemyList) {
+            List<SpawnableEnemyWithRarity> WeightedOoblterraEnemies = new();
+            foreach(SpawnableEnemyWithRarity Enemy in OoblterraEnemyList) {
+                WeightedOoblterraEnemies.Add(new SpawnableEnemyWithRarity { enemyType = Enemy.enemyType, rarity = Enemy.rarity * WTOBase.WTOWeightScale.Value });
+            }
+            switch (TiedToLabState) {
+                case TiedToLabEnum.WTOOnly:
+                    CurrentMoonEnemyList = OoblterraEnemyList;
+                    break;
+                case TiedToLabEnum.AppendWTO:
+                    CurrentMoonEnemyList.AddRange(WeightedOoblterraEnemies);
+                    break;
+            }
         }
     }
 }

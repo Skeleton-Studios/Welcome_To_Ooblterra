@@ -3,61 +3,63 @@ using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.Things;
 
-namespace Welcome_To_Ooblterra.RoomBehaviors;
-public class FrankensteinVisuals : MonoBehaviour {
+namespace Welcome_To_Ooblterra.RoomBehaviors
+{
+    public class FrankensteinVisuals : MonoBehaviour {
 
-    [InspectorName("SceneAnim")]
-    public AudioClip ReviveSound;
-    public AudioSource ReviveSoundPlayer;
-    public Animator CoilAnim;
-    public ParticleSystem[] LightningParticles;
-    public LightComponent[] Lights;
+        [InspectorName("SceneAnim")]
+        public AudioClip ReviveSound;
+        public AudioSource ReviveSoundPlayer;
+        public Animator CoilAnim;
+        public ParticleSystem[] LightningParticles;
+        public LightComponent[] Lights;
 
-    private bool ShouldAnimate;
-    private bool AnimStarted;
-    private bool AnimStopped;
-    private System.Random MyRandom;
+        private bool ShouldAnimate;
+        private bool AnimStarted;
+        private bool AnimStopped;
+        private System.Random MyRandom;
 
-    private static readonly WTOBase.WTOLogger Log = new(typeof(FrankensteinVisuals), LogSourceType.Room);
+        private static readonly WTOBase.WTOLogger Log = new(typeof(FrankensteinVisuals), LogSourceType.Room);
 
-    private void Start() {
-        MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-    }
-    private void Update() {
-        if (ShouldAnimate){
-            StartCoroutine(VisualsHandler());
+        private void Start() {
+            MyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         }
-    }
-
-    public void StartVisuals() {
-        Log.Debug("Visuals script starting coroutine ...");
-        ShouldAnimate = true;
-    }
-    IEnumerator VisualsHandler() {
-        if (!AnimStarted) {
-            ReviveSoundPlayer.clip = ReviveSound;
-            ReviveSoundPlayer.Play();
-            CoilAnim.SetTrigger("HeatCoils");
-            foreach (ParticleSystem LightningBolt in LightningParticles) {
-                LightningBolt.Play();
-            }
-            AnimStarted = true;
-        }
-        if (!AnimStopped) { 
-            foreach (LightComponent Light in Lights) {
-                Light.SetLightBrightness((MyRandom.Next(0, 10) % 2 == 0) ? 200 : 0);
+        private void Update() {
+            if (ShouldAnimate){
+                StartCoroutine(VisualsHandler());
             }
         }
-        yield return new WaitForSeconds(3.4f);
-        if (!AnimStopped) {
-            foreach (ParticleSystem LightningBolt in LightningParticles) {
-                LightningBolt.Stop();
 
+        public void StartVisuals() {
+            Log.Debug("Visuals script starting coroutine ...");
+            ShouldAnimate = true;
+        }
+        IEnumerator VisualsHandler() {
+            if (!AnimStarted) {
+                ReviveSoundPlayer.clip = ReviveSound;
+                ReviveSoundPlayer.Play();
+                CoilAnim.SetTrigger("HeatCoils");
+                foreach (ParticleSystem LightningBolt in LightningParticles) {
+                    LightningBolt.Play();
+                }
+                AnimStarted = true;
             }
-            foreach (LightComponent Light in Lights) {
-                Light.SetLightBrightness(0);
+            if (!AnimStopped) { 
+                foreach (LightComponent Light in Lights) {
+                    Light.SetLightBrightness((MyRandom.Next(0, 10) % 2 == 0) ? 200 : 0);
+                }
             }
-            AnimStopped = true;
+            yield return new WaitForSeconds(3.4f);
+            if (!AnimStopped) {
+                foreach (ParticleSystem LightningBolt in LightningParticles) {
+                    LightningBolt.Stop();
+
+                }
+                foreach (LightComponent Light in Lights) {
+                    Light.SetLightBrightness(0);
+                }
+                AnimStopped = true;
+            }
         }
     }
 }

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copy this file to Welcome_To_Ooblterra.csproj.user and set R2ModmanPath to your
+  r2modman profile's BepInEx/plugins folder for the mod. This file is gitignored.
+
+  Example path:
+    %APPDATA%\r2modmanPlus-local\LethalCompany\profiles\<ProfileName>\BepInEx\plugins\Skeleton-Studios-Welcome_To_Ooblterra
+-->
+<Project>
+    <PropertyGroup>
+        <R2ModmanPath></R2ModmanPath>
+    </PropertyGroup>
+</Project>

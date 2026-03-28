@@ -4,146 +4,148 @@ using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Properties;
 
-namespace Welcome_To_Ooblterra.Security;
-internal class SpikeTrap : NetworkBehaviour {
+namespace Welcome_To_Ooblterra.Security
+{
+    internal class SpikeTrap : NetworkBehaviour {
 
 #pragma warning disable 0649 // Assigned in Unity Editor
-    public GameObject SpikeMesh;
-    public AudioClip SpikesExtend;
-    public AudioClip SpikesRetract;
-    public AudioClip SpikesDisable;
-    public AudioSource SpikeSoundPlayer;
-    public Transform RootRotation;
+        public GameObject SpikeMesh;
+        public AudioClip SpikesExtend;
+        public AudioClip SpikesRetract;
+        public AudioClip SpikesDisable;
+        public AudioSource SpikeSoundPlayer;
+        public Transform RootRotation;
 #pragma warning restore 0649
 
-    private bool SpikesEnabled = true;
-    private bool SpikesActivated;
-    private bool AllowDamagePlayer;
-    private float SecondsSinceSpikesActivated;
-    private float SecondsUntilCanDamagePlayer;
-    private int PlayerDamageAmount = 80;
+        private bool SpikesEnabled = true;
+        private bool SpikesActivated;
+        private bool AllowDamagePlayer;
+        private float SecondsSinceSpikesActivated;
+        private float SecondsUntilCanDamagePlayer;
+        private int PlayerDamageAmount = 80;
     
-    //anim controls
-    private float TimeElapsed;
-    private const float MoveTime = 0.2f;
-    private readonly Vector3 SpikeRaisePos = new(0, 1.163f, 0);
-    private readonly Vector3 SpikeFallPos = new(0, 0, 0);
+        //anim controls
+        private float TimeElapsed;
+        private const float MoveTime = 0.2f;
+        private readonly Vector3 SpikeRaisePos = new(0, 1.163f, 0);
+        private readonly Vector3 SpikeFallPos = new(0, 0, 0);
 
-    private static readonly WTOBase.WTOLogger Log = new(typeof(SpikeTrap), LogSourceType.Room);
+        private static readonly WTOBase.WTOLogger Log = new(typeof(SpikeTrap), LogSourceType.Room);
 
-    public void OnTriggerEnter(Collider other) {
-        if (!SpikesEnabled) {
-            return;
-        }
-        if (SpikesActivated) {
-            return;
-        }
-        if (other.gameObject.CompareTag("Player")) {
-            Log.Debug("Player entered spike trap, calling Raise RPC!");
-            RaiseSpikesServerRpc();
-        }
-    }
-
-    public void OnTriggerStay(Collider other) {
-        if (AllowDamagePlayer && other.gameObject.CompareTag("Player") && SecondsUntilCanDamagePlayer <= 0) {
-            PlayerDamageAmount = StartOfRound.Instance.connectedPlayersAmount <= 0 ? 80 : 100;
-            other.GetComponent<PlayerControllerB>().DamagePlayer(PlayerDamageAmount, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
-            SecondsUntilCanDamagePlayer = 0.75f;
-        }
-    }
-
-    public void Update() {
-        if(SecondsUntilCanDamagePlayer > 0) {
-            SecondsUntilCanDamagePlayer -= Time.deltaTime;
-        }
-        if (SecondsSinceSpikesActivated >= 3f) {
-            if(SpikesActivated == true) {
-                SpikeSoundPlayer.clip = SpikesRetract;
-                SpikeSoundPlayer.Play();
-                TimeElapsed = 0f;
+        public void OnTriggerEnter(Collider other) {
+            if (!SpikesEnabled) {
+                return;
             }
-            SpikesActivated = false;
-            Log.Info("Lowering Spikes!");
-            StartCoroutine(LowerSpikes());
-        }
-        if (!SpikesEnabled) {
-            return;
-        }
-        if (SpikesActivated) {
-            Log.Info("Raising Spikes!");
-            StartCoroutine(RaiseSpikes());
-            SecondsSinceSpikesActivated += Time.deltaTime;
+            if (SpikesActivated) {
+                return;
+            }
+            if (other.gameObject.CompareTag("Player")) {
+                Log.Debug("Player entered spike trap, calling Raise RPC!");
+                RaiseSpikesServerRpc();
+            }
         }
 
-    }
-
-    IEnumerator RaiseSpikes() {
-        TimeElapsed += Time.deltaTime;
-        SpikeMesh.transform.localPosition = Vector3.Lerp(SpikeFallPos, SpikeRaisePos, TimeElapsed / MoveTime);
-        if (TimeElapsed / MoveTime >= 1) {
-            AllowDamagePlayer = true;
-            Log.Info("Finished Raising Spikes");
-            StopCoroutine(RaiseSpikes());
+        public void OnTriggerStay(Collider other) {
+            if (AllowDamagePlayer && other.gameObject.CompareTag("Player") && SecondsUntilCanDamagePlayer <= 0) {
+                PlayerDamageAmount = StartOfRound.Instance.connectedPlayersAmount <= 0 ? 80 : 100;
+                other.GetComponent<PlayerControllerB>().DamagePlayer(PlayerDamageAmount, hasDamageSFX: true, callRPC: true, CauseOfDeath.Mauling, 0);
+                SecondsUntilCanDamagePlayer = 0.75f;
+            }
         }
-        yield return null;
-    }
-    IEnumerator LowerSpikes() {
-        TimeElapsed += Time.deltaTime;
-        Log.Debug($"Current Lerp Position: {TimeElapsed / MoveTime}");
-        SpikeMesh.transform.localPosition = Vector3.Lerp(SpikeRaisePos, SpikeFallPos, TimeElapsed / MoveTime);
-        if (TimeElapsed / MoveTime >= 1) {
-            AllowDamagePlayer = false;
-            Log.Info("Finished Lowering Spikes");
-            StopCoroutine(LowerSpikes());
-            SecondsSinceSpikesActivated = 0f;
-            SpikeMesh.GetComponent<MeshRenderer>().enabled = false;
+
+        public void Update() {
+            if(SecondsUntilCanDamagePlayer > 0) {
+                SecondsUntilCanDamagePlayer -= Time.deltaTime;
+            }
+            if (SecondsSinceSpikesActivated >= 3f) {
+                if(SpikesActivated == true) {
+                    SpikeSoundPlayer.clip = SpikesRetract;
+                    SpikeSoundPlayer.Play();
+                    TimeElapsed = 0f;
+                }
+                SpikesActivated = false;
+                Log.Info("Lowering Spikes!");
+                StartCoroutine(LowerSpikes());
+            }
+            if (!SpikesEnabled) {
+                return;
+            }
+            if (SpikesActivated) {
+                Log.Info("Raising Spikes!");
+                StartCoroutine(RaiseSpikes());
+                SecondsSinceSpikesActivated += Time.deltaTime;
+            }
+
         }
-        yield return null;
-    }
 
-    public void RecieveToggleSpikes(bool enabled) {
-        Log.Debug($"Called toggle spikes with state: {enabled}");
-        ToggleSpikesServerRpc(enabled);
-        ToggleSpikes(enabled);
-    }
+        IEnumerator RaiseSpikes() {
+            TimeElapsed += Time.deltaTime;
+            SpikeMesh.transform.localPosition = Vector3.Lerp(SpikeFallPos, SpikeRaisePos, TimeElapsed / MoveTime);
+            if (TimeElapsed / MoveTime >= 1) {
+                AllowDamagePlayer = true;
+                Log.Info("Finished Raising Spikes");
+                StopCoroutine(RaiseSpikes());
+            }
+            yield return null;
+        }
+        IEnumerator LowerSpikes() {
+            TimeElapsed += Time.deltaTime;
+            Log.Debug($"Current Lerp Position: {TimeElapsed / MoveTime}");
+            SpikeMesh.transform.localPosition = Vector3.Lerp(SpikeRaisePos, SpikeFallPos, TimeElapsed / MoveTime);
+            if (TimeElapsed / MoveTime >= 1) {
+                AllowDamagePlayer = false;
+                Log.Info("Finished Lowering Spikes");
+                StopCoroutine(LowerSpikes());
+                SecondsSinceSpikesActivated = 0f;
+                SpikeMesh.GetComponent<MeshRenderer>().enabled = false;
+            }
+            yield return null;
+        }
 
-    [ServerRpc(RequireOwnership = false)]
-    public void ToggleSpikesServerRpc(bool enabled) {
-        Log.Debug($"Toggling spikes to {enabled} serverRpc");
-        ToggleSpikesClientRpc(enabled);
-    }
-
-    [ClientRpc]
-    public void ToggleSpikesClientRpc(bool enabled) {
-        Log.Debug($"Toggling spikes to {enabled} clientRpc");
-        if (SpikesEnabled != enabled) {
+        public void RecieveToggleSpikes(bool enabled) {
+            Log.Debug($"Called toggle spikes with state: {enabled}");
+            ToggleSpikesServerRpc(enabled);
             ToggleSpikes(enabled);
         }
-    }
 
-    private void ToggleSpikes(bool enabled) {
-        if(enabled == false) { 
-            SpikeSoundPlayer.clip = SpikesDisable;
+        [ServerRpc(RequireOwnership = false)]
+        public void ToggleSpikesServerRpc(bool enabled) {
+            Log.Debug($"Toggling spikes to {enabled} serverRpc");
+            ToggleSpikesClientRpc(enabled);
+        }
+
+        [ClientRpc]
+        public void ToggleSpikesClientRpc(bool enabled) {
+            Log.Debug($"Toggling spikes to {enabled} clientRpc");
+            if (SpikesEnabled != enabled) {
+                ToggleSpikes(enabled);
+            }
+        }
+
+        private void ToggleSpikes(bool enabled) {
+            if(enabled == false) { 
+                SpikeSoundPlayer.clip = SpikesDisable;
+                SpikeSoundPlayer.Play();
+            }
+            SpikesEnabled = enabled;
+            Log.Debug($"SPIKES STATE: {SpikesEnabled}");
+            if (SpikesActivated) {
+                SecondsSinceSpikesActivated = 5f;
+            }
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void RaiseSpikesServerRpc() {
+            RaiseSpikesClientRpc();
+        }
+
+        [ClientRpc]
+        public void RaiseSpikesClientRpc() {
+            TimeElapsed = 0f;
+            SpikeSoundPlayer.clip = SpikesExtend;
             SpikeSoundPlayer.Play();
+            SpikeMesh.GetComponent<MeshRenderer>().enabled = true;
+            SpikesActivated = true;
         }
-        SpikesEnabled = enabled;
-        Log.Debug($"SPIKES STATE: {SpikesEnabled}");
-        if (SpikesActivated) {
-            SecondsSinceSpikesActivated = 5f;
-        }
-    }
-
-    [ServerRpc(RequireOwnership = false)]
-    public void RaiseSpikesServerRpc() {
-        RaiseSpikesClientRpc();
-    }
-
-    [ClientRpc]
-    public void RaiseSpikesClientRpc() {
-        TimeElapsed = 0f;
-        SpikeSoundPlayer.clip = SpikesExtend;
-        SpikeSoundPlayer.Play();
-        SpikeMesh.GetComponent<MeshRenderer>().enabled = true;
-        SpikesActivated = true;
     }
 }
