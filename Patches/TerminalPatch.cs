@@ -16,7 +16,7 @@ namespace Welcome_To_Ooblterra.Patches
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(TerminalPatch), LogSourceType.Generic);
 
-        [HarmonyPatch(typeof(StartOfRound), "Start")]
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.Start))]
         [HarmonyPostfix]
         private static void AddLogs() {
             LoadLogKeywords();

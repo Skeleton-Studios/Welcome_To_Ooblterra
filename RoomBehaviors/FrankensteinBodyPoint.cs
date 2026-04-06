@@ -76,7 +76,7 @@ namespace Welcome_To_Ooblterra.Things
                 }
                 HasBody = true;
                 if (PlayerRagdoll != null) {
-                    Log.Debug($"Player Body ID is {PlayerRagdoll.bodyID.Value}");
+                    Log.Debug($"Player Body ID is {PlayerRagdoll.bodyID}");
                 }
             } else {
                 Log.Error("ClientRpc: Could not find networkobject in the object that was placed on table.");

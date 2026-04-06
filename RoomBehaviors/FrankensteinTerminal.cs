@@ -115,7 +115,7 @@ namespace Welcome_To_Ooblterra.Things
                 Log.Error("Problem with body point!!!");
                 return;
             }
-            SetVariablesServerRpc(BodyPoint.RespawnPos.position, BodyPoint.PlayerRagdoll.bodyID.Value);
+            SetVariablesServerRpc(BodyPoint.RespawnPos.position, BodyPoint.PlayerRagdoll.bodyID);
             StartSceneServerRpc(CalculateCorrectnessPercentage());
             foreach(FrankensteinChemPoint ChemPoint in FrankensteinChemPoints) {
                 ChemPoint.ClearChemical();

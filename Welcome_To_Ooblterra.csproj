@@ -1,11 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
     <!-- BepInEx Properties -->
     <PropertyGroup>
         <AssemblyName>Welcome_To_Ooblterra</AssemblyName>
         <Product>Welcome_To_Ooblterra</Product>
         <!-- Change to whatever version you're currently on. -->
-        <Version>2.0.1</Version>
+        <Version>2.1.0</Version>
     </PropertyGroup>
 
     <!-- Project Properties -->
@@ -22,7 +22,7 @@
     </PropertyGroup>
 
     <PropertyGroup>
-        <UnityPluginsDirectory>..\WelcomeToOoblterra73\Assets\LethalCompany\Mods\plugins\</UnityPluginsDirectory>
+        <UnityPluginsDirectory>..\..\..\Unity\Assets\LethalCompany\Mods\plugins\</UnityPluginsDirectory>
     </PropertyGroup>
 
     <!-- Set NuGet Sources -->
@@ -47,7 +47,7 @@
 
     <!-- Import user-local properties (e.g. R2ModmanPath). This file should not be committed to source control. -->
     <Import Project="$(MSBuildProjectFullPath).user" Condition="Exists('$(MSBuildProjectFullPath).user')" />
-
+	
     <ItemGroup>
         <!-- Tool required for allowing access to private members in the lethal company dll -->
         <PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" Version="0.4.1" PrivateAssets="all"/>
@@ -62,8 +62,8 @@
         <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" PrivateAssets="all"/>
 
         <!-- Associated mod dependencies -->
-        <PackageReference Include="Evaisa-LethalLib" Version="1.1.1" PrivateAssets="all"/>
-        <PackageReference Include="IAmBatby-LethalLevelLoader" Version="1.6.8" PrivateAssets="all"/>
+        <PackageReference Include="Evaisa-LethalLib" Version="1.2.0" PrivateAssets="all"/>
+        <PackageReference Include="IAmBatby-LethalLevelLoader" Version="1.6.9" PrivateAssets="all"/>
 
         <!-- Pre-generated ahead of time. Needs to be updated with every new game release -->
         <Reference Include="MMHOOK_Assembly-CSharp">
@@ -79,9 +79,10 @@
     <Sdk Name="Evaisa.NetcodePatcher.MSBuild" Version="4.4.1" />
     <PropertyGroup>
         <NetcodePatcherUnityVersion>2022.3.62</NetcodePatcherUnityVersion>
-        <NetcodePatcherNetcodeVersion>1.12.0</NetcodePatcherNetcodeVersion>
+        <NetcodePatcherNetcodeVersion>1.12.2</NetcodePatcherNetcodeVersion>
         <NetcodePatcherTransportVersion>1.0.0</NetcodePatcherTransportVersion>
     </PropertyGroup>
+	
     <ItemGroup>
         <NetcodePatch Include="$(TargetPath)" />
     </ItemGroup>
@@ -90,11 +91,6 @@
     <PropertyGroup>
         <MSBuildWarningsAsMessages>$(MSBuildWarningsAsMessages);NCP0001</MSBuildWarningsAsMessages>
     </PropertyGroup>
-
-    <Target Name="LegacyNetcodePatch" AfterTargets="NetcodePatch" Condition="'$(MSBuildRuntimeType)' != 'Core'">
-        <!-- run the CLI patcher only for MSBuilds that cannot load the dependencies -->
-        <Exec Command="netcode-patch -nv 1.5.2 &quot;$(TargetPath)&quot; @(ReferencePathWithRefAssemblies->'&quot;%(Identity)&quot;', ' ')"/>
-    </Target>
 
     <!-- After build, copy assembly to Unity project for testing if running as submodule of Unity project -->
     <Target Condition="Exists('$(UnityPluginsDirectory)')" Name="CopyToUnity" DependsOnTargets="NetcodePatch" AfterTargets="PostBuildEvent">
@@ -105,5 +101,4 @@
     <Target Condition="'$(R2ModmanPath)' != ''" Name="CopyToR2Modman" DependsOnTargets="NetcodePatch" AfterTargets="CopyToUnity">
         <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(R2ModmanPath)"/>
     </Target>
-
 </Project>

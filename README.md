@@ -24,9 +24,6 @@ cp bin/Debug/netstandard2.1/Welcome_To_Ooblterra.dll your_r2modman_profile_path\
 ```
 (replace Debug with Release if applicable)
 
-You can also create a `Welcome_To_Ooblterra.csproj.user` file (use the `Welcome_To_Ooblterra.csproj.user.example` file as a base) and specify the R2Modman path in there.
-This will automatically copy the built dll each time you build the project
-
 4. Launch the game
 
 ## CREDITS

@@ -153,7 +153,7 @@ namespace Welcome_To_Ooblterra.Patches
             return true;
         }
 
-        /*[HarmonyPatch(typeof(GrabbableObject), "Start")]
+        /*[HarmonyPatch(typeof(GrabbableObject), nameof(GrabbableObject.Start))]
         [HarmonyPostfix]
         private static void SetScrapValueWTO(GrabbableObject __instance) {
             if(RoundManager.Instance.currentLevel.PlanetName != MoonFriendlyName || !WTOBase.WTOScalePrice.Value) {

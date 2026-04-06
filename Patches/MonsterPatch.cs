@@ -73,7 +73,7 @@ namespace Welcome_To_Ooblterra.Patches
 
         [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnRandomOutsideEnemy))]
         [HarmonyPrefix]
-        private static void SetOutsideEnemiesWTO(RoundManager __instance, GameObject[] spawnPoints, float timeUpToCurrentHour) {
+        private static void SetOutsideEnemiesWTO(RoundManager __instance, float timeUpToCurrentHour) {
                 string PlanetName = __instance.currentLevel.PlanetName;
                 if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow)
                 {
@@ -139,14 +139,14 @@ namespace Welcome_To_Ooblterra.Patches
 
             LethalLib.Modules.NetworkPrefabs.RegisterNetworkPrefab(EnemyType.enemyPrefab);
             LethalLib.Modules.Enemies.RegisterEnemy(EnemyType, rarity, LethalLib.Modules.Levels.LevelTypes.None, SpawnType, /*new string[] { "OoblterraLevel" },*/ EnemyInfo, EnemyKeyword);
-            EnemyList?.Add(new SpawnableEnemyWithRarity { enemyType = EnemyType, rarity = rarity });
+            EnemyList?.Add(new SpawnableEnemyWithRarity(EnemyType, rarity));
             Log.Info("Monster Loaded: " + EnemyName.Remove(EnemyName.Length - 6, 6));
         }
 
         private static void SetMonsterStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableEnemyWithRarity> CurrentMoonEnemyList, List<SpawnableEnemyWithRarity> OoblterraEnemyList) {
             List<SpawnableEnemyWithRarity> WeightedOoblterraEnemies = new();
             foreach(SpawnableEnemyWithRarity Enemy in OoblterraEnemyList) {
-                WeightedOoblterraEnemies.Add(new SpawnableEnemyWithRarity { enemyType = Enemy.enemyType, rarity = Enemy.rarity * WTOBase.WTOWeightScale.Value });
+                WeightedOoblterraEnemies.Add(new SpawnableEnemyWithRarity(Enemy.enemyType, Enemy.rarity * WTOBase.WTOWeightScale.Value));
             }
             switch (TiedToLabState) {
                 case TiedToLabEnum.WTOOnly:

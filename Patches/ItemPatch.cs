@@ -52,7 +52,7 @@ namespace Welcome_To_Ooblterra.Patches
         };
 
         //PATCHES
-        [HarmonyPatch(typeof(RoundManager), "SetLockedDoors")]
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SetLockedDoors))]
         [HarmonyPrefix]
         private static void ReplaceKeys(RoundManager __instance)
         {
@@ -65,7 +65,7 @@ namespace Welcome_To_Ooblterra.Patches
             __instance.keyPrefab = KeyObject;
         }
 
-        [HarmonyPatch(typeof(CozyLights), "SetAudio")]
+        [HarmonyPatch(typeof(CozyLights), nameof(CozyLights.SetAudio))]
         [HarmonyPrefix]
         private static bool ReplaceDiscoBall(CozyLights __instance)
         {
@@ -85,7 +85,7 @@ namespace Welcome_To_Ooblterra.Patches
             return true;
         }
 
-        [HarmonyPatch(typeof(RoundManager), "SpawnScrapInLevel")]
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnScrapInLevel))]
         [HarmonyPrefix]
         private static void SetItemsWTO(RoundManager __instance)
         {
@@ -131,7 +131,7 @@ namespace Welcome_To_Ooblterra.Patches
             List<SpawnableItemWithRarity> WeightedOoblterraItems = new();
             foreach (SpawnableItemWithRarity Item in OoblterraItemList)
             {
-                WeightedOoblterraItems.Add(new SpawnableItemWithRarity { spawnableItem = Item.spawnableItem, rarity = Item.rarity * WTOBase.WTOWeightScale.Value });
+                WeightedOoblterraItems.Add(new SpawnableItemWithRarity(Item.spawnableItem, Item.rarity * WTOBase.WTOWeightScale.Value));
             }
             switch (TiedToLabState)
             {

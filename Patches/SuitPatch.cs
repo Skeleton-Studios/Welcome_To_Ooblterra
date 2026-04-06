@@ -34,7 +34,7 @@ namespace Welcome_To_Ooblterra.Patches
         private static readonly WTOBase.WTOLogger Log = new(typeof(SuitPatch), LogSourceType.Generic);
 
         //PATCHES
-        [HarmonyPatch(typeof(StartOfRound), "SceneManager_OnLoadComplete1")]
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.SceneManager_OnLoadComplete1))]
         [HarmonyPrefix]
         private static void StartPatch(ref StartOfRound __instance) {
             GhostPlayerSuit = WTOBase.ContextualLoadAsset<Material>(SuitPath + "GhostPlayerSuit.mat");
@@ -59,11 +59,11 @@ namespace Welcome_To_Ooblterra.Patches
             }*/
         }
 
-        [HarmonyPatch(typeof(StartOfRound), "Start")]
-        [HarmonyPatch(typeof(RoundManager), "GenerateNewLevelClientRpc")]
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.Start))]
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.GenerateNewLevelClientRpc))]
         [HarmonyPostfix]
         [HarmonyPriority(0)]
-        private static void PatchPosters(StartOfRound __instance) {
+        private static void PatchPosters() {
             if (WTOBase.WTOCustomPoster.Value){
                 ReplacePoster();
             }

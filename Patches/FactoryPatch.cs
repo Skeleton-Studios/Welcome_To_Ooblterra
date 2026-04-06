@@ -21,7 +21,7 @@ namespace Welcome_To_Ooblterra.Patches
         private static readonly WTOBase.WTOLogger Log = new(typeof(FactoryPatch), LogSourceType.Generic);
 
         //PATCHES 
-        [HarmonyPatch(typeof(RoundManager), "SpawnMapObjects")]
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnMapObjects))]
         [HarmonyPrefix]
         private static bool WTOSpawnMapObjects(RoundManager __instance) {
             if (WTOBase.WTOForceHazards.Value == TiedToLabEnum.UseMoonDefault && __instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName) {

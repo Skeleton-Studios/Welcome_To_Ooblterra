@@ -109,7 +109,7 @@ namespace Welcome_To_Ooblterra.Properties
 
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
-        private const string modVersion = "2.0.1";
+        private const string modVersion = "2.1.0";
 
         private readonly Harmony WTOHarmony = new(modGUID);
         public static ManualLogSource WTOLogSource;
