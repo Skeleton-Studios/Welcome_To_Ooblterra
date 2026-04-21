@@ -12,12 +12,12 @@ namespace Welcome_To_Ooblterra.Patches
         */
     internal class SuitPatch {
 
+        // TODO: Move the suits to their own asset bundle so they can be loaded properly without disturbing LLL.
         private const string SuitPath = "CustomSuits/";
-        private const string BlackSuitPath = "CustomSuits/BlackSuits";
 
         private const string PosterGameObject = "HangarShip/Plane.001";
 
-        static readonly string[] SuitMaterialNames = new string[] {
+        static readonly string[] SuitMaterialNames = [
             "RedSuit.mat",
             "ProtSuit.mat",
             "YellowSuit.mat",
@@ -25,7 +25,7 @@ namespace Welcome_To_Ooblterra.Patches
             "BlueSuit.mat",
             "IndigoSuit.mat",
             "MackSuit.mat"
-        };
+        ];
 
         private static bool SuitsLoaded = false;
 
@@ -41,22 +41,6 @@ namespace Welcome_To_Ooblterra.Patches
             if (WTOBase.WTOCustomSuits.Value) {
                 LoadSuits(SuitPath);
             }
-            /*
-            switch (WTOBase.WTOCustomSuits.Value) {
-                case SuitStatus.Enable:
-                    LoadSuits(SuitPath);
-                    return;
-                case SuitStatus.Disable:
-                    return;
-                case SuitStatus.Purchase:
-                    AddSuitPurchaseNode();
-                    return;
-                case SuitStatus.SleepsSpecial:
-                    LoadSuits(BlackSuitPath);
-                    return;
-                default:
-                    return;
-            }*/
         }
 
         [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.Start))]
@@ -67,23 +51,8 @@ namespace Welcome_To_Ooblterra.Patches
             if (WTOBase.WTOCustomPoster.Value){
                 ReplacePoster();
             }
-            /*
-            switch (WTOBase.WTOCustomPoster.Value) {
-                case PosterStatus.ReplaceVanilla:
-                    ReplacePoster();
-                    return;
-                case PosterStatus.AddAsDecor:
-                    AddPosterShipDeco();
-                    return;
-                case PosterStatus.Disable:
-                    return;
-                default: 
-                    return;
-            }
-            */
         }
 
-        //METHODS
         private static void LoadSuits(string RelevantPath) {
             if (SuitsLoaded) {
                 Log.Warning("SUITS ALREADY LOADED!");
@@ -103,9 +72,7 @@ namespace Welcome_To_Ooblterra.Patches
             }
             SuitsLoaded = true;
         }
-        private static void AddSuitPurchaseNode() {
 
-        }
         private static void ReplacePoster() {
             if (GameObject.Find(PosterGameObject) == null) {
                 return;
@@ -113,9 +80,6 @@ namespace Welcome_To_Ooblterra.Patches
             Material[] materials = ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials;
             materials[1] = WTOBase.ContextualLoadAsset<Material>(SuitPath + "Poster.mat");
             ((Renderer)GameObject.Find(PosterGameObject).GetComponent<MeshRenderer>()).materials = materials;
-        }
-        private static void AddPosterShipDeco() {
-
         }
     }
 }

@@ -1,69 +1,15 @@
 ﻿using HarmonyLib;
 using UnityEngine;
-using NetworkPrefabs = LethalLib.Modules.NetworkPrefabs;
-using LethalLib.Modules;
-using System.Collections.Generic;
 using Welcome_To_Ooblterra.Properties;
-using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Patches
 {
     internal class ItemPatch
     {
-
-
         private static AudioClip CachedDiscoBallMusic;
         private static AudioClip OoblterraDiscoMusic;
-        public class ItemData
-        {
-            private readonly string AssetName;
-            private readonly int Rarity;
-            private Item Itemref;
 
-            public ItemData(string name, int rarity)
-            {
-                AssetName = ItemPath + name;
-                Rarity = rarity;
-            }
-
-            public string GetItemPath() { return AssetName; }
-            public int GetRarity() { return Rarity; }
-            public void SetItem(Item ItemToSet) { Itemref = ItemToSet; }
-            public Item GetItem() { return Itemref; }
-
-        }
         private const string ItemPath = "CustomItems/";
-
-        private static readonly Dictionary<string, List<SpawnableItemWithRarity>> MoonsToItemLists = new();
-
-        //This array stores all our custom items
-        public static ItemData[] ItemList = new ItemData[] {
-            new("AlienCrate.asset", 30),
-            new("FiveSixShovel.asset", 10),
-            new("HandCrystal.asset", 30),
-            new("OoblCorpse.asset", 5),
-            new("StatueSmall.asset", 40),
-            new("WandCorpse.asset", 5),
-            new("WandFeed.asset", 20),
-            new("SprintTotem.asset", 25),
-            new("CursedTotem.asset", 20),
-            new("Chems.asset", 0),
-            new("Battery.asset", 0)
-        };
-
-        //PATCHES
-        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SetLockedDoors))]
-        [HarmonyPrefix]
-        private static void ReplaceKeys(RoundManager __instance)
-        {
-            if (__instance.currentLevel.PlanetName != MoonPatch.MoonFriendlyName)
-            {
-                return;
-            }
-
-            GameObject KeyObject = GameObject.Instantiate(WTOBase.ContextualLoadAsset<GameObject>(ItemPath + "OoblKey.prefab"), __instance.mapPropsContainer.transform);
-            __instance.keyPrefab = KeyObject;
-        }
 
         [HarmonyPatch(typeof(CozyLights), nameof(CozyLights.SetAudio))]
         [HarmonyPrefix]
@@ -85,63 +31,11 @@ namespace Welcome_To_Ooblterra.Patches
             return true;
         }
 
-        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.SpawnScrapInLevel))]
-        [HarmonyPrefix]
-        private static void SetItemsWTO(RoundManager __instance)
-        {
-            string PlanetName = __instance.currentLevel.PlanetName;
-            if (DungeonManager.CurrentExtendedDungeonFlow != FactoryPatch.OoblDungeonFlow)
-            {
-                if (MoonsToItemLists.TryGetValue(PlanetName, out List<SpawnableItemWithRarity> ResultItemList))
-                {
-                    __instance.currentLevel.spawnableScrap = ResultItemList;
-                }
-                return;
-            }
-            SetItemStuff(WTOBase.WTOForceScrap.Value, ref __instance.currentLevel.spawnableScrap, MoonsToItemLists[MoonPatch.MoonFriendlyName]);
-        }
-
         //METHODS
         public static void Start()
         {
-            //Create our custom items
-            Item NextItemToProcess;
-            foreach (ItemData MyCustomScrap in ItemList)
-            {
-                //Load item based on its path 
-                NextItemToProcess = WTOBase.ContextualLoadAsset<Item>(MyCustomScrap.GetItemPath());
-                //Register it with LethalLib
-                NetworkPrefabs.RegisterNetworkPrefab(NextItemToProcess.spawnPrefab);
-                //if it aint broke... (but technically I should get rid of the reference to ooblterra because I dont want to have all the scrap listed twice)
-                LethalLib.Modules.Items.RegisterScrap(NextItemToProcess, MyCustomScrap.GetRarity(), Levels.LevelTypes.None);
-                //Set the item reference in the ItemData class
-                MyCustomScrap.SetItem(NextItemToProcess);
-                //Debug.Log("Item Loaded: " + NextItemToProcess.name);
-            }
-            NetworkPrefabs.RegisterNetworkPrefab(WTOBase.ContextualLoadAsset<GameObject>(ItemPath + "OoblKey.prefab"));
             CachedDiscoBallMusic = WTOBase.ContextualLoadAsset<AudioClip>(ItemPath + "Boombox6QuestionMark.ogg", false);
             OoblterraDiscoMusic = WTOBase.ContextualLoadAsset<AudioClip>(ItemPath + "ooblboombox.ogg", false);
-            if (!MoonsToItemLists.ContainsKey(MoonPatch.MoonFriendlyName))
-            {
-                MoonsToItemLists.Add(MoonPatch.MoonFriendlyName, MoonPatch.OoblterraExtendedLevel.SelectableLevel.spawnableScrap);
-            }
-        }
-        private static void SetItemStuff(TiedToLabEnum TiedToLabState, ref List<SpawnableItemWithRarity> CurrentMoonItemList, List<SpawnableItemWithRarity> OoblterraItemList)
-        {
-            List<SpawnableItemWithRarity> WeightedOoblterraItems = new();
-            foreach (SpawnableItemWithRarity Item in OoblterraItemList)
-            {
-                WeightedOoblterraItems.Add(new SpawnableItemWithRarity(Item.spawnableItem, Item.rarity * WTOBase.WTOWeightScale.Value));
-            }
-            switch (TiedToLabState)
-            {
-                case TiedToLabEnum.WTOOnly:
-                    CurrentMoonItemList = OoblterraItemList;
-                    break;
-                case TiedToLabEnum.AppendWTO:
-                    CurrentMoonItemList.AddRange(WeightedOoblterraItems);
-                    break;
-            }
         }
     }
 }
