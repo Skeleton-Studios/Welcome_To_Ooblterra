@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Welcome_To_Ooblterra.Properties;
 using Unity.Netcode;
 
 namespace Welcome_To_Ooblterra.Enemies

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Netcode;
-using Welcome_To_Ooblterra.Properties;
 using System.Linq;
 
 namespace Welcome_To_Ooblterra.Items

@@ -4,7 +4,6 @@ using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies;
-using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things
 {

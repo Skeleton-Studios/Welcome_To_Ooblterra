@@ -6,7 +6,6 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 using Welcome_To_Ooblterra.Items;
-using Welcome_To_Ooblterra.Properties;
 using static LethalLib.Modules.Enemies;
 
 namespace Welcome_To_Ooblterra.Enemies

@@ -6,7 +6,6 @@ using UnityEngine.Assertions.Must;
 using System.Runtime.CompilerServices;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
 using static Welcome_To_Ooblterra.Enemies.WTOEnemy;
-using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Enemies
 {

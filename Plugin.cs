@@ -3,6 +3,7 @@ using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
 using LethalLevelLoader;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
@@ -10,35 +11,39 @@ using System.Linq;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Patches;
+using Welcome_To_Ooblterra.Enemies;
 
-namespace Welcome_To_Ooblterra.Properties
+namespace Welcome_To_Ooblterra
 {
     /* S/O to Minx, whose tutorial provided a great starting point.
         * Wouldn'tve had any of this code without it, thank you!
         */
 
     [HideInInspector]
-    public enum SuitStatus {
+    public enum SuitStatus
+    {
         Enable,
         Purchase,
         Disable,
         SleepsSpecial
     }
 
-    public enum PosterStatus {
+    public enum PosterStatus
+    {
         ReplaceVanilla,
         AddAsDecor,
         Disable
     }
 
-    public enum FootstepEnum { 
+    public enum FootstepEnum
+    {
         Enable,
         Quiet,
         Disable
     }
 
-    public enum TiedToLabEnum {
+    public enum TiedToLabEnum
+    {
         WTOOnly,
         AppendWTO,
         UseMoonDefault
@@ -75,11 +80,12 @@ namespace Welcome_To_Ooblterra.Properties
     }
 
     [BepInPlugin(modGUID, modName, modVersion)]
-    public class WTOBase : BaseUnityPlugin {
+    public class WTOBase : BaseUnityPlugin
+    {
 
-        public class WTOLogger(System.Type Type, LogSourceType SourceType = LogSourceType.Generic)
+        public class WTOLogger(Type Type, LogSourceType SourceType = LogSourceType.Generic)
         {
-            public readonly System.Type Type = Type;
+            public readonly Type Type = Type;
             public readonly LogSourceType SourceType = SourceType;
 
             public void Debug(string text, bool AddFlair = true, bool ForcePrint = false)
@@ -102,8 +108,8 @@ namespace Welcome_To_Ooblterra.Properties
                 LogToConsole(Type, SourceType, LogType.Error, text, AddFlair, ForcePrint);
             }
         }
-        
-        private class AssetBundleLoadException(string message) : System.Exception(message)
+
+        private class AssetBundleLoadException(string message) : Exception(message)
         {
         }
 
@@ -152,7 +158,13 @@ namespace Welcome_To_Ooblterra.Properties
 
         public static ConfigEntry<string> WTOContourMapWritePath;
 
-        private static readonly WTOLogger Log = new (typeof(WTOBase));
+        private static readonly WTOLogger Log = new(typeof(WTOBase));
+
+        private static AudioClip? originalDiscoBallMusic;
+        private static AudioClip? ooblterraCozyLightsMusic;
+        public static Material? ghostPlayerSuit;
+
+        private static bool suitsLoaded = false;
 
         void Awake()
         {
@@ -193,163 +205,14 @@ namespace Welcome_To_Ooblterra.Properties
 
             WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
 
-            FixLLLLoadingFreeze();
 
             try
             {
                 LoadWelcomeToOoblterra();
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Log.Error($"Failed to load Welcome To Ooblterra. If you have the time, please report this error on our GitHub repository https://github.com/Skeleton-Studios/Welcome_To_Ooblterra/issues : {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Applies a loading freeze fix to Lethal Level Loader.
-        /// This currently happens because LLL caches all scene bundles after the first run, and
-        /// then will not attempt to load them on startup from then on.
-        /// This causes LLL to never get past the loading phase and simply sit stuck on the Online / LAN screen.
-        /// 
-        /// There are some issues open on LLL's repository about this:
-        /// https://github.com/IAmBatby/LethalLevelLoader/issues/177
-        /// https://github.com/IAmBatby/LethalLevelLoader/issues/175
-        /// </summary>
-        private void FixLLLLoadingFreeze()
-        {
-            Assembly assembly = Assembly.GetAssembly(typeof(LethalLevelLoader.AssetBundleLoader));
-
-            System.Type AssetBundleLoaderType = assembly.GetType("LethalLevelLoader.AssetBundles.AssetBundleLoader");
-            if (AssetBundleLoaderType == null)
-            {
-                Log.Warning("Could not find LethalLevelLoader.AssetBundles.AssetBundleLoader type");
-                return;
-            }
-
-            PropertyInfo AllowLoadingProperty = AssetBundleLoaderType.GetProperty("AllowLoading", BindingFlags.Static | BindingFlags.NonPublic);
-            if(AllowLoadingProperty == null)
-            {
-                Log.Warning("Could not find AllowLoading field in AssetBundleLoader");
-                return;
-            }
-
-            bool AllowLoading = (bool)AllowLoadingProperty.GetValue(null);
-
-            if(AllowLoading)
-            {
-                // This can't be in the errored state, so we don't need to do anything.
-                Log.Info("AllowLoading is already true, so AssetBundleLoader is not in a stuck state. No need to apply fix.");
-                return;
-            }
-
-            // Next, get the "Instance" field value, which is an instance of the inner AssetBundleLoader class, 
-            // and get Instance.AssetBundleInfos List
-
-            PropertyInfo InstanceProperty = AssetBundleLoaderType.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public);
-            if(InstanceProperty == null)
-            {
-                Log.Warning("Could not find Instance field in AssetBundleLoader");
-                return;
-            }
-
-            object AssetBundleLoaderInstance = InstanceProperty.GetValue(null);
-
-            FieldInfo AssetBundleInfosField = AssetBundleLoaderType.GetField("AssetBundleInfos", BindingFlags.Instance | BindingFlags.NonPublic);
-
-            if(AssetBundleInfosField == null)
-            {
-                Log.Warning("Could not find AssetBundleInfos field in AssetBundleLoader");
-                return;
-            }
-            
-            // This type is luckily public
-            List<LethalLevelLoader.AssetBundles.AssetBundleInfo> AssetBundleInfos = (List<LethalLevelLoader.AssetBundles.AssetBundleInfo>)AssetBundleInfosField.GetValue(AssetBundleLoaderInstance);
-
-            if(AssetBundleInfos.Count == 0)
-            {
-                // If there's none, then im not sure how we're in this state.
-                Log.Info("AssetBundleInfos list is empty, so AssetBundleLoader is not in a stuck state. No need to apply fix.");
-                return;
-            }
-
-            // Next, get the internal static knownSceneBundles dictionary
-            FieldInfo fieldInfo = AssetBundleLoaderType.GetField("knownSceneBundles", BindingFlags.Static | BindingFlags.NonPublic);
-
-            if (fieldInfo == null)
-            {
-                Log.Warning("Could not find knownSceneBundles field in AssetBundleLoader");
-                return;
-            }
-    
-            Dictionary<string, LethalLevelLoader.AssetBundles.LethalBundleManifest> knownSceneBundles = (Dictionary<string, LethalLevelLoader.AssetBundles.LethalBundleManifest>)fieldInfo.GetValue(null);
-
-            bool allSceneBundlesAreKnownAndSkipped = true;
-            foreach (var info in AssetBundleInfos)
-            {
-                if (!knownSceneBundles.TryGetValue(info.AssetBundleFileName, out var bundleManifest))
-                {
-                    // Does not exist in knownSceneBundles, so this will hit TryLoadBundle path which is OK
-                    allSceneBundlesAreKnownAndSkipped = false;
-                    break;
-                }
-
-                if(bundleManifest.timestamp != File.GetLastWriteTime(info.AssetBundleFilePath).Ticks)
-                {
-                    // This will trigger TryLoadBundle path which is OK.
-                    allSceneBundlesAreKnownAndSkipped = false;
-                    break;
-                }
-            }
-
-            if(!allSceneBundlesAreKnownAndSkipped)
-            {
-                // TryLoadBundle will have been called
-                Log.Info("Not all scene bundles are known and skipped, so AssetBundleLoader is not in a stuck state. No need to apply fix.");
-                return;
-            }
-
-            // Now, check if all bundles have hasInitialized private member set to true,
-            // And also check the activeLoadRequest private member is not null
-            FieldInfo hasInitializedField = typeof(LethalLevelLoader.AssetBundles.AssetBundleInfo).GetField("hasInitialized", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (hasInitializedField == null) {
-                Log.Warning("Could not find hasInitialized field in AssetBundleInfo");
-                return;
-            }
-
-            FieldInfo activeLoadRequestField = typeof(LethalLevelLoader.AssetBundles.AssetBundleInfo).GetField("activeLoadRequest", BindingFlags.Instance | BindingFlags.NonPublic);
-            if (activeLoadRequestField == null) {
-                Log.Warning("Could not find activeLoadRequest field in AssetBundleInfo");
-                return;
-            }
-
-            foreach (var info in AssetBundleInfos) {
-                bool hasInitialized = (bool)hasInitializedField.GetValue(info);
-                object activeLoadRequest = activeLoadRequestField.GetValue(info);
-                if (!hasInitialized || activeLoadRequest != null) {
-                    // Not sure what to make of this really - let's presume it's fine
-                    return;
-                }
-            }
-
-            FieldInfo requestedBundleCountField = AssetBundleLoaderType.GetField("requestedBundleCount", BindingFlags.Static | BindingFlags.NonPublic);
-            if (requestedBundleCountField == null) {
-                Log.Warning("Could not find requestedBundleCount field in AssetBundleLoader");
-                return;
-            }
-
-            FieldInfo processedBundleCount = AssetBundleLoaderType.GetField("processedBundleCount", BindingFlags.Static | BindingFlags.NonPublic);
-            if (processedBundleCount == null) {
-                Log.Warning("Could not find processedBundleCount field in AssetBundleLoader");
-                return;
-            }
-
-            Log.Info("AssetBundleLoader appears to be in a stuck state where all bundles are being skipped due to being known, but they have not been marked as initialized. Attempting to fix by loading bundles directly.");
-
-            requestedBundleCountField.SetValue(AssetBundleLoaderInstance, AssetBundleInfos.Count);
-            processedBundleCount.SetValue(AssetBundleLoaderInstance, 0);
-
-            foreach(var info in AssetBundleInfos) {
-                info.TryLoadBundle();
             }
         }
 
@@ -362,23 +225,10 @@ namespace Welcome_To_Ooblterra.Properties
             Log.Info("Loading - Start!");
 
             WTOHarmony.PatchAll(typeof(WTOBase));
-            WTOHarmony.PatchAll(typeof(FactoryPatch));
-            WTOHarmony.PatchAll(typeof(ItemPatch));
-            WTOHarmony.PatchAll(typeof(MonsterPatch));
-            WTOHarmony.PatchAll(typeof(MoonPatch));
-            WTOHarmony.PatchAll(typeof(SuitPatch));
-            WTOHarmony.PatchAll(typeof(TerminalPatch));
 
-            Log.Info("Harmony Patches applied! Loading asset bundle...");
+            Log.Info("Harmony Patches applied! Loading non-LLL asset bundle...");
 
-            LoadAssetBundle();
-
-            Log.Info("Asset bundle loaded! Reading assets and registering objects...");
-
-            MoonPatch.Start();
-            FactoryPatch.Start();
-            ItemPatch.Start();
-            MonsterPatch.Start();
+            LoadNonLLLAssetBundle();
 
             Log.Info("Assets read successfully! Applying netcode runtime init...");
 
@@ -401,16 +251,307 @@ namespace Welcome_To_Ooblterra.Properties
         }
 
         /// <summary>
-        /// Loads the main asset bundle for WTO.
-        /// Since v73, the asset bundle is now just one "content" bundle
-        /// instead of several other bundles.
+        /// Replace disco ball music with Ooblterra music.
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <returns></returns>
+        [HarmonyPatch(typeof(CozyLights), nameof(CozyLights.SetAudio))]
+        [HarmonyPrefix]
+        private static bool ReplaceCozyLights(CozyLights __instance)
+        {
+            if(__instance.gameObject.transform.parent == null || !__instance.gameObject.transform.parent.name.Contains("Disco")) 
+            {
+                // this is not the disco ball
+                return true;
+            }
+
+            if(IsOnOoblterra())
+            {
+                Log.Info("Found disco ball cozy lights, replacing music...");
+                originalDiscoBallMusic = __instance.turnOnAudio.clip;
+
+            }
+            else
+            {
+                // if not on ooblterra, check if the music is set to ooblterra music and return it back
+                if (__instance.turnOnAudio.clip == ooblterraCozyLightsMusic)
+                {
+                    __instance.turnOnAudio.clip = originalDiscoBallMusic;
+                }
+
+            }
+
+            return true;
+        }
+
+        /// <summary>
+        /// Something related to AI, idk.
+        /// </summary>
+        /// <param name="__instance"></param>
+        [HarmonyPatch(typeof(EnemyAI), nameof(EnemyAI.SetEnemyStunned))]
+        [HarmonyPostfix]
+        private static void SetOwnershipToStunningPlayer(EnemyAI __instance)
+        {
+            if (__instance is not WTOEnemy || __instance.stunnedByPlayer == null)
+            {
+                return;
+            }
+            Log.Info($"Enemy: {__instance.GetType()} STUNNED BY: {__instance.stunnedByPlayer}; Switching ownership...");
+            __instance.ChangeOwnershipOfEnemy(__instance.stunnedByPlayer.actualClientId);
+        }
+
+        /// <summary>
+        /// Fix for OoblGhostAI re-enabling the nav agent each frame.
+        /// This would cause a huge number of errors to be printed in the console.
+        /// The ghost does not even use the nav agent anyway
+        /// The base code for this simply calls
+        /// isClientCalculatingAI = enable
+        /// navAgent.enabled = enable.
+        /// </summary>
+        /// <param name="__instance"></param>
+        /// <param name="enable"></param>
+        /// <returns></returns>
+        [HarmonyPatch(typeof(EnemyAI), nameof(EnemyAI.SetClientCalculatingAI))]
+        [HarmonyPrefix]
+        private static bool PreventGhostAgentEnable(EnemyAI __instance, bool enable)
+        {
+
+            if (__instance is OoblGhostAI)
+            {
+                __instance.isClientCalculatingAI = enable;
+                return false;
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Inform Oobl ghosts whenever the signal translator is used, so they can properly update their behavior.
+        /// </summary>
+        [HarmonyPatch(typeof(HUDManager), nameof(HUDManager.UseSignalTranslatorClientRpc))]
+        [HarmonyPostfix]
+        private static void TellAllGhostsOfSignalTransmission()
+        {
+            OoblGhostAI[] Ghosts = FindObjectsOfType<OoblGhostAI>();
+            foreach (OoblGhostAI Ghost in Ghosts)
+            {
+                Ghost.EvalulateSignalTranslatorUse();
+            }
+        }
+
+        /// <summary>
+        /// Patches to apply when the scene loads.
+        /// </summary>
+        /// <param name="__instance"></param>
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.SceneManager_OnLoadComplete1))]
+        [HarmonyPostfix]
+        private static void ManageNav(StartOfRound __instance)
+        {
+            // confirm why this is needed
+            SoundManager.Instance.DaytimeMusic = new AudioClip[0];
+        }
+
+        /// <summary>
+        /// Fix up the fog animation
+        /// </summary>
+        /// <param name="__instance"></param>
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.OnShipLandedMiscEvents))]
+        [HarmonyPostfix]
+        private static void SetFogTies(StartOfRound __instance)
+        {
+            if (!IsOnOoblterra())
+            {
+                return;
+            }
+
+            Animator OoblFogAnimator = GameObject.Find("OoblFog").gameObject.GetComponent<Animator>();
+            Log.Debug($"Fog animator found : {OoblFogAnimator != null}");
+            if (TimeOfDay.Instance.sunAnimator == OoblFogAnimator)
+            {
+                Log.Debug($"Sun Animator IS fog animator, supposedly");
+                return;
+            }
+            TimeOfDay.Instance.sunAnimator = OoblFogAnimator;
+            Log.Debug($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
+            // confirm why this is needed
+            TimeOfDay.Instance.playDelayedMusicCoroutine = null;
+        }
+
+        /// <summary>
+        ///  Fix up ooblterra lighting
+        /// </summary>
+        /// <param name="__instance"></param>
+        [HarmonyPatch(typeof(TimeOfDay), nameof(TimeOfDay.SetInsideLightingDimness))]
+        [HarmonyPrefix]
+        private static void SpoofLightValues(TimeOfDay __instance)
+        {
+            if (!IsOnOoblterra())
+            {
+                return;
+            }
+            Light Direct = GameObject.Find("ActualSun").GetComponent<Light>();
+            Light Indirect = GameObject.Find("ActualIndirect").GetComponent<Light>();
+            TimeOfDay timeOfDay = FindObjectOfType<TimeOfDay>();
+            timeOfDay.sunIndirect = Indirect;
+            timeOfDay.sunDirect = Direct;
+        }
+
+        /// <summary>
+        /// If enabled, automatically route to Ooblterra.
+        /// This is mostly used for the automatic contour map renderer, but if you
+        /// want you can use it for other things too.
+        /// </summary>
+        /// <param name="__instance"></param>
+        [HarmonyPatch(typeof(StartMatchLever), nameof(StartMatchLever.Start))]
+        [HarmonyPrefix]
+        private static void AutoRouteToOoblterra(StartMatchLever __instance)
+        {
+            // applied to StartMatchLevel since this will appear when the ship loads in.
+            // if we are set to autoroute, change the level to ooblterra.
+            if (WTOAutoRoute.Value && StartOfRound.Instance.IsServer)
+            {
+                StartOfRound.Instance.StartCoroutine(RouteToOoblterraOnceLLLIsLoaded(__instance));
+            }
+        }
+
+        /// <summary>
+        /// Replace the poster in the ship with the custom Ooblterra poster.
+        /// </summary>
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.Start))]
+        [HarmonyPatch(typeof(RoundManager), nameof(RoundManager.GenerateNewLevelClientRpc))]
+        [HarmonyPostfix]
+        [HarmonyPriority(0)]
+        private static void PatchPosters()
+        {
+            if (WTOCustomPoster.Value)
+            {
+                ReplacePoster();
+            }
+        }
+
+        private static void ReplacePoster()
+        {
+            GameObject poster = GameObject.Find("HangarShip/Plane.001");
+            if (poster == null)
+            {
+                return;
+            }
+            MeshRenderer meshRenderer = poster.GetComponent<MeshRenderer>();
+            Material[] materials = meshRenderer.materials;
+            materials[1] = ContextualLoadAsset<Material>("CustomSuits/Poster.mat");
+            meshRenderer.materials = materials;
+        }
+
+        private static Func<bool> GetIsLLLReadyFunc()
+        {
+            Assembly assembly = Assembly.GetAssembly(typeof(AssetBundleLoader));
+
+            Type NetworkBundleManagerType = assembly.GetType("LethalLevelLoader.NetworkBundleManager");
+
+            if (NetworkBundleManagerType == null)
+            {
+                Log.Warning("Could not find LethalLevelLoader.NetworkBundleManager type");
+                return () => true;
+            }
+
+            PropertyInfo InstanceProperty = NetworkBundleManagerType.GetProperty("Instance", BindingFlags.Static | BindingFlags.Public);
+            if (InstanceProperty == null)
+            {
+                Log.Warning("Could not find Instance field in NetworkBundleManager");
+                return () => true;
+            }
+
+            object NetworkBundleManagerInstance = InstanceProperty.GetValue(null);
+
+            FieldInfo AllowedToLoadLevelField = NetworkBundleManagerType.GetField("allowedToLoadLevel", BindingFlags.Instance | BindingFlags.NonPublic);
+
+            if (AllowedToLoadLevelField == null)
+            {
+                Log.Warning("Could not find allowedToLoadLevel field in NetworkBundleManager");
+                return () => true;
+            }
+
+            NetworkVariable<bool> allowedToLoadLevel = AllowedToLoadLevelField.GetValue(NetworkBundleManagerInstance) as NetworkVariable<bool>;
+
+            return () =>
+            {
+                try
+                {
+                    return allowedToLoadLevel.Value;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warning($"Exception while trying to get allowedToLoadLevel value: {ex}");
+                    return true;
+                }
+            };
+        }
+
+        private static ExtendedLevel? GetOooblterraExtendedLevel()
+        {
+            foreach (ExtendedLevel level in PatchedContent.ExtendedLevels)
+            {
+                foreach (ContentTag tag in level.ContentTags)
+                {
+                    if (tag.contentTagName == "Welcome To Ooblterra!")
+                    {
+                        return level;
+                    }
+                }
+            }
+            return null;
+        }
+
+        private static string GetOoblterraMoonName()
+        {
+            return GetOooblterraExtendedLevel()?.SelectableLevel.PlanetName ?? "523 Ooblterra";
+        }
+
+        private static string? GetCurrentMoonName()
+        {
+            return LevelManager.CurrentExtendedLevel?.SelectableLevel?.PlanetName;
+        }
+
+        private static bool IsOnOoblterra()
+        {
+            return GetCurrentMoonName() == GetOoblterraMoonName();
+        }
+
+        private static IEnumerator RouteToOoblterraOnceLLLIsLoaded(StartMatchLever startMatchLever)
+        {
+            Log.Info("Waiting for LLL to finish loading before routing to Ooblterra...");
+            yield return new WaitUntil(GetIsLLLReadyFunc());
+
+            ExtendedLevel? ooblterraLevel = GetOooblterraExtendedLevel();
+            if (ooblterraLevel == null)
+            {
+                Log.Error("Could not find Ooblterra extended level! Cannot route to Ooblterra.");
+                yield break;
+            }
+
+            Log.Info("LLL finished loading, routing to Ooblterra...");
+            StartOfRound.Instance.ChangeLevel(ooblterraLevel.SelectableLevel.levelID);
+            StartOfRound.Instance.ArriveAtLevel();
+
+            Log.Info("Pulling lever to start match...");
+            startMatchLever.leverHasBeenPulled = true;
+            startMatchLever.leverAnimatorObject.SetBool("pullLever", true);
+            startMatchLever.triggerScript.interactable = false;
+            startMatchLever.PullLever();
+        }
+
+        /// <summary>
+        /// Loads the non-LLL asset bundle for WTO.
+        /// This contains assets that are not auto-registered unlike the LLL content bundle.
+        /// This needs to be a separate bundle to not step on LLL's toes, since LLL will load
+        /// all bundles that end with .lethalbundle. If we try and load the asset bundle too, 
+        /// we get an error.
         /// </summary>
         /// <exception cref="FileNotFoundException">If the asset bundle can't be found</exception>
         /// <exception cref="AssetBundleLoadException">If the asset bundle fails to load for some reason</exception>
-        private void LoadAssetBundle()
+        private void LoadNonLLLAssetBundle()
         {
             string baseDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string fullPath = Path.Combine(baseDir, "content");
+            string fullPath = Path.Combine(baseDir, "non_lll_content");
             if (!File.Exists(fullPath))
             {
                 throw new FileNotFoundException($"Asset bundle not found at path: {fullPath}");
@@ -421,15 +562,21 @@ namespace Welcome_To_Ooblterra.Properties
             {
                 throw new AssetBundleLoadException($"Failed to load asset bundle from path: {fullPath}");
             }
+            
+            // Grab all the references we need.
+            ooblterraCozyLightsMusic = ContextualLoadAsset<AudioClip>("CustomItems/ooblboombox.ogg", false);
+            ghostPlayerSuit = WTOBase.ContextualLoadAsset<Material>("CustomSuits/GhostPlayerSuit.mat", false);
         }
 
         private static string ResolveRootPath(string pathToAsset)
         {
             // Need to identify what the root path was when this asset bundle was build. It can change depending on where
             // the files were in unity. First, try some known ones, then do a brute force check.
-            foreach (string rootPath in RootPaths) {
+            foreach (string rootPath in RootPaths)
+            {
                 var fullPath = Path.Join(rootPath, pathToAsset).ToLower();
-                if (ContentAssetBundle.Contains(fullPath)) {
+                if (ContentAssetBundle.Contains(fullPath))
+                {
                     Log.Info($"Resolved asset bundle root path: {rootPath}");
                     return rootPath;
                 }
@@ -437,9 +584,11 @@ namespace Welcome_To_Ooblterra.Properties
 
             // Failed to find using known root paths, so do a brute force check 
             // of all asset names in the bundle to see if we can find the target asset and work backwards from there.
-            foreach (var name in ContentAssetBundle.GetAllAssetNames()) {
+            foreach (var name in ContentAssetBundle.GetAllAssetNames())
+            {
                 var lowerName = name.ToLower();
-                if (lowerName.EndsWith(pathToAsset.ToLower())) {
+                if (lowerName.EndsWith(pathToAsset.ToLower()))
+                {
                     return name[..^pathToAsset.Length];
                 }
             }
@@ -457,25 +606,31 @@ namespace Welcome_To_Ooblterra.Properties
         /// <param name="LogLoading">Whether to log the loading process</param>
         /// <returns>The loaded asset of type T</returns>
         /// <exception cref="AssetBundleLoadException">Thrown if the asset bundle is not loaded yet, or if the asset fails to load (most likely because it was missing or the wrong type)</exception>
-        public static T ContextualLoadAsset <T>(string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object {
-            if (Application.platform == RuntimePlatform.WindowsEditor) {
+        public static T ContextualLoadAsset<T>(string PathToAsset, bool LogLoading = true) where T : UnityEngine.Object
+        {
+            if (Application.platform == RuntimePlatform.WindowsEditor)
+            {
                 string PathMinusFileType = PathToAsset.Substring(17);
                 PathMinusFileType = PathMinusFileType.Substring(0, PathMinusFileType.LastIndexOf("."));
-                if (LogLoading) {
+                if (LogLoading)
+                {
                     Log.Info($"Loading {PathMinusFileType} from resources folder...", ForcePrint: true);
                 }
                 return Resources.Load<T>(PathMinusFileType);
-            } else {
-                if(LogLoading) {
-                    Log.Info($"Loading {PathToAsset}...", ForcePrint:true);
+            }
+            else
+            {
+                if (LogLoading)
+                {
+                    Log.Info($"Loading {PathToAsset}...", ForcePrint: true);
                 }
 
-                if(!ContentAssetBundle)
+                if (!ContentAssetBundle)
                 {
                     throw new AssetBundleLoadException($"Cannot load {PathToAsset} because ContentAssetBundle is not loaded yet.");
                 }
 
-                if(resolvedRootPath == "")
+                if (resolvedRootPath == "")
                 {
                     resolvedRootPath = ResolveRootPath(PathToAsset);
                 }
@@ -495,7 +650,8 @@ namespace Welcome_To_Ooblterra.Properties
         /// <param name="text">The log message text</param>
         /// <param name="AddFlair">Adds some ====== to the log message</param>
         /// <param name="ForcePrint">Whether to force print the log message regardless of settings. It could be set to off in mod settings but this bypasses that</param>
-        private static void LogToConsole(System.Type LogClassType, LogSourceType SourceType, LogType logType, string text, bool AddFlair = true, bool ForcePrint = false) {
+        private static void LogToConsole(Type LogClassType, LogSourceType SourceType, LogType logType, string text, bool AddFlair = true, bool ForcePrint = false)
+        {
             // Handle enable / disable of specific log types, in addition to force print and debug mode
             if (!ForcePrint)
             {
@@ -518,12 +674,13 @@ namespace Welcome_To_Ooblterra.Properties
 
             text = $"[{LogClassType.Name}]: {text}";
 
-            if (AddFlair) { 
+            if (AddFlair)
+            {
                 text = $"======={text}=======";
             }
 
             // Log as appropriate type for debug, info, warning etc.
-            switch(logType)
+            switch (logType)
             {
                 case LogType.Debug: WTOLogSource.LogDebug(text); break;
                 case LogType.Info: WTOLogSource.LogInfo(text); break;
@@ -533,7 +690,8 @@ namespace Welcome_To_Ooblterra.Properties
             }
         }
 
-        public static List<string> CSVSeperatedStringList(string InputString) {
+        public static List<string> CSVSeperatedStringList(string InputString)
+        {
             return new(InputString.Replace(" ", "").ToLower().Split(','));
         }
 
@@ -545,7 +703,7 @@ namespace Welcome_To_Ooblterra.Properties
             };
         }
 
-        private static void PrintReferences(IEnumerable<Object> objects)
+        private static void PrintReferences(IEnumerable<UnityEngine.Object> objects)
         {
             string HierarchyString(GameObject x)
             {
@@ -558,7 +716,7 @@ namespace Welcome_To_Ooblterra.Properties
                 return s;
             }
 
-            void PrintReference(Object o)
+            void PrintReference(UnityEngine.Object o)
             {
                 if (o == null)
                 {
@@ -617,7 +775,7 @@ namespace Welcome_To_Ooblterra.Properties
                 }
             }
 
-            foreach (Object o in objects)
+            foreach (UnityEngine.Object o in objects)
             {
                 PrintReference(o);
             }

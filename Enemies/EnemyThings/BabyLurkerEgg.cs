@@ -3,7 +3,6 @@ using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
-using Welcome_To_Ooblterra.Properties;
 using static LethalLib.Modules.Enemies;
 
 namespace Welcome_To_Ooblterra.Things

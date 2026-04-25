@@ -1,6 +1,5 @@
 ﻿using System.IO;
 using UnityEngine;
-using Welcome_To_Ooblterra.Properties;
 
 namespace Welcome_To_Ooblterra.Things
 {

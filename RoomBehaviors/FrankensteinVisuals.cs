@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using UnityEngine;
-using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.Things;
 
 namespace Welcome_To_Ooblterra.RoomBehaviors

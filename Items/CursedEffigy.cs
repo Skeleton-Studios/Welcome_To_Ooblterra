@@ -4,8 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Patches;
-using Welcome_To_Ooblterra.Properties;
 using System.Linq;
 
 namespace Welcome_To_Ooblterra.Items

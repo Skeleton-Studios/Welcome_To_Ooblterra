@@ -1,7 +1,6 @@
 ﻿using System;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Properties;
 using Welcome_To_Ooblterra.Enemies;
 
 namespace Welcome_To_Ooblterra.Items
