@@ -163,8 +163,7 @@ namespace Welcome_To_Ooblterra
         private static AudioClip? originalDiscoBallMusic;
         private static AudioClip? ooblterraCozyLightsMusic;
         public static Material? ghostPlayerSuit;
-
-        private static bool suitsLoaded = false;
+        public static Material? customPoster;
 
         void Awake()
         {
@@ -269,7 +268,6 @@ namespace Welcome_To_Ooblterra
             {
                 Log.Info("Found disco ball cozy lights, replacing music...");
                 originalDiscoBallMusic = __instance.turnOnAudio.clip;
-
             }
             else
             {
@@ -315,7 +313,6 @@ namespace Welcome_To_Ooblterra
         [HarmonyPrefix]
         private static bool PreventGhostAgentEnable(EnemyAI __instance, bool enable)
         {
-
             if (__instance is OoblGhostAI)
             {
                 __instance.isClientCalculatingAI = enable;
@@ -388,6 +385,7 @@ namespace Welcome_To_Ooblterra
             {
                 return;
             }
+
             Light Direct = GameObject.Find("ActualSun").GetComponent<Light>();
             Light Indirect = GameObject.Find("ActualIndirect").GetComponent<Light>();
             TimeOfDay timeOfDay = FindObjectOfType<TimeOfDay>();
@@ -422,22 +420,19 @@ namespace Welcome_To_Ooblterra
         [HarmonyPriority(0)]
         private static void PatchPosters()
         {
-            if (WTOCustomPoster.Value)
+            if (!WTOCustomPoster.Value)
             {
-                ReplacePoster();
+                return;
             }
-        }
 
-        private static void ReplacePoster()
-        {
             GameObject poster = GameObject.Find("HangarShip/Plane.001");
-            if (poster == null)
+            if (poster == null || customPoster == null)
             {
                 return;
             }
             MeshRenderer meshRenderer = poster.GetComponent<MeshRenderer>();
             Material[] materials = meshRenderer.materials;
-            materials[1] = ContextualLoadAsset<Material>("CustomSuits/Poster.mat");
+            materials[1] = customPoster;
             meshRenderer.materials = materials;
         }
 
@@ -565,7 +560,8 @@ namespace Welcome_To_Ooblterra
             
             // Grab all the references we need.
             ooblterraCozyLightsMusic = ContextualLoadAsset<AudioClip>("CustomItems/ooblboombox.ogg", false);
-            ghostPlayerSuit = WTOBase.ContextualLoadAsset<Material>("CustomSuits/GhostPlayerSuit.mat", false);
+            ghostPlayerSuit = ContextualLoadAsset<Material>("CustomSuits/GhostPlayerSuit.mat", false);
+            customPoster = ContextualLoadAsset<Material>("CustomSuits/Poster.mat");
         }
 
         private static string ResolveRootPath(string pathToAsset)
@@ -688,11 +684,6 @@ namespace Welcome_To_Ooblterra
                 case LogType.Error: WTOLogSource.LogError(text); break;
                 default: WTOLogSource.LogMessage(text); break;
             }
-        }
-
-        public static List<string> CSVSeperatedStringList(string InputString)
-        {
-            return new(InputString.Replace(" ", "").ToLower().Split(','));
         }
 
         public static ClientRpcSendParams AllClientsButSender(ServerRpcParams rpcParams)

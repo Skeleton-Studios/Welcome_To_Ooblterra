@@ -1,8 +1,6 @@
 ﻿using System.Collections;
-using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Patches;
 
 namespace Welcome_To_Ooblterra.Enemies.EnemyThings
 {
@@ -11,7 +9,7 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
         public int TargetID = 0;
         public int BabiesToSpawn = 20;
         private Vector3 SpawnPosition;
-        private EnemyType BabyLurker;
+        public EnemyType BabyLurker;
         private int iterator = 0;
         public MeshRenderer EggMesh;
         public MeshRenderer InnerEggMesh;
@@ -31,7 +29,6 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
             if (other.GetComponent<BoxCollider>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerProjectile>() != null) {
                 return; 
             } 
-            BabyLurker = MonsterPatch.InsideEnemies.First(x => x.enemyType.enemyName == "Baby Lurker").enemyType;
             SpawnPosition = RoundManager.Instance.GetRandomNavMeshPositionInRadius(transform.position, radius: 1);
             if(SpawnPosition == transform.position) {
                 return;

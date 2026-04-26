@@ -3,7 +3,6 @@ using System.Linq;
 using GameNetcodeStuff;
 using Unity.Netcode;
 using UnityEngine;
-using Welcome_To_Ooblterra.Patches;
 
 namespace Welcome_To_Ooblterra.Enemies
 {
@@ -161,6 +160,8 @@ namespace Welcome_To_Ooblterra.Enemies
         private readonly AISearchRoutine RoamPlanet = new();
         private bool ReachedNextPoint = false;
         private bool CalledMom;
+        public Item WandererCorpse;
+        public EnemyType AdultWandererEnemyType;
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(WandererAI), LogSourceType.Enemy);
 
@@ -241,7 +242,6 @@ namespace Welcome_To_Ooblterra.Enemies
             Log.Info($"Spawning Adult Wanderer targeting player ID {KillerID}");
             PlayerControllerB Killer = StartOfRound.Instance.allPlayerScripts[KillerID];
             //Spawn Wanderer Corpse
-            Item WandererCorpse = ItemPatch.ItemList[5].GetItem();
             GameObject SpawnedItem = Object.Instantiate(WandererCorpse.spawnPrefab, base.transform.position + new Vector3(0, 5, 0), Quaternion.identity);
             NetworkObject ItemNetworkObject = SpawnedItem.GetComponent<NetworkObject>();
             int WandererCorpseValue = (int)(RoundManager.Instance.AnomalyRandom.Next(WandererCorpse.minValue, WandererCorpse.maxValue) * RoundManager.Instance.scrapValueMultiplier);
@@ -253,7 +253,7 @@ namespace Welcome_To_Ooblterra.Enemies
 
             Vector3 AdultSpawnPos = Killer.transform.position - Vector3.Scale(new Vector3(-5, 0, -5), Killer.transform.forward * -1);
             Quaternion AdultSpawnRot = new(0, Quaternion.LookRotation(Killer.transform.position - AdultSpawnPos).y, 0, 1);
-            GameObject AdultWanderer = Instantiate(MonsterPatch.AdultWandererContainer[0].enemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
+            GameObject AdultWanderer = Instantiate(AdultWandererEnemyType.enemyPrefab, AdultSpawnPos, AdultSpawnRot);
             if (IsServer) { 
                 AdultWanderer.gameObject.GetComponentInChildren<NetworkObject>().Spawn(destroyWithScene: true);
                 AdultWanderer.gameObject.GetComponentInChildren<AdultWandererAI>().SetTargetServerRpc(KillerID);

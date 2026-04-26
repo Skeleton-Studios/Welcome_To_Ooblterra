@@ -81,7 +81,7 @@ namespace Welcome_To_Ooblterra.Items
                 Log.Debug("Got network object for Ghost Player");
                 MaskedPlayerEnemy MimicScript = networkObject.GetComponent<MaskedPlayerEnemy>();
                 MimicScript.mimickingPlayer = previousPlayerHeldBy;
-                Material suitMaterial = SuitPatch.GhostPlayerSuit;
+                Material suitMaterial = WTOBase.ghostPlayerSuit;
                 MimicScript.rendererLOD0.material = suitMaterial;
                 MimicScript.rendererLOD1.material = suitMaterial;
                 MimicScript.rendererLOD2.material = suitMaterial;
@@ -117,7 +117,7 @@ namespace Welcome_To_Ooblterra.Items
             Log.Debug("Got network object for Ghost Player enemy client");
             MaskedPlayerEnemy MimicReference = netObject.GetComponent<MaskedPlayerEnemy>();
             MimicReference.mimickingPlayer = previousPlayerHeldBy;
-            Material suitMaterial = SuitPatch.GhostPlayerSuit;
+            Material suitMaterial = WTOBase.ghostPlayerSuit;
             MimicReference.rendererLOD0.material = suitMaterial;
             MimicReference.rendererLOD1.material = suitMaterial;
             MimicReference.rendererLOD2.material = suitMaterial;
