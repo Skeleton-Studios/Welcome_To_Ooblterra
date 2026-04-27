@@ -1,9 +1,8 @@
 ﻿using GameNetcodeStuff;
-using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies.EnemyThings;
-using static LethalLib.Modules.Enemies;
+using LethalLevelLoader;
 
 namespace Welcome_To_Ooblterra.Things
 {
@@ -18,83 +17,124 @@ namespace Welcome_To_Ooblterra.Things
         public ScanNodeProperties ScanNode;
 
         private System.Random enemyRandom;
-        private GameObject HiveProjectile;
         private bool EggSpawned = false;
         private bool EggDropped = false;
-        private float SecondsUntilNextSpawnAttempt = 15f;
+
+        private float NextSpawnAttemptTime = 0;
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(BabyLurkerEgg), LogSourceType.Thing);
 
-        private void OnTriggerStay(Collider other) { 
-            PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
-            if (other.gameObject.CompareTag("Player") && EggSpawned && !EggDropped) {
-                SpawnProjectileServerRpc((int)victim.actualClientId); 
-            }
-        }
-        private void Start() {
-            enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
-            SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
-            ScanNode.creatureScanID = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Baby Lurker").terminalNode.creatureFileID;
-            SpawnEgg();
-        }
-        private void Update() {
-            if (EggSpawned) {
-                return;
-            }
-            if(SecondsUntilNextSpawnAttempt > 0) {
-                SecondsUntilNextSpawnAttempt -= Time.deltaTime;
-                return;
-            }
-            if(enemyRandom.Next(0, 100) < 60){
-                SpawnEggServerRpc();
-            } else {
-                SecondsUntilNextSpawnAttempt = enemyRandom.Next(15, 40);
+        private void OnTriggerStay(Collider other) 
+        {
+            if (IsServer)
+            {
+                if(EggSpawned && !EggDropped && other.gameObject.TryGetComponent<PlayerControllerB>(out PlayerControllerB victim))
+                {
+                    SpawnProjectile(victim.actualClientId);
+                }
             }
         }
 
-        public void SpawnEgg() {
-            if (EggSpawned) {
+        private void Start() 
+        {
+            SetScanNodeId();
+
+            enemyRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
+            NextSpawnAttemptTime = Time.time + enemyRandom.Next(15, 40);
+
+            if (IsServer)
+            {
+                SetEggPosition();
+            }
+        }
+
+        private void SetScanNodeId()
+        {
+            ExtendedEnemyType babyLurkerEggType = PatchedContent.ExtendedEnemyTypes.Find((ExtendedEnemyType x) => x.EnemyDisplayName == "Baby Lurker Egg");
+            if (babyLurkerEggType == null)
+            {
+                Log.Error("Couldn't find Baby Lurker Egg enemy type in ExtendedEnemyTypes list!");
                 return;
             }
-            HiveMesh.SetActive(true);
-            MapDot.SetActive(true);
-            if (Physics.Linecast(TraceTransform.position, TraceTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) {
+
+            ScanNode.creatureScanID = babyLurkerEggType.EnemyInfoNode.creatureFileID;
+            Log.Debug("Set scan node ID for Baby Lurker Egg: " + ScanNode.creatureScanID);
+        }
+
+        private void Update() 
+        {
+            if(IsServer)
+            {
+                if (!EggSpawned && Time.time >= NextSpawnAttemptTime)
+                {
+                    if (enemyRandom.Next(0, 100) < 60)
+                    {
+                        SetEggPosition();
+                    }
+                    else
+                    {
+                        NextSpawnAttemptTime = Time.time + enemyRandom.Next(15, 40);
+                    }
+                }
+            }
+        }
+
+        private void SetEggPosition() 
+        {
+            if (EggSpawned) 
+            {
+                return;
+            }
+
+            if (Physics.Linecast(TraceTransform.position, TraceTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) 
+            {
                 HiveMesh.transform.position = HitResult.point;
                 HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
-                Log.Info("Lurker Egg active!");
+                Log.Debug("Server - Lurker Egg Line trace hit at position: " + HitResult.point);
                 EggSpawned = true;
-            } else {
-                Log.Warning("Lurker Egg Line trace failed!");
-            }
 
-        }
-        [ServerRpc]
-        public void SpawnEggServerRpc() {
-            SpawnEggClientRpc();
+                SetEggPositionClientRpc(HitResult.point);
+            } 
+            else 
+            {
+                Log.Warning("Server - Lurker Egg Line trace failed!");
+            }
         }
 
         [ClientRpc]
-        public void SpawnEggClientRpc() {
-            SpawnEgg();
+        private void SetEggPositionClientRpc(Vector3 position) 
+        {
+            Log.Debug("Client - Setting lurker egg position to: " + position);
+
+            EggSpawned = true;
+            HiveMesh.SetActive(true);
+            MapDot.SetActive(true);
+            HiveMesh.transform.position = position;
+            HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
         }
 
-        [ServerRpc(RequireOwnership = false)]
-        public void SpawnProjectileServerRpc(int targetID) {
-            SpawnProjectileClientRpc(targetID);
-        }
-        [ClientRpc] 
-        public void SpawnProjectileClientRpc(int targetID){
-            if (EggDropped) {
+        private void SpawnProjectile(ulong targetID) 
+        {
+            if(EggDropped)
+            {
+                // server already dropped egg - do nothing.
                 return;
             }
-            MapDot.SetActive(false);
-            GetComponent<AudioSource>()?.PlayOneShot(BreakoffSound[enemyRandom.Next(0, BreakoffSound.Length)]);
-            Log.Info("Lurker egg projectile being spawned!");
-            HiveProjectile = GameObject.Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation);
-            HiveProjectile.GetComponent<BabyLurkerEggProjectile>().TargetID = targetID;
+
             EggDropped = true;
-            Destroy(HiveMesh); 
-         
+
+            Instantiate(projectileTemplate, DropTransform.position, DropTransform.rotation).GetComponent<NetworkObject>().Spawn();
+
+            SpawnProjectileClientRpc();
+        }
+
+        [ClientRpc] 
+        public void SpawnProjectileClientRpc()
+        {
+            EggDropped = true;
+            MapDot.SetActive(false);
+            HiveMesh.SetActive(false);
+            GetComponent<AudioSource>()?.PlayOneShot(BreakoffSound[enemyRandom.Next(0, BreakoffSound.Length)]);
         }
     }
 }

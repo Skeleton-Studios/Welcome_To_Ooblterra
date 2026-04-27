@@ -514,18 +514,27 @@ namespace Welcome_To_Ooblterra
         private static IEnumerator RouteToOoblterraOnceLLLIsLoaded(StartMatchLever startMatchLever)
         {
             Log.Info("Waiting for LLL to finish loading before routing to Ooblterra...");
+            yield return new WaitUntil(() => GetOooblterraExtendedLevel() != null);
+
+            Log.Info("Ooblterra extended level found, now waiting for LLL to allow level loading...");
             yield return new WaitUntil(GetIsLLLReadyFunc());
 
             ExtendedLevel? ooblterraLevel = GetOooblterraExtendedLevel();
             if (ooblterraLevel == null)
             {
-                Log.Error("Could not find Ooblterra extended level! Cannot route to Ooblterra.");
+                Log.Error("Somehow, Ooblterra extended level is null. Cannot route to Ooblterra.");
                 yield break;
             }
 
             Log.Info("LLL finished loading, routing to Ooblterra...");
             StartOfRound.Instance.ChangeLevel(ooblterraLevel.SelectableLevel.levelID);
+
+            yield return new WaitUntil(GetIsLLLReadyFunc());
+
             StartOfRound.Instance.ArriveAtLevel();
+
+            // just to be sure
+            yield return new WaitUntil(GetIsLLLReadyFunc());
 
             Log.Info("Pulling lever to start match...");
             startMatchLever.leverHasBeenPulled = true;

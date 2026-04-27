@@ -1,16 +1,14 @@
 ﻿using System.Collections;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.AI;
 
 namespace Welcome_To_Ooblterra.Enemies.EnemyThings
 {
-    public class BabyLurkerEggProjectile : NetworkBehaviour {
-
-        public int TargetID = 0;
+    public class BabyLurkerEggProjectile : NetworkBehaviour 
+    {
         public int BabiesToSpawn = 20;
-        private Vector3 SpawnPosition;
         public EnemyType BabyLurker;
-        private int iterator = 0;
         public MeshRenderer EggMesh;
         public MeshRenderer InnerEggMesh;
         public AudioClip[] Splat;
@@ -20,45 +18,71 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(BabyLurkerEggProjectile), LogSourceType.Thing);
 
-        private void Start() {
+        private void Start() 
+        {
             EggRandom = new System.Random(StartOfRound.Instance.randomMapSeed);
         }
 
-        private void OnTriggerEnter(Collider other) {
-            Log.Debug($"Collision registered! Collider: {other.gameObject}");
-            if (other.GetComponent<BoxCollider>() != null || other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerProjectile>() != null) {
-                return; 
-            } 
-            SpawnPosition = RoundManager.Instance.GetRandomNavMeshPositionInRadius(transform.position, radius: 1);
-            if(SpawnPosition == transform.position) {
+        private void OnTriggerEnter(Collider other) 
+        {
+            if (!IsServer)
+            {
                 return;
             }
-            try {
-                GetComponent<AudioSource>().PlayOneShot(Splat[EggRandom.Next(0, Splat.Length - 1)]);
-            } catch {
-                Log.Error("Couldn't play splat sound!"); 
+
+            Log.Debug($"Collision registered! Collider: {other.gameObject}");
+
+            if (other.GetComponent<BabyLurkerAI>() != null || other.GetComponent<BabyLurkerProjectile>() != null) 
+            {
+                // avoid hitting the lurker that chucked us
+                return; 
+            } 
+
+            // Try *hard* to find the right position
+            NavMeshHit? hit = Utils.GetRandomNavMeshPositionInRadiusExtended(transform.position, radius: 1);
+
+            // play impact sound always, even if it hits out of bounds, but only play the egg animation if it hits a valid nav mesh position.
+            // otherwise it will just get destroyed below.
+            OnImpactClientRpc(playEggAnimation: hit.HasValue);
+
+            if (!hit.HasValue)
+            {
+                Log.Warning("Lurker projectile hit too far from nav mesh to spawn enemies, not spawning");
+                // short delay to allow impact sound to finish on client side before destroying.
+                Destroy(gameObject, 0.6f);
+                return;
             }
+
             GetComponent<Rigidbody>().isKinematic = true;
-            StartCoroutine(StartEggExploding());
+            StartCoroutine(StartEggExplodingServer(hit.Value.position));
         }
 
-        private float timeElapsed = 0f;
-        private readonly float ExpandTime = 3f;
-        private float LerpValue = 0f;
-        IEnumerator StartEggExploding() {
-            while ((timeElapsed / ExpandTime) < 1) {
-                timeElapsed += Time.deltaTime; 
-                LerpValue = Mathf.Lerp(0.5f, 0.8f, timeElapsed / ExpandTime);
-                EggMesh.transform.localScale = new Vector3(LerpValue, LerpValue, LerpValue);
+        [ClientRpc]
+        private void OnImpactClientRpc(bool playEggAnimation)
+        {
+            GetComponent<AudioSource>().PlayOneShot(Splat[EggRandom.Next(0, Splat.Length - 1)]);
+
+            if(playEggAnimation)
+            {
+                StartCoroutine(ClientEggExplodingAnimation());
+            }
+        }
+
+        const float ExpandTime = 3f;
+
+        private IEnumerator ClientEggExplodingAnimation()
+        {
+            float startTime = Time.time;
+            float endTime = startTime + ExpandTime;
+
+            while (Time.time < endTime)
+            {
+                float f = Mathf.InverseLerp(startTime, endTime, Time.time);
+                float l = Mathf.Lerp(0.5f, 0.8f, f);
+                EggMesh.transform.localScale = new Vector3(l, l, l);
                 yield return null;
             }
-            DestroyEgg();
-            StartCoroutine(SpawnBabyLurkers());
-            StopCoroutine(StartEggExploding());
 
-        }
-
-        private void DestroyEgg() {
             EggMesh.enabled = false;
             InnerEggMesh.enabled = false;
             ExplodeParticle.Play();
@@ -66,13 +90,19 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
             GetComponent<AudioSource>().PlayOneShot(Boom[EggRandom.Next(0, Boom.Length)]);
         }
 
-        IEnumerator SpawnBabyLurkers() {
-            while(iterator < BabiesToSpawn) {
-                RoundManager.Instance.SpawnEnemyGameObject(SpawnPosition, 0, 1, BabyLurker);
-                iterator++;
+        private IEnumerator StartEggExplodingServer(Vector3 spawnPosition) 
+        {
+            // wait for the client animation to finish.
+            yield return new WaitForSeconds(ExpandTime);
+
+            for(int i = 0; i < BabiesToSpawn; i++) 
+            {
+                RoundManager.Instance.SpawnEnemyGameObject(spawnPosition, 0, 1, BabyLurker);
                 yield return new WaitForSeconds(0.05f);
             }
-            Destroy(this.gameObject);
+
+            // short delay to allow audio to finish on client side before destroying.
+            Destroy(gameObject, 1.0f);
         }
     }
 }
