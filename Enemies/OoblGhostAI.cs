@@ -1,4 +1,5 @@
 ﻿using GameNetcodeStuff;
+using LethalLevelLoader;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
@@ -6,7 +7,6 @@ using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering.HighDefinition;
 using Welcome_To_Ooblterra.Items;
-using static LethalLib.Modules.Enemies;
 
 namespace Welcome_To_Ooblterra.Enemies
 {
@@ -173,7 +173,11 @@ namespace Welcome_To_Ooblterra.Enemies
         }
 
         public override void Start() {
-            OoblGhostTerminalInt = spawnableEnemies.FirstOrDefault((SpawnableEnemy x) => x.enemy.enemyName == "Oobl Ghost").terminalNode.creatureFileID;
+            ExtendedEnemyType ooblGhostType = PatchedContent.ExtendedEnemyTypes.Find((ExtendedEnemyType x) => x.EnemyDisplayName == "Oobl Ghost");
+            if(ooblGhostType != null) 
+            { 
+                OoblGhostTerminalInt = ooblGhostType.EnemyInfoNode.creatureFileID;
+            }
             base.Start();
             StopGhostFade();
         }
