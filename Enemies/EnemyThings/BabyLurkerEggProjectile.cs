@@ -15,6 +15,7 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
         public AudioClip[] Boom;
         public ParticleSystem ExplodeParticle;
         private System.Random EggRandom;
+        private bool hasImpacted = false;
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(BabyLurkerEggProjectile), LogSourceType.Thing);
 
@@ -25,7 +26,7 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
 
         private void OnTriggerEnter(Collider other) 
         {
-            if (!IsServer)
+            if (!IsServer || hasImpacted)
             {
                 return;
             }
@@ -36,7 +37,10 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
             {
                 // avoid hitting the lurker that chucked us
                 return; 
-            } 
+            }
+
+            // hitting multiple triggers in the same frame can cause OnTriggerEnter to fire more than once.
+            hasImpacted = true;
 
             // Try *hard* to find the right position
             NavMeshHit? hit = Utils.GetRandomNavMeshPositionInRadiusExtended(transform.position, radius: 1);
@@ -60,7 +64,7 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
         [ClientRpc]
         private void OnImpactClientRpc(bool playEggAnimation)
         {
-            GetComponent<AudioSource>().PlayOneShot(Splat[EggRandom.Next(0, Splat.Length - 1)]);
+            GetComponent<AudioSource>().PlayOneShot(Splat[EggRandom.Next(0, Splat.Length)]);
 
             if(playEggAnimation)
             {

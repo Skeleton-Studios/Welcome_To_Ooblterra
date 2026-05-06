@@ -30,7 +30,7 @@ namespace Welcome_To_Ooblterra.Things
             {
                 if(EggSpawned && !EggDropped && other.gameObject.TryGetComponent<PlayerControllerB>(out PlayerControllerB victim))
                 {
-                    SpawnProjectile(victim.actualClientId);
+                    SpawnProjectile();
                 }
             }
         }
@@ -89,7 +89,7 @@ namespace Welcome_To_Ooblterra.Things
             if (Physics.Linecast(TraceTransform.position, TraceTransform.position + (Vector3.up * 5000), out RaycastHit HitResult, StartOfRound.Instance.collidersAndRoomMask, QueryTriggerInteraction.Ignore)) 
             {
                 HiveMesh.transform.position = HitResult.point;
-                HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
+                HiveMesh.transform.rotation = Quaternion.Euler(180, 0, 0);
                 Log.Debug("Server - Lurker Egg Line trace hit at position: " + HitResult.point);
                 EggSpawned = true;
 
@@ -113,7 +113,7 @@ namespace Welcome_To_Ooblterra.Things
             HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
         }
 
-        private void SpawnProjectile(ulong targetID) 
+        private void SpawnProjectile() 
         {
             if(EggDropped)
             {
@@ -129,7 +129,7 @@ namespace Welcome_To_Ooblterra.Things
         }
 
         [ClientRpc] 
-        public void SpawnProjectileClientRpc()
+        private void SpawnProjectileClientRpc()
         {
             EggDropped = true;
             MapDot.SetActive(false);
