@@ -26,13 +26,13 @@
     </PropertyGroup>
 
     <!-- Set NuGet Sources -->
-    <PropertyGroup>
-        <RestoreAdditionalProjectSources>
-            https://api.nuget.org/v3/index.json;
-            https://nuget.bepinex.dev/v3/index.json;
-
-        </RestoreAdditionalProjectSources>
-    </PropertyGroup>
+	<PropertyGroup>
+		<RestoreAdditionalProjectSources>
+			https://api.nuget.org/v3/index.json;
+			https://nuget.bepinex.dev/v3/index.json;
+			https://nuget.windows10ce.com/nuget/v3/index.json <!-- This source lets you reference mods from thunderstore if they aren't on NuGet -->
+		</RestoreAdditionalProjectSources>
+	</PropertyGroup>
 
     <!-- Embed Debug Symbols for Easier Debugging -->
     <PropertyGroup>

@@ -110,7 +110,7 @@ namespace Welcome_To_Ooblterra.Things
             HiveMesh.SetActive(true);
             MapDot.SetActive(true);
             HiveMesh.transform.position = position;
-            HiveMesh.transform.rotation = new Quaternion(180, 0, 0, 0);
+            HiveMesh.transform.rotation = Quaternion.Euler(180, 0, 0);
         }
 
         private void SpawnProjectile() 
