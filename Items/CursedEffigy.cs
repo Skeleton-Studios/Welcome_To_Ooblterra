@@ -82,11 +82,12 @@ namespace Welcome_To_Ooblterra.Items
             {
                 Log.Debug("Got network object for Ghost Player");
                 MaskedPlayerEnemy MimicScript = networkObject.GetComponent<MaskedPlayerEnemy>();
+                PlayerControllerB previousPlayerHeldBy = StartOfRound.Instance.allPlayerScripts[playerIndex];
                 MimicScript.mimickingPlayer = previousPlayerHeldBy;
                 MimicScript.rendererLOD0.material = WTOBase.ghostPlayerSuit;
                 MimicScript.rendererLOD1.material = WTOBase.ghostPlayerSuit;
                 MimicScript.rendererLOD2.material = WTOBase.ghostPlayerSuit;
-                MimicScript.SetEnemyOutside(!previousPlayerHeldBy.isInsideFactory);
+                MimicScript.SetEnemyOutside(inFactory);
                 MimicScript.SetVisibilityOfMaskedEnemy();
 
                 //This makes it such that the mimic has no visible mask :)

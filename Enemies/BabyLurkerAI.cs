@@ -81,12 +81,7 @@ namespace Welcome_To_Ooblterra.Enemies
             
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
-                //if(BabyLurkerList[enemyIndex].CheckIfWeAreFirstToJump()){
-                    //BabyLurkerList[enemyIndex].ThrowingSelfAtPlayer = true;
-                    BabyLurkerList[enemyIndex].LaunchProjectile();
-                //} else { 
-                //    BabyLurkerList[enemyIndex].JumpCooldownSeconds = .1f;
-                //}
+                BabyLurkerList[enemyIndex].LaunchProjectile();
             }
             public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
 
@@ -185,15 +180,6 @@ namespace Welcome_To_Ooblterra.Enemies
                     Log.Warning("No target for baby lurkers!");
                 }
             }
-        }
-
-        public bool CheckIfWeAreFirstToJump() {
-            foreach(BabyLurkerAI BabyLurker in BabyLurkerList.Values) {
-                if (BabyLurker.ThrowingSelfAtPlayer) {
-                    return false;
-                }
-            }
-            return true;
         }
 
         public void LaunchProjectile() {

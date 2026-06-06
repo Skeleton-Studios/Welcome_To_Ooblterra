@@ -32,7 +32,6 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
             PlayerControllerB victim = other.gameObject.GetComponent<PlayerControllerB>();
             if (other.gameObject.CompareTag("Player") && !IsDead) {
                 victim.DamagePlayer(15, causeOfDeath: CauseOfDeath.Unknown);
-            
             }
             DestroySelf(); 
             IsDead = true;
@@ -46,6 +45,7 @@ namespace Welcome_To_Ooblterra.Enemies.EnemyThings
                 LurkerMesh.enabled = !IsArachnophobiaMode;
             }
         }
+
         private void Update() { 
             if (!StartAutoDestroy){
                 return;

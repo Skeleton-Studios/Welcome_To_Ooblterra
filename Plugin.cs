@@ -19,36 +19,6 @@ namespace Welcome_To_Ooblterra
         * Wouldn'tve had any of this code without it, thank you!
         */
 
-    [HideInInspector]
-    public enum SuitStatus
-    {
-        Enable,
-        Purchase,
-        Disable,
-        SleepsSpecial
-    }
-
-    public enum PosterStatus
-    {
-        ReplaceVanilla,
-        AddAsDecor,
-        Disable
-    }
-
-    public enum FootstepEnum
-    {
-        Enable,
-        Quiet,
-        Disable
-    }
-
-    public enum TiedToLabEnum
-    {
-        WTOOnly,
-        AppendWTO,
-        UseMoonDefault
-    }
-
     public enum LogType
     {
         Debug,
@@ -131,20 +101,7 @@ namespace Welcome_To_Ooblterra
         private static string resolvedRootPath = "";
 
         public static ConfigEntry<bool> WTODebug;
-        public static ConfigEntry<bool> WTOCustomSuits;
         public static ConfigEntry<bool> WTOCustomPoster;
-        public static ConfigEntry<bool> WTOScalePrice;
-        public static ConfigEntry<string> WTOHazardList;
-        public static ConfigEntry<string> WTOHazardMoonList;
-        public static ConfigEntry<int> WTOFootsteps;
-        public static ConfigEntry<int> WTOMusic;
-        public static ConfigEntry<TiedToLabEnum> WTOForceHazards;
-        public static ConfigEntry<TiedToLabEnum> WTOForceInsideMonsters;
-        public static ConfigEntry<TiedToLabEnum> WTOForceOutsideMonsters;
-        public static ConfigEntry<TiedToLabEnum> WTOForceDaytimeMonsters;
-        public static ConfigEntry<TiedToLabEnum> WTOForceScrap;
-        public static ConfigEntry<bool> WTOForceOutsideOnly;
-        public static ConfigEntry<int> WTOWeightScale;
 
         public static ConfigEntry<bool> WTOLogging_Debug;
         public static ConfigEntry<bool> WTOLogging_Info;
@@ -176,27 +133,13 @@ namespace Welcome_To_Ooblterra
                 WTOLogging_Error = Config.Bind("1. Debugging", "Log Level Error Messages", true, "Whether or not to write error messages to the log. Errors that represent genuine problems that should not be happening.");
                 WTOLogging_Filter = Config.Bind("1. Debugging", "Log Filter", "WTO", "The filter to apply to the log. Only messages that match this RegEx filter will be printed. If empty, all messages will be printed. This is applied to the final log string, including class name.");
 
-                WTOFootsteps = Config.Bind("2. Accessibility", "Footstep Sounds", 100, "Adjust the volume of 523 Ooblterra's custom footstep sound. Binds between 0 and 100."); //IMPLEMENTED 
-                WTOMusic = Config.Bind("2. Accessibility", "Music Volume", 100, "Adjust the volume of 523-Ooblterra's custom Time-Of-Day music. Binds between 0 and 100.");
+                WTOCustomPoster = Config.Bind("2. Ship Stuff", "Visit Ooblterra Poster Status", true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
 
-                WTOCustomSuits = Config.Bind("3. Ship Stuff", "Custom Suit Status", true, "Whether or not to add WTO's custom suits."); //IMPLEMENTED
-                WTOCustomPoster = Config.Bind("3. Ship Stuff", "Visit Ooblterra Poster Status", true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
+                WTOTestRoom = Config.Bind("3. Testing", "Enable Test Room Teleporter", false, "Whether or not to enable the test room teleporter in Ooblterra. This spawns a teleporter outside of the ship and spawns the test room.");
+                WTOStartupType = Config.Bind("3. Testing", "Startup Type", StartupType.Normal, "The type of startup to use for the game. Leave this set to Normal. The other modes are for internal use only (e.g. for automated tools)");
+                WTOAutoRoute = Config.Bind("3. Testing", "Auto Route", false, "When true, automatically routes to Ooblterra on game start.");
 
-                WTOHazardList = Config.Bind("4. Map Hazards", "Custom Hazard List", "SpikeTrap, TeslaCoil, BabyLurkerEgg, BearTrap", "A list of all of WTO's custom hazards to enable. Affects 523-Ooblterra, and also has influence on the settings below."); //IMPLEMENTED
-                /*WTOForceOutsideOnly = Config.Bind("5. Modded Content", "Force Configuration settings on 523 Ooblterra", true, "When true, forces 523 Ooblterra to spawn only the enemies/scrap found in its LLL config settings. This prevents custom monsters/scrap from spawning on the moon, unless manually specified.");*/
-                //WTOScalePrice = Config.Bind("5. Scrap", "Scale Scrap By Route Price", false, "Changes the value of Ooblterra's scrap to fit relative to the route price set for 523 Ooblterra. Only affects Ooblterra's custom scrap."); //IMPLEMENTED
-                WTOForceHazards = Config.Bind("5. Modpack Controls", "Bind WTO Hazards to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own hazards, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-                WTOForceInsideMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Inside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own inside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-                WTOForceOutsideMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Outside Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's outside enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-                WTOForceDaytimeMonsters = Config.Bind("5. Modpack Controls", "Bind WTO Daytime Enemies to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with 523 Ooblterra's daytime enemies, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-                WTOForceScrap = Config.Bind("5. Modpack Controls", "Bind WTO Scrap to Oobl Lab", TiedToLabEnum.WTOOnly, "Whether the Oobl Lab should always spawn with its own scrap, regardless of moon. See the wiki on Thunderstore for more information."); //IMPLEMENTED
-                WTOWeightScale = Config.Bind("5. Modpack Controls", "WTOAppend Weight Scale", 1, "For any setting configured to WTOAppend above, this setting multiplies that thing's weight before appending it to list."); //IMPLEMENTED
-
-                WTOTestRoom = Config.Bind("6. Testing", "Enable Test Room Teleporter", false, "Whether or not to enable the test room teleporter in Ooblterra. This spawns a teleporter outside of the ship and spawns the test room.");
-                WTOStartupType = Config.Bind("6. Testing", "Startup Type", StartupType.Normal, "The type of startup to use for the game. Leave this set to Normal. The other modes are for internal use only (e.g. for automated tools)");
-                WTOAutoRoute = Config.Bind("6. Testing", "Auto Route", false, "When true, automatically routes to Ooblterra on game start.");
-
-                WTOContourMapWritePath = Config.Bind("7. Contour Map Render", "Contour Map Write Path", "contourmap.exr", "The file path to write the contour map file to when Startup Type is set to ContourMapRender");
+                WTOContourMapWritePath = Config.Bind("4. Contour Map Render", "Contour Map Write Path", "contourmap.exr", "The file path to write the contour map file to when Startup Type is set to ContourMapRender");
             }
 
             //Load up various things and tell the console we've loaded
@@ -566,11 +509,27 @@ namespace Welcome_To_Ooblterra
             {
                 throw new AssetBundleLoadException($"Failed to load asset bundle from path: {fullPath}");
             }
-            
+
             // Grab all the references we need.
-            ooblterraCozyLightsMusic = ContextualLoadAsset<AudioClip>("CustomItems/ooblboombox.ogg", false);
-            ghostPlayerSuit = ContextualLoadAsset<Material>("CustomSuits/GhostPlayerSuit.mat", false);
+            ooblterraCozyLightsMusic = ContextualLoadAsset<AudioClip>("CustomItems/ooblboombox.ogg");
+            ghostPlayerSuit = ContextualLoadAsset<Material>("CustomSuits/GhostPlayerSuit.mat");
             customPoster = ContextualLoadAsset<Material>("CustomSuits/Poster.mat");
+
+            // Register network prefabs that are not handled by LLL
+            string[] customPrefabsPaths =
+            [
+                "CustomDungeon/Behaviors/BatteryRecepticleTransform.prefab",
+                "CustomDungeon/Behaviors/ChargedBattery.prefab",
+                "CustomDungeon/Behaviors/DrainedBattery.prefab",
+                "CustomDungeon/Behaviors/ScrapShelf.prefab",
+                "CustomDungeon/Security/BabyLurkerEgg/BabyLurkerEggProjectile.prefab"
+            ];
+
+            foreach (string path in customPrefabsPaths)
+            {
+                GameObject prefab = ContextualLoadAsset<GameObject>(path);
+                LethalLevelLoaderNetworkManager.RegisterNetworkPrefab(prefab);
+            }
         }
 
         private static string ResolveRootPath(string pathToAsset)
