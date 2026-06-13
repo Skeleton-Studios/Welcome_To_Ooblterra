@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using GameNetcodeStuff;
 using HarmonyLib;
 using LethalLevelLoader;
 using System;
@@ -522,7 +523,8 @@ namespace Welcome_To_Ooblterra
                 "CustomDungeon/Behaviors/ChargedBattery.prefab",
                 "CustomDungeon/Behaviors/DrainedBattery.prefab",
                 "CustomDungeon/Behaviors/ScrapShelf.prefab",
-                "CustomDungeon/Security/BabyLurkerEgg/BabyLurkerEggProjectile.prefab"
+                "CustomDungeon/Security/BabyLurkerEgg/BabyLurkerEggProjectile.prefab",
+                "CustomMoon/BearTrap/BearTrap.prefab" // gets spawned by BearTrapSpawner, which gets registered by LLL, but this prefab does not
             ];
 
             foreach (string path in customPrefabsPaths)
@@ -660,6 +662,32 @@ namespace Welcome_To_Ooblterra
             {
                 TargetClientIds = [.. from id in NetworkManager.Singleton.ConnectedClientsIds where id != rpcParams.Receive.SenderClientId select id]
             };
+        }
+
+        public static ClientRpcSendParams SingleClient(ulong clientId)
+        {
+            return new ClientRpcSendParams
+            {
+                TargetClientIds = [clientId]
+            };
+        }
+
+        public static int PlayerIndex(PlayerControllerB? player)
+        {
+            if(player == null)
+            {
+                return -1; // marker for 'no player'
+            }
+            return Array.IndexOf(StartOfRound.Instance.allPlayerScripts, player);
+        }
+
+        public static PlayerControllerB? PlayerFromIndex(int index)
+        {
+            if (index < 0 || index >= StartOfRound.Instance.allPlayerScripts.Length)
+            {
+                return null;
+            }
+            return StartOfRound.Instance.allPlayerScripts[index];
         }
 
         private static void PrintReferences(IEnumerable<UnityEngine.Object> objects)

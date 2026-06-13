@@ -18,14 +18,14 @@ namespace Welcome_To_Ooblterra.Things
             DamageOverlappingPlayer(victim, 0.5f, ref TimeSincePlayerDamaged, UserSetDamageAmount);
         }
 
-        public static void DamageOverlappingPlayer(PlayerControllerB victim, float TotalDamageTime, ref float TimeSinceDamageTaken, int DamageAmount) {
+        public static void DamageOverlappingPlayer(PlayerControllerB victim, float TotalDamageTime, ref float TimeSinceDamageTaken, int DamageAmount, CauseOfDeath causeOfDeath = CauseOfDeath.Drowning) {
             if ((TimeSinceDamageTaken < TotalDamageTime)) {
                 TimeSinceDamageTaken += Time.deltaTime;
                 return;
             }
             if (victim != null) {
                 TimeSinceDamageTaken = 0f;
-                victim.DamagePlayer(DamageAmount, hasDamageSFX: true, callRPC: true, CauseOfDeath.Drowning);
+                victim.DamagePlayer(DamageAmount, hasDamageSFX: true, callRPC: true, causeOfDeath);
                 Log.Debug("New health amount: " + victim.health);
             }
         }
