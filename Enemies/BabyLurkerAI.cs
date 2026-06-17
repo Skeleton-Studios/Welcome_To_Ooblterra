@@ -45,9 +45,17 @@ namespace Welcome_To_Ooblterra.Enemies
         private class ChasePlayer : BehaviorState {
 
             public override void OnStateEntered(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                if(BabyLurkerList[enemyIndex].targetPlayer == null) {
+                    // targetPlayer null safety for client side.
+                    return;
+                }
                 BabyLurkerList[enemyIndex].SetDestinationToPosition(BabyLurkerList[enemyIndex].targetPlayer.transform.position);
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                if(BabyLurkerList[enemyIndex].targetPlayer == null) {
+                    // targetPlayer null safety for client side.
+                    return;
+                }
                 BabyLurkerList[enemyIndex].SetDestinationToPosition(BabyLurkerList[enemyIndex].targetPlayer.transform.position);
             }
             public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {

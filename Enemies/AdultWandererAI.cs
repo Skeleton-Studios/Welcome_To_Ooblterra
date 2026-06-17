@@ -133,6 +133,10 @@ namespace Welcome_To_Ooblterra.Enemies
                 AWandList[enemyIndex].agent.speed = 9f;
             }
             public override void UpdateBehavior(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
+                if(AWandList[enemyIndex].targetPlayer == null) {
+                    // targetPlayer null safety for client side.
+                    return;
+                }
                 AWandList[enemyIndex].SetDestinationToPosition(AWandList[enemyIndex].targetPlayer.transform.position);
             }
             public override void OnStateExit(int enemyIndex, System.Random enemyRandom, Animator creatureAnimator) {
@@ -317,6 +321,10 @@ namespace Welcome_To_Ooblterra.Enemies
             base.Update();
         }
         private void MeleeAttackPlayer(PlayerControllerB Target) {
+            if(Target == null) {
+                // Is null on client when calling
+                return;
+            }
             Log.Info("Attacking player!");
             Target.DamagePlayer(40, hasDamageSFX: true, callRPC: true, CauseOfDeath.Bludgeoning, 0);
             if (Target == GameNetworkManager.Instance.localPlayerController) {

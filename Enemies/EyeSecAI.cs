@@ -90,7 +90,7 @@ namespace Welcome_To_Ooblterra.Enemies
                 EyeSecList[enemyIndex].StartAttackVisuals();
                 EyeSecList[enemyIndex].agent.speed = 0f;
                 if (EyeSecList[enemyIndex].DoFearEffect) {
-                    Log.Debug($"Eyesec: Setting fear effect on Player {EyeSecList[enemyIndex].targetPlayer.playerUsername}!");
+                    //Log.Debug($"Eyesec: Setting fear effect on Player {EyeSecList[enemyIndex].targetPlayer.playerUsername}!");
                     if (EyeSecList[enemyIndex].targetPlayer == GameNetworkManager.Instance.localPlayerController) {
                         GameNetworkManager.Instance.localPlayerController.JumpToFearLevel(1f);
                     }
@@ -330,7 +330,8 @@ namespace Welcome_To_Ooblterra.Enemies
         public override void Start() {
             InitialState = new Patrol();
             RefreshGrabbableObjectsInMapList();
-            PrintDebugs = true;
+            PrintDebugs = false;
+            DebugEnemy = false; // prints a LOT of stuff in client console
             EyeSecID++;
             WTOEnemyID = EyeSecID;
             Log.Info($"Adding EyeSec {this} at {EyeSecID}");

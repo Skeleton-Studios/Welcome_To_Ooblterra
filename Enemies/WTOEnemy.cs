@@ -109,6 +109,11 @@ namespace Welcome_To_Ooblterra.Enemies
         }
 
         internal bool PlayerCanBeTargeted(PlayerControllerB myPlayer) {
+            if(myPlayer == null)
+            {
+                // targetPlayer null safety for client side.
+                return false;
+            }
             return (GetPlayerState(myPlayer) == MyValidState);
         }
         internal PlayerState GetPlayerState(PlayerControllerB myPlayer) {

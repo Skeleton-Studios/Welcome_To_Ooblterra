@@ -521,7 +521,8 @@ namespace Welcome_To_Ooblterra.Enemies
         public override void Start() {
             InitialState = new Asleep();
             enemyHP = 20;
-            PrintDebugs = true;
+            PrintDebugs = false;
+            DebugEnemy = false; 
             GallenarmaID++;
             WTOEnemyID = GallenarmaID;
             Log.Info($"Adding Gallenarma {this} at {GallenarmaID}");

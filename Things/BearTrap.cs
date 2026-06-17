@@ -29,7 +29,6 @@ namespace Welcome_To_Ooblterra.Things
 
         // Server side variables
         private System.Random Random;
-        private readonly HashSet<PlayerControllerB> PlayerInRangeList = new();
 
         private bool Raised
         {
@@ -43,39 +42,13 @@ namespace Welcome_To_Ooblterra.Things
             set => BearTrapAnim.SetBool("CloseTrap", value);
         }
 
-        // Client side class for tracking if multiple traps are all trapping a player at once
-        // and when they're fully freed from all traps.
-        class ClientTrappedEntry(float originalMoveSpeed, float originalJumpForce)
-        {
-            private float originalMoveSpeed = originalMoveSpeed;
-            private float originalJumpForce = originalJumpForce;
-            int count = 1;
-
-            public void Increment()
-            {
-                count++;
-            }
-
-            public bool Decrement()
-            {
-                count--;
-                return count == 0;
-            }
-
-            public void RestorePlayer(PlayerControllerB player)
-            {
-                player.movementSpeed = originalMoveSpeed;
-                player.jumpForce = originalJumpForce;
-            }
-        }
-        
         // Client side variables
-        private Coroutine? TrappedClientDamageCoroutine = null;
+        private PlayerControllerB? TrappedPlayer = null;
+        private Coroutine? DamageLocalTrappedPlayerCoroutine = null;
+        private static float TrappedPlayerOriginalSpeed = 0.0f;
+        private static float TrappedPlayerOriginalJumpForce = 0.0f;
+        private static int TrappedPlayerCount = 0; // Used to handle multiple traps hitting the same player at once - only restore speed/jump force when the last trap is released.
 
-        private float TrappedClientDamageTimer = 0.5f;
-
-        // Tracking across multiple bear traps trapping the player at once
-        private static ClientTrappedEntry? SharedTrappedClientEntry = null;
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(BearTrap), LogSourceType.Thing);
 
@@ -86,21 +59,27 @@ namespace Welcome_To_Ooblterra.Things
 
         private void Start() 
         {
-            // Ensure different seed per trap or they all do the same thing
+            // Ensure different seed per trap or they all come up at the same time.
             Random = new System.Random(StartOfRound.Instance.randomMapSeed + BearTrapCount++);
+
+            // Start with trap underground and choose a random initial time to come up
+            Raised = false;
+            Closed = false;
 
             if(IsServer)
             {
                 MoveToStartingLocation();
 
-                // Start with trap underground and choose a random initial time to come up
-                Raised = false;
-                Closed = false;
-
                 // Come back up after random time - sets raised to true once finished.
                 float recoveryTime = RandomFloatInRange(Random, InitialSpawnTimeRangeMin, InitialSpawnTimeRangeMax);
                 StartCoroutine(RaiseTrapCoroutine(recoveryTime));
             }
+        }
+
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
+            OnPlayerFreed();
         }
 
         private void MoveToStartingLocation()
@@ -145,47 +124,63 @@ namespace Welcome_To_Ooblterra.Things
                 if(!hit.HasValue)
                 {
                     Log.Error("Bear Trap couldn't find any nav mesh position to position itself on either, leaving at original position");
-                    return;
                 }
+                else
+                {
+                    transform.position = hit.Value.position;
+                    transform.rotation = Quaternion.Euler(0, randomYaw, 0);
+                }
+            }
+            else
+            {
+                averageHitPoint /= count;
+                averageHitNormal.Normalize();
 
-                transform.position = hit.Value.position;
-                transform.rotation = Quaternion.Euler(0, randomYaw, 0);
-
-                return;
+                // Move the trap to the average hit point, and rotate it to align with the average hit normal.
+                transform.position = averageHitPoint;
+                transform.rotation = Quaternion.FromToRotation(Vector3.up, averageHitNormal) * Quaternion.Euler(0, randomYaw, 0);
             }
 
-            averageHitPoint /= count;
-            averageHitNormal.Normalize();
-
-            // Move the trap to the average hit point, and rotate it to align with the average hit normal.
-            transform.position = averageHitPoint;
-            transform.rotation = Quaternion.FromToRotation(Vector3.up, averageHitNormal) * Quaternion.Euler(0, randomYaw, 0);
+            // Ensure all clients are synced.
+            // No need for a full NetworkTransform - we only pick a position once.
+            MoveToStartingLocationClientRpc(transform.position, transform.rotation);
         }
 
-        public bool Hit(int force, Vector3 hitDirection, PlayerControllerB playerWhoHit, bool playHitSFX, int hitID) 
+        [ClientRpc]
+        private void MoveToStartingLocationClientRpc(Vector3 position, Quaternion rotation)
         {
-            Debug.Log($"Bear trap was hit on the {(IsServer ? "server" : "client")} with force {force}");
+            transform.position = position;
+            transform.rotation = rotation;
+        }
 
-            // Process only on server (re-calls this function)
-            if (IsClient)
+        public bool Hit(int force, Vector3 hitDirection, PlayerControllerB playerWhoHit, bool playHitSFX, int hitID)
+        {
+            if(!Raised)
             {
+                // Exit early if already disabled from being hit
+                return true;
+            }
+
+            if(!IsServer)
+            {
+                // Go through server
                 OnHitServerRpc();
             }
             else
             {
-                ProcessHit();
+                OnHitServer();
             }
 
             return true;
         }
 
         [ServerRpc(RequireOwnership = false)]
-        private void OnHitServerRpc()
+        void OnHitServerRpc()
         {
-            ProcessHit();
+            OnHitServer();
         }
 
-        private void ProcessHit()
+        void OnHitServer()
         {
             if(!Raised)
             {
@@ -193,145 +188,88 @@ namespace Welcome_To_Ooblterra.Things
                 return;
             }
 
-            // Go back down and hide again
+            // Set the server's Raised state as soon as possible in case we get multiple
+            // RPC calls from each client calling Hit() (I am not sure how the LC processes this, but
+            // better safe than sorry since most things like this tend to be processed on clients).
             Raised = false;
-            ReleaseAllVictims();
 
             // Come back up after recovery time - re-sets raised to true once finished.
+            // Handle on server to ensure all clients use the same recovery time.
             float recoveryTime = RandomFloatInRange(Random, RecoveryTimeRangeMin, RecoveryTimeRangeMax);
             StartCoroutine(RaiseTrapCoroutine(recoveryTime));
-        }
 
-        public void OnTriggerStay(Collider other) 
-        {
-            // Using OnTriggerStay to repeatedly check for when the trap becomes re-enabled
-            // after the hit timeout expires.
-
-            if(!IsServer)
-            {
-                return;
-            }
-
-            if(!Raised || PlayerInRangeList.Count > 0)
-            {
-                // Trap is not raised yet, or is already eating a player, so ignore
-                return;
-            }
-
-            if (other.gameObject.TryGetComponent<PlayerControllerB>(out var PlayerInRange) && PlayerInRangeList.Add(PlayerInRange))
-            {
-                Log.Debug($"Bear Trap: Adding Player {PlayerInRange} to player in range list...");
-                Closed = true;
-                OnClientTrappedClientRpc(WTOBase.PlayerIndex(PlayerInRange));
-            }
+            SetRaisedClientRpc(false);
         }
 
         [ClientRpc]
-        private void OnClientTrappedClientRpc(int clientIndex) 
+        void SetRaisedClientRpc(bool raised) 
         {
-            PlayerControllerB localPlayer = StartOfRound.Instance.localPlayerController;
-            // we use -1 in this case to mean 'all players'
-            if (clientIndex == -1 || clientIndex == WTOBase.PlayerIndex(localPlayer))
+            if(!raised)
             {
-                // Snapshot the original values here in case some other mod 
-                // also modified them.
-                // Best effort attempt since we can't really know what other mods might
-                // be doing to the movement speed.
-                TrappedClientDamageTimer = 0.5f; // reset on retrap
-                if(SharedTrappedClientEntry == null)
-                {
-                    // create initial entry for trapped player since one does not exist from
-                    // another trap
-                    SharedTrappedClientEntry = new ClientTrappedEntry(localPlayer.movementSpeed, localPlayer.jumpForce);
-                }
-                else
-                {
-                    // increment existing ref count
-                    SharedTrappedClientEntry.Increment();
-                }
-                localPlayer.movementSpeed = 0.4f;
-                localPlayer.jumpForce = 1;
-
-                // Start dealing damage to local trapped player
-                if(TrappedClientDamageCoroutine != null)
-                {
-                    Log.Warning("Client trap damage coroutine was somehow already running on re-trap");
-                }
-                else
-                {
-                    TrappedClientDamageCoroutine = StartCoroutine(DamageLocalPlayerCoroutine());
-                }
+                // Free player if we have someone trapped
+                OnPlayerFreed();
             }
-            
-            // Always play trap sound on all clients
-            GetComponent<AudioSource>().PlayOneShot(CloseSound);
+            Raised = raised;
+        }
+
+        public void OnTriggerStay(Collider other)
+        {
+            if(!IsClient)
+            {
+                return; // only process on client side
+            }
+
+            if(!Raised)
+            {
+                return; // only trap players when the trap is raised
+            }
+
+            if (other.gameObject.TryGetComponent<PlayerControllerB>(out var trappedPlayer) && TrappedPlayer == null)
+            {
+                int playerIndex = WTOBase.PlayerIndex(trappedPlayer);
+                Log.Debug($"Bear Trap: Trapped player {playerIndex}");
+
+                // Apply local trap effects.
+                OnPlayerTrapped(trappedPlayer);
+            }
         }
 
         public void OnTriggerExit(Collider other) 
         {
-            if(!IsServer)
+            if(!IsClient)
             {
-                return;
+                return; // only process on client side
             }
 
-            if(other.gameObject.TryGetComponent<PlayerControllerB>(out var PlayerInRange) && PlayerInRangeList.Remove(PlayerInRange))
+            if (other.gameObject.TryGetComponent<PlayerControllerB>(out var trappedPlayer) && TrappedPlayer == trappedPlayer)
             {
-                Log.Debug($"Bear Trap: Removing Player {PlayerInRange} from player in range list...");
-                Closed = PlayerInRangeList.Count > 0;
-                OnClientFreedClientRpc(WTOBase.PlayerIndex(PlayerInRange));
-            }
-        }
+                int playerIndex = WTOBase.PlayerIndex(trappedPlayer);
+                Log.Debug($"Bear Trap: Freed player {playerIndex}");
 
-        [ClientRpc]
-        private void OnClientFreedClientRpc(int clientIndex) 
-        {
-            if(TrappedClientDamageCoroutine == null)
-            {
-                // Local client is not trapped, so ignore this message
-                return;
-            }
-
-            PlayerControllerB localPlayer = StartOfRound.Instance.localPlayerController;
-            // we use -1 in this case to mean 'all players'
-            if (clientIndex == -1 || clientIndex == WTOBase.PlayerIndex(localPlayer))
-            {
-                // Local client is no longer trapped
-                StopCoroutine(TrappedClientDamageCoroutine);
-                TrappedClientDamageCoroutine = null;
-
-                if(SharedTrappedClientEntry == null)
-                {
-                    Log.Error("SharedTrappedClientEntry was null when trying to free player from trap");
-                    return;
-                }
-                if(SharedTrappedClientEntry.Decrement())
-                {
-                    // This was the last trap freeing the player, so restore original values and clear entry
-                    SharedTrappedClientEntry.RestorePlayer(localPlayer);
-                    SharedTrappedClientEntry = null;
-                }
+                // Apply local trap release effects
+                OnPlayerFreed();
             }
         }
 
-        private void ReleaseAllVictims()
+        private IEnumerator RaiseTrapCoroutine(float waitTime)
         {
-            // Server only - free all clients from the trap
+            yield return new WaitForSeconds(waitTime);
 
-            // No players trapped anymore
-            PlayerInRangeList.Clear();
-            Closed = false;
-
-            // Inform the players of this fact so they can reset their movement speed and jump force if needed.
-            OnClientFreedClientRpc(-1);
+            Log.Debug($"Trap raised after {waitTime} seconds");
+            SetRaisedClientRpc(true);
         }
 
         private IEnumerator DamageLocalPlayerCoroutine()
         {
-            while(true)
+            float trappedClientDamageTimer = 0.5f;
+            // Run on local client - can't damage from server side.
+            PlayerControllerB victim = StartOfRound.Instance.localPlayerController;
+
+            // Basic safety checks to ensure we don't somehow damage the player
+            // in weird situations.
+            while(!victim.isPlayerDead && TrappedPlayer == victim)
             {
-                // Run on local client - can't damage from server side.
-                PlayerControllerB victim = StartOfRound.Instance.localPlayerController;
-                AcidWater.DamageOverlappingPlayer(victim, 0.5f, ref TrappedClientDamageTimer, 5, CauseOfDeath.Mauling);
+                AcidWater.DamageOverlappingPlayer(victim, 0.5f, ref trappedClientDamageTimer, 5, CauseOfDeath.Mauling);
                 if (victim.health > 1)
                 {
                     victim.movementSpeed = 0.4f;
@@ -340,19 +278,70 @@ namespace Welcome_To_Ooblterra.Things
                 else
                 {
                     // Restore player movement before death
-                    SharedTrappedClientEntry?.RestorePlayer(victim);
+                    victim.movementSpeed = TrappedPlayerOriginalSpeed;
+                    victim.jumpForce = TrappedPlayerOriginalJumpForce;
                 }
 
                 yield return null;
             }
+
+            // Player so the coroutine can exit.
+            // Leave the trapped state as trapped though with this dead player body.
+            // if the body moves off of the trap then the trap will free them and a different
+            // player can be trapped.
         }
 
-        private IEnumerator RaiseTrapCoroutine(float waitTime)
+        private void OnPlayerTrapped(PlayerControllerB trappedPlayer)
         {
-            yield return new WaitForSeconds(waitTime);
+            // Plays client side trap effects.
+            TrappedPlayer = trappedPlayer;
+            Closed = true;
+            GetComponent<AudioSource>().PlayOneShot(CloseSound);
 
-            Raised = true;
-            Log.Debug($"Trap raised after {waitTime} seconds");
+            // Store if we trapped our local player and modify their
+            // movement speed and jump force.
+            // Don't touch the effects on other players.
+            if(TrappedPlayer == StartOfRound.Instance.localPlayerController)
+            {
+                if(TrappedPlayerCount == 0)
+                {
+                    // Store original speed/jump force before modifying them, but only for the first trap that hits the player if multiple traps hit at once.
+                    TrappedPlayerOriginalSpeed = trappedPlayer.movementSpeed;
+                    TrappedPlayerOriginalJumpForce = trappedPlayer.jumpForce;
+                }
+
+                // can have multiple traps running the damage routine at once.
+                DamageLocalTrappedPlayerCoroutine = StartCoroutine(DamageLocalPlayerCoroutine());
+                TrappedPlayerCount++;
+            }
+        }
+
+        private void OnPlayerFreed()
+        {
+            // Revert trap effects on the local player, if they are who we trapped.
+            
+            // Guard against StartOfRound being destroyed before this trap during scene teardown.
+            if(StartOfRound.Instance != null && TrappedPlayer == StartOfRound.Instance.localPlayerController)
+            {
+                // Stop local running damage coroutine.
+                if(DamageLocalTrappedPlayerCoroutine != null)
+                {
+                    StopCoroutine(DamageLocalTrappedPlayerCoroutine);
+                    DamageLocalTrappedPlayerCoroutine = null;
+                }
+
+                TrappedPlayerCount--;
+                if(TrappedPlayerCount == 0)
+                {
+                    // Restore original speed/jump force when the last trap is released if multiple traps hit at once.
+                    TrappedPlayer.movementSpeed = TrappedPlayerOriginalSpeed;
+                    TrappedPlayer.jumpForce = TrappedPlayerOriginalJumpForce;
+                }
+            }
+
+            // Clear local trap effects.
+            TrappedPlayer = null;
+            Closed = false;
         }
     }
 }

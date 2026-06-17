@@ -232,6 +232,10 @@ namespace Welcome_To_Ooblterra.Enemies
         }
         private class StalkedPlayerSeesUs : StateTransition {
             public override bool CanTransitionBeTaken() {
+                if(EnforcerList[enemyIndex].targetPlayer == null) {
+                    // targetPlayer null safety for client side.
+                    return false;
+                }
                 return EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].eye.position, 30) || EnforcerList[enemyIndex].targetPlayer.HasLineOfSightToPosition(EnforcerList[enemyIndex].transform.position, 30);
             }
             public override BehaviorState NextState() {
@@ -248,6 +252,10 @@ namespace Welcome_To_Ooblterra.Enemies
         }
         private class PlayerKilled : StateTransition {
             public override bool CanTransitionBeTaken() {
+                if(EnforcerList[enemyIndex].targetPlayer == null) {
+                    // targetPlayer null safety for client side.
+                    return false;
+                }
                 return EnforcerList[enemyIndex].targetPlayer.isPlayerDead;
             }
             public override BehaviorState NextState() {
@@ -282,6 +290,10 @@ namespace Welcome_To_Ooblterra.Enemies
         private class PlayerFoundDuringSearch : StateTransition {
             public override bool CanTransitionBeTaken() {
                 //I GOTTA better FEELING ABOUT THIS
+                if(EnforcerList[enemyIndex].targetPlayer == null) {
+                    // targetPlayer null safety for client side.
+                    return false;
+                }
                 return EnforcerList[enemyIndex].IsTargetPlayerWithinLOS(EnforcerList[enemyIndex].targetPlayer, width: 120);
             }
             public override BehaviorState NextState() {
