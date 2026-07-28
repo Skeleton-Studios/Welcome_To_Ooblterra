@@ -5,42 +5,56 @@ namespace Welcome_To_Ooblterra.Items
 {
     public class WTOBattery : GrabbableObject {
 
-        public bool HasCharge;
+        public bool HasCharge = true;
         public Material ChargedMaterial;
-        public Material EmptyMaterial;
+        public Material DrainedMaterial;
         public ScanNodeProperties ScanNode;
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(WTOBattery), LogSourceType.Item);
 
-        public override void Start() {
-            base.Start();
-            //int StartingScrapValue;
-            // System.Random ScrapValueRandom = new(StartOfRound.Instance.randomMapSeed);
-            if(ScanNode == null) {
-                ScanNode = base.gameObject.GetComponentInChildren<ScanNodeProperties>();
+        private void Awake() 
+        {
+            ScanNode ??= gameObject.GetComponentInChildren<ScanNodeProperties>();
+        }
+
+        public override void OnNetworkSpawn() 
+        {
+            base.OnNetworkSpawn();
+
+            if(IsServer)
+            {
+                SetCharge(HasCharge);
+
+                // Server's initial state synced to clients on spawn.
+                SetChargeClientRpc(HasCharge, new ClientRpcParams
+                {
+                    Send = WTOBase.AllClientsButHost()
+                });
             }
-            Log.Info($"Battery value: {scrapValue}");
-            if (scrapValue < 100) {
-                Log.Info("Setting Battery State to Drained");
-                ScanNode.headerText = "Drained Battery";
-                HasCharge = false;
-                mainObjectRenderer.SetMaterials(new() { EmptyMaterial });
-                /*
-                StartingScrapValue = ScrapValueRandom.Next(itemProperties.minValue, itemProperties.maxValue);
-                StartingScrapValue /= 5;
-                StartingScrapValue = (int)Mathf.Round(StartingScrapValue * 0.4f);
-                */ 
-                insertedBattery.charge = 100;
-            } else {
+        }
+
+        [ClientRpc]
+        private void SetChargeClientRpc(bool hasCharge, ClientRpcParams clientRpcParams = default)
+        {
+            SetCharge(hasCharge);
+        }
+
+        private void SetCharge(bool hasCharge)
+        {
+            HasCharge = hasCharge;
+
+            if (HasCharge)
+            {
                 Log.Info("Setting Battery State to Charged");
                 ScanNode.headerText = "Charged Battery";
-                mainObjectRenderer.SetMaterials(new() { ChargedMaterial });
-                HasCharge = true;
-                scrapValue = 200;
-                /*StartingScrapValue = ScrapValueRandom.Next(450, 550);
-                */
+                mainObjectRenderer.SetMaterials([ChargedMaterial]);
             }
-            SetScrapValue(scrapValue); 
+            else
+            {
+                Log.Info("Setting Battery State to Drained");
+                ScanNode.headerText = "Drained Battery";
+                mainObjectRenderer.SetMaterials([DrainedMaterial]);
+            }
         }
 
         public override void OnPlaceObject()

@@ -32,10 +32,7 @@ namespace Welcome_To_Ooblterra.Things
         public Color LightColor;
         public Light CenterLight;
 
-        // Prefab used to spawn the charged battery somewhere around the place.
-        public GameObject ChargedBatteryPrefab;
-        // Prefab used to spawn the drained battery in the recepticle.
-        public GameObject DrainedBatteryPrefab;
+        public Item BatteryItem;
 
         // Prefab used to spawn the scrap shelf
         public GameObject ScrapShelfPrefab;
@@ -69,7 +66,10 @@ namespace Welcome_To_Ooblterra.Things
                 NextLight.SetColorRelative(this.transform.position);
             }
 
-            SpawnBatteryObjects();
+            if(IsServer)
+            {
+                SpawnBatteryObjects();
+            }
         }
 
         private void Update() 
@@ -119,36 +119,66 @@ namespace Welcome_To_Ooblterra.Things
 
         private RandomMapObject? FindChargedBatterySpawn()
         {
-            List<RandomMapObject> AllRandomSpawnList = new();
-            List<RandomMapObject> ViableSpawnlist = new();
-            AllRandomSpawnList.AddRange(FindObjectsOfType<RandomMapObject>());
-            float MinSpawnRange = 80f;
-            foreach (RandomMapObject BatterySpawn in AllRandomSpawnList.Where(x => x.spawnablePrefabs.Contains(ChargedBatteryPrefab)))
-            {
-                float SpawnPointDistance = Vector3.Distance(this.transform.position, BatterySpawn.transform.position);
-                Log.Debug($"BATTERY DISTANCE: {SpawnPointDistance}");
-                if (SpawnPointDistance > MinSpawnRange)
-                {
-                    ViableSpawnlist.Add(BatterySpawn);
-                }
-            }
-            Log.Debug($"Viable Battery Spawns: {ViableSpawnlist.Count}");
-            if (ViableSpawnlist.Count == 0)
+            var spawns = (
+                from s in FindObjectsOfType<RandomMapObject>()
+                where s.spawnablePrefabs.Contains(BatteryItem.spawnPrefab) && Vector3.Distance(transform.position, s.transform.position) > 80f
+                select s
+            ).ToList();
+
+            Log.Debug($"Viable Battery Spawns: {spawns.Count}");
+            if (spawns.Count == 0)
             {
                 Log.Error("NO VIABLE SPAWNS FOR BATTERY FOUND!");
                 return null;
             }
-            System.Random MachineRandom = new();
-            return ViableSpawnlist[MachineRandom.Next(0, ViableSpawnlist.Count)];
+
+            System.Random MachineRandom = new(StartOfRound.Instance.randomMapSeed);
+            return spawns[MachineRandom.Next(0, spawns.Count)];
+        }
+
+        private int CalculateBatteryScrapValue(bool charged)
+        {
+            // Battery does not get spawned in the same way that other scrap does, so we need to calculate its scrap value here
+            // and distribute it to all clients. 
+            if (!charged)
+            {
+                // Non charged battery uses a fixed low number
+                // 225 / 8 = 28.125, which is close to the fixed 30 the old code used, but this can be somewhat controlled by client mods that change minValue.
+                return BatteryItem.minValue / 8;
+            }
+
+            // This calc is copied from LC code, so could need updating if LC changes the calculation method.
+            return (int)(RoundManager.Instance.AnomalyRandom.Next(BatteryItem.minValue, BatteryItem.maxValue) * RoundManager.Instance.scrapValueMultiplier);
+        }
+
+        private WTOBattery SpawnBattery(bool charged, Transform transform, Transform parent)
+        {
+            GameObject battery = Instantiate(BatteryItem.spawnPrefab, transform.position, transform.rotation, parent);
+            WTOBattery batteryBehaviour = battery.GetComponent<WTOBattery>();
+            batteryBehaviour.HasCharge = charged;
+            RoundManager.Instance.spawnedSyncedObjects.Add(battery);
+            battery.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+
+            SetBatteryScrapValueClientRpc(batteryBehaviour, CalculateBatteryScrapValue(charged));
+
+            return batteryBehaviour;
+        }
+
+        [ClientRpc]
+        void SetBatteryScrapValueClientRpc(NetworkBehaviourReference networkBehaviour, int scrapValue)
+        {
+            if(networkBehaviour.TryGet(out WTOBattery battery))
+            {
+                battery.SetScrapValue(scrapValue);
+            }
+            else
+            {
+                Log.Error("Failed to get WTOBattery from NetworkBehaviourReference in SetBatteryScrapValueClientRpc. This should never happen.");
+            }
         }
 
         private void SpawnBatteryObjects() 
         {
-            if (!IsServer) 
-            {
-                return;
-            }
-
             // Recepticle transform to insert the battery into
             {
                 GameObject BatteryRecepticleTransform = Instantiate(BatteryRecepticleTransformPrefab, BatteryTransform.position, BatteryTransform.rotation, transform);
@@ -158,12 +188,7 @@ namespace Welcome_To_Ooblterra.Things
             }
 
             // Spawn the initial drained battery in the recepticle
-            {
-                GameObject DrainedBattery = Instantiate(DrainedBatteryPrefab, BatteryTransform.position, BatteryTransform.rotation, SpawnedBatteryRecepticleTransform.transform);
-                RoundManager.Instance.spawnedSyncedObjects.Add(DrainedBattery);
-                DrainedBattery.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
-                SetInsertedBattery(DrainedBattery.GetComponent<WTOBattery>());
-            }
+            SetInsertedBattery(SpawnBattery(false, BatteryTransform, SpawnedBatteryRecepticleTransform.transform));
 
             // Spawn the scrap shelf
             {
@@ -178,9 +203,8 @@ namespace Welcome_To_Ooblterra.Things
                 RandomMapObject? spawn = FindChargedBatterySpawn();
                 if (spawn != null)
                 {
-                    GameObject ChargedBattery = Instantiate(ChargedBatteryPrefab, spawn.transform.position, spawn.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
-                    RoundManager.Instance.spawnedSyncedObjects.Add(ChargedBattery);
-                    ChargedBattery.GetComponent<NetworkObject>().Spawn(destroyWithScene: true);
+                    Log.Info("Spawning charged battery at " + spawn.transform.position);
+                    SpawnBattery(true, spawn.transform, RoundManager.Instance.mapPropsContainer.transform);
                 }
             }
 

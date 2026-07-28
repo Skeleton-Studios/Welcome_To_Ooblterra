@@ -520,8 +520,6 @@ namespace Welcome_To_Ooblterra
             string[] customPrefabsPaths =
             [
                 "CustomDungeon/Behaviors/BatteryRecepticleTransform.prefab",
-                "CustomDungeon/Behaviors/ChargedBattery.prefab",
-                "CustomDungeon/Behaviors/DrainedBattery.prefab",
                 "CustomDungeon/Behaviors/ScrapShelf.prefab",
                 "CustomDungeon/Security/BabyLurkerEgg/BabyLurkerEggProjectile.prefab",
                 "CustomMoon/BearTrap/BearTrap.prefab" // gets spawned by BearTrapSpawner, which gets registered by LLL, but this prefab does not
@@ -654,6 +652,18 @@ namespace Welcome_To_Ooblterra
                 case LogType.Error: WTOLogSource.LogError(text); break;
                 default: WTOLogSource.LogMessage(text); break;
             }
+        }
+
+        public static ClientRpcSendParams AllClientsButHost()
+        {
+            if (!NetworkManager.Singleton.IsHost)
+            {
+                Log.Error("AllClientsButHost called on a client that is not the host.");
+            }
+            return new ClientRpcSendParams
+            {
+                TargetClientIds = [.. from id in NetworkManager.Singleton.ConnectedClientsIds where id != NetworkManager.Singleton.LocalClientId select id]
+            };
         }
 
         public static ClientRpcSendParams AllClientsButSender(ServerRpcParams rpcParams)

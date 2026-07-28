@@ -17,7 +17,9 @@ namespace Welcome_To_Ooblterra.Things
 #pragma warning restore 0649
 
         private float TotemSecondsRemaining = 15f;
-        private int LastSentTotemPieces = 0;
+        // on server - last sent totem pieces
+        // on client - last received totem pieces
+        private int LastTotemPieces = 0;
 
         // The player's sprint multiplier when the item was picked up.
         // This is used as a baseline to return to once this item stops
@@ -42,17 +44,17 @@ namespace Welcome_To_Ooblterra.Things
             // This gets called when this is instantiated BEFORE LoadItemSaveData().
             // Start() is called after LoadItemSaveData() so that cannot be used for this initialisation.
             TotemSecondsRemaining = TotemDuration;
-            LastSentTotemPieces = TotemPieces.Count;
+            LastTotemPieces = TotemPieces.Count;
             PrintState("Awake: ");
         }
 
         public override int GetItemDataToSave()
         {
-            // Bitpack the calculated ScrapValuePerPiece and LastSentTotemPieces. We will snap the duration upwards
+            // Bitpack the calculated ScrapValuePerPiece and LastTotemPieces. We will snap the duration upwards
             // based on how many pieces there were.
             // We uses pieces are they are an exact value - no floats to worry about.
             int scrapValuePerPiece = ScrapValuePerPiece & 0xFFFF; // 16 bits for scrap value per piece
-            int pieces = LastSentTotemPieces & 0xFFFF; // 16 bits for pieces remaining
+            int pieces = LastTotemPieces & 0xFFFF; // 16 bits for pieces remaining
             return (scrapValuePerPiece << 16) | pieces;
         }
 
@@ -62,24 +64,24 @@ namespace Welcome_To_Ooblterra.Things
             // the current scrap value in ReduceTotemPercentage() when the item is picked up.
             // We presume that the scrap value is correctly saved/loaded by the game itself.
             ScrapValuePerPiece = (saveData >> 16) & 0xFFFF;
-            LastSentTotemPieces = saveData & 0xFFFF;
+            LastTotemPieces = saveData & 0xFFFF;
 
             // Derive time remaining from the number of pieces remaining and the total duration.
             // only needed for server, but doesn't hurt putting it on clients too.
-            TotemSecondsRemaining = (LastSentTotemPieces / (float)TotemPieces.Count) * TotemDuration;
+            TotemSecondsRemaining = (LastTotemPieces / (float)TotemPieces.Count) * TotemDuration;
 
-            SetTotemPieces(LastSentTotemPieces);
+            SetTotemPieces(LastTotemPieces);
 
             PrintState("LoadItemSaveData: ");
 
-            // If the LastSentTotemPieces was somehow 0, set it to -1 here after the effects are applied.
+            // If the LastTotemPieces was somehow 0, set it to -1 here after the effects are applied.
             // This means we get visual rendering of 0 pieces, but then the next countdown tick will
             // cause -1 to go to 0 and destroy the totem.
             // If we left this at 0, then the totem would not be destroyed as the countdown tick would not trigger
             // the UpdateTotemClientRpc() call to destroy the totem.
-            if (LastSentTotemPieces == 0)
+            if (LastTotemPieces == 0)
             {
-                LastSentTotemPieces = -1;
+                LastTotemPieces = -1;
             }
         }
 
@@ -113,6 +115,17 @@ namespace Welcome_To_Ooblterra.Things
             }
         }
 
+        public override void EnableItemMeshes(bool enable)
+        {
+            base.EnableItemMeshes(enable);
+
+            if (enable)
+            {
+                // Don't turn them all on - only the current number of pieces
+                SetTotemPieces(LastTotemPieces);
+            }
+        }
+
         public override void DiscardItem()
         {
             if (IsOwner && playerHeldBy != null && OriginalSprintMultiplier.HasValue)
@@ -142,14 +155,14 @@ namespace Welcome_To_Ooblterra.Things
             float percent = TotemSecondsRemaining / TotemDuration;
             int piecesRemaining = (int)Math.Ceiling(percent * TotemPieces.Count);
 
-            if (piecesRemaining != LastSentTotemPieces)
+            if (piecesRemaining != LastTotemPieces)
             {
-                LastSentTotemPieces = piecesRemaining;
+                LastTotemPieces = piecesRemaining;
                 int newScrapValue = ScrapValuePerPiece * piecesRemaining;
 
                 PrintState("ReduceTotemPercentage: ");
 
-                UpdateTotemClientRpc(LastSentTotemPieces, newScrapValue);
+                UpdateTotemClientRpc(LastTotemPieces, newScrapValue);
             }
         }
 
@@ -158,6 +171,7 @@ namespace Welcome_To_Ooblterra.Things
         {
             SetScrapValue(newScrapValue);
             AudioPlayer.PlayOneShot(TotemBreakSound);
+            LastTotemPieces = pieces;
             SetTotemPieces(pieces);
 
             if (pieces == 0)
@@ -179,7 +193,7 @@ namespace Welcome_To_Ooblterra.Things
 
         private void PrintState(string prefix="")
         {
-            Log.Info($"{prefix} TotemSecondsRemaining={TotemSecondsRemaining}, LastSentTotemPieces={LastSentTotemPieces}, ScrapValuePerPiece={ScrapValuePerPiece}, ScrapValue(lc)={scrapValue}");
+            Log.Info($"{prefix} TotemSecondsRemaining={TotemSecondsRemaining}, LastSentTotemPieces={LastTotemPieces}, ScrapValuePerPiece={ScrapValuePerPiece}, ScrapValue(lc)={scrapValue}");
         }
     }
 }
