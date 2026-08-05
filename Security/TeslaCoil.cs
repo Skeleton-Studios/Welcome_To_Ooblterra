@@ -1,14 +1,13 @@
 ﻿using GameNetcodeStuff;
 using System.Collections.Generic;
-using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 using Welcome_To_Ooblterra.Enemies;
 
 namespace Welcome_To_Ooblterra.Things
 {
-    internal class TeslaCoil : NetworkBehaviour {
-
+    internal class TeslaCoil : NetworkBehaviour 
+    {
 #pragma warning disable 0649 // Assigned in Unity Editor
         public BoxCollider RangeBox;
         public GameObject SmallRing; 
@@ -20,185 +19,217 @@ namespace Welcome_To_Ooblterra.Things
         public AudioClip RingsOn;
         public AudioClip RingsOff;
         public AudioClip RingsActive;
-        public AudioClip WalkieTalkieDie;
 
         public MeshRenderer[] Emissives;
         public Animator TeslaCoilAnim;
-
-        readonly WalkieTalkie NowYoureOnWalkies;
 #pragma warning restore 0649
 
-        [HideInInspector]
-        private bool TeslaCoilOn = true;
-        private bool AttemptedFireShotgun = false;
+        /// <summary>
+        /// State that marks what is in range of a tesla coil.
+        /// These are merged together by the <see cref="TeslaCoilManager"/> to determine what items
+        /// should be affected by the tesla coil.
+        /// </summary>
+        public class CoilInRangeState
+        {
+            public bool isEnabled = true;
+            public bool localPlayerInRange = false;
+            public HashSet<GrabbableObject> grabbableObjectsInRange = new();
+            public HashSet<EyeSecAI> eyeSecInRange = new();
 
-        private readonly List<PlayerControllerB> PlayerInRangeList = new();
-        private readonly List<WalkieTalkie> WalkiesToReEnable = new();
-        private readonly List<FlashlightItem> FlashLightsToReEnable = new();
+            public void Clear()
+            {
+                isEnabled = true;
+                localPlayerInRange = false;
+                grabbableObjectsInRange.Clear();
+                eyeSecInRange.Clear();
+            }
+        }
+
+        private CoilInRangeState coilState = new();
+
+        private Color[] emissiveColors = [];
+        private Material[] emissiveMaterials = [];
 
         private static readonly WTOBase.WTOLogger Log = new(typeof(TeslaCoil), LogSourceType.Room);
 
-        public void OnTriggerEnter(Collider other) {
-            try {
-                EyeSecAI EyeSecInRange = other.gameObject.GetComponent<EyeSecAI>();
-                EyeSecInRange.BuffedByTeslaCoil = true;
-            } catch {}       
-            try {
-                PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
+        private void Start()
+        {
+            emissiveMaterials = new Material[Emissives.Length];
+            emissiveColors = new Color[Emissives.Length];
+
+            for (int i = 0; i < Emissives.Length; i++)
+            {
+                var mats = Emissives[i].sharedMaterials;
+                var instance = new Material(mats[0]);
+                emissiveMaterials[i] = instance;
+                emissiveColors[i] = instance.GetColor("_EmissiveColor");
+
+                mats = [.. mats];
+                mats[0] = instance;
+                Emissives[i].materials = mats;
+            }
+
+            ToggleTeslaCoil(true);
+        }
+
+        public override void OnDestroy()
+        {
+            base.OnDestroy();
+            // Unity does not readily automatically destroy the material clones.
+            for (int i = 0; i < emissiveMaterials.Length; i++)
+            {
+                if (emissiveMaterials[i] != null)
+                {
+                    Destroy(emissiveMaterials[i]);
+                }
+            }
+        }
+
+        private void OnEnable()
+        {
+            TeslaCoilManager.Instance.AddTeslaCoil(this, coilState);
+        }
+
+        private void OnDisable()
+        {
+            TeslaCoilManager.Instance.RemoveTeslaCoil(this);
+            coilState.Clear();
+        }
+
+        public void OnTriggerEnter(Collider other) 
+        {
+            Log.Debug($"OnTriggerEnter: {other.gameObject.name}");
+
+            bool updated = false;
+            if (other.gameObject.TryGetComponent(out EnemyAICollisionDetect enemy))
+            {
+                if (enemy.mainScript != null && enemy.mainScript is EyeSecAI EyeSecInRange && !EyeSecInRange.isEnemyDead)
+                {
+                    coilState.eyeSecInRange.Add(EyeSecInRange);
+                    updated = true;
+                }
+            }
+
+            if (IsServer && other.gameObject.TryGetComponent(out GrabbableObject grabbableObject))
+            {
+                coilState.grabbableObjectsInRange.Add(grabbableObject);
+                updated = true;
+            }
+
+            if (IsClient && other.gameObject.TryGetComponent(out PlayerControllerB PlayerInRange) && StartOfRound.Instance.localPlayerController == PlayerInRange)
+            {
+                // Allow each player to apply tesla coil effects on themselves.
+                coilState.localPlayerInRange = true;
+                updated = true;
+            }
+
+            if (updated)
+            {
+                PrintInRangeObjects();
+            }
+        }
+
+        public void OnTriggerExit(Collider other) 
+        {
+            Log.Debug($"OnTriggerExit: {other.gameObject.name}");
             
-                if (!PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null){
-                    Log.Debug($"Adding Player {PlayerInRange} to player in range list...");
-                    PlayerInRangeList.Add(PlayerInRange);
-                }
-            } catch {}
-            try {
-                RadarBoosterItem RadarBoosterInRange = other.gameObject.GetComponent<RadarBoosterItem>();
-                RadarBoosterInRange.EnableRadarBooster(false);
-            } catch { }
-        }
-        public void OnTriggerExit(Collider other) {
-            try {
-                EyeSecAI EyeSecInRange = other.gameObject.GetComponent<EyeSecAI>();
-                other.gameObject.GetComponent<EyeSecAI>().BuffedByTeslaCoil = false;
-            } catch { }
-            try {
-                PlayerControllerB PlayerInRange = other.gameObject.GetComponent<PlayerControllerB>();
-                if (PlayerInRangeList.Contains(PlayerInRange) && PlayerInRange != null) {
-                    Log.Debug($"Removing Player {PlayerInRange} from player in range list...");
-                    ReEnableEquipment(PlayerInRange);
-                    PlayerInRangeList.Remove(PlayerInRange);
-                }
-            } catch { }
-        }
-        private void Start() {
-            RecieveToggleTeslaCoil(false);
-            RecieveToggleTeslaCoil(true);
-        }
-        private void Update() {
-            if (!TeslaCoilOn) {
-                return;
+            bool updated = false;
+            if (other.gameObject.TryGetComponent(out EyeSecAI EyeSecInRange) && !EyeSecInRange.isEnemyDead)
+            {
+                // Note: Once eye sec dies, the TeslaCoilManager will remove it from the list, so we don't need to worry about that here.
+                coilState.eyeSecInRange.Remove(EyeSecInRange);
+                updated = true;
             }
-            SpinRings();
-            //Wow this code sucks cock
-            if(PlayerInRangeList.Count <= 0) {
-                return;
+
+            if (IsServer && other.gameObject.TryGetComponent(out GrabbableObject grabbableObject))
+            {
+                coilState.grabbableObjectsInRange.Remove(grabbableObject);
+                updated = true;
             }
-            foreach (PlayerControllerB Player in PlayerInRangeList) {
-                if(Vector3.Distance(Player.transform.position, this.transform.position) > 30) {
-                    PlayerInRangeList.Remove(Player);
-                    continue;
-                }
-                if(Player.ItemSlots.Count() <= 0) {
-                    continue;
-                }
-                foreach (GrabbableObject HeldObject in Player.ItemSlots) {
-                    if(HeldObject is WalkieTalkie NextWalkie) {
-                        if (HeldObject.isBeingUsed == false) {
-                            continue;
-                        }
-                        if (!WalkiesToReEnable.Contains(NextWalkie)) {
-                            WalkiesToReEnable.Add(NextWalkie);
-                        }
-                        if (NextWalkie.clientIsHoldingAndSpeakingIntoThis) {
-                            NextWalkie.SwitchWalkieTalkieOn(false);
-                            SendDeathSFXServerRpc((int)Player.actualClientId);
-                            continue;
-                        }
-                        NextWalkie.SwitchWalkieTalkieOn(false);
-                        continue;
-                    }
-                    if(HeldObject is FlashlightItem NextFlashlight) {
-                        if(NextFlashlight.isBeingUsed && !FlashLightsToReEnable.Contains(NextFlashlight)) {
-                            FlashLightsToReEnable.Add(NextFlashlight);
-                        }
-                        HeldObject.GetComponent<FlashlightItem>().SwitchFlashlight(false);
-                        continue;
-                    }
-                    if(HeldObject is BoomboxItem NextBoombox) {
-                        NextBoombox.StartMusic(false);
-                        continue;
-                    }
-                    if(HeldObject is PatcherTool NextZapGun) {
-                        NextZapGun.DisablePatcherGun();
-                        continue;
-                    }
-                    if(HeldObject is RadarBoosterItem NextBooster) {
-                        NextBooster.EnableRadarBooster(false);
-                        continue;
-                    }
-                    if(HeldObject is ShotgunItem NextShotgun && AttemptedFireShotgun == false) {
-                        NextShotgun.ItemActivate(true);
-                        AttemptedFireShotgun = true;
-                        continue;
-                    }
-                }
+
+            if (IsClient && other.gameObject.TryGetComponent(out PlayerControllerB PlayerInRange) && StartOfRound.Instance.localPlayerController == PlayerInRange)
+            {
+                // Allow each player to apply tesla coil effects on themselves.
+                coilState.localPlayerInRange = false;
+                updated = true;
+            }
+
+            if (updated)
+            {
+                PrintInRangeObjects();
             }
         }
-        private void SpinRings() {
+
+        private void PrintInRangeObjects()
+        {
+            Log.Debug($"EyeSecs in range: {coilState.eyeSecInRange.Count}");
+            Log.Debug($"Grabbable objects in range: {coilState.grabbableObjectsInRange.Count}");
+            Log.Debug($"Local player in range: {coilState.localPlayerInRange}");
+        }
+
+        private void Update() 
+        {
+            if (coilState.isEnabled)
+            {
+                SpinRings();
+            }
+
+        }
+
+        private void SpinRings() 
+        {
             SmallRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
             MediumRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
             LargeRing.transform.Rotate(0, 0, -160 * Time.deltaTime);
         }
-        private void ToggleRings(bool State) {
-            TeslaCoilAnim.SetBool("Powered", State);
-            foreach (MeshRenderer Mesh in Emissives) {
-                Color CachedColor = Mesh.materials[0].GetColor("_EmissionColor");
-                Mesh.materials[0].SetColor("_EmissiveColor", CachedColor * (State ? 1 : 0));
+
+        /// <summary>
+        /// Called when the tesla coil is triggered from the map (like opening/closing doors)
+        /// </summary>
+        /// <param name="enabled">True if the tesla coil should be enabled, false if it should be disabled.</param>
+        public void RecieveToggleTeslaCoil(bool enabled) 
+        {
+            ToggleTeslaCoil(enabled);
+            ToggleTeslaCoilServerRpc(enabled);
+        }
+
+        [ServerRpc(RequireOwnership = false)]
+        public void ToggleTeslaCoilServerRpc(bool enabled, ServerRpcParams serverParams = default) 
+        {
+            ToggleTeslaCoilClientRpc(enabled, new ClientRpcParams
+            {
+                Send = WTOBase.AllClientsButSender(serverParams)
+            });
+        }
+
+        [ClientRpc]
+        public void ToggleTeslaCoilClientRpc(bool enabled, ClientRpcParams clientRpcParams = default) 
+        {
+            ToggleTeslaCoil(enabled);
+        }
+
+        private void ToggleTeslaCoil(bool enabled) 
+        {
+            coilState.isEnabled = enabled;
+            TeslaCoilAnim.SetBool("Powered", enabled);
+
+            for (int i = 0; i < emissiveMaterials.Length; i++)
+            {
+                emissiveMaterials[i].SetColor("_EmissiveColor", emissiveColors[i] * (enabled ? 1 : 0));
             }
-            AttemptedFireShotgun = false;
-            if(State == false) {
-                StaticNoiseMaker.Stop();
-                RingNoiseMaker.clip = RingsOff;
-                RingNoiseMaker.Play();
-            } else {
+
+            if (enabled)
+            {
                 StaticNoiseMaker.Play();
                 RingNoiseMaker.clip = RingsOn;
                 RingNoiseMaker.Play();
             }
-        }
-        public void RecieveToggleTeslaCoil(bool enabled) {
-            ToggleTeslaCoilServerRpc(enabled);
-            ToggleTeslaCoil(enabled);
-        }
-
-        private void ReEnableEquipment(PlayerControllerB PlayerToCheck) {
-            foreach (GrabbableObject NextItem in PlayerToCheck.ItemSlots) {
-                if (WalkiesToReEnable.Contains(NextItem)) {
-                    WalkiesToReEnable.Remove(NextItem as WalkieTalkie);
-                    NextItem.GetComponent<WalkieTalkie>().SwitchWalkieTalkieOn(true);
-                }
-                if (FlashLightsToReEnable.Contains(NextItem)) {
-                    FlashLightsToReEnable.Remove(NextItem as FlashlightItem);
-                    NextItem.GetComponent<FlashlightItem>().SwitchFlashlight(true);
-                }
+            else
+            {
+                StaticNoiseMaker.Stop();
+                RingNoiseMaker.clip = RingsOff;
+                RingNoiseMaker.Play();
             }
-        }
-
-        [ServerRpc(RequireOwnership = false)]
-        public void ToggleTeslaCoilServerRpc(bool enabled) {
-            ToggleTeslaCoilClientRpc(enabled);
-        }
-        [ClientRpc]
-        public void ToggleTeslaCoilClientRpc(bool enabled) {
-            if(TeslaCoilOn != enabled) { 
-                ToggleTeslaCoil(enabled);
-            }
-        }
-        private void ToggleTeslaCoil(bool enabled) {
-            TeslaCoilOn = enabled;
-            ToggleRings(TeslaCoilOn);
-        }
-
-        [ServerRpc(RequireOwnership = false)]
-        public void SendDeathSFXServerRpc(int PlayerID) {
-            SendDeathSFXClientRpc(PlayerID);
-        }
-        [ClientRpc]
-        public void SendDeathSFXClientRpc(int PlayerID) {
-            SendDeathSFX(PlayerID);
-        }
-        private void SendDeathSFX(int PlayerID) {
-            NowYoureOnWalkies.BroadcastSFXFromWalkieTalkie(WalkieTalkieDie, PlayerID);
         }
     }
 }

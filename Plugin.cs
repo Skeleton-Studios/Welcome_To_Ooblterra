@@ -12,7 +12,9 @@ using System.Linq;
 using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 using Welcome_To_Ooblterra.Enemies;
+using Welcome_To_Ooblterra.Things;
 
 namespace Welcome_To_Ooblterra
 {
@@ -122,6 +124,8 @@ namespace Welcome_To_Ooblterra
         private static AudioClip? ooblterraCozyLightsMusic;
         public static Material? ghostPlayerSuit;
         public static Material? customPoster;
+
+        private static GameObject teslaCoilManagerPrefab;
 
         void Awake()
         {
@@ -355,6 +359,24 @@ namespace Welcome_To_Ooblterra
             }
         }
 
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.Awake))]
+        [HarmonyPostfix]
+        private static void OnStartOfRoundAwake(StartOfRound __instance)
+        {
+            // Create TeslaCoilManager on its own root GameObject so it
+            // is guaranteed to survive independently of this plugin's GO.
+
+            // Note: Copied from how DawnLib does this for persistent singletons.
+            // See: https://github.com/TeamXiaolan/DawnLib/blob/main/DawnLib.Dusk/src/Internal/Patches/NetworkerPatch.cs
+            if(NetworkManager.Singleton.IsServer)
+            {
+                GameObject teslaCoilManager = Instantiate(teslaCoilManagerPrefab);
+                SceneManager.MoveGameObjectToScene(teslaCoilManager, __instance.gameObject.scene);
+                teslaCoilManager.GetComponent<NetworkObject>().Spawn();
+            }
+        }
+
+
         /// <summary>
         /// Replace the poster in the ship with the custom Ooblterra poster.
         /// </summary>
@@ -515,6 +537,8 @@ namespace Welcome_To_Ooblterra
             ooblterraCozyLightsMusic = ContextualLoadAsset<AudioClip>("CustomItems/ooblboombox.ogg");
             ghostPlayerSuit = ContextualLoadAsset<Material>("CustomSuits/GhostPlayerSuit.mat");
             customPoster = ContextualLoadAsset<Material>("CustomSuits/Poster.mat");
+            teslaCoilManagerPrefab = ContextualLoadAsset<GameObject>("CustomDungeon/Security/TeslaCoilManager.prefab");
+            LethalLevelLoaderNetworkManager.RegisterNetworkPrefab(teslaCoilManagerPrefab);
 
             // Register network prefabs that are not handled by LLL
             string[] customPrefabsPaths =
