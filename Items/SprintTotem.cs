@@ -37,6 +37,8 @@ namespace Welcome_To_Ooblterra.Things
         // This is done this way to allow the scrap value to be changed externally after the item is created, but before it is picked up.
         private int ScrapValuePerPiece = 0;
 
+        private readonly NetworkVariable<bool> owningPlayerIsSprinting = new (false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Owner);
+
         private static readonly WTOBase.WTOLogger Log = new(typeof(SprintTotem), LogSourceType.Item);
 
         private void Awake()
@@ -106,9 +108,11 @@ namespace Welcome_To_Ooblterra.Things
                 playerHeldBy.sprintMultiplier = playerHeldBy.isSprinting ?
                     isPocketed ? 2.25f : 3.0f :
                     OriginalSprintMultiplier.Value;
+
+                owningPlayerIsSprinting.Value = playerHeldBy.isSprinting;
             }
 
-            if (IsServer && !isPocketed && playerHeldBy.isSprinting)
+            if (IsServer && !isPocketed && owningPlayerIsSprinting.Value)
             {
                 // Server does tick countdown and syncs to clients.
                 ReduceTotemPercentage();

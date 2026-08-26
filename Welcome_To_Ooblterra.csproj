@@ -5,7 +5,7 @@
         <AssemblyName>Welcome_To_Ooblterra</AssemblyName>
         <Product>Welcome_To_Ooblterra</Product>
         <!-- Change to whatever version you're currently on. -->
-        <Version>2.1.0</Version>
+        <Version>2.2.0</Version>
     </PropertyGroup>
 
     <!-- Project Properties -->
@@ -62,7 +62,8 @@
         <PackageReference Include="UnityEngine.Modules" Version="2022.3.62" PrivateAssets="all" />
 
         <!-- Associated mod dependencies -->
-        <PackageReference Include="IAmBatby-LethalLevelLoader" Version="1.7.5" PrivateAssets="all" />
+        <PackageReference Include="IAmBatby-LethalLevelLoader" Version="1.7.11" PrivateAssets="all" />
+        <!-- Note: We also have DawnLib, but none of our code links to it. It can be added if needed. -->
 
         <!-- Pre-generated ahead of time. Needs to be updated with every new game release -->
         <Reference Include="MMHOOK_Assembly-CSharp">

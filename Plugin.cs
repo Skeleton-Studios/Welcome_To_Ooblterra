@@ -88,7 +88,7 @@ namespace Welcome_To_Ooblterra
 
         private const string modGUID = "SkullCrusher.WTO";
         private const string modName = "Welcome To Ooblterra";
-        private const string modVersion = "2.1.0";
+        private const string modVersion = "2.2.0";
 
         private readonly Harmony WTOHarmony = new(modGUID);
         public static ManualLogSource WTOLogSource;
@@ -195,6 +195,41 @@ namespace Welcome_To_Ooblterra
             }
 
             Log.Info("Runtime init applied! Welcome To Ooblterra successfully loaded");
+        }
+
+        /// <summary>
+        /// Restore LLL's custom bestiary entries to match vanilla LC's...
+        /// Only correct WTO nodes that still match the exact broken LLL introduced state,
+        /// we do not want to touch other people's mods...
+        /// </summary>
+        [HarmonyPatch(typeof(TerminalManager), "CreateEnemyTypeTerminalData")]
+        [HarmonyPostfix]
+        private static void FixWtoEnemyBestiaryTerminalNode(ExtendedEnemyType extendedEnemyType)
+        {
+            if (extendedEnemyType == null || extendedEnemyType.EnemyInfoNode == null)
+            {
+                return;
+            }
+
+            // Scope to Welcome to Ooblterra content only.
+            if (extendedEnemyType.ExtendedMod == null || 
+                extendedEnemyType.AuthorName != "SkullCrusher" || 
+                extendedEnemyType.ModName != "Welcome to Ooblterra!")
+            {
+                return;
+            }
+
+            TerminalNode node = extendedEnemyType.EnemyInfoNode;
+
+            // Exact incorrect LLL state: clearPreviousText left false, typing length not 35.
+            if (node.clearPreviousText || node.maxCharactersToType == 35)
+            {
+                return;
+            }
+
+            Log.Info($"Fixing LLL bestiary TerminalNode defaults for WTO enemy '{extendedEnemyType.EnemyDisplayName}'");
+            node.clearPreviousText = true;
+            node.maxCharactersToType = 35;
         }
 
         /// <summary>
@@ -545,6 +580,7 @@ namespace Welcome_To_Ooblterra
             [
                 "CustomDungeon/Behaviors/BatteryRecepticleTransform.prefab",
                 "CustomDungeon/Behaviors/ScrapShelf.prefab",
+                "CustomDungeon/Behaviors/Crusher.prefab",
                 "CustomDungeon/Security/BabyLurkerEgg/BabyLurkerEggProjectile.prefab",
                 "CustomMoon/BearTrap/BearTrap.prefab" // gets spawned by BearTrapSpawner, which gets registered by LLL, but this prefab does not
             ];

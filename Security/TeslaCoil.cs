@@ -98,8 +98,6 @@ namespace Welcome_To_Ooblterra.Things
 
         public void OnTriggerEnter(Collider other) 
         {
-            Log.Debug($"OnTriggerEnter: {other.gameObject.name}");
-
             bool updated = false;
             if (other.gameObject.TryGetComponent(out EnemyAICollisionDetect enemy))
             {
@@ -131,8 +129,6 @@ namespace Welcome_To_Ooblterra.Things
 
         public void OnTriggerExit(Collider other) 
         {
-            Log.Debug($"OnTriggerExit: {other.gameObject.name}");
-            
             bool updated = false;
             if (other.gameObject.TryGetComponent(out EyeSecAI EyeSecInRange) && !EyeSecInRange.isEnemyDead)
             {
