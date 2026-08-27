@@ -87,7 +87,7 @@ namespace Welcome_To_Ooblterra
         }
 
         private const string modGUID = "SkullCrusher.WTO";
-        private const string modName = "Welcome To Ooblterra";
+        private const string modName = "Welcome To Ooblterra!";
         private const string modVersion = "2.2.1";
 
         private readonly Harmony WTOHarmony = new(modGUID);
@@ -105,6 +105,8 @@ namespace Welcome_To_Ooblterra
 
         public static ConfigEntry<bool> WTODebug;
         public static ConfigEntry<bool> WTOCustomPoster;
+
+        public static ConfigEntry<bool> WTOAllSuitsEnabled;
 
         public static ConfigEntry<bool> WTOLogging_Debug;
         public static ConfigEntry<bool> WTOLogging_Info;
@@ -139,6 +141,12 @@ namespace Welcome_To_Ooblterra
                 WTOLogging_Filter = Config.Bind("1. Debugging", "Log Filter", "WTO", "The filter to apply to the log. Only messages that match this RegEx filter will be printed. If empty, all messages will be printed. This is applied to the final log string, including class name.");
 
                 WTOCustomPoster = Config.Bind("2. Ship Stuff", "Visit Ooblterra Poster Status", true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
+                WTOAllSuitsEnabled = Config.Bind("2. Ship Stuff", "Enable All Suits", true, "Whether or not to show all suits. If set to false, all suits are hidden. If true, use the individual config entries below to enable/disable specific suits."); //IMPLEMENTED
+
+                LethalLevelLoader.Plugin.onSetupComplete += () => 
+                {
+                    ConfigureUnlockableItems(PatchedContent.ExtendedUnlockableItems);
+                };
 
                 WTOTestRoom = Config.Bind("3. Testing", "Enable Test Room Teleporter", false, "Whether or not to enable the test room teleporter in Ooblterra. This spawns a teleporter outside of the ship and spawns the test room.");
                 WTOStartupType = Config.Bind("3. Testing", "Startup Type", StartupType.Normal, "The type of startup to use for the game. Leave this set to Normal. The other modes are for internal use only (e.g. for automated tools)");
@@ -151,7 +159,6 @@ namespace Welcome_To_Ooblterra
             Instance ??= this;
 
             WTOLogSource = BepInEx.Logging.Logger.CreateLogSource(modGUID);
-
 
             try
             {
@@ -214,7 +221,7 @@ namespace Welcome_To_Ooblterra
             // Scope to Welcome to Ooblterra content only.
             if (extendedEnemyType.ExtendedMod == null || 
                 extendedEnemyType.AuthorName != "SkullCrusher" || 
-                extendedEnemyType.ModName != "Welcome to Ooblterra!")
+                extendedEnemyType.ModName != modName)
             {
                 return;
             }
@@ -437,6 +444,22 @@ namespace Welcome_To_Ooblterra
             meshRenderer.materials = materials;
         }
 
+        private void ConfigureUnlockableItems(List<ExtendedUnlockableItem> items)
+        {
+            foreach (ExtendedUnlockableItem item in items)
+            {
+                if(HasOoblterraTag(item.ContentTags) && item.UnlockableItem.suitMaterial != null)
+                {
+                    var thisSuitEnabled = Config.Bind("2. Ship Stuff", $"Enable {item.UnlockableItem.unlockableName}", true, $"Whether or not to show the {item.UnlockableItem.unlockableName}."); //IMPLEMENTED
+                    if(!WTOAllSuitsEnabled.Value || !thisSuitEnabled.Value)
+                    {
+                        Log.Info($"Disabling {item.UnlockableItem.unlockableName} suit.");
+                        item.UnlockableItem.alreadyUnlocked = false;
+                    }
+                }
+            }
+        }
+
         private static Func<bool> GetIsLLLReadyFunc()
         {
             Assembly assembly = Assembly.GetAssembly(typeof(AssetBundleLoader));
@@ -482,16 +505,23 @@ namespace Welcome_To_Ooblterra
             };
         }
 
+        private static bool IsOoblterraTag(ContentTag tag) 
+        {
+            return tag.contentTagName == modName;
+        }
+
+        private static bool HasOoblterraTag(List<ContentTag> tags)
+        {
+            return tags.Any(IsOoblterraTag);
+        }
+
         private static ExtendedLevel? GetOooblterraExtendedLevel()
         {
             foreach (ExtendedLevel level in PatchedContent.ExtendedLevels)
             {
-                foreach (ContentTag tag in level.ContentTags)
+                if (HasOoblterraTag(level.ContentTags))
                 {
-                    if (tag.contentTagName == "Welcome To Ooblterra!")
-                    {
-                        return level;
-                    }
+                    return level;
                 }
             }
             return null;
