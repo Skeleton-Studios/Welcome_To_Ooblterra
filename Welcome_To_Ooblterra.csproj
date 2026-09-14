@@ -63,7 +63,7 @@
 
         <!-- Associated mod dependencies -->
         <PackageReference Include="IAmBatby-LethalLevelLoader" Version="1.7.11" PrivateAssets="all" />
-        <!-- Note: We also have DawnLib, but none of our code links to it. It can be added if needed. -->
+        <PackageReference Include="TeamXiaolan.DawnLib" Version="0.9.25" PrivateAssets="all" />
 
         <!-- Pre-generated ahead of time. Needs to be updated with every new game release -->
         <Reference Include="MMHOOK_Assembly-CSharp">

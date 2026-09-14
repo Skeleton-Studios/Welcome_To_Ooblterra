@@ -27,13 +27,17 @@ namespace Welcome_To_Ooblterra.Things
                 (spawnableItem.spawnableItem.twoHanded ? TwoHanded : OneHanded).Add(spawnableItem);
             }
 
+            if (OneHanded.Count == 0 && TwoHanded.Count == 0)
+            {
+                return;
+            }
+
             System.Random ShelfRandom = new (StartOfRound.Instance.randomMapSeed);
             foreach (Transform SpawnLocation in ScrapSpawnPoints)
             {
-                //get a random object from the scrap pool
-                SpawnableItemWithRarity ScrapToSpawn = ShelfRandom.Next(0, 100) < 80 ?
-                    TwoHanded[ShelfRandom.Next(0, TwoHanded.Count)] :
-                    OneHanded[ShelfRandom.Next(0, OneHanded.Count)];
+                bool preferTwoHanded = TwoHanded.Count > 0 && (OneHanded.Count == 0 || ShelfRandom.Next(0, 100) < 80);
+                List<SpawnableItemWithRarity> pool = preferTwoHanded ? TwoHanded : OneHanded;
+                SpawnableItemWithRarity ScrapToSpawn = pool[ShelfRandom.Next(0, pool.Count)];
                 //Instantiate it at our current scrap spawn point 
                 GameObject SpawnedScrap = Instantiate(ScrapToSpawn.spawnableItem.spawnPrefab, SpawnLocation.transform.position, SpawnLocation.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
                 //set its scrap value 
