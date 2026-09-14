@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Configuration;
 using BepInEx.Logging;
+using Dawn;
 using GameNetcodeStuff;
 using HarmonyLib;
 using LethalLevelLoader;
@@ -418,6 +419,34 @@ namespace Welcome_To_Ooblterra
             }
         }
 
+        /// <summary>
+        /// When using LunarConfig, DawnLib takes over spawning of bear traps.
+        /// Its method of matching the floor tags that a bear trap can spawn on differs
+        /// from vanilla SpawnOutsideHazards. This patch applies the correct floor tags
+        /// for the current spawn path.
+        /// </summary>
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.Start))]
+        [HarmonyPostfix]
+        private static void ApplyBearTrapFloorTagsForCurrentSpawnPath()
+        {
+            if (!LethalContent.MapObjects.IsFrozen)
+            {
+                return;
+            }
+
+            foreach (DawnMapObjectInfo mapObjectInfo in LethalContent.MapObjects.Values)
+            {
+                SpawnableOutsideObject? outsideObject = mapObjectInfo.OutsideInfo?.SpawnableOutsideObject;
+                if (outsideObject?.prefabToSpawn?.name == "BearTrapSpawner")
+                {
+                    // DawnLib only places the trap when ShouldSkipRespectOverride is false (Lunar Config tag).
+                    // Otherwise vanilla RoundManager.SpawnOutsideHazards handles the spawn
+                    outsideObject.spawnableFloorTags = mapObjectInfo.ShouldSkipRespectOverride() ? ["Grass", "Gravel", "Snow"] : [];
+
+                    Log.Info($"Bear trap floor tags set to [{string.Join(", ", outsideObject.spawnableFloorTags)}] (DawnLib spawn path: {!mapObjectInfo.ShouldSkipRespectOverride()})");
+                }
+            }
+        }
 
         /// <summary>
         /// Replace the poster in the ship with the custom Ooblterra poster.
