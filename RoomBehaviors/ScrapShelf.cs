@@ -24,7 +24,20 @@ namespace Welcome_To_Ooblterra.Things
             List<SpawnableItemWithRarity> TwoHanded = new();
             foreach(SpawnableItemWithRarity spawnableItem in RandomScrapTypes) 
             {
-                (spawnableItem.spawnableItem.twoHanded ? TwoHanded : OneHanded).Add(spawnableItem);
+                // Skip 0 rarity, as these would never be spawned by the real selected loot tables.
+                // If we allow 0, then LunarConfig will end up causing default scrap to be spawned for
+                // Ooblterra, since it gets added to the loot table with rarity 0 instead of being 
+                // excluded entirely.
+                // The mechanism for this is a bit complex:
+                // - LunarConfig will stamp all items with dawn_lib:lunar_config
+                // - DawnLib treats items with this tag as "overridable" and registers them all.
+                // - The spawn list contains a bunch of 0 rarity items, which are filtered out by the
+                //   normal spawn paths, but the ScrapShelf previously used the entire loot table and
+                //   just grabbed random items, causing 0 rarity scrap to get spawned.
+                if(spawnableItem.rarity > 0)
+                {
+                    (spawnableItem.spawnableItem.twoHanded ? TwoHanded : OneHanded).Add(spawnableItem);
+                }
             }
 
             if (OneHanded.Count == 0 && TwoHanded.Count == 0)

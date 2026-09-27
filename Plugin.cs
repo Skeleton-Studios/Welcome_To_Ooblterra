@@ -8,9 +8,11 @@ using LethalLevelLoader;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -105,6 +107,7 @@ namespace Welcome_To_Ooblterra
         private static string resolvedRootPath = "";
 
         public static ConfigEntry<bool> WTODebug;
+        public static ConfigEntry<bool> WTOLogSpawnLists;
         public static ConfigEntry<bool> WTOCustomPoster;
 
         public static ConfigEntry<bool> WTOAllSuitsEnabled;
@@ -135,6 +138,7 @@ namespace Welcome_To_Ooblterra
             /*CONFIG STUFF*/
             {
                 WTODebug = Config.Bind("1. Debugging", "Print Debug Strings", false, "Whether or not to write WTO's debug print-strings to the log."); //IMPLEMENTED
+                WTOLogSpawnLists = Config.Bind("1. Debugging", "Log Moon Spawn Lists", false, "When landing, write the moon's scrap, enemy, dungeon, and map-object spawn lists to the log. Zero-rarity entries and all-zero curves are omitted. DawnLib outside objects are listed from DawnLib weights, because DawnLib removes them from the vanilla list before it spawns them.");
                 WTOLogging_Debug = Config.Bind("1. Debugging", "Log Level Debug Messages", false, "Whether or not to write debug messages to the log. These are the lowest, most spammy logs.");
                 WTOLogging_Info = Config.Bind("1. Debugging", "Log Level Info Messages", true, "Whether or not to write info messages to the log. General info logs that shouldn't be printed too often.");
                 WTOLogging_Warning = Config.Bind("1. Debugging", "Log Level Warning Messages", true, "Whether or not to write warning messages to the log. Warnings that are potentially errors or misconfigurations.");
@@ -362,6 +366,214 @@ namespace Welcome_To_Ooblterra
             Log.Debug($"Is Sun Animator Fog Animator? {TimeOfDay.Instance.sunAnimator == OoblFogAnimator}");
             // confirm why this is needed
             TimeOfDay.Instance.playDelayedMusicCoroutine = null;
+        }
+
+        /// <summary>
+        /// Dump the moon's resolved spawn lists after other mods have finished rewriting them.
+        /// Harmony postfixes run higher priority first, so Last runs after other landing patches.
+        /// </summary>
+        [HarmonyPatch(typeof(StartOfRound), nameof(StartOfRound.OnShipLandedMiscEvents))]
+        [HarmonyPostfix]
+        [HarmonyPriority(Priority.Last)]
+        private static void LogMoonSpawnListsOnLanding()
+        {
+            if (!WTOLogSpawnLists.Value)
+            {
+                return;
+            }
+
+            SelectableLevel? level = StartOfRound.Instance?.currentLevel;
+            if (level == null)
+            {
+                Log.Error("No current level found");
+                return;
+            }
+
+            try
+            {
+                Log.Info(BuildMoonSpawnListDump(level), AddFlair: false, ForcePrint: true);
+            }
+            catch (Exception ex)
+            {
+                Log.Error($"Failed to dump moon spawn lists: {ex}");
+            }
+        }
+
+        private static string BuildMoonSpawnListDump(SelectableLevel level)
+        {
+            StringBuilder dump = new();
+            string planet = string.IsNullOrEmpty(level.PlanetName) ? level.name : level.PlanetName;
+            dump.AppendLine($"Moon spawn lists: {planet} ({level.sceneName}) weather={level.currentWeather} scrap={level.minScrap}-{level.maxScrap}");
+            dump.AppendLine("Entries with rarity 0 or an all-zero curve are omitted.");
+
+            DungeonFlowName(dump);
+            AppendRarityList(dump, "Scrap", level.spawnableScrap?.Select(entry => (Name: entry.spawnableItem != null ? entry.spawnableItem.itemName : "(null)", entry.rarity)));
+            AppendRarityList(dump, "Inside enemies", level.Enemies?.Select(entry => (Name: entry.enemyType != null ? entry.enemyType.enemyName : "(null)", entry.rarity)));
+            AppendRarityList(dump, "Outside enemies", level.OutsideEnemies?.Select(entry => (Name: entry.enemyType != null ? entry.enemyType.enemyName : "(null)", entry.rarity)));
+            AppendRarityList(dump, "Daytime enemies", level.DaytimeEnemies?.Select(entry => (Name: entry.enemyType != null ? entry.enemyType.enemyName : "(null)", entry.rarity)));
+            AppendDungeonList(dump, level);
+            AppendInsideMapObjects(dump, level);
+            AppendIndoorHazards(dump, level);
+            AppendOutsideObjects(dump, level);
+            AppendDawnLibMapObjects(dump, level);
+            return dump.ToString().TrimEnd();
+        }
+
+        private static void DungeonFlowName(StringBuilder dump)
+        {
+            string? interiorName = RoundManager.Instance?.dungeonGenerator?.Generator?.DungeonFlow?.name;
+            if (!string.IsNullOrEmpty(interiorName))
+            {
+                dump.AppendLine($"Generated interior: {interiorName}");
+            }
+        }
+
+        private static void AppendRarityList(StringBuilder dump, string title, IEnumerable<(string Name, int rarity)>? entries)
+        {
+            List<(string Name, int rarity)> present = entries?.Where(entry => entry.rarity > 0).OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase).ToList() ?? [];
+            int omitted = (entries?.Count() ?? 0) - present.Count;
+            dump.AppendLine($"[{title}] {present.Count} (omitted {omitted})");
+            foreach ((string name, int rarity) in present)
+            {
+                dump.AppendLine($"  {name}: {rarity}");
+            }
+        }
+
+        private static void AppendDungeonList(StringBuilder dump, SelectableLevel level)
+        {
+            IntWithRarity[] flows = level.dungeonFlowTypes ?? [];
+            List<(string Name, int rarity)> present = [];
+            int omitted = 0;
+            foreach (IntWithRarity entry in flows)
+            {
+                if (entry.rarity <= 0)
+                {
+                    omitted++;
+                    continue;
+                }
+
+                present.Add((DungeonFlowLabel(entry.id), entry.rarity));
+            }
+
+            dump.AppendLine($"[Interiors] {present.Count} (omitted {omitted})");
+            foreach ((string name, int rarity) in present.OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                dump.AppendLine($"  {name}: {rarity}");
+            }
+        }
+
+        private static string DungeonFlowLabel(int id)
+        {
+            IndoorMapType[]? flows = RoundManager.Instance?.dungeonFlowTypes;
+            if (flows == null || id < 0 || id >= flows.Length || flows[id]?.dungeonFlow == null)
+            {
+                return $"id {id}";
+            }
+
+            return flows[id].dungeonFlow.name;
+        }
+
+        private static void AppendInsideMapObjects(StringBuilder dump, SelectableLevel level)
+        {
+            AppendCurveList(dump, "Inside map objects", level.spawnableMapObjects?.Select(entry => (
+                Name: entry.prefabToSpawn != null ? entry.prefabToSpawn.name : "(null)",
+                Curve: entry.numberToSpawn,
+                Extra: "")));
+        }
+
+        private static void AppendIndoorHazards(StringBuilder dump, SelectableLevel level)
+        {
+            AppendCurveList(dump, "Indoor hazards", level.indoorMapHazards?.Select(entry => (
+                Name: entry.hazardType?.prefabToSpawn != null ? entry.hazardType.prefabToSpawn.name : entry.hazardType != null ? entry.hazardType.name : "(null)",
+                Curve: entry.numberToSpawn,
+                Extra: "")));
+        }
+
+        private static void AppendOutsideObjects(StringBuilder dump, SelectableLevel level)
+        {
+            AppendCurveList(dump, "Outside objects", level.spawnableOutsideObjects?.Select(entry => (
+                Name: entry.spawnableObject?.prefabToSpawn != null ? entry.spawnableObject.prefabToSpawn.name : "(null)",
+                Curve: entry.randomAmount,
+                Extra: FloorTagSuffix(entry.spawnableObject?.spawnableFloorTags))));
+        }
+
+        private static void AppendDawnLibMapObjects(StringBuilder dump, SelectableLevel level)
+        {
+            if (!LethalContent.MapObjects.IsFrozen || level.GetDawnInfo() == null)
+            {
+                return;
+            }
+
+            SpawnWeightContext context = new(
+                level.GetDawnInfo(),
+                RoundManager.Instance?.dungeonGenerator?.Generator?.DungeonFlow is { } flow && flow.TryGetDawnInfo(out DawnDungeonInfo? dungeonInfo) ? dungeonInfo : null,
+                null);
+
+            List<(string Name, AnimationCurve? Curve, string Extra)> outside = [];
+            List<(string Name, AnimationCurve? Curve, string Extra)> inside = [];
+            foreach (DawnMapObjectInfo mapObject in LethalContent.MapObjects.Values)
+            {
+                if (mapObject.ShouldSkipRespectOverride())
+                {
+                    continue;
+                }
+
+                if (mapObject.OutsideInfo != null)
+                {
+                    string tags = FloorTagSuffix(mapObject.OutsideInfo.SpawnableOutsideObject?.spawnableFloorTags);
+                    outside.Add((mapObject.Key.ToString(), mapObject.OutsideInfo.SpawnWeights.GetFor(context), tags));
+                }
+
+                if (mapObject.InsideInfo != null)
+                {
+                    inside.Add((mapObject.Key.ToString(), mapObject.InsideInfo.SpawnWeights.GetFor(context), ""));
+                }
+            }
+
+            dump.AppendLine("DawnLib spawn path (these outside objects are removed from the vanilla list before DawnLib places them):");
+            AppendCurveList(dump, "DawnLib outside objects", outside);
+            AppendCurveList(dump, "DawnLib inside objects", inside);
+        }
+
+        private static void AppendCurveList(StringBuilder dump, string title, IEnumerable<(string Name, AnimationCurve? Curve, string Extra)>? entries)
+        {
+            List<(string Name, AnimationCurve? Curve, string Extra)> present = entries?
+                .Where(entry => !CurveIsZero(entry.Curve))
+                .OrderBy(entry => entry.Name, StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? [];
+            int omitted = (entries?.Count() ?? 0) - present.Count;
+            dump.AppendLine($"[{title}] {present.Count} (omitted {omitted})");
+            foreach ((string name, AnimationCurve? curve, string extra) in present)
+            {
+                dump.AppendLine($"  {name}: {FormatCurve(curve)}{extra}");
+            }
+        }
+
+        private static string FloorTagSuffix(string[]? tags)
+        {
+            if (tags == null || tags.Length == 0)
+            {
+                return " | floors=(any)";
+            }
+
+            return $" | floors={string.Join(",", tags)}";
+        }
+
+        private static bool CurveIsZero(AnimationCurve? curve)
+        {
+            return curve == null || curve.keys == null || curve.keys.Length == 0 || curve.keys.All(key => Mathf.Approximately(key.value, 0f));
+        }
+
+        private static string FormatCurve(AnimationCurve? curve)
+        {
+            if (curve?.keys == null || curve.keys.Length == 0)
+            {
+                return "(none)";
+            }
+
+            return string.Join(";", curve.keys
+                .OrderBy(key => key.time)
+                .Select(key => $"{key.time.ToString("0.00", CultureInfo.InvariantCulture)},{key.value.ToString("0.00", CultureInfo.InvariantCulture)}"));
         }
 
         /// <summary>
