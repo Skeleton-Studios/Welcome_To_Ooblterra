@@ -1,5 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Linq;
 using Unity.Netcode;
 using UnityEngine;
 
@@ -12,16 +12,16 @@ namespace Welcome_To_Ooblterra.Things
         public Animator ShelfOpener;
         public AudioSource ShelfSFX;
 
-        public void Start() 
+        private void Start() 
         {
             if(!IsServer)
-            {
+            { 
                 return;
             }
 
             List<SpawnableItemWithRarity> RandomScrapTypes = StartOfRound.Instance.currentLevel.spawnableScrap;
-            List<SpawnableItemWithRarity> OneHanded = new();
-            List<SpawnableItemWithRarity> TwoHanded = new();
+            List<SpawnableItemWithRarity> OneHanded = [];
+            List<SpawnableItemWithRarity> TwoHanded = [];
             foreach(SpawnableItemWithRarity spawnableItem in RandomScrapTypes) 
             {
                 // Skip 0 rarity, as these would never be spawned by the real selected loot tables.
@@ -45,19 +45,25 @@ namespace Welcome_To_Ooblterra.Things
                 return;
             }
 
-            System.Random ShelfRandom = new (StartOfRound.Instance.randomMapSeed);
+            int[] oneHandedWeights = [.. OneHanded.Select(item => item.rarity)];
+            int[] twoHandedWeights = [.. TwoHanded.Select(item => item.rarity)];
+
+            System.Random random = RoundManager.Instance.AnomalyRandom;
+
             foreach (Transform SpawnLocation in ScrapSpawnPoints)
             {
-                bool preferTwoHanded = TwoHanded.Count > 0 && (OneHanded.Count == 0 || ShelfRandom.Next(0, 100) < 80);
-                List<SpawnableItemWithRarity> pool = preferTwoHanded ? TwoHanded : OneHanded;
-                SpawnableItemWithRarity ScrapToSpawn = pool[ShelfRandom.Next(0, pool.Count)];
-                //Instantiate it at our current scrap spawn point 
+                // Aim to spawn two handed scap more often as it's usually more valuable.
+                bool preferTwoHanded = TwoHanded.Count > 0 && (OneHanded.Count == 0 || random.Next(0, 100) < 80);
+                SpawnableItemWithRarity ScrapToSpawn = preferTwoHanded ? 
+                    TwoHanded[RoundManager.Instance.GetRandomWeightedIndex(twoHandedWeights, random)] :
+                    OneHanded[RoundManager.Instance.GetRandomWeightedIndex(oneHandedWeights, random)];
+
                 GameObject SpawnedScrap = Instantiate(ScrapToSpawn.spawnableItem.spawnPrefab, SpawnLocation.transform.position, SpawnLocation.transform.rotation, RoundManager.Instance.mapPropsContainer.transform);
-                //set its scrap value 
+
                 GrabbableObject ScrapGrabbableObject = SpawnedScrap.GetComponent<GrabbableObject>();
-                int ScrapValue = ShelfRandom.Next(ScrapGrabbableObject.itemProperties.minValue, ScrapGrabbableObject.itemProperties.maxValue);
-                ScrapValue = (int)Math.Round(ScrapValue * 0.4);
-                //Spawn it
+                // Scrap value is calculated in the same way as vanilla.
+                int ScrapValue = (int)(random.Next(ScrapGrabbableObject.itemProperties.minValue, ScrapGrabbableObject.itemProperties.maxValue) * RoundManager.Instance.scrapValueMultiplier);
+
                 NetworkObject ScrapNetworkObject = SpawnedScrap.GetComponent<NetworkObject>();
                 ScrapNetworkObject.Spawn(destroyWithScene: true);
                 RoundManager.Instance.spawnedSyncedObjects.Add(SpawnedScrap);
