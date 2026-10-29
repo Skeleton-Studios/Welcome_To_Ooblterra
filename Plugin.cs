@@ -110,8 +110,6 @@ namespace Welcome_To_Ooblterra
         public static ConfigEntry<bool> WTOLogSpawnLists;
         public static ConfigEntry<bool> WTOCustomPoster;
 
-        public static ConfigEntry<bool> WTOAllSuitsEnabled;
-
         public static ConfigEntry<bool> WTOLogging_Debug;
         public static ConfigEntry<bool> WTOLogging_Info;
         public static ConfigEntry<bool> WTOLogging_Warning;
@@ -146,7 +144,6 @@ namespace Welcome_To_Ooblterra
                 WTOLogging_Filter = Config.Bind("1. Debugging", "Log Filter", "WTO", "The filter to apply to the log. Only messages that match this RegEx filter will be printed. If empty, all messages will be printed. This is applied to the final log string, including class name.");
 
                 WTOCustomPoster = Config.Bind("2. Ship Stuff", "Visit Ooblterra Poster Status", true, "Whether or not to add WTO's custom poster."); //IMPLEMENTED
-                WTOAllSuitsEnabled = Config.Bind("2. Ship Stuff", "Enable All Suits", true, "Whether or not to show all suits. If set to false, all suits are hidden. If true, use the individual config entries below to enable/disable specific suits."); //IMPLEMENTED
 
                 LethalLevelLoader.Plugin.onSetupComplete += () => 
                 {
@@ -489,7 +486,7 @@ namespace Welcome_To_Ooblterra
                         ? item.UnlockableItem.unlockableName["WTO ".Length..]
                         : item.UnlockableItem.unlockableName;
                     var thisSuitEnabled = Config.Bind("2. Ship Stuff", $"Enable {configName}", true, $"Whether or not to show the {configName}."); //IMPLEMENTED
-                    if(!WTOAllSuitsEnabled.Value || !thisSuitEnabled.Value)
+                    if(!thisSuitEnabled.Value)
                     {
                         Log.Info($"Disabling {item.UnlockableItem.unlockableName} suit.");
                         item.UnlockableItem.alreadyUnlocked = false;
