@@ -366,25 +366,66 @@ namespace Welcome_To_Ooblterra
         }
 
         /// <summary>
-        ///  Fix up ooblterra lighting
+        /// Stores a cache of values needed by SetInsideLightingDimness_Patch to avoid 
+        /// needing to get them every frame.
+        /// </summary>
+        private class OoblterraLightsCache
+        {
+            public bool failed;
+            public bool cachedIsOnOoblterra;
+            public Light cachedActualSun;
+            public Light cachedActualIndirect;
+
+            public OoblterraLightsCache()
+            {
+                cachedActualSun = GameObject.Find("ActualSun")?.GetComponent<Light>();
+                cachedActualIndirect = GameObject.Find("ActualIndirect")?.GetComponent<Light>();
+                failed = cachedActualSun == null || cachedActualIndirect == null;
+            }
+        }
+
+        private static OoblterraLightsCache ooblterraLightsCache = null;
+
+        /// <summary>
+        /// Point TimeOfDay at Ooblterra's sun lights before vanilla applies inside-factory dimming.
+        /// The lights are cached once and re-used, and are cleared if we are no longer on Ooblterra.
+        /// This is implemented here to keep it self contained and robust.
         /// </summary>
         /// <param name="__instance"></param>
         [HarmonyPatch(typeof(TimeOfDay), nameof(TimeOfDay.SetInsideLightingDimness))]
         [HarmonyPrefix]
-        private static void SpoofLightValues(TimeOfDay __instance)
+        private static void SetInsideLightingDimness_Patch(TimeOfDay __instance)
         {
             if (!IsOnOoblterra())
+            {
+                ooblterraLightsCache = null;
+                return;
+            }
+
+            // Get cached values once, re-setting if we are no longer on Ooblterra
+            if (ooblterraLightsCache == null)
+            {
+                ooblterraLightsCache = new OoblterraLightsCache();
+                if(ooblterraLightsCache.failed)
+                {
+                    // Only print on first cache attempt.
+                    Log.Warning($"Ooblterra lighting cache failed: ActualSun={ooblterraLightsCache.cachedActualSun != null}, ActualIndirect={ooblterraLightsCache.cachedActualIndirect != null}.");
+                }
+                else 
+                {
+                    Log.Info($"Ooblterra lighting cache successfully initialized.");
+                }
+            }
+
+            if (ooblterraLightsCache.failed)
             {
                 return;
             }
 
-            Light Direct = GameObject.Find("ActualSun").GetComponent<Light>();
-            Light Indirect = GameObject.Find("ActualIndirect").GetComponent<Light>();
-            TimeOfDay timeOfDay = FindObjectOfType<TimeOfDay>();
-            timeOfDay.sunIndirect = Indirect;
-            timeOfDay.sunDirect = Direct;
+            __instance.sunDirect = ooblterraLightsCache.cachedActualSun;
+            __instance.sunIndirect = ooblterraLightsCache.cachedActualIndirect;
         }
-
+        
         /// <summary>
         /// If enabled, automatically route to Ooblterra.
         /// This is mostly used for the automatic contour map renderer, but if you
