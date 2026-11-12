@@ -445,13 +445,17 @@ namespace Welcome_To_Ooblterra.Enemies
         public override void HitEnemy(int force = 1, PlayerControllerB playerWhoHit = null, bool playHitSFX = false, int hitID = -1) {
 
             base.HitEnemy(force, playerWhoHit, playHitSFX);
-            SetTargetServerRpc((int)playerWhoHit.playerClientId);
-            ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
-            Log.Debug("Player hit us!");
-            if(ActiveState is ShutDown || ActiveState is Attack || ActiveState is MoveToAttackPosition) {
-                return;
+            // This can be null, and we need to handle it properly.
+            if(playerWhoHit != null)
+            {
+                SetTargetServerRpc((int)playerWhoHit.playerClientId);
+                ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
+                Log.Debug("Player hit us!");
+                if(ActiveState is ShutDown || ActiveState is Attack || ActiveState is MoveToAttackPosition) {
+                    return;
+                }
+                OverrideState(new Attack());
             }
-            OverrideState(new Attack());
         }
 
         [ServerRpc]

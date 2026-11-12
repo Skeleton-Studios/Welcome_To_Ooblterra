@@ -568,10 +568,13 @@ namespace Welcome_To_Ooblterra.Enemies
             }
 
             //If we're attacked by a player, they need to be immediately set to our target player
-            SetTargetServerRpc((int)playerWhoHit.playerClientId);
-            ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
-            if (!(ActiveState is Attack || ActiveState is Chase || ActiveState is Enraged)) {
-                OverrideState(new Attack());
+            if(playerWhoHit != null)
+            {
+                SetTargetServerRpc((int)playerWhoHit.playerClientId);
+                ChangeOwnershipOfEnemy(playerWhoHit.actualClientId);
+                if (!(ActiveState is Attack || ActiveState is Chase || ActiveState is Enraged)) {
+                    OverrideState(new Attack());
+                }
             }
         }
         public override void DetectNoise(Vector3 noisePosition, float noiseLoudness, int timesNoisePlayedInOneSpot = 0, int noiseID = 0) {

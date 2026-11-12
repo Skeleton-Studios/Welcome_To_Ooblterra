@@ -358,8 +358,12 @@ namespace Welcome_To_Ooblterra.Enemies
                 return;
             }
             //If we're attacked by a player, they need to be immediately set to our target player
-            SetTargetServerRpc((int)playerWhoHit.playerClientId);
-            OverrideState(new Attack());
+            // This can be null, and we need to handle it properly.
+            if(playerWhoHit != null)
+            {
+                SetTargetServerRpc((int)playerWhoHit.playerClientId);
+                OverrideState(new Attack());
+            }
         }
     }
 }
